@@ -56,8 +56,12 @@ namespace Inu.Cate
 
         protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
+            var candidates = Compiler.Instance.WordOperation.PointerRegisters(offset);
+            if (!candidates.Any()) {
+                candidates = WordOperation.Registers;
+            }
             Compiler.Instance.WordOperation.UsingAnyRegister(instruction,
-                Compiler.Instance.WordOperation.PointerRegisters(offset),
+                candidates,
                 pointerRegister =>
                 {
                     pointerRegister.LoadFromMemory(instruction, pointer, 0);
@@ -110,6 +114,9 @@ namespace Inu.Cate
                                 return;
                             }
                             var candidates = WordOperation.Registers.Where(r => r.IsPointer(offset)).ToList();
+                            if (!candidates.Any()) {
+                                candidates = WordOperation.Registers;
+                            }
                             WordOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
                             {
                                 temporaryRegister.CopyFrom(instruction, pointerRegister);
@@ -141,9 +148,7 @@ namespace Inu.Cate
                 case VariableOperand variableOperand: {
                         var variable = variableOperand.Variable;
                         var offset = variableOperand.Offset;
-                        if (variable.Register is ByteRegister register) {
-                            Debug.Assert(offset == 0);
-                            //var register = Compiler.Instance.ByteOperation.RegisterFromId(variable.Register.Value);
+                        if (variable.Register is ByteRegister register && offset == 0) {
                             if (Equals(register, this)) {
                             }
                             else {

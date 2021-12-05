@@ -1,0 +1,23 @@
+﻿namespace Inu.Cate.MuCom87
+{
+    internal class DecrementJumpInstruction : Cate.DecrementJumpInstruction
+    {
+        public DecrementJumpInstruction(Function function, AssignableOperand operand, Anchor anchor) : base(function, operand, anchor) { }
+
+        public override void BuildAssembly()
+        {
+            var registerInUse = IsRegisterInUse(ByteRegister.A);
+            if (registerInUse) {
+                WriteLine("\tstaw\t" + ByteWorkingRegister.TemporaryByte);
+            }
+            ByteRegister.A.Load(this, Operand);
+            WriteLine("\tsui\ta,1");
+            ByteRegister.A.Store(this, Operand);
+            if (registerInUse) {
+                WriteLine("\tldaw\t" + ByteWorkingRegister.TemporaryByte);
+            }
+            WriteJumpLine("\tskz");
+            WriteJumpLine("\tjr\t" + Anchor.Label);
+        }
+    }
+}

@@ -36,15 +36,15 @@ namespace Inu.Cate
         }
         public abstract void LoadFromMemory(Instruction instruction, string label);
         public abstract void StoreToMemory(Instruction instruction, string label);
-        public abstract void Load(Instruction instruction, Operand sourceOperand);
-        public abstract void Store(Instruction instruction, AssignableOperand destinationOperand);
+        public abstract void Load(Instruction instruction, Operand operand);
+        public abstract void Store(Instruction instruction, AssignableOperand operand);
         public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
 
 
-        public abstract void LoadIndirect(Instruction instruction, WordRegister sourcePointerRegister, int sourceOffset);
-        public abstract void StoreIndirect(Instruction instruction, WordRegister destinationPointerRegister, int destinationOffset);
+        public abstract void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
+        public abstract void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
 
-        public abstract void CopyFrom(Instruction instruction, WordRegister sourceRegister);
+        public abstract void CopyFrom(Instruction instruction, WordRegister register);
 
 
         public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
@@ -53,9 +53,12 @@ namespace Inu.Cate
 
         public void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
-            if (instruction.IsRegisterInUse(this))
-            {
+            if (instruction.IsRegisterInUse(this)) {
                 var changed = instruction.ChangedRegisters.Contains(this);
+                if (!changed && ShouldBeRewind(offset)) {
+                    instruction.ChangedRegisters.Add(this);
+                    changed = true;
+                }
                 Add(instruction, offset);
                 action();
                 if (!changed) {
@@ -72,5 +75,7 @@ namespace Inu.Cate
                 instruction.EndRegister(this);
             }
         }
+
+        protected virtual bool ShouldBeRewind(int offset) => offset > 2 || offset < -2;
     }
 }

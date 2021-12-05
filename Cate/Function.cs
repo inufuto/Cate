@@ -288,7 +288,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("if @2 != 0 goto MapToVVram@Anchor29")) {
+                if (instruction.ToString().Contains("pt[8] = 3")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

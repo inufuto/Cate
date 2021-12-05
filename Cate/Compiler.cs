@@ -1484,7 +1484,7 @@ namespace Inu.Cate
 
         public virtual void SaveRegisters(StreamWriter writer, ISet<Register> register)
         {
-            var set = SavingRegisterIds((ISet<Register>)register).ToImmutableSortedSet();
+            var set = SavingRegisterIds(register).ToImmutableSortedSet();
             foreach (var r in set) {
                 r.Save(writer, null, false, 0);
             }
@@ -1604,6 +1604,6 @@ namespace Inu.Cate
         public abstract Operand LowByteOperand(Operand operand);
         public abstract Operand HighByteOperand(Operand operand);
 
-        public abstract void CallExternal(Instruction instruction, string functionName);
+        public abstract void CallExternal(Instruction instruction, string externalName);
     }
 }

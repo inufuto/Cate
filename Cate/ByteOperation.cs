@@ -166,7 +166,7 @@ namespace Inu.Cate
 
         protected virtual void SaveAndRestore(Instruction instruction, ByteRegister register, Action action)
         {
-            var temporaryRegister = Registers.Find(r => r != register && !instruction.IsRegisterInUse(r));
+            var temporaryRegister = Registers.Find(r => !Equals(r, register) && !instruction.IsRegisterInUse(r));
             if (temporaryRegister != null) {
                 temporaryRegister.CopyFrom(instruction, register);
                 action();
@@ -247,7 +247,11 @@ namespace Inu.Cate
              });
         }
 
-        public abstract string ToTemporaryByte(Instruction instruction, ByteRegister rightRegister);
+        public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);
 
+        public List<ByteRegister> RegistersOtherThan(Cate.ByteRegister register)
+        {
+            return Registers.FindAll(r => !Equals(r, register));
+        }
     }
 }

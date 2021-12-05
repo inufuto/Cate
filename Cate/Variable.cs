@@ -44,7 +44,8 @@ namespace Inu.Cate
         public bool Static
         {
             get => @static;
-            set {
+            set
+            {
                 Debug.Assert(register == null);
                 Debug.Assert(localVariableId == null);
                 @static = value;
@@ -55,7 +56,8 @@ namespace Inu.Cate
         public Register? Register
         {
             get => register;
-            set {
+            set
+            {
                 Debug.Assert(localVariableId == null);
                 Debug.Assert(!@static);
                 register = value;
@@ -65,7 +67,8 @@ namespace Inu.Cate
         public int? LocalVariableId
         {
             get => localVariableId;
-            set {
+            set
+            {
                 Debug.Assert(register == null);
                 Debug.Assert(!@static);
                 localVariableId = value;
@@ -75,7 +78,8 @@ namespace Inu.Cate
 
         public override string Label
         {
-            get {
+            get
+            {
                 if (localVariableId != null) {
                     Debug.Assert(Block.Function != null);
                     return Block.Function.Label + LocalVariableName(localVariableId.Value);
@@ -92,7 +96,8 @@ namespace Inu.Cate
 
         public int Range
         {
-            get {
+            get
+            {
                 if (Usages.Count > 0) {
                     return Usages.Last().Key - Usages.First().Key;
                 }

@@ -1,0 +1,194 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+
+namespace Inu.Cate.MuCom87
+{
+    internal class ByteRegister : Cate.ByteRegister
+    {
+        public static readonly Accumulator A = new Accumulator(1);
+        public static readonly ByteRegister D = new ByteRegister(2, "d");
+        public static readonly ByteRegister E = new ByteRegister(3, "e");
+        public static readonly ByteRegister B = new ByteRegister(4, "b");
+        public static readonly ByteRegister C = new ByteRegister(5, "c");
+        public static readonly ByteRegister H = new ByteRegister(6, "h");
+        public static readonly ByteRegister L = new ByteRegister(7, "l");
+
+        public static List<Cate.ByteRegister> Registers = new List<Cate.ByteRegister>() { A, D, E, B, C, H, L };
+
+        protected ByteRegister(int id, string name) : base(id, name) { }
+
+        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        {
+            Debug.Assert(Equals(A));
+            Instruction.WriteTabs(writer, tabCount);
+            writer.WriteLine("\tpush\tv" + comment);
+        }
+
+        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        {
+            Debug.Assert(Equals(A));
+            Instruction.WriteTabs(writer, tabCount);
+            writer.WriteLine("\tpop\tv" + comment);
+        }
+
+        public override Cate.WordRegister? PairRegister => WordRegister.Registers.FirstOrDefault(wordRegister => wordRegister.Name.Contains(Name));
+
+        public override void LoadConstant(Instruction instruction, string value)
+        {
+            instruction.WriteLine("\tmvi\t" + Name + "," + value);
+            instruction.ChangedRegisters.Add(this);
+            instruction.RemoveVariableRegister(this);
+        }
+
+        public override void LoadConstant(Instruction instruction, int value)
+        {
+            if (value == 0 && Equals(this, A)) {
+                instruction.WriteLine("\txra\ta,a");
+                instruction.ChangedRegisters.Add(this);
+                instruction.RemoveVariableRegister(this);
+                return;
+            }
+            base.LoadConstant(instruction, value);
+        }
+
+        public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
+        {
+            var address = variable.MemoryAddress(offset);
+            LoadFromMemory(instruction, address);
+        }
+
+        public override void LoadFromMemory(Instruction instruction, string label)
+        {
+            instruction.WriteLine("\tmov\t" + Name + "," + label);
+            instruction.RemoveVariableRegister(this);
+            instruction.ChangedRegisters.Add(this);
+        }
+
+        public override void StoreToMemory(Instruction instruction, Variable variable, int offset)
+        {
+            var address = variable.MemoryAddress(offset);
+            StoreToMemory(instruction, address);
+            instruction.SetVariableRegister(variable, offset, this);
+        }
+
+        public override void StoreToMemory(Instruction instruction, string label)
+        {
+            instruction.WriteLine("\tmov\t" + label + "," + Name);
+        }
+
+        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        {
+            switch (pointerRegister) {
+                case WordRegister wordRegister when offset == 0:
+                    LoadIndirect(instruction, wordRegister);
+                    return;
+                case WordRegister wordRegister:
+                    wordRegister.TemporaryOffset(instruction, offset, () =>
+                    {
+                        LoadIndirect(instruction, wordRegister);
+                    });
+                    return;
+            }
+            throw new NotImplementedException();
+        }
+
+        public virtual void LoadIndirect(Instruction instruction, WordRegister pointerRegister)
+        {
+            ByteOperation.UsingRegister(instruction, A, () =>
+            {
+                A.LoadIndirect(instruction, pointerRegister);
+                CopyFrom(instruction, A);
+            });
+        }
+
+        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        {
+            switch (pointerRegister) {
+                case WordRegister wordRegister when offset == 0:
+                    StoreIndirect(instruction, wordRegister);
+                    return;
+                case WordRegister wordRegister:
+                    wordRegister.TemporaryOffset(instruction, offset, () =>
+                    {
+                        StoreIndirect(instruction, wordRegister);
+                    });
+                    return;
+            }
+            throw new NotImplementedException();
+        }
+
+        public virtual void StoreIndirect(Instruction instruction, WordRegister wordRegister)
+        {
+            ByteOperation.UsingRegister(instruction, A, () =>
+            {
+                A.CopyFrom(instruction, this);
+                A.StoreIndirect(instruction, wordRegister);
+            });
+        }
+
+
+        public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
+        {
+            if (Equals(sourceRegister, A)) {
+                instruction.WriteLine("\tmov\t" + Name + ",a");
+                return;
+            }
+            ByteOperation.UsingRegister(instruction, A, () =>
+            {
+                A.CopyFrom(instruction, sourceRegister);
+                instruction.WriteLine("\tmov\t" + Name + ",a");
+            });
+        }
+
+
+        public override void Operate(Instruction instruction, string operation, bool change, int count)
+        {
+            for (var i = 0; i < count; ++i) {
+                instruction.WriteLine("\t" + operation + Name);
+            }
+            instruction.ChangedRegisters.Add(this);
+        }
+
+        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
+        {
+            ByteOperation.UsingRegister(instruction, A, () =>
+            {
+                A.CopyFrom(instruction, this);
+                A.Operate(instruction, operation, change, operand);
+                if (change) {
+                    CopyFrom(instruction, A);
+                }
+            });
+        }
+
+        public override void Operate(Instruction instruction, string operation, bool change, string operand)
+        {
+            ByteOperation.UsingRegister(instruction, A, () =>
+            {
+                A.CopyFrom(instruction, this);
+                A.Operate(instruction, operation, change, operand);
+                if (change) {
+                    CopyFrom(instruction, A);
+                }
+            });
+        }
+
+        public override void Save(Instruction instruction)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Restore(Instruction instruction)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static List<Cate.ByteRegister> RegistersOtherThan(ByteRegister register)
+        {
+            return Registers.FindAll(r => !Equals(r, register));
+        }
+    }
+}
