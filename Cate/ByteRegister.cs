@@ -114,13 +114,18 @@ namespace Inu.Cate
                                 return;
                             }
                             var candidates = WordOperation.Registers.Where(r => r.IsPointer(offset)).ToList();
-                            if (!candidates.Any()) {
-                                candidates = WordOperation.Registers;
+                            if (candidates.Any()) {
+                                WordOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
+                                {
+                                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                                    LoadIndirect(instruction, temporaryRegister, offset);
+                                });
+                                instruction.ChangedRegisters.Add(this);
+                                return;
                             }
-                            WordOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
+                            pointerRegister.TemporaryOffset(instruction, offset, () =>
                             {
-                                temporaryRegister.CopyFrom(instruction, pointerRegister);
-                                LoadIndirect(instruction, temporaryRegister, offset);
+                                LoadIndirect(instruction, pointerRegister, 0);
                             });
                             instruction.ChangedRegisters.Add(this);
                             return;

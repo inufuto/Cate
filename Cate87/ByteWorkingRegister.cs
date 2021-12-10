@@ -6,7 +6,7 @@ namespace Inu.Cate.MuCom87
     internal class ByteWorkingRegister : Cate.ByteRegister
     {
         public const int MinId = 20;
-        public const int Count = 32 - 1;
+        public const int Count = 16;
 
         private static int IdToOffset(int id)
         {

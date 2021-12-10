@@ -17,5 +17,7 @@ namespace Inu.Cate.MuCom87
         {
             return Compiler.LowByteOperand(operand);
         }
+
+        protected override bool CanCopyRegisterToSave(Instruction instruction, Cate.WordRegister register) => false;
     }
 }

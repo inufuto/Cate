@@ -56,15 +56,21 @@ namespace Inu.Cate
             if (SourceOperand is IntegerOperand integerOperand && DestinationOperand is IndirectOperand indirectOperand) {
                 var pointer = indirectOperand.Variable;
                 var offset = indirectOperand.Offset;
+                var register = GetVariableRegister(pointer, offset);
+                if (register is WordRegister pointerRegister) {
+                    ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
+                    return;
+                }
                 var pointerRegisters = WordOperation.PointerRegisters(offset);
                 if (pointerRegisters.Any()) {
                     WordOperation.UsingAnyRegister(this, pointerRegisters, DestinationOperand, SourceOperand,
-                        pointerRegister =>
-                    {
-                        ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
-                    });
-                    return;
+                        temporaryRegister =>
+                        {
+                            temporaryRegister.LoadFromMemory(this, pointer, offset);
+                            ByteOperation.StoreConstantIndirect(this, temporaryRegister, offset, integerOperand.IntegerValue);
+                        });
                 }
+                return;
             }
 
             ByteOperation.UsingAnyRegister(this, Candidates(), DestinationOperand, SourceOperand, register =>

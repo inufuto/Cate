@@ -250,6 +250,16 @@ namespace Inu.Cate.MuCom87
 
         private void LoadIndirect(Instruction instruction, WordRegister wordRegister)
         {
+            if (Equals(wordRegister, this)) {
+                WordOperation.UsingAnyRegister(instruction, WordRegister.RegistersOtherThan(this), temporaryRegister =>
+                {
+                    var register = ((WordRegister)temporaryRegister);
+                    register.LoadIndirect(instruction, wordRegister);
+                    instruction.ChangedRegisters.Add(register);
+                    CopyFrom(instruction, temporaryRegister);
+                });
+                return;
+            }
             ByteOperation.UsingRegister(instruction, ByteRegister.A, () =>
             {
                 Debug.Assert(Low != null);
@@ -261,6 +271,12 @@ namespace Inu.Cate.MuCom87
                 High.CopyFrom(instruction, ByteRegister.A);
                 instruction.WriteLine("\tdcx\t" + wordRegister.HighName);
             });
+            instruction.ChangedRegisters.Add(this);
+        }
+
+        private static List<Cate.WordRegister> RegistersOtherThan(WordRegister register)
+        {
+            return Registers.FindAll(r => !Equals(r, register));
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)

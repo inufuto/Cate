@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static System.String;
 
 namespace Inu.Cate.MuCom87
 {
@@ -11,89 +12,92 @@ namespace Inu.Cate.MuCom87
 
         protected override void CompareByte()
         {
+            string label = null;
+            void Write()
+            {
+                WriteJumpLine("\tjr\t" + Anchor);
+            }
+            void WriteNot()
+            {
+                label = Anchor + "_ne" + subLabelIndex;
+                WriteJumpLine("\tjr\t" + Anchor + "_ne" + subLabelIndex);
+                WriteJumpLine("\tjr\t" + Anchor);
+            }
+
             switch (OperatorId) {
                 case Keyword.Equal:
-                    Operate("nea|nei");
-                    return;
+                    Operate("nea|nei", Write);
+                    break;
                 case Keyword.NotEqual:
-                    Operate("eqa|eqi");
-                    return;
+                    Operate("eqa|eqi", Write);
+                    break;
                 case '<':
-                    Operate("eqa|eqi", "gta|gti");
-                    return;
+                    if (Signed) {
+                        CallExternalByte("cate.LessThanByte", "sknz");
+                    }
+                    else {
+                        Operate("lta|lti", WriteNot);
+                    }
+                    break;
                 case '>':
-                    Operate("eqa|eqi", "lta|lti");
-                    return;
+                    if (Signed) {
+                        CallExternalByte("cate.GreaterThanByte", "sknz");
+                    }
+                    else {
+                        Operate("gta|gti", WriteNot);
+                    }
+                    break;
                 case Keyword.LessEqual:
-                    BranchLessEqualByte();
-                    return;
+                    if (Signed) {
+                        CallExternalByte("cate.GreaterThanByte", "skz");
+                    }
+                    else {
+                        Operate("gta|gti", Write);
+                    }
+                    break;
                 case Keyword.GreaterEqual:
-                    BranchGreaterEqualByte();
-                    return;
+                    if (Signed) {
+                        CallExternalByte("cate.LessThanByte", "skz");
+                    }
+                    else {
+                        Operate("lta|lti", Write);
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException();
             }
-            throw new NotImplementedException();
-        }
-
-        private void BranchNotEqual()
-        {
-            Operate("eqa|eqi");
-            WriteJumpLine("\tjr\t" + Anchor);
+            if (IsNullOrEmpty(label)) return;
+            WriteJumpLine("\t" + label + ":");
+            ++subLabelIndex;
         }
 
 
-        private void BranchEqualByte()
-        {
-            Operate("nea|nei");
-            WriteJumpLine("\tjr\t" + Anchor);
-        }
-
-        private void BranchLessEqualByte()
-        {
-            if (Signed) {
-                CallExternalByte("cate.GreaterThanByte");
-                WriteJumpLine("\tjr\t" + Anchor);
-                return;
-            }
-            Operate("gta|gti");
-            WriteJumpLine("\tjr\t" + Anchor);
-        }
-
-        private void BranchGreaterEqualByte()
-        {
-            if (Signed) {
-                CallExternalByte("cate.LessThanByte");
-                WriteJumpLine("\tjr\t" + Anchor);
-                return;
-            }
-            Operate("lta|lti");
-            WriteJumpLine("\tjr\t" + Anchor);
-        }
-
-        private void Operate(params string[] operations)
+        private void Operate(string operation, Action action)
         {
             switch (RightOperand) {
                 case IntegerOperand integerOperand:
-                    OperateConstant(operations, integerOperand.IntegerValue.ToString());
+                    OperateConstant(operation, action, integerOperand.IntegerValue.ToString());
                     return;
                 case StringOperand stringOperand:
-                    OperateConstant(operations, stringOperand.StringValue);
+                    OperateConstant(operation, action, stringOperand.StringValue);
                     return;
                 case ByteRegisterOperand registerOperand:
-                    OperateRegister(operations, registerOperand.Register);
+                    OperateRegister(operation, action, registerOperand.Register);
                     return;
                 case VariableOperand variableOperand: {
                         var register = GetVariableRegister(variableOperand);
                         if (register is Cate.ByteRegister byteRegister) {
-                            OperateRegister(operations, byteRegister);
+                            OperateRegister(operation, action, byteRegister);
                             return;
                         }
                         break;
                     }
                 case IndirectOperand indirectOperand: {
                         var pointer = indirectOperand.Variable;
-                        var register = GetVariableRegister(pointer, 0);
+                        var offset = indirectOperand.Offset;
+                        var register = GetVariableRegister(pointer, offset);
                         if (register is WordRegister wordRegister) {
-                            OperateIndirect(operations, wordRegister);
+                            OperateIndirect(operation, action, wordRegister);
                             return;
                         }
                         break;
@@ -104,99 +108,51 @@ namespace Inu.Cate.MuCom87
                 ByteRegister.A.Load(this, RightOperand);
                 WriteLine("\tstaw\t" + ByteWorkingRegister.TemporaryByte);
             });
-            OperateWorkingRegister(operations, ByteWorkingRegister.TemporaryByte);
+            OperateWorkingRegister(operation, action, ByteWorkingRegister.TemporaryByte);
         }
 
-        private void OperateIndirect(string[] operations, WordRegister register)
+        private void OperateIndirect(string operation, Action action, WordRegister register)
         {
             ByteRegister.A.Load(this, LeftOperand);
-            foreach (var operation in operations) {
-                WriteJumpLine("\t" + operation.Split('|')[0] + "x\t" + register.HighName);
-                WriteJumpLine("\tjr\t" + Anchor);
-            }
+            WriteJumpLine("\t" + operation.Split('|')[0] + "x\t" + register.HighName);
+            action();
         }
 
-        private void OperateRegister(IEnumerable<string> operations, Cate.ByteRegister? register)
+        private void OperateRegister(string operation, Action action, Cate.ByteRegister? register)
         {
             switch (register) {
                 case ByteRegister byteRegister:
-                    OperateRegister(operations, byteRegister.Name);
+                    OperateRegister(operation, action, byteRegister.Name);
                     return;
                 case ByteWorkingRegister workingRegister:
-                    OperateWorkingRegister(operations, workingRegister.Name);
+                    OperateWorkingRegister(operation, action, workingRegister.Name);
                     return;
             }
             throw new NotImplementedException();
         }
 
-        private void OperateWorkingRegister(IEnumerable<string> operations, string name)
+        private void OperateWorkingRegister(string operation, Action action, string name)
         {
             ByteRegister.A.Load(this, LeftOperand);
-            foreach (var operation in operations) {
-                WriteJumpLine("\t" + operation.Split('|')[0] + "w\t" + name);
-                WriteJumpLine("\tjr\t" + Anchor);
-            }
+            WriteJumpLine("\t" + operation.Split('|')[0] + "w\t" + name);
+            action();
         }
 
-        private void OperateRegister(IEnumerable<string> operations, string name)
+        private void OperateRegister(string operation, Action action, string name)
         {
             ByteRegister.A.Load(this, LeftOperand);
-            foreach (var operation in operations) {
-                WriteJumpLine("\t" + operation.Split('|')[0] + "\ta," + name);
-                WriteJumpLine("\tjr\t" + Anchor);
-            }
+            WriteJumpLine("\t" + operation.Split('|')[0] + "\ta," + name);
+            action();
         }
 
-        private void OperateConstant(IEnumerable<string> operations, string value)
+        private void OperateConstant(string operation, Action action, string value)
         {
             ByteRegister.A.Load(this, LeftOperand);
-            foreach (var operation in operations) {
-                WriteJumpLine("\t" + operation.Split('|')[1] + "\ta," + value);
-                WriteJumpLine("\tjr\t" + Anchor);
-            }
+            WriteJumpLine("\t" + operation.Split('|')[1] + "\ta," + value);
+            action();
         }
 
-        private void Operate(string operation, Operand rightOperand)
-        {
-            if (Equals(LeftOperand.Register, ByteRegister.A)) {
-                ByteRegister.A.Operate(this, operation, false, rightOperand);
-                return;
-            }
-            if (RightOperand.Register != null || RightOperand is ConstantOperand) {
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
-                    ByteRegister.A.Load(this, LeftOperand);
-                    ByteRegister.A.Operate(this, operation, false, rightOperand);
-                });
-                return;
-            }
-            ByteOperation.UsingAnyRegister(this, ByteRegister.RegistersOtherThan(ByteRegister.A), temporaryRegister =>
-            {
-                temporaryRegister.Load(this, RightOperand);
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
-                    ByteRegister.A.Load(this, LeftOperand);
-                    ByteRegister.A.Operate(this, operation, false, rightOperand);
-                });
-            });
-        }
-
-        //private void Operate(string operation)
-        //{
-        //    if (Equals(RightOperand.Register, ByteRegister.A)) {
-        //        List<Cate.ByteRegister> candidates = new List<Cate.ByteRegister>(ByteRegister.RegistersOtherThan(ByteRegister.A));
-        //        ByteOperation.UsingAnyRegister(this, candidates,
-        //            temporaryRegister =>
-        //        {
-        //            temporaryRegister.CopyFrom(this, ByteRegister.A);
-        //            Operate(operation, new ByteRegisterOperand(RightOperand.Type, temporaryRegister));
-        //        });
-        //        return;
-        //    }
-        //    Operate(operation, RightOperand);
-        //}
-
-        private void CallExternalByte(string functionName)
+        private void CallExternalByte(string functionName, string skip)
         {
             ByteOperation.UsingRegister(this, ByteRegister.C, () =>
             {
@@ -207,7 +163,8 @@ namespace Inu.Cate.MuCom87
                     Compiler.CallExternal(this, functionName);
                 });
             });
-            WriteLine("\tsknz");
+            WriteJumpLine("\t" + skip);
+            WriteJumpLine("\tjr\t" + Anchor);
         }
 
 
@@ -257,32 +214,32 @@ namespace Inu.Cate.MuCom87
                     ++subLabelIndex;
                     return;
                 case '<':
-                    CallExternalWord(Signed ? "cate.LessThanSignedWord" : "cate.LessThanWord");
+                    CallExternalWord(Signed ? "cate.LessThanSignedWord" : "cate.LessThanWord", "sknz");
                     return;
                 case '>':
-                    CallExternalWord(Signed ? "cate.GreaterThanSignedWord" : "cate.GreaterThanWord");
-                    break;
+                    CallExternalWord(Signed ? "cate.GreaterThanSignedWord" : "cate.GreaterThanWord", "sknz");
+                    return;
                 case Keyword.LessEqual:
-                    CallExternalWord(Signed ? "cate.LessEqualSignedWord" : "cate.LessEqualWord");
+                    CallExternalWord(Signed ? "cate.GreaterThanSignedWord" : "cate.GreaterThanWord", "skz");
                     return;
                 case Keyword.GreaterEqual:
-                    CallExternalWord(Signed ? "cate.LessEqualSignedWord" : "cate.LessEqualWord");
+                    CallExternalWord(Signed ? "cate.LessThanSignedWord" : "cate.LessThanWord", "skz");
                     return;
             }
             throw new NotImplementedException();
         }
-        private void CallExternalWord(string functionName)
+        private void CallExternalWord(string functionName, string skip)
         {
-            WordOperation.UsingRegister(this, WordRegister.Bc, () =>
+            WordOperation.UsingRegister(this, WordRegister.Hl, () =>
             {
-                WordRegister.Bc.Load(this, RightOperand);
-                WordOperation.UsingRegister(this, WordRegister.Hl, () =>
+                WordOperation.UsingRegister(this, WordRegister.Bc, () =>
                 {
+                    WordRegister.Bc.Load(this, RightOperand);
                     WordRegister.Hl.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
                 });
             });
-            WriteLine("\tsknz");
+            WriteJumpLine("\t" + skip);
             WriteJumpLine("\tjr\t" + Anchor);
         }
     }

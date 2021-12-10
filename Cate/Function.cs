@@ -288,7 +288,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("pt[8] = 3")) {
+                if (instruction.ToString().Contains("if *p < p[2] goto Main@Anchor6")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

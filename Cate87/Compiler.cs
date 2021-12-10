@@ -42,9 +42,13 @@ namespace Inu.Cate.MuCom87
         {
             var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
                 .ThenBy(v => v.Usages.Count).ToList();
-            var allocatableByteVariables = rangeOrdered.Where(variable => variable.Type.ByteCount == 1 &&  CanAllocate(variable, ByteRegister.A)).ToList();
-            var accumulatorAllocatable = allocatableByteVariables.Count() <= 1;
-            if (accumulatorAllocatable && allocatableByteVariables.Any()) {
+            var allocatableByteVariables = rangeOrdered.Where(variable =>
+                !variable.IsTemporary() &&
+                variable.Type.ByteCount == 1 &&
+                !Conflict(variable.Intersections, ByteRegister.A) &&
+                CanAllocate(variable, ByteRegister.A)
+            ).ToList();
+            if (allocatableByteVariables.Any()) {
                 allocatableByteVariables.First().Register = ByteRegister.A;
             }
             var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
@@ -62,7 +66,7 @@ namespace Inu.Cate.MuCom87
                 var register = variable.Parameter.Register;
                 if (
                     register is ByteRegister byteRegister &&
-                    (!Equals(byteRegister, ByteRegister.A) || accumulatorAllocatable) &&
+                    (!Equals(byteRegister, ByteRegister.A) || allocatableByteVariables.Count() <= 1) &&
                     !Conflict(variable.Intersections, byteRegister)
                 ) {
                     variable.Register = byteRegister;
