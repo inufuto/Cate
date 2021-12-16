@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -57,6 +58,7 @@ namespace Inu.Cate
         public readonly ISet<Instruction> PreviousInstructions = new HashSet<Instruction>();
         public readonly IDictionary<Register, RegisterAssignment> RegisterAssignments = new Dictionary<Register, RegisterAssignment>();
         public Flag ResultFlags;
+        public readonly Dictionary<WordRegister, int> RegisterOffsets = new Dictionary<WordRegister, int>();
 
         protected Instruction(Function function)
         {
@@ -85,8 +87,10 @@ namespace Inu.Cate
         }
 
 
-        public ISet<Register> TemporaryRegisterIds {
-            get {
+        public ISet<Register> TemporaryRegisterIds
+        {
+            get
+            {
                 var temporaryRegisterIds = new HashSet<Register>();
                 IEnumerable<Register> changedRegisters = ResultRegister != null ? ChangedRegisters.Where(r => !Equals(r, ResultRegister)) : ChangedRegisters;
 
@@ -102,17 +106,6 @@ namespace Inu.Cate
 
         protected virtual Register? ResultRegister => ResultOperand?.Register;
 
-        //public IEnumerable<Register> UsingRegisterIds
-        //{
-        //    get {
-        //        ISet<Register> registers = new HashSet<Register>(destinationRegisterIds);
-        //        foreach (var key in temporaryRegisterUsages.Keys) {
-        //            registers.Add(key);
-        //        }
-        //        return registers;
-        //    }
-        //}
-
         public virtual Operand? ResultOperand => null;
 
         public Register? GetVariableRegister(Variable variable, int offset)
@@ -120,10 +113,10 @@ namespace Inu.Cate
             if (offset == 0 && variable.Register != null) {
                 return variable.Register;
             }
-            foreach (var (registerId, registerUsage) in RegisterAssignments) {
+            foreach (var (registerId, registerAssignment) in RegisterAssignments) {
                 if (
-                    registerUsage.Variable.SameStorage(variable) &&
-                    registerUsage.Offset == offset
+                    registerAssignment.Variable.SameStorage(variable) &&
+                    registerAssignment.Offset == offset
                 )
                     return registerId;
             }
@@ -139,10 +132,8 @@ namespace Inu.Cate
         {
             if (Equals(variable.Register, register) && offset == 0)
                 return true;
-            if (RegisterAssignments.TryGetValue(register, out var usage)) {
-                return usage.Variable.SameStorage(variable) && usage.Offset == offset;
-            }
-            return false;
+            if (!RegisterAssignments.TryGetValue(register, out var registerAssignment)) return false;
+            return registerAssignment.Variable.SameStorage(variable) && registerAssignment.Offset == offset;
         }
 
         public bool VariableRegisterMatches(VariableOperand operand, Register register)
@@ -172,21 +163,17 @@ namespace Inu.Cate
                 }
                 return;
             }
-
-            var resultRegisterUsage = new RegisterAssignment(variable, offset);
-
-            if (register != null) {
-                RegisterAssignments[register] = resultRegisterUsage;
-                if (register is WordRegister wordRegister) {
-                    if (wordRegister.Low != null) {
-                        RegisterAssignments.Remove(wordRegister.Low);
-                        //RemoveVariableRegister(wordRegister.Low);
-                    }
-                    if (wordRegister.High != null) {
-                        RegisterAssignments.Remove(wordRegister.High);
-                        //RemoveVariableRegister(wordRegister.High);
-                    }
-                }
+            var registerAssignment = new RegisterAssignment(variable, offset);
+            if (register == null) return;
+            RegisterAssignments[register] = registerAssignment;
+            if (!(register is WordRegister wordRegister)) return;
+            if (wordRegister.Low != null) {
+                RegisterAssignments.Remove(wordRegister.Low);
+                //RemoveVariableRegister(wordRegister.Low);
+            }
+            if (wordRegister.High != null) {
+                RegisterAssignments.Remove(wordRegister.High);
+                //RemoveVariableRegister(wordRegister.High);
             }
         }
 
@@ -212,29 +199,25 @@ namespace Inu.Cate
 
         public void RemoveVariableRegister(Variable variable, int offset)
         {
-            foreach (var (key, usage) in RegisterAssignments) {
+            foreach (var (key, registerAssignment) in RegisterAssignments) {
                 var remove = false;
-                if (usage.Variable.SameStorage(variable)) {
-                    if (usage.Offset == offset) {
+                if (registerAssignment.Variable.SameStorage(variable)) {
+                    if (registerAssignment.Offset == offset) {
                         remove = true;
                     }
-                    else if (variable.Type.ByteCount > 1 && usage.Offset == offset + 1) {
+                    else if (variable.Type.ByteCount > 1 && registerAssignment.Offset == offset + 1) {
                         remove = true;
                     }
-                    else if (usage.Variable.Type.ByteCount > 1 && offset == usage.Offset + 1) {
+                    else if (registerAssignment.Variable.Type.ByteCount > 1 && offset == registerAssignment.Offset + 1) {
                         remove = true;
                     }
                 }
-
-                //if (!Equals(usage, registerAssignment))
-                //    continue;
                 if (!remove)
                     continue;
                 RegisterAssignments.Remove(key);
                 break;
             }
         }
-
 
         public bool IsRegisterInVariableRange(Register? register, Variable? excludedVariable)
         {
@@ -263,21 +246,24 @@ namespace Inu.Cate
         {
             var registers = new HashSet<Register>();
             foreach (var previousInstruction in PreviousInstructions) {
-                foreach (var (register, usage) in previousInstruction.RegisterAssignments) {
-                    if (!previousInstruction.IsRegisterInVariableRange(register, usage.Variable)) {
+                foreach (var (register, registerAssignment) in previousInstruction.RegisterAssignments) {
+                    if (previousInstruction.IsRegisterInVariableRange(register, registerAssignment.Variable)) {
                         registers.Add(register);
                     }
                 }
-            }
-            foreach (var registerId in registers) {
-                var usages = PreviousInstructions.Select(i => i.RegisterAssignments.TryGetValue(registerId, out var usage) ? usage : null).Distinct().ToList();
-                if (usages.Count != 1)
-                    continue;
-                {
-                    var usage = usages[0];
-                    if (usage != null) {
-                        //SetVariableRegisterId(usage.Variable, usage.Offset, registerId);
-                        RegisterAssignments[registerId] = usage;
+
+                foreach (var registerId in registers) {
+                    var usages = PreviousInstructions
+                        .Select(i => i.RegisterAssignments.TryGetValue(registerId, out var usage) ? usage : null)
+                        .Distinct().ToList();
+                    if (usages.Count != 1)
+                        continue;
+                    {
+                        var registerAssignment = usages[0];
+                        if (registerAssignment != null) {
+                            //SetVariableRegisterId(usage.Variable, usage.Offset, registerId);
+                            RegisterAssignments[registerId] = registerAssignment;
+                        }
                     }
                 }
             }
@@ -415,5 +401,32 @@ namespace Inu.Cate
         }
 
         public virtual bool IsResultChanged() => false;
+
+        public int GetRegisterOffset(WordRegister register)
+        {
+            if (RegisterOffsets.TryGetValue(register, out var offset)) {
+                return offset;
+            }
+            return 0;
+        }
+
+        public void SetRegisterOffset(WordRegister register, int offset)
+        {
+            RegisterOffsets[register] = offset;
+            //foreach (var pair in RegisterAssignments) {
+            //    var registerAssignment = pair.Value;
+            //    if (!Equals(pair.Key, register) || registerAssignment.Offset == offset) continue;
+            //    RegisterAssignments[register] = new RegisterAssignment(registerAssignment.Variable, offset);
+            //}
+        }
+
+        public bool IsRegisterOffsetEmpty()
+        {
+            foreach (var (key, offset) in RegisterOffsets) {
+                if (!ChangedRegisters.Contains(key)) continue;
+                if (offset != 0) return false;
+            }
+            return true;
+        }
     }
 }

@@ -12,7 +12,7 @@ namespace Inu.Cate.MuCom87
 
         protected override void CompareByte()
         {
-            string label = null;
+            string? label = null;
             void Write()
             {
                 WriteJumpLine("\tjr\t" + Anchor);
@@ -90,6 +90,7 @@ namespace Inu.Cate.MuCom87
                             OperateRegister(operation, action, byteRegister);
                             return;
                         }
+
                         break;
                     }
                 case IndirectOperand indirectOperand: {
@@ -103,6 +104,7 @@ namespace Inu.Cate.MuCom87
                         break;
                     }
             }
+
             ByteOperation.UsingRegister(this, ByteRegister.A, () =>
             {
                 ByteRegister.A.Load(this, RightOperand);
@@ -170,48 +172,12 @@ namespace Inu.Cate.MuCom87
 
         protected override void CompareWord()
         {
-            void CompareHighByte(string operation)
-            {
-                var registerInUse = IsRegisterInUse(ByteRegister.A);
-                if (registerInUse) {
-                    WriteLine("\tstaw\t" + ByteWorkingRegister.TemporaryByte);
-                }
-                ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
-                ByteRegister.A.Operate(this, operation, false, Compiler.HighByteOperand(RightOperand));
-                if (registerInUse) {
-                    WriteLine("\tldaw\t" + ByteWorkingRegister.TemporaryByte);
-                }
-            }
-
-            void CompareLowByte(string operation)
-            {
-                var registerInUse = IsRegisterInUse(ByteRegister.A);
-                if (registerInUse) {
-                    WriteLine("\tstaw\t" + ByteWorkingRegister.TemporaryByte);
-                }
-                ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
-                ByteRegister.A.Operate(this, operation, false, Compiler.LowByteOperand(RightOperand));
-                if (registerInUse) {
-                    WriteLine("\tldaw\t" + ByteWorkingRegister.TemporaryByte);
-                }
-            }
-
             switch (OperatorId) {
                 case Keyword.Equal:
-                    CompareHighByte("eqa|eqi");
-                    WriteJumpLine("\tjr\t" + Anchor + "_ne" + subLabelIndex);
-                    CompareLowByte("nea|nei");
-                    WriteJumpLine("\tjr\t" + Anchor);
-                    WriteJumpLine(Anchor + "_ne" + subLabelIndex + ":");
-                    ++subLabelIndex;
+                    CallExternalWord("cate.EqualWord", "sknz");
                     return;
                 case Keyword.NotEqual:
-                    CompareHighByte("nea|nei");
-                    WriteJumpLine("\tjr\t" + Anchor + "_eq" + subLabelIndex);
-                    CompareLowByte("eqa|eqi");
-                    WriteJumpLine("\tjr\t" + Anchor);
-                    WriteJumpLine(Anchor + "_eq" + subLabelIndex + ":");
-                    ++subLabelIndex;
+                    CallExternalWord("cate.EqualWord", "skz");
                     return;
                 case '<':
                     CallExternalWord(Signed ? "cate.LessThanSignedWord" : "cate.LessThanWord", "sknz");
@@ -238,6 +204,7 @@ namespace Inu.Cate.MuCom87
                     WordRegister.Hl.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
                 });
+                ChangedRegisters.Add(WordRegister.Hl);
             });
             WriteJumpLine("\t" + skip);
             WriteJumpLine("\tjr\t" + Anchor);

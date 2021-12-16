@@ -1,20 +1,53 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Inu.Cate.MuCom87
 {
-    class SubroutineInstruction : Cate.SubroutineInstruction
+    internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
-        public SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand, List<Operand> sourceOperands) : base(function, targetFunction, destinationOperand, sourceOperands)
-        { }
+        public const string TemporaryByte = "@TempParam";
+        private bool accumulatorSaved;
+
+        public SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand,
+            List<Operand> sourceOperands) : base(function, targetFunction, destinationOperand, sourceOperands)
+        {
+            ParameterAssignments.Reverse();
+        }
+
+        //protected override void CopyByte(Instruction instruction, Cate.ByteRegister destination, Cate.ByteRegister source)
+        //{
+        //    if (ParameterAssignments.Any(a => Equals(a.Register, ByteRegister.A))) {
+        //        instruction.WriteLine("\tstaw\t" + ByteWorkingRegister.TemporaryByte);
+        //        instruction.WriteLine("\tmov\ta," + source.Name);
+        //        instruction.WriteLine("\tmov\t" + destination.Name + ",a");
+        //        instruction.WriteLine("\tldaw\t" + ByteWorkingRegister.TemporaryByte);
+        //    }
+        //    else {
+        //        base.CopyByte(instruction, destination, source);
+        //    }
+        //}
 
         protected override void Call()
         {
+            if (accumulatorSaved) {
+                WriteLine("\tldaw\t" + TemporaryByte);
+            }
             WriteLine("\tcall\t" + TargetFunction.Label);
+        }
+
+        protected override Register? SaveAccumulator(Register register, ParameterAssignment assignment)
+        {
+            if (Equals(register, ByteRegister.A) && ParameterAssignments.Any(a => !a.Equals(assignment) && !a.Done)) {
+                WriteLine("\tstaw\t" + TemporaryByte);
+                accumulatorSaved = true;
+                return null;
+            }
+            return base.SaveAccumulator(register, assignment);
         }
 
         protected override void StoreParameters()
         {
-            StoreParametersViaPointer();
+            StoreParametersDirect();
         }
 
         public static Register? ParameterRegister(int index, ParameterizableType type)

@@ -20,6 +20,21 @@ namespace Inu.Cate.MuCom87
 
         protected ByteRegister(int id, string name) : base(id, name) { }
 
+        public override bool Conflicts(Register? register)
+        {
+            switch (register) {
+                case WordRegister wordRegister:
+                    if (wordRegister.Contains(this))
+                        return true;
+                    break;
+                case ByteRegister byteRegister:
+                    if (PairRegister != null && PairRegister.Contains(byteRegister))
+                        return true;
+                    break;
+            }
+            return base.Conflicts(register);
+        }
+
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
         {
             Debug.Assert(Equals(A));
@@ -82,7 +97,7 @@ namespace Inu.Cate.MuCom87
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             switch (pointerRegister) {
-                case WordRegister wordRegister when offset == 0:
+                case WordRegister wordRegister when offset == instruction.GetRegisterOffset(wordRegister):
                     LoadIndirect(instruction, wordRegister);
                     return;
                 case WordRegister wordRegister:
@@ -95,7 +110,7 @@ namespace Inu.Cate.MuCom87
             throw new NotImplementedException();
         }
 
-        public virtual void LoadIndirect(Instruction instruction, WordRegister pointerRegister)
+        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister)
         {
             ByteOperation.UsingRegister(instruction, A, () =>
             {
@@ -107,7 +122,7 @@ namespace Inu.Cate.MuCom87
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             switch (pointerRegister) {
-                case WordRegister wordRegister when offset == 0:
+                case WordRegister wordRegister when offset == instruction.GetRegisterOffset(wordRegister):
                     StoreIndirect(instruction, wordRegister);
                     return;
                 case WordRegister wordRegister:
@@ -120,7 +135,7 @@ namespace Inu.Cate.MuCom87
             throw new NotImplementedException();
         }
 
-        public virtual void StoreIndirect(Instruction instruction, WordRegister wordRegister)
+        public override void StoreIndirect(Instruction instruction, Cate.WordRegister wordRegister)
         {
             ByteOperation.UsingRegister(instruction, A, () =>
             {

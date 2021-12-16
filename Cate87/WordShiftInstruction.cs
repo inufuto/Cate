@@ -13,55 +13,27 @@ namespace Inu.Cate.MuCom87
 
         protected override void ShiftConstant(int count)
         {
-            if (OperatorId == Keyword.ShiftRight && ((IntegerType)LeftOperand.Type).Signed) {
-                CallExternal(() => ByteRegister.B.LoadConstant(this, count));
+            if (count == 8) {
+                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
+                {
+                    ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
+                    ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
+                    ByteRegister.A.LoadConstant(this, 0);
+                    ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                });
                 return;
             }
-
-            Action<Action<string>, Action<string>> byteAction = OperatorId switch
-            {
-                Keyword.ShiftLeft => (low, high) =>
+            if (count == -8) {
+                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
                 {
-                    low("shal");
-                    high("ral");
-                }
-                ,
-                Keyword.ShiftRight => (low, high) =>
-                {
-                    high("shar");
-                    low("rar");
-                }
-                ,
-                _ => throw new NotImplementedException()
-            };
-            if (LeftOperand.SameStorage(DestinationOperand)) {
-                for (var i = 0; i < count; ++i) {
-                    byteAction(operation =>
-                    {
-                        ByteOperation.Operate(this, operation, true, Compiler.LowByteOperand(DestinationOperand));
-                    }, operation =>
-                    {
-                        ByteOperation.Operate(this, operation, true, Compiler.HighByteOperand(DestinationOperand));
-                    });
-                }
+                    ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
+                    ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                    ByteRegister.A.LoadConstant(this, 0);
+                    ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
+                });
                 return;
             }
-            WordOperation.UsingAnyRegister(this, WordRegister.Registers, DestinationOperand, LeftOperand, temporaryRegister =>
-            {
-                temporaryRegister.Load(this, LeftOperand);
-                for (var i = 0; i < count; ++i) {
-                    byteAction(operation =>
-                    {
-                        Debug.Assert(temporaryRegister.Low != null);
-                        temporaryRegister.Low.Operate(this, operation, true, 1);
-                    }, operation =>
-                    {
-                        Debug.Assert(temporaryRegister.High != null);
-                        temporaryRegister.High.Operate(this, operation, true, 1);
-                    });
-                }
-                temporaryRegister.Store(this, DestinationOperand);
-            });
+            CallExternal(() => ByteRegister.B.LoadConstant(this, count));
         }
 
         protected override void ShiftVariable(Operand counterOperand)
@@ -88,6 +60,8 @@ namespace Inu.Cate.MuCom87
                     Compiler.CallExternal(this, functionName);
                 });
                 WordRegister.Hl.Store(this, DestinationOperand);
+                ChangedRegisters.Add(WordRegister.Hl);
+                ChangedRegisters.Add(ByteRegister.B);
             });
         }
     }

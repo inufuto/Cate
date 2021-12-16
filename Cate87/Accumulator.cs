@@ -9,14 +9,14 @@ namespace Inu.Cate.MuCom87
         protected internal Accumulator(int id) : base(id, "a") { }
 
 
-        public override void LoadIndirect(Instruction instruction, WordRegister wordRegister)
+        public override void LoadIndirect(Instruction instruction, Cate.WordRegister wordRegister)
         {
-            instruction.WriteLine("\tldax\t" + wordRegister.HighName);
+            instruction.WriteLine("\tldax\t" + ((WordRegister)wordRegister).HighName);
         }
 
-        public override void StoreIndirect(Instruction instruction, WordRegister wordRegister)
+        public override void StoreIndirect(Instruction instruction, Cate.WordRegister wordRegister)
         {
-            instruction.WriteLine("\tstax\t" + wordRegister.HighName);
+            instruction.WriteLine("\tstax\t" + ((WordRegister)wordRegister).HighName);
         }
 
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
@@ -106,7 +106,7 @@ namespace Inu.Cate.MuCom87
         private void OperateIndirect(Instruction instruction, string operation, Cate.WordRegister pointerRegister, int offset)
         {
             switch (pointerRegister) {
-                case WordRegister wordRegister when offset == 0:
+                case WordRegister wordRegister when offset == instruction.GetRegisterOffset(wordRegister):
                     OperateIndirect(instruction, operation, wordRegister);
                     return;
                 case WordRegister wordRegister:

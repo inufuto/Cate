@@ -17,6 +17,7 @@ namespace Inu.Cate.MuCom87
         protected override void WriteAssembly(StreamWriter writer)
         {
             writer.WriteLine("\text " + ByteWorkingRegister.TemporaryByte);
+            writer.WriteLine("\text " + SubroutineInstruction.TemporaryByte);
             writer.WriteLine("\text " + TemporaryWord);
             writer.WriteLine("extrn " + WorkingRegisterLabel);
             base.WriteAssembly(writer);
@@ -40,18 +41,18 @@ namespace Inu.Cate.MuCom87
 
         public override void AllocateRegisters(List<Variable> variables, Function function)
         {
-            var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
+            var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Type.ByteCount).ThenBy(v => v.Range)
                 .ThenBy(v => v.Usages.Count).ToList();
-            var allocatableByteVariables = rangeOrdered.Where(variable =>
-                !variable.IsTemporary() &&
-                variable.Type.ByteCount == 1 &&
-                !Conflict(variable.Intersections, ByteRegister.A) &&
-                CanAllocate(variable, ByteRegister.A)
-            ).ToList();
-            if (allocatableByteVariables.Any()) {
-                allocatableByteVariables.First().Register = ByteRegister.A;
-            }
-            var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
+            //var accumulatorVariables = rangeOrdered.Where(variable =>
+            //    !variable.IsTemporary() &&
+            //    variable.Type.ByteCount == 1 &&
+            //    !Conflict(variable.Intersections, ByteRegister.A) &&
+            //    CanAllocate(variable, ByteRegister.A)
+            //).ToList();
+            //if (allocatableByteVariables.Any()) {
+            //    allocatableByteVariables.First().Register = ByteRegister.A;
+            //}
+            var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Type.ByteCount).ThenByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
             var byteRegisters = ByteOperation.RegistersOtherThan(ByteRegister.A);
             foreach (var variable in usageOrdered) {
                 var register = variable.Type.ByteCount == 1 ? AllocatableRegister(variable, byteRegisters, function) : AllocatableRegister(variable, WordOperation.Registers, function);
@@ -66,7 +67,7 @@ namespace Inu.Cate.MuCom87
                 var register = variable.Parameter.Register;
                 if (
                     register is ByteRegister byteRegister &&
-                    (!Equals(byteRegister, ByteRegister.A) || allocatableByteVariables.Count() <= 1) &&
+                    !Equals(byteRegister, ByteRegister.A) && // || accumulatorVariables.Count() <= 1)
                     !Conflict(variable.Intersections, byteRegister)
                 ) {
                     variable.Register = byteRegister;

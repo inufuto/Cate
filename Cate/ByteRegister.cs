@@ -41,17 +41,34 @@ namespace Inu.Cate
         public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
         public abstract void StoreToMemory(Instruction instruction, Variable variable, int offset);
         public abstract void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
+        public virtual void LoadIndirect(Instruction instruction, WordRegister pointerRegister)
+        {
+            LoadIndirect(instruction, pointerRegister, 0);
+        }
         public abstract void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
+
+        public virtual void StoreIndirect(Instruction instruction, WordRegister pointerRegister)
+        {
+            StoreIndirect(instruction, pointerRegister);
+        }
 
         protected virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
-            Compiler.Instance.WordOperation.UsingAnyRegister(instruction,
-                Compiler.Instance.WordOperation.PointerRegisters(offset),
-                pointerRegister =>
+            var candidates = Compiler.Instance.WordOperation.PointerRegisters(offset);
+            if (candidates.Any()) {
+                Compiler.Instance.WordOperation.UsingAnyRegister(instruction, candidates, pointerRegister =>
                 {
                     pointerRegister.LoadFromMemory(instruction, pointer, 0);
                     LoadIndirect(instruction, pointerRegister, offset);
                 });
+            }
+            else {
+                Compiler.Instance.WordOperation.UsingAnyRegister(instruction, Compiler.Instance.WordOperation.Registers, pointerRegister =>
+                {
+                    pointerRegister.LoadFromMemory(instruction, pointer, 0);
+                    LoadIndirect(instruction, pointerRegister, offset);
+                });
+            }
         }
 
         protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
@@ -82,6 +99,9 @@ namespace Inu.Cate
                     LoadConstant(instruction, stringOperand.StringValue);
                     return;
                 case VariableOperand variableOperand: {
+                        if (instruction.VariableRegisterMatches(variableOperand, this)) {
+                            return;
+                        }
                         var register = instruction.GetVariableRegister(variableOperand);
                         if (register is ByteRegister byteRegister) {
                             if (Equals(byteRegister, this)) {
@@ -125,7 +145,7 @@ namespace Inu.Cate
                             }
                             pointerRegister.TemporaryOffset(instruction, offset, () =>
                             {
-                                LoadIndirect(instruction, pointerRegister, 0);
+                                LoadIndirect(instruction, pointerRegister);
                             });
                             instruction.ChangedRegisters.Add(this);
                             return;
@@ -158,6 +178,7 @@ namespace Inu.Cate
                             }
                             else {
                                 register.CopyFrom(instruction, this);
+                                instruction.ChangedRegisters.Add(register);
                             }
                         }
                         else {

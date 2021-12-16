@@ -62,6 +62,14 @@ namespace Inu.Cate.MuCom87
             writer.WriteLine("\tpop\t" + HighName + comment);
         }
 
+        public override bool Conflicts(Register? register)
+        {
+            if (register is ByteRegister byteRegister && Contains(byteRegister)) {
+                return true;
+            }
+            return base.Conflicts(register);
+        }
+
         public override void Add(Instruction instruction, int offset)
         {
             if (offset == 0) { return; }
@@ -207,9 +215,10 @@ namespace Inu.Cate.MuCom87
                         }
                         WordOperation.UsingAnyRegister(instruction, WordRegister.Registers,
                             pointerRegister =>
-                            {
-                                StoreIndirect(instruction, pointerRegister, destinationOffset);
-                            });
+                        {
+                            pointerRegister.LoadFromMemory(instruction, destinationPointer, 0);
+                            StoreIndirect(instruction, pointerRegister, destinationOffset);
+                        });
                         return;
                     }
             }
@@ -221,6 +230,7 @@ namespace Inu.Cate.MuCom87
             instruction.WriteLine("\tl" + Name + "d\t" + variable.MemoryAddress(offset));
             instruction.SetVariableRegister(variable, offset, this);
             instruction.ChangedRegisters.Add(this);
+            instruction.SetRegisterOffset(this, offset);
         }
 
         private void Store(Instruction instruction, Variable variable, int offset)
@@ -339,5 +349,7 @@ namespace Inu.Cate.MuCom87
         {
             instruction.WriteLine("\tpop\t" + HighName);
         }
+
+        protected virtual bool IsOffsetShort(int offset) => Math.Abs(offset) <= 4;
     }
 }

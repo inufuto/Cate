@@ -2,7 +2,7 @@
 
 namespace Inu.Cate.MuCom87
 {
-    class ByteBinomialInstruction : BinomialInstruction
+    internal class ByteBinomialInstruction : BinomialInstruction
     {
         public ByteBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand) { }
 

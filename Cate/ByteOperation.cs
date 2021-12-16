@@ -214,28 +214,12 @@ namespace Inu.Cate
 
         public abstract void ClearByte(Instruction instruction, string label);
 
-        //public void UsingAnyRegister(Instruction instruction, List<ByteRegister> candidates, Operand operand,
-        //    Action<ByteRegister> action)
-        //{
-        //    if (operand is VariableOperand variableOperand) {
-        //        if (variableOperand.Register is ByteRegister register) {
-        //            if (candidates.Contains(register)) {
-        //                action(register);
-        //                return;
-        //            }
-        //        }
-        //    }
-        //    UsingAnyRegister(instruction, candidates, action);
-        //}
-
         public void OperateByteBinomial(BinomialInstruction instruction, string operation, bool change)
         {
             instruction.ByteOperation.UsingAnyRegisterToChange(instruction, Accumulators, instruction.DestinationOperand, instruction.LeftOperand, register =>
              {
                  if (instruction.RightOperand.Register is ByteRegister rightRegister && Equals(rightRegister, register)) {
-                     var temporaryByte = ToTemporaryByte(instruction, rightRegister);
-                     register.Load(instruction, instruction.LeftOperand);
-                     register.Operate(instruction, operation, change, temporaryByte);
+                     OperateByteBinomial(instruction, register, operation, change, rightRegister);
                  }
                  else {
                      register.Load(instruction, instruction.LeftOperand);
@@ -245,6 +229,14 @@ namespace Inu.Cate
                  instruction.RemoveVariableRegister(register);
                  register.Store(instruction, instruction.DestinationOperand);
              });
+        }
+
+        protected virtual void OperateByteBinomial(BinomialInstruction instruction, ByteRegister register, string operation, bool change,
+            ByteRegister rightRegister)
+        {
+            var temporaryByte = ToTemporaryByte(instruction, rightRegister);
+            register.Load(instruction, instruction.LeftOperand);
+            register.Operate(instruction, operation, change, temporaryByte);
         }
 
         public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);

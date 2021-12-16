@@ -53,29 +53,26 @@ namespace Inu.Cate
 
         public void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
+            void MakeOffset()
+            {
+                var oldOffset = instruction.GetRegisterOffset(this);
+                if (oldOffset == offset) return;
+                Add(instruction, offset - oldOffset);
+                instruction.RemoveVariableRegister(this);
+                instruction.ChangedRegisters.Add(this);
+                instruction.SetRegisterOffset(this, offset);
+            }
+
             if (instruction.IsRegisterInUse(this)) {
-                var changed = instruction.ChangedRegisters.Contains(this);
-                if (!changed && ShouldBeRewind(offset)) {
-                    instruction.ChangedRegisters.Add(this);
-                    changed = true;
-                }
-                Add(instruction, offset);
+                MakeOffset();
                 action();
-                if (!changed) {
-                    Add(instruction, -offset);
-                    instruction.ChangedRegisters.Remove(this);
-                }
             }
             else {
                 instruction.BeginRegister(this);
-                Add(instruction, offset);
-                instruction.RemoveVariableRegister(this);
-                instruction.ChangedRegisters.Add(this);
+                MakeOffset();
                 action();
                 instruction.EndRegister(this);
             }
         }
-
-        protected virtual bool ShouldBeRewind(int offset) => offset > 2 || offset < -2;
     }
 }

@@ -11,6 +11,7 @@ namespace Inu.Cate
         {
             public readonly Function.Parameter Parameter;
             public readonly Operand Operand;
+            private bool began;
             public Register? Register { get; private set; }
             public bool Done { get; private set; }
 
@@ -32,6 +33,7 @@ namespace Inu.Cate
                 instruction.RemoveSourceRegister(Operand);
                 if (register != null) {
                     instruction.BeginRegister(register);
+                    began = true;
                 }
             }
 
@@ -48,7 +50,7 @@ namespace Inu.Cate
                 other.SetDone(instruction, Operand.Register);
             }
 
-            public void Close(Instruction instruction)
+            public void Close(SubroutineInstruction instruction)
             {
                 Debug.Assert(Done);
                 if (Register == null)
@@ -56,15 +58,23 @@ namespace Inu.Cate
                 if (!Equals(Register, Parameter.Register)) {
                     Debug.Assert(Parameter.Register != null);
                     if (Parameter.Register is ByteRegister byteRegister) {
-                        byteRegister.CopyFrom(instruction, (ByteRegister)Register);
+                        var br = (ByteRegister)Register;
+                        instruction.CopyByte(instruction, byteRegister, br);
                     }
                     if (Parameter.Register is WordRegister wordRegister) {
                         wordRegister.CopyFrom(instruction, (WordRegister)Register);
                     }
                 }
-                instruction.EndRegister(Register);
+                if (began) {
+                    instruction.EndRegister(Register);
+                }
                 Done = false;
             }
+        }
+
+        protected virtual void CopyByte(Instruction instruction, ByteRegister destination, ByteRegister source)
+        {
+            destination.CopyFrom(instruction, source);
         }
 
         public readonly Function TargetFunction;
@@ -191,7 +201,7 @@ namespace Inu.Cate
                         var register = variableOperand.Variable.Register
                                        ?? GetVariableRegister(variableOperand.Variable, variableOperand.Offset);
                         if (Equals(register, parameter.Register)) {
-                            assignment.SetDone(this, register);
+                            assignment.SetDone(this, SaveAccumulator(register, assignment));
                             changed = true;
                         }
                     }
@@ -207,7 +217,7 @@ namespace Inu.Cate
                     Debug.Assert(parameter.Register != null);
                     if (!IsRegisterInUse(parameter.Register)) {
                         Load(parameter.Register, operand);
-                        assignment.SetDone(this, parameter.Register);
+                        assignment.SetDone(this, SaveAccumulator(parameter.Register, assignment));
                         changed = true;
                     }
                 }
@@ -218,6 +228,7 @@ namespace Inu.Cate
                     if (assignment.Done)
                         continue;
                     var parameter = assignment.Parameter;
+                    Debug.Assert(parameter.Register != null);
                     var operand = assignment.Operand;
                     {
                         Register? register;
@@ -227,12 +238,12 @@ namespace Inu.Cate
                         else {
                             register = WordOperation.Registers.Find(r => !IsRegisterInUse(r));
                         }
-
                         if (register == null)
                             continue;
                         Load(register, operand);
-                        assignment.SetDone(this, register);
+                        assignment.SetDone(this, SaveAccumulator(register, assignment));
                         changed = true;
+                        break;
                     }
                 }
                 if (changed)
@@ -242,6 +253,7 @@ namespace Inu.Cate
                     if (assignment.Done)
                         continue;
                     var parameter = assignment.Parameter;
+                    Debug.Assert(parameter.Register != null);
                     var operand = assignment.Operand;
                     var other = ParameterAssignments.Find(a => !a.Done && Equals(a.Operand.Register, parameter.Register));
                     if (other != null && Equals(other.Parameter.Register, operand.Register)) {
@@ -253,6 +265,11 @@ namespace Inu.Cate
             foreach (var assignment in ParameterAssignments) {
                 assignment.Close(this);
             }
+        }
+
+        protected virtual Register? SaveAccumulator(Register register, ParameterAssignment assignment)
+        {
+            return register;
         }
 
         private void Load(Register register, Operand operand)
@@ -352,7 +369,8 @@ namespace Inu.Cate
 
                     var operand = assignment.Operand;
                     if (index == 0) {
-                        pointerRegister.LoadFromMemory(this, TargetFunction.ParameterLabel(parameter));
+                        //pointerRegister.LoadFromMemory(this, TargetFunction.ParameterLabel(parameter));
+                        pointerRegister.LoadConstant(this, TargetFunction.ParameterLabel(parameter));
                     }
 
                     if (parameter.Type.ByteCount == 1) {

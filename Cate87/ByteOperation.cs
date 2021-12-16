@@ -7,8 +7,17 @@ namespace Inu.Cate.MuCom87
 {
     class ByteOperation : Cate.ByteOperation
     {
-        public override List<Cate.ByteRegister> Registers => ByteRegister.Registers.Union(ByteWorkingRegister.Registers).ToList();
+        public override List<Cate.ByteRegister> Registers => ByteRegister.RegistersOtherThan(ByteRegister.A).Union(ByteWorkingRegister.Registers).ToList();
         public override List<Cate.ByteRegister> Accumulators => new List<Cate.ByteRegister>() { ByteRegister.A };
+
+
+        protected override void OperateByteBinomial(BinomialInstruction instruction, Cate.ByteRegister register, string operation, bool change,
+            Cate.ByteRegister rightRegister)
+        {
+            var temporaryByte = ToTemporaryByte(instruction, rightRegister);
+            register.Load(instruction, instruction.LeftOperand);
+            instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + temporaryByte);
+        }
 
         protected override void OperateConstant(Instruction instruction, string operation, string value, int count)
         {
@@ -62,7 +71,7 @@ namespace Inu.Cate.MuCom87
                     {
                         StoreConstantIndirect(instruction, wordRegister, 0, value);
                     });
-                    break;
+                    return;
             }
             throw new NotImplementedException();
         }
@@ -70,7 +79,7 @@ namespace Inu.Cate.MuCom87
         public override void ClearByte(Instruction instruction, string label)
         {
             instruction.RemoveVariableRegister(ByteRegister.A);
-            instruction.WriteLine("\txra\ta");
+            instruction.WriteLine("\txra\ta,a");
             instruction.WriteLine("\tmov\t" + label + ",a");
             instruction.ChangedRegisters.Add(ByteRegister.A);
         }
