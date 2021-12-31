@@ -83,6 +83,18 @@ namespace Inu.Cate
 
         protected readonly List<ParameterAssignment> ParameterAssignments = new List<ParameterAssignment>();
 
+        public override bool IsSourceOperand(Variable variable)
+        {
+            foreach (var sourceOperand in SourceOperands) {
+                switch (sourceOperand) {
+                    case VariableOperand variableOperand when variableOperand.Variable == variable:
+                    case IndirectOperand indirectOperand when indirectOperand.Variable == variable:
+                        return true;
+                }
+            }
+            return base.IsSourceOperand(variable);
+        }
+
         public override bool IsResultChanged()
         {
             if (ResultOperand == null) {

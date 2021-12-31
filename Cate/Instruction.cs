@@ -388,7 +388,7 @@ namespace Inu.Cate
             RegisterAssignments.Remove(variable.Register);
         }
 
-        public bool IsSourceOperand(Variable variable)
+        public virtual bool IsSourceOperand(Variable variable)
         {
             return variable.Register != null && sourceRegisterIds.Contains(variable.Register);
         }
