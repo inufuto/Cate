@@ -8,13 +8,13 @@
         {
             var registerInUse = IsRegisterInUse(ByteRegister.A);
             if (registerInUse) {
-                WriteLine("\tstaw\t" + ByteWorkingRegister.TemporaryByte);
+                WriteLine("\tstaw\t" + MuCom87.Compiler.TemporaryByte);
             }
             ByteRegister.A.Load(this, Operand);
             WriteLine("\tsui\ta,1");
             ByteRegister.A.Store(this, Operand);
             if (registerInUse) {
-                WriteLine("\tldaw\t" + ByteWorkingRegister.TemporaryByte);
+                WriteLine("\tldaw\t" + MuCom87.Compiler.TemporaryByte);
             }
             WriteJumpLine("\tskz");
             WriteJumpLine("\tjr\t" + Anchor.Label);

@@ -14,6 +14,10 @@ namespace Inu.Cate.MuCom87
         public override void BuildAssembly()
         {
             if (RightValue == 0) {
+                if (DestinationOperand.Register is WordRegister destinationRegister) {
+                    destinationRegister.LoadConstant(this, 0);
+                    return;
+                }
                 ByteOperation.UsingRegister(this, ByteRegister.A, () =>
                 {
                     ByteRegister.A.LoadConstant(this, 0);
@@ -22,73 +26,37 @@ namespace Inu.Cate.MuCom87
                 });
                 return;
             }
-            if (BitCount == 1) {
-                if (!DestinationOperand.SameStorage(LeftOperand)) {
-                    ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                    {
-                        ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
-                        ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                        ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
-                        ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                    });
+            if (RightValue == 1) {
+                if (DestinationOperand.Register is WordRegister destinationRegister && !Equals(destinationRegister, LeftOperand.Register)) {
+                    destinationRegister.Load(this, LeftOperand);
+                    return;
                 }
-
-                ByteOperation.UsingRegister(this, ByteRegister.C, () =>
-                {
-                    ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                    {
-                        ByteRegister.A.Load(this, Compiler.HighByteOperand(DestinationOperand));
-                        ByteRegister.C.CopyFrom(this, ByteRegister.A);
-                        ByteRegister.A.Load(this, Compiler.LowByteOperand(DestinationOperand));
-                        Shift(() =>
-                        {
-                            WriteLine("\tshal");
-                            WriteLine("\trcl");
-                        });
-                        ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                        ByteRegister.A.CopyFrom(this, ByteRegister.C);
-                        ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                    });
-                });
-                return;
-            }
-            //WordOperation.UsingRegister(this, WordRegister.Hl, () =>
-            //{
-            //    WordRegister.Hl.Load(this, LeftOperand);
-            //    ByteOperation.UsingRegister(this, ByteRegister.B, () =>
-            //    {
-            //        ByteRegister.B.LoadConstant(this, RightValue);
-            //        Compiler.CallExternal(this, "cate.Multiply");
-            //    });
-            //});
-            WordOperation.UsingRegister(this, WordRegister.De, () =>
-            {
                 ByteOperation.UsingRegister(this, ByteRegister.A, () =>
                 {
                     ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
-                    ByteRegister.E.CopyFrom(this, ByteRegister.A);
-                    ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
-                    ByteRegister.D.CopyFrom(this, ByteRegister.A);
-                    ChangedRegisters.Add(WordRegister.De);
-                    RemoveVariableRegister(WordRegister.De);
-
-                    ByteRegister.A.LoadConstant(this, 0);
                     ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                    ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
                     ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                    Operate(() =>
-                    {
-                        ByteRegister.A.Load(this, Compiler.LowByteOperand(DestinationOperand));
-                        WriteLine("\tadd\ta,e");
-                        ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                        ByteRegister.A.Load(this, Compiler.HighByteOperand(DestinationOperand));
-                        WriteLine("\tadc\ta,d");
-                        ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                    }, () =>
-                    {
-                        Compiler.CallExternal(this, "cate.ShiftLeftDe1");
-                    });
                 });
-            });
+                return;
+            }
+
+            void Call()
+            {
+                WordRegister.Hl.Load(this, LeftOperand);
+                ByteOperation.UsingRegister(this, ByteRegister.C, () =>
+                {
+                    ByteRegister.C.LoadConstant(this, RightValue);
+                    Compiler.CallExternal(this, "cate.MultiplyHlC");
+                });
+                WordRegister.Hl.Store(this, DestinationOperand);
+            }
+
+            if (DestinationOperand.Register == WordRegister.Hl) {
+                Call();
+                return;
+            }
+            WordOperation.UsingRegister(this, WordRegister.Hl, Call);
         }
     }
 }

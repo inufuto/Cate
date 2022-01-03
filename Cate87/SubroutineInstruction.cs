@@ -5,7 +5,7 @@ namespace Inu.Cate.MuCom87
 {
     internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
-        public const string TemporaryByte = "@TempParam";
+        public const string TemporaryByte = MuCom87.Compiler.TemporaryByte;   //"@TempParam";
         private bool accumulatorSaved;
 
         public SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand,

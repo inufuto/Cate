@@ -5,6 +5,7 @@ namespace Inu.Cate.MuCom87
 {
     internal class ByteWorkingRegister : Cate.ByteRegister
     {
+        public const string WorkingRegisterLabel = "@Working";
         public const int MinId = 20;
         public const int Count = 0;
 
@@ -13,7 +14,7 @@ namespace Inu.Cate.MuCom87
             return id - MinId;
         }
 
-        private static string IdToName(int id) => Compiler.WorkingRegisterLabel + "+" + IdToOffset(id);
+        private static string IdToName(int id) => WorkingRegisterLabel + "+" + IdToOffset(id);
 
         public static List<Cate.ByteRegister> Registers
         {
@@ -26,8 +27,6 @@ namespace Inu.Cate.MuCom87
                 return registers;
             }
         }
-
-        public static string TemporaryByte = "@TemporaryByte";
 
 
         public ByteWorkingRegister(int id) : base(id, IdToName(id))
@@ -162,12 +161,12 @@ namespace Inu.Cate.MuCom87
         {
             var registerInUse = instruction.IsRegisterInUse(ByteRegister.A);
             if (registerInUse) {
-                instruction.WriteLine("\tstaw\t" + TemporaryByte);
+                instruction.WriteLine("\tstaw\t" + Compiler.TemporaryByte);
             }
             ByteRegister.A.CopyFrom(instruction, this);
             ByteRegister.A.Save(instruction);
             if (registerInUse) {
-                instruction.WriteLine("\tldaw\t" + TemporaryByte);
+                instruction.WriteLine("\tldaw\t" + Compiler.TemporaryByte);
             }
         }
 
@@ -184,5 +183,6 @@ namespace Inu.Cate.MuCom87
         {
             return new ByteWorkingRegister(offset + MinId);
         }
+
     }
 }

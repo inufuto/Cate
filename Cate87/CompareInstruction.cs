@@ -108,9 +108,9 @@ namespace Inu.Cate.MuCom87
             ByteOperation.UsingRegister(this, ByteRegister.A, () =>
             {
                 ByteRegister.A.Load(this, RightOperand);
-                WriteLine("\tstaw\t" + ByteWorkingRegister.TemporaryByte);
+                WriteLine("\tstaw\t" + MuCom87.Compiler.TemporaryByte);
             });
-            OperateWorkingRegister(operation, action, ByteWorkingRegister.TemporaryByte);
+            OperateWorkingRegister(operation, action, MuCom87.Compiler.TemporaryByte);
         }
 
         private void OperateIndirect(string operation, Action action, WordRegister register)

@@ -87,7 +87,7 @@ namespace Inu.Cate.MuCom87
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister register)
         {
             //throw new System.NotImplementedException();
-            var label = ByteWorkingRegister.TemporaryByte;
+            var label = Compiler.TemporaryByte;
             register.StoreToMemory(instruction, label);
             return label;
         }

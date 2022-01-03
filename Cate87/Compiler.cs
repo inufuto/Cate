@@ -3,23 +3,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using static Inu.Cate.MuCom87.Compiler;
 
 namespace Inu.Cate.MuCom87
 {
     internal class Compiler : Cate.Compiler
     {
-        public const string WorkingRegisterLabel = "@Working";
+        public const string TemporaryByte = "@TemporaryByte";
         public const string TemporaryWord = "@TemporaryWord";
 
         public Compiler() : base(new ByteOperation(), new WordOperation()) { }
 
         protected override void WriteAssembly(StreamWriter writer)
         {
-            writer.WriteLine("\text " + ByteWorkingRegister.TemporaryByte);
+            writer.WriteLine("\text " + TemporaryByte);
             writer.WriteLine("\text " + SubroutineInstruction.TemporaryByte);
             writer.WriteLine("\text " + TemporaryWord);
-            writer.WriteLine("extrn " + WorkingRegisterLabel);
+            writer.WriteLine("extrn " + ByteWorkingRegister.WorkingRegisterLabel);
             base.WriteAssembly(writer);
         }
 
