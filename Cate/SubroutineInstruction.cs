@@ -227,7 +227,7 @@ namespace Inu.Cate
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
                     Debug.Assert(parameter.Register != null);
-                    if (!IsRegisterInUse(parameter.Register)) {
+                    if (!IsRegisterInUse(parameter.Register) && !ConflictsSourceRegister(parameter)) {
                         Load(parameter.Register, operand);
                         assignment.SetDone(this, SaveAccumulator(parameter.Register, assignment));
                         changed = true;
@@ -277,6 +277,18 @@ namespace Inu.Cate
             foreach (var assignment in ParameterAssignments) {
                 assignment.Close(this);
             }
+        }
+
+        private bool ConflictsSourceRegister(Function.Parameter parameter)
+        {
+            foreach (var parameterAssignment in ParameterAssignments.Where(p => !p.Done && p.Parameter != parameter)) {
+                var operand = parameterAssignment.Operand;
+                var operandRegister = operand.Register;
+                if (operandRegister != null && operandRegister.Conflicts(parameter.Register)) return true;
+                if (!(operand is IndirectOperand indirectOperand)) continue;
+                if (indirectOperand.Variable.Register != null && indirectOperand.Variable.Register.Conflicts(parameter.Register)) return true;
+            }
+            return false;
         }
 
         protected virtual Register? SaveAccumulator(Register register, ParameterAssignment assignment)

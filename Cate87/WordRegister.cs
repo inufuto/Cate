@@ -332,6 +332,7 @@ namespace Inu.Cate.MuCom87
                 ByteRegister.A.CopyFrom(instruction, register.High);
                 Debug.Assert(High != null);
                 High.CopyFrom(instruction, ByteRegister.A);
+                instruction.ChangedRegisters.Add(this);
             });
         }
 
