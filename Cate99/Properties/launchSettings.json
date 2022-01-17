@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Cate99": {
+      "commandName": "Project",
+      "commandLineArgs": "aaa.c",
+      "workingDirectory": "D:\\8bit\\cate"
+    }
+  }
+}

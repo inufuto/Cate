@@ -34,6 +34,7 @@ namespace Inu.Cate
 
         public override int ByteCount => ElementCount != null ? ElementType.ByteCount * ElementCount.Value : 0;
         public override int Incremental => throw new NotImplementedException();
+        public override int MaxElementSize => ElementType.MaxElementSize;
 
         public override Constant DefaultValue()
         {

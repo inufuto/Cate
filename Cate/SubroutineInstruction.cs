@@ -205,7 +205,7 @@ namespace Inu.Cate
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
                     Debug.Assert(parameter.Register != null);
-                    if (!IsRegisterInUse(parameter.Register)) {
+                    if (!IsRegisterInUse(parameter.Register) && !IsSourceVariable(parameter.Register)) {
                         Load(parameter.Register, operand);
                         assignment.SetDone(this, parameter.Register);
                         changed = true;
@@ -255,6 +255,16 @@ namespace Inu.Cate
             }
         }
 
+        private bool IsSourceVariable(Register register)
+        {
+            foreach (var parameterAssignment in ParameterAssignments) {
+                if (parameterAssignment.Done || Equals(parameterAssignment.Parameter.Register, register)) continue;
+                var operandRegister = parameterAssignment.Operand.Register;
+                if (operandRegister != null && operandRegister.Conflicts(register)) return true;
+            }
+            return false;
+        }
+
         private void Load(Register register, Operand operand)
         {
             switch (register) {
@@ -264,6 +274,10 @@ namespace Inu.Cate
                 case WordRegister wordRegister:
                     wordRegister.Load(this, operand);
                     break;
+            }
+
+            if (operand.Register != register) {
+                ChangedRegisters.Add(register);
             }
         }
 
@@ -338,7 +352,7 @@ namespace Inu.Cate
                         }
                     }
 
-                    void StoreWord(WordRegister register)
+                    void StoreWordViaRegister(WordRegister register)
                     {
                         Debug.Assert(register.Low != null);
                         Debug.Assert(register.High != null);
@@ -388,13 +402,13 @@ namespace Inu.Cate
                     else {
                         if (operand.Register is WordRegister wordRegister && wordRegister.IsPair()) {
                             wordRegister.Load(this, operand);
-                            StoreWord(wordRegister);
+                            StoreWordViaRegister(wordRegister);
                         }
                         else {
                             WordOperation.UsingAnyRegister(this, WordOperation.PairRegisters, register =>
                             {
                                 register.Load(this, operand);
-                                StoreWord(register);
+                                StoreWordViaRegister(register);
                             });
                         }
                     }

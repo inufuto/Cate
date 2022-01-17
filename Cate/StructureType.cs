@@ -8,13 +8,15 @@ namespace Inu.Cate
     {
         public class Member
         {
+            public readonly int Offset;
             public readonly Type Type;
             public readonly int Id;
 
-            public Member(Type type, int id)
+            public Member(Type type, int id, int offset)
             {
                 Id = id;
                 Type = type;
+                this.Offset = offset;
             }
 
             public override bool Equals(object? obj)
@@ -24,13 +26,24 @@ namespace Inu.Cate
 
             public override int GetHashCode()
             {
-                return Id.GetHashCode() + Type.GetHashCode();
+                return Id.GetHashCode() + Type.GetHashCode() + Offset.GetHashCode();
             }
         }
 
         public readonly List<Member> Members = new List<Member>();
+        private int lastOffset = 0;
+        public override int ByteCount => Compiler.Instance.AlignedSize(lastOffset);
 
-        public void AddMember(int id, Type type) { Members.Add(new Member(type, id)); }
+
+        public void AddMember(int id, Type type)
+        {
+            var offset = lastOffset;
+            if (type.ByteCount >= Compiler.Instance.Alignment) {
+                offset = Compiler.Instance.AlignedSize(offset);
+            }
+            Members.Add(new Member(type, id, offset));
+            lastOffset = offset + type.ByteCount;
+        }
 
         public override bool Equals(object? obj)
         {
@@ -43,8 +56,9 @@ namespace Inu.Cate
             return Members.Sum(m => m.GetHashCode());
         }
 
-        public override int ByteCount => Members.Sum(m => m.Type.ByteCount);
+
         public override int Incremental => throw new System.NotImplementedException();
+        public override int MaxElementSize => Members.Select(m => m.Type.MaxElementSize).Max();
 
         public override Constant DefaultValue()
         {
@@ -60,20 +74,17 @@ namespace Inu.Cate
 
         public Value MemberValue(Identifier identifier, AssignableValue value)
         {
-            var offset = 0;
             foreach (var member in Members) {
-                if (member.Id == identifier.Id) {
-                    var memberType = member.Type;
-                    if (memberType is ArrayType arrayType) {
-                        var structurePointer = value.Reference(identifier.Position);
-                        var bytePointer = structurePointer!.CastTo(new PointerType(IntegerType.ByteType));
-                        var addedBytePointer = bytePointer!.BinomialResult(identifier.Position, '+', new ConstantInteger(offset));
-                        return addedBytePointer!.CastTo(arrayType.ToPointerType())!;
-                    }
-                    var memberValue = new StructureMember(memberType, value, offset);
-                    return memberValue; ;
+                if (member.Id != identifier.Id) continue;
+                var memberType = member.Type;
+                if (memberType is ArrayType arrayType) {
+                    var structurePointer = value.Reference(identifier.Position);
+                    var bytePointer = structurePointer!.CastTo(new PointerType(IntegerType.ByteType));
+                    var addedBytePointer = bytePointer!.BinomialResult(identifier.Position, '+', new ConstantInteger(member.Offset));
+                    return addedBytePointer!.CastTo(arrayType.ToPointerType())!;
                 }
-                offset += member.Type.ByteCount;
+                var memberValue = new StructureMember(memberType, value, member.Offset);
+                return memberValue; ;
             }
             throw new UndefinedIdentifierError(identifier);
         }

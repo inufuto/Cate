@@ -21,8 +21,10 @@ namespace Inu.Cate
 
         public override void WriteAssembly(StreamWriter writer)
         {
+            var size = 0;
             foreach (var elementValue in ElementValues) {
                 elementValue.WriteAssembly(writer);
+                size += elementValue.Type.ByteCount;
             }
         }
 

@@ -89,7 +89,7 @@ namespace Inu.Cate
         }
 
 
-        public void WriteAssembly(StreamWriter writer)
+        public void WriteAssembly(StreamWriter writer, ref int codeOffset, ref int dataOffset)
         {
             ExitAnchor.Address = NextAddress;
 
@@ -105,20 +105,24 @@ namespace Inu.Cate
             writer.WriteLine(";\tfunction " + Name);
             writer.WriteLine(";");
 
-            if (functionBlock == null)
-                return;
+            if (functionBlock == null) return;
 
             FillFlow();
             OptimizeVariables();
 
             WriteLocalVariables(writer);
 
-            functionBlock.WriteAssembly(writer);
+            Compiler.Instance.MakeAlignment(writer, "cseg", ref codeOffset);
+            Compiler.Instance.MakeAlignment(writer, "dseg", ref dataOffset);
+            functionBlock.WriteAssembly(writer, ref codeOffset, ref dataOffset);
             writer.WriteLine("\tcseg");
             writer.WriteLine(Label + ":");
             if (Visibility == Visibility.Public) {
                 writer.WriteLine("\tpublic\t" + Label);
             }
+
+            var compiler = Compiler.Instance;
+            compiler.WriteBeginningOfFunction(writer, this);
 
             ISet<Register> savedRegisterIds = new HashSet<Register>();
             foreach (var instruction in Instructions.Where(i => !i.IsEmpty())) {
@@ -138,7 +142,6 @@ namespace Inu.Cate
                 }
             }
 
-            var compiler = Compiler.Instance;
             if (Type.ByteCount > 0) {
                 var returnRegisterId = compiler.ReturnRegister(Type.ByteCount);
                 savedRegisterIds.Remove(returnRegisterId);
@@ -191,19 +194,21 @@ namespace Inu.Cate
 
             //writer.WriteLine(ExitLabel + ":");
             compiler.RestoreRegisters(writer, savedRegisterIds);
-            writer.WriteLine(compiler.EndOfFunction);
+            compiler.WriteEndOfFunction(writer, this);
         }
-
 
         private void WriteLocalVariables(StreamWriter writer)
         {
             if (localVariableIds.Count > 0) {
                 writer.WriteLine("\tdseg");
             }
-            foreach (var pair in localVariableIds) {
-                var id = pair.Key;
-                var size = pair.Value;
+            var offset = 0;
+            foreach (var (id, size) in localVariableIds) {
+                if (size >= Compiler.Instance.Alignment) {
+                    Compiler.Instance.MakeAlignment(writer, ref offset);
+                }
                 writer.WriteLine(Label + Variable.LocalVariableName(id) + ":\tdefs " + size);
+                offset += size;
             }
         }
 
@@ -227,7 +232,7 @@ namespace Inu.Cate
 
         public string ParameterLabel(Parameter parameter)
         {
-            return Label + "@Param" + Parameters.IndexOf(parameter);
+            return Label + "__Param" + Parameters.IndexOf(parameter);
         }
         private void FillFlow()
         {
@@ -288,7 +293,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("if @2 != 0 goto MapToVVram@Anchor29")) {
+                if (instruction.ToString().Contains("PrintS_(*pText,pText[2])")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

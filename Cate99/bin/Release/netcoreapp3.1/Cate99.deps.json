@@ -1,0 +1,50 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.1",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {
+      "Cate99/1.0.0": {
+        "dependencies": {
+          "Cate": "1.0.0",
+          "Language": "1.0.0"
+        },
+        "runtime": {
+          "Cate99.dll": {}
+        }
+      },
+      "Cate/1.0.0": {
+        "dependencies": {
+          "Language": "1.0.0"
+        },
+        "runtime": {
+          "Cate.dll": {}
+        }
+      },
+      "Language/1.0.0": {
+        "runtime": {
+          "Language.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Cate99/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Cate/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Language/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

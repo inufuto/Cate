@@ -10,7 +10,7 @@ namespace Inu.Cate
 {
     public class Variable : NamedValue
     {
-        public const char TemporaryVariablePrefix = '@';
+        public const string TemporaryVariablePrefix = "__";
 
 
         [Flags]
@@ -105,14 +105,16 @@ namespace Inu.Cate
 
         public bool IsConstant() => value != null;
 
-        public void WriteAssembly(StreamWriter writer)
+        public void WriteAssembly(StreamWriter writer, ref int offset)
         {
+            Compiler.Instance.MakeAlignment(writer, Type.MaxElementSize, ref offset);
             if (value != null) {
                 writer.WriteLine(Label + ": ;" + Name);
                 if (Visibility == Visibility.Public) {
                     writer.WriteLine("\tpublic\t" + Label);
                 }
                 value.WriteAssembly(writer);
+                offset += Type.ByteCount;
             }
             else {
                 if (register != null) {
@@ -130,6 +132,9 @@ namespace Inu.Cate
                         writer.WriteLine("\textrn\t" + Label);
                     }
                     else {
+                        var size = Type.ByteCount;
+                        offset += size;
+                        Compiler.Instance.MakeAlignment(writer, Type.MaxElementSize, ref offset);
                         writer.WriteLine(Label + ":\tdefs " + Type.ByteCount);
                         if (Visibility == Visibility.Public) {
                             writer.WriteLine("\tpublic\t" + Label);

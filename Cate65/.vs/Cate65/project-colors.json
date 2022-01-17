@@ -1,0 +1,16 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "55b5a6ed-b23e-4893-ad96-a9b7d393c514": {
+      "ProjectGuid": "55b5a6ed-b23e-4893-ad96-a9b7d393c514",
+      "DisplayName": "Cate",
+      "ColorIndex": 0
+    },
+    "a8b04dc3-d5e8-4def-8b70-72861f066140": {
+      "ProjectGuid": "a8b04dc3-d5e8-4def-8b70-72861f066140",
+      "DisplayName": "Cate65",
+      "ColorIndex": 1
+    }
+  },
+  "NextColorIndex": 2
+}
