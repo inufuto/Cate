@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -68,15 +69,17 @@ namespace Inu.Cate.Tms99
         public static void Operate(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand)
         {
             if (destinationOperand.SameStorage(leftOperand)) {
-                if (Tms99.Compiler.Operate(instruction, operation, rightOperand, destinationOperand)) return;
+                if (Compiler.Operate(instruction, operation, rightOperand, destinationOperand)) return;
             }
             Debug.Assert(instance != null);
-            instance.UsingAnyRegisterToChange(instruction, destinationOperand, leftOperand, register =>
+            var candidates = ByteRegister.Registers.Where(r => !Equals(r, rightOperand.Register)).ToList();
+            instance.UsingAnyRegisterToChange(instruction, candidates, destinationOperand, leftOperand, register =>
             {
                 register.Load(instruction, leftOperand);
-                var right = Tms99.Compiler.OperandToString(instruction, rightOperand);
+                var right = Compiler.OperandToString(instruction, rightOperand);
                 if (right != null) {
                     instruction.WriteLine("\t" + operation + "\t" + right + "," + register.Name);
+                    instruction.ChangedRegisters.Add(register);
                     register.Store(instruction, destinationOperand);
                 }
                 else {
@@ -87,6 +90,7 @@ namespace Inu.Cate.Tms99
                             rightRegister.Load(instruction, rightOperand);
                             destinationRegister.Load(instruction, leftOperand);
                             instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," + destinationRegister.Name);
+                            instruction.ChangedRegisters.Add(destinationRegister);
                             destinationRegister.Store(instruction, destinationOperand);
                         });
                     });
@@ -94,7 +98,7 @@ namespace Inu.Cate.Tms99
             });
         }
 
-        public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)
+        public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, string value)
         {
             Debug.Assert(instance != null);
             instance.UsingAnyRegisterToChange(instruction, destinationOperand, leftOperand, register =>
@@ -102,19 +106,67 @@ namespace Inu.Cate.Tms99
                 register.Load(instruction, leftOperand);
                 instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
                 register.Store(instruction, destinationOperand);
+                instruction.ChangedRegisters.Add(register);
             });
+        }
+        public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)
+        {
+            OperateConstant(instruction, operation, destinationOperand, leftOperand, value.ToString());
         }
 
         public static void Operate(Instruction instruction, string operation, Operand leftOperand, Operand rightOperand)
         {
+            Debug.Assert(instance != null);
+
+            var left = Compiler.OperandToString(instruction, leftOperand);
+            var right = Compiler.OperandToString(instruction, rightOperand);
+            if (left != null) {
+                if (right != null) {
+                    instruction.WriteLine("\t" + operation + "\t" + left + "," + right);
+                    return;
+                }
+                instance.UsingAnyRegister(instruction, rightRegister =>
+                {
+                    rightRegister.Load(instruction, rightOperand);
+                    instruction.WriteLine("\t" + operation + "\t" + left + "," + rightRegister.Name);
+                    rightRegister.Store(instruction, rightOperand);
+                });
+                return;
+            }
+
             void OperateRegister(Cate.ByteRegister register)
             {
                 register.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + register.Name + "," +
-                                      Tms99.Compiler.OperandToString(instruction, rightOperand));
+                if (right != null) {
+                    instruction.WriteLine("\t" + operation + "\t" + register.Name + "," +
+                                          right);
+                }
+                else {
+                    Debug.Assert(instance != null);
+                    instance.UsingAnyRegister(instruction, rightRegister =>
+                    {
+                        rightRegister.Load(instruction, rightOperand);
+                        instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + rightRegister.Name);
+                        rightRegister.Store(instruction, rightOperand);
+                    });
+                }
+
+                if (rightOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register == null) {
+                    var offset = indirectOperand.Offset;
+                    var candidates = WordRegister.Registers.Where(r => r.IsOffsetInRange(offset)).ToList();
+                    Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, candidates, pointerRegister =>
+                    {
+                        pointerRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
+                        if (offset == 0) {
+                            instruction.WriteLine("\t" + operation + "\t" + register.Name + ",*" + pointerRegister.Name);
+                        }
+                        else {
+                            instruction.WriteLine("\t" + operation + "\t" + register.Name + ",@" + offset + "(" + pointerRegister.Name + ")");
+                        }
+                    });
+                }
             }
 
-            Debug.Assert(instance != null);
             if (leftOperand.Register is ByteRegister leftRegister) {
                 OperateRegister(leftRegister);
                 return;
@@ -127,7 +179,7 @@ namespace Inu.Cate.Tms99
             void OperateRegister(Cate.ByteRegister register)
             {
                 register.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
+                instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + ByteRegister.ByteConst(value));
             }
 
             Debug.Assert(instance != null);

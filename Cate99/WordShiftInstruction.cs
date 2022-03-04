@@ -9,17 +9,20 @@ namespace Inu.Cate.Tms99
         protected override void ShiftConstant(int count)
         {
             count &= 15;
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 Keyword.ShiftLeft => "sla",
                 Keyword.ShiftRight when ((IntegerType)LeftOperand.Type).Signed => "sra",
                 Keyword.ShiftRight => "srl",
                 _ => throw new NotImplementedException()
             };
-            WordOperation.UsingAnyRegister(this, temporaryRegister =>
+            WordOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, temporaryRegister =>
             {
                 temporaryRegister.Load(this, LeftOperand);
-                WriteLine("\t" + operation + "\t" + temporaryRegister.Name + "," + count);
+                if (count > 0) {
+                    WriteLine("\t" + operation + "\t" + temporaryRegister.Name + "," + count);
+                }
+                temporaryRegister.Store(this, DestinationOperand);
             });
         }
 
@@ -48,6 +51,7 @@ namespace Inu.Cate.Tms99
 
                 if (RightOperand.Type.ByteCount == 1) {
                     r1.ByteRegister.Load(this, RightOperand);
+                    r1.ByteRegister.Expand(this, ((IntegerType)RightOperand.Type).Signed);
                 }
                 else {
                     r1.Load(this, RightOperand);

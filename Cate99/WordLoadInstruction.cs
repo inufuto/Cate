@@ -16,6 +16,9 @@
             }
             if (source != null & destination != null) {
                 WriteLine("\tmov\t" + source + "," + destination);
+                if (DestinationOperand.Register is WordRegister wordRegister) {
+                    ChangedRegisters.Add(wordRegister);
+                }
                 return;
             }
             base.BuildAssembly();

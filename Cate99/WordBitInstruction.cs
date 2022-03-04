@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -16,33 +17,25 @@ namespace Inu.Cate.Tms99
                     Tms99.WordOperation.Operate(this, "soc", DestinationOperand, LeftOperand, RightOperand);
                     return;
                 case '&':
-                    WordOperation.UsingAnyRegister(this, rightRegister =>
+                    ByteOperation.UsingAnyRegisterToChange(this, DestinationOperand, LeftOperand, destinationRegister =>
                     {
-                        rightRegister.Load(this, RightOperand);
-                        WriteLine("\tinv\t" + rightRegister.Name);
-                        if (DestinationOperand.SameStorage(LeftOperand)) {
-                            WriteLine("\tszc\t" + rightRegister.Name + Tms99.Compiler.OperandToString(this, DestinationOperand));
-                        }
-                        else {
-                            void OperateRegister(WordRegister register)
-                            {
-                                register.Load(this, LeftOperand);
-                                WriteLine("\tszc\t" + rightRegister.Name + "," + register.Name);
-                                register.Store(this, DestinationOperand);
-                            }
-                            if (DestinationOperand.Register is WordRegister destinationRegister) {
-                                OperateRegister(destinationRegister);
-                            }
-                            else if (LeftOperand.Register is WordRegister leftRegister) {
-                                OperateRegister(leftRegister);
+                        var candidates = ByteOperation.Registers.Where(r => !Equals(r, destinationRegister)).ToList();
+                        ByteOperation.UsingAnyRegister(this, candidates, null, RightOperand, sourceRegister =>
+                        {
+                            if (Equals(LeftOperand.Register, destinationRegister)) {
+                                destinationRegister.Load(this, LeftOperand);
+                                sourceRegister.Load(this, RightOperand);
                             }
                             else {
-                                WordOperation.UsingAnyRegister(this, temporaryRegister =>
-                                {
-                                    OperateRegister((WordRegister)temporaryRegister);
-                                });
+                                destinationRegister.Load(this, RightOperand);
+                                sourceRegister.Load(this, LeftOperand);
                             }
-                        }
+
+                            WriteLine("\tinv\t" + sourceRegister.Name);
+                            ChangedRegisters.Add(sourceRegister);
+                            WriteLine("\tszc\t" + sourceRegister.Name + "," + destinationRegister.Name);
+                            destinationRegister.Store(this, DestinationOperand);
+                        });
                     });
                     break;
                 case '^': {

@@ -1,0 +1,4 @@
+D:\8bit\cate\Cate99.pdb
+D:\8bit\cate\Cate.pdb
+D:\8bit\cate\Language.pdb
+D:\8bit\cate\Cate99.exe

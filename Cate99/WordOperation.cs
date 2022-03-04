@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -37,17 +38,18 @@ namespace Inu.Cate.Tms99
                 register.Store(instruction, destinationOperand);
             }
 
-            if (destinationOperand.Register is WordRegister destinationRegister) {
-                OperateRegister(destinationRegister);
-                return;
-            }
+            //if (destinationOperand.Register is WordRegister destinationRegister) {
+            //    OperateRegister(destinationRegister);
+            //    return;
+            //}
 
-            if (leftOperand.Register is WordRegister leftRegister) {
-                OperateRegister(leftRegister);
-                return;
-            }
+            //if (leftOperand.Register is WordRegister leftRegister) {
+            //    OperateRegister(leftRegister);
+            //    return;
+            //}
             Debug.Assert(instance != null);
-            instance.UsingAnyRegister(instruction, OperateRegister);
+            var candidates = WordRegister.Registers.Where(r=>!Equals(r, rightOperand.Register)).ToList();
+            instance.UsingAnyRegister(instruction, candidates, destinationOperand, leftOperand, OperateRegister);
         }
 
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)
@@ -119,7 +121,7 @@ namespace Inu.Cate.Tms99
             instance.UsingAnyRegister(instruction, OperateRegister);
         }
 
-        public static void OperateConstant(Instruction instruction, string operation, Operand leftOperand, int value)
+        public static void OperateConstant(Instruction instruction, string operation, Operand leftOperand, string value)
         {
             void OperateRegister(Cate.WordRegister register)
             {
@@ -133,6 +135,10 @@ namespace Inu.Cate.Tms99
                 return;
             }
             instance.UsingAnyRegister(instruction, OperateRegister);
+        }
+        public static void OperateConstant(Instruction instruction, string operation, Operand leftOperand, int value)
+        {
+            OperateConstant(instruction, operation, leftOperand, value.ToString());
         }
 
         public static void Operate(Instruction instruction, string operation, AssignableOperand operand)

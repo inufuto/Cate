@@ -16,3 +16,4 @@ D:\Projects\cs\console\cate\Cate99\obj\Release\netcoreapp3.1\win-x64\Cate99.cspr
 D:\Projects\cs\console\cate\Cate99\obj\Release\netcoreapp3.1\win-x64\Cate99.dll
 D:\Projects\cs\console\cate\Cate99\obj\Release\netcoreapp3.1\win-x64\Cate99.pdb
 D:\Projects\cs\console\cate\Cate99\obj\Release\netcoreapp3.1\win-x64\Cate99.genruntimeconfig.cache
+D:\Projects\cs\console\cate\Cate99\obj\Release\netcoreapp3.1\win-x64\Cate99.csproj.AssemblyReference.cache

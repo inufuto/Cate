@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -17,50 +13,27 @@ namespace Inu.Cate.Tms99
                 return;
             }
 
-            void OperateRegister(WordRegister sourceRegister, WordRegister destinationRegister)
+            var candidates = WordOperation.Registers.Where(lowRegister =>
             {
-                if (destinationRegister.Index == 0) {
-                    var candidates = WordOperation.Registers.Where(r => ((WordRegister)r).Index != 0).ToList();
-                    WordOperation.UsingAnyRegister(this, candidates, temporaryRegister =>
-                    {
-                        OperateRegister(sourceRegister, (WordRegister)temporaryRegister);
-                    });
-                    return;
-                }
-
-                var highRegister = WordRegister.FromIndex(destinationRegister.Index - 1);
+                if (((WordRegister)lowRegister).Index == 0) return false;
+                var highRegister = WordRegister.FromIndex(((WordRegister)lowRegister).Index - 1);
+                return !IsRegisterInUse(highRegister);
+            }).ToList();
+            WordOperation.UsingAnyRegister(this, candidates, DestinationOperand, LeftOperand, lowRegister =>
+            {
+                var highRegister = WordRegister.FromIndex(((WordRegister)lowRegister).Index - 1);
                 WordOperation.UsingRegister(this, highRegister, () =>
                 {
-                    sourceRegister.Load(this, LeftOperand);
-                    highRegister.LoadConstant(this, RightValue);
-                    WriteLine("\tmpy\t" + sourceRegister.Name + "," + highRegister);
-                    destinationRegister.Store(this, DestinationOperand);
-                });
-            }
-
-            if (LeftOperand.Register is WordRegister leftRegister) {
-                if (DestinationOperand.Register is WordRegister destinationRegister) {
-                    OperateRegister(leftRegister, destinationRegister);
-                    return;
-                }
-                WordOperation.UsingAnyRegister(this, temporaryRegister =>
-                {
-                    OperateRegister(leftRegister, (WordRegister)temporaryRegister);
-                });
-            }
-            else {
-                WordOperation.UsingAnyRegister(this, sourceRegister =>
-                {
-                    if (DestinationOperand.Register is WordRegister destinationRegister) {
-                        OperateRegister((WordRegister)sourceRegister, destinationRegister);
-                        return;
-                    }
-                    WordOperation.UsingAnyRegister(this, temporaryRegister =>
+                    WordOperation.UsingAnyRegister(this, rightRegister =>
                     {
-                        OperateRegister((WordRegister)sourceRegister, (WordRegister)temporaryRegister);
+                        highRegister.Load(this, LeftOperand);
+                        rightRegister.LoadConstant(this, RightValue);
+                        WriteLine("\tmpy\t" + rightRegister.Name + "," + highRegister);
+                        lowRegister.Store(this, DestinationOperand);
+                        ChangedRegisters.Add(lowRegister);
                     });
                 });
-            }
+            });
         }
 
         private void ClearDestination()

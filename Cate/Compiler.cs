@@ -1619,6 +1619,7 @@ namespace Inu.Cate
         }
 
         public virtual int Alignment => 1;
+        public virtual IntegerType CounterType => IntegerType.ByteType;
 
         public int AlignedSize(int size)
         {

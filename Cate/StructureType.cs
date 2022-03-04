@@ -32,7 +32,7 @@ namespace Inu.Cate
 
         public readonly List<Member> Members = new List<Member>();
         private int lastOffset = 0;
-        public override int ByteCount => Compiler.Instance.AlignedSize(lastOffset);
+        public override int ByteCount => lastOffset;
 
 
         public void AddMember(int id, Type type)

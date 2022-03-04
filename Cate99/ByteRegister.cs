@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -10,7 +11,7 @@ namespace Inu.Cate.Tms99
         private const int MinId = 100;
 
         private static List<Cate.ByteRegister>? registers;
-        private readonly WordRegister wordRegister;
+        public readonly WordRegister WordRegister;
 
         public static List<Cate.ByteRegister> Registers
         {
@@ -35,10 +36,9 @@ namespace Inu.Cate.Tms99
 
         private ByteRegister(WordRegister wordRegister) : base(MinId + wordRegister.Index, wordRegister.Name)
         {
-            this.wordRegister = wordRegister;
+            this.WordRegister = wordRegister;
         }
-        public int Index => wordRegister.Index;
-        public WordRegister WordRegister => WordRegister.FromIndex(Index);
+        public int Index => WordRegister.Index;
 
         public override bool Conflicts(Register? register)
         {
@@ -48,27 +48,36 @@ namespace Inu.Cate.Tms99
             return base.Conflicts(register);
         }
 
+        public override bool Matches(Register register)
+        {
+            if (register is WordRegister wordRegister && Equals(wordRegister.ByteRegister, this)) return true;
+            return base.Matches(register);
+        }
+
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
         {
-            wordRegister.Save(writer, comment, jump, tabCount);
+            WordRegister.Save(writer, comment, jump, tabCount);
         }
 
         public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
         {
-            wordRegister.Restore(writer, comment, jump, tabCount);
+            WordRegister.Restore(writer, comment, jump, tabCount);
         }
 
         public override void LoadConstant(Instruction instruction, string value)
         {
-            wordRegister.LoadConstant(instruction, value);
+            WordRegister.LoadConstant(instruction, ByteConst(value));
             instruction.ChangedRegisters.Add(this);
             instruction.RemoveVariableRegister(this);
         }
 
+        public static string ByteConst(string value) => value + " shl 8";
+        public static string ByteConst(int value) => ByteConst(value.ToString());
+
         public override void LoadConstant(Instruction instruction, int value)
         {
             if (value == 0) {
-                instruction.WriteLine("\tclr\t" + Name);
+                Clear(instruction);
                 instruction.ChangedRegisters.Add(this);
                 instruction.RemoveVariableRegister(this);
                 return;
@@ -89,19 +98,28 @@ namespace Inu.Cate.Tms99
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             if (offset == 0) {
-                instruction.WriteLine("\tmovb\t*" + pointerRegister.Name + "," + Name);
+                if (pointerRegister.Conflicts(this)) {
+                    instruction.WriteLine("\tmovb\t*" + pointerRegister.Name + "," + Name);
+                    instruction.WriteLine("\tandi\t" + Name + ",>ff00");
+                }
+                else {
+                    Clear(instruction);
+                    instruction.WriteLine("\tmovb\t*" + pointerRegister.Name + "," + Name);
+                }
             }
             else {
                 void ForRegister(Cate.WordRegister register1)
                 {
+                    Clear(instruction);
                     instruction.WriteLine("\tmovb\t@" + offset + "(" + register1.Name + ")," + Name);
                 }
 
-                if (pointerRegister.IsOffsetInRange(offset)) {
+                if (pointerRegister.IsOffsetInRange(offset) && !pointerRegister.Conflicts(this)) {
                     ForRegister(pointerRegister);
                 }
                 else {
-                    WordOperation.UsingAnyRegister(instruction, WordOperation.PointerRegisters(offset),
+                    var candidates = WordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList();
+                    WordOperation.UsingAnyRegister(instruction, candidates,
                         temporaryRegister =>
                     {
                         temporaryRegister.CopyFrom(instruction, pointerRegister);
@@ -109,13 +127,11 @@ namespace Inu.Cate.Tms99
                     });
                 }
             }
-            instruction.WriteLine("\tsrl\t" + Name + ",8");
             instruction.RemoveVariableRegister(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
-            instruction.WriteLine("\tswpb\t" + Name);
             if (offset == 0) {
                 instruction.WriteLine("\tmovb\t" + Name + ",*" + pointerRegister);
             }
@@ -140,23 +156,22 @@ namespace Inu.Cate.Tms99
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
+            Clear(instruction);
             instruction.WriteLine("\tmovb\t@" + label + "," + Name);
-            instruction.WriteLine("\tsrl\t" + Name + ",8");
             instruction.ChangedRegisters.Add(this);
             instruction.RemoveVariableRegister(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
         {
-            instruction.WriteLine("\tswpb\t" + Name);
-            instruction.WriteLine("\tmov\t" + Name + ",@" + label);
+            instruction.WriteLine("\tmovb\t" + Name + ",@" + label);
         }
 
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
         {
-            if (sourceRegister is ByteRegister sourceByteRegister) {
-                wordRegister.CopyFrom(instruction, sourceByteRegister.wordRegister);
-            }
+            instruction.WriteLine("\tmov\t" + sourceRegister.Name + "," + Name);
+            instruction.RemoveVariableRegister(WordRegister);
+            instruction.ChangedRegisters.Add(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, int count)
@@ -183,12 +198,24 @@ namespace Inu.Cate.Tms99
 
         public override void Save(Instruction instruction)
         {
-            wordRegister.Save(instruction);
+            WordRegister.Save(instruction);
         }
 
         public override void Restore(Instruction instruction)
         {
-            wordRegister.Restore(instruction);
+            WordRegister.Restore(instruction);
+        }
+
+        public WordRegister Expand(Instruction instruction, bool signed)
+        {
+            var operation = signed ? "sra" : "srl";
+            instruction.WriteLine("\t" + operation + "\t" + Name + ",8");
+            return WordRegister;
+        }
+
+        public void Clear(Instruction instruction)
+        {
+            WordRegister.Clear(instruction);
         }
     }
 }

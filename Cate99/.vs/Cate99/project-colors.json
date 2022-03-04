@@ -5,7 +5,17 @@
       "ProjectGuid": "3e96b77f-a38f-431e-868e-c64521c5783b",
       "DisplayName": "Cate99",
       "ColorIndex": 0
+    },
+    "e5290e94-37f1-4a3c-8e6b-b645ccbb14a7": {
+      "ProjectGuid": "e5290e94-37f1-4a3c-8e6b-b645ccbb14a7",
+      "DisplayName": "Cate99",
+      "ColorIndex": 1
+    },
+    "93ff8c14-5beb-42e6-bfdf-8f482798405f": {
+      "ProjectGuid": "93ff8c14-5beb-42e6-bfdf-8f482798405f",
+      "DisplayName": "Cate",
+      "ColorIndex": 2
     }
   },
-  "NextColorIndex": 1
+  "NextColorIndex": 3
 }

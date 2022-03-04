@@ -6,38 +6,40 @@
 
         protected override void Expand()
         {
-            if (SourceOperand.Register is ByteRegister sourceRegister) {
-                sourceRegister.WordRegister.Store(this, DestinationOperand);
-                return;
-            }
-            ByteOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, temporaryRegister =>
+            Operate(false);
+        }
+
+        protected override void ExpandSigned()
+        {
+            Operate(true);
+        }
+
+        private void Operate(bool signed)
+        {
+            ByteOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, byteRegister =>
             {
-                temporaryRegister.Load(this, SourceOperand);
-                ((ByteRegister)temporaryRegister).WordRegister.Store(this, DestinationOperand);
+                byteRegister.Load(this, SourceOperand);
+                RemoveVariableRegister(byteRegister);
+                var wordRegister = ((ByteRegister)byteRegister).Expand(this, signed);
+                ChangedRegisters.Add(wordRegister);
+                wordRegister.Store(this, DestinationOperand);
             });
         }
 
         protected override void Reduce()
         {
-            WordOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, temporaryRegister =>
+            WordOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, wordRegister =>
             {
-                temporaryRegister.Load(this, SourceOperand);
-                ((WordRegister)temporaryRegister).ByteRegister.Store(this, DestinationOperand);
+                wordRegister.Load(this, SourceOperand);
+                WriteLine("\tsla\t" + wordRegister + ",8");
+                ((WordRegister)wordRegister).ByteRegister.Store(this, DestinationOperand);
+                RemoveVariableRegister(wordRegister);
             });
         }
 
-        protected override void ExpandSigned()
+        public override bool CanAllocateRegister(Variable variable, Register register)
         {
-            var byteRegister = ByteRegister.FromIndex(0);
-            var wordRegister = WordRegister.FromIndex(1);
-            WordOperation.UsingRegister(this, wordRegister, () =>
-            {
-                byteRegister.Load(this, SourceOperand);
-                Compiler.CallExternal(this, "cate.ExpandSigned");
-                wordRegister.Store(this, DestinationOperand);
-                RemoveVariableRegister(wordRegister);
-                ChangedRegisters.Add(wordRegister);
-            });
+            return true;
         }
     }
 }

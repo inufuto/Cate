@@ -79,8 +79,7 @@ namespace Inu.Cate.Tms99
 
         private static Cate.Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Cate.Register
         {
-            foreach (var register in registers)
-            {
+            foreach (var register in registers) {
                 if (!IsAllocatable(function, variable, register)) continue;
                 var conflict = Conflict(variable.Intersections, register);
                 if (!conflict) return register;
@@ -226,12 +225,16 @@ namespace Inu.Cate.Tms99
         }
 
         public override int Alignment => 2;
+        public override IntegerType CounterType => IntegerType.WordType;
 
         public override IEnumerable<Register> IncludedRegisterIds(Register register)
         {
-            return register is WordRegister wordRegister
-                ? new List<Register>() { wordRegister.ByteRegister }
-                : new List<Register>();
+            return register switch
+            {
+                WordRegister wordRegister => new List<Register>() { wordRegister.ByteRegister },
+                ByteRegister byteRegister => new List<Register>() { byteRegister.WordRegister },
+                _ => throw new NotImplementedException()
+            };
         }
 
         public override Operand LowByteOperand(Operand operand)

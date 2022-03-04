@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -22,10 +24,38 @@ namespace Inu.Cate.Tms99
                     }
                 }
                 Tms99.ByteOperation.OperateConstant(this, "ci", LeftOperand, integerOperand.IntegerValue);
+                goto jump;
             }
-            else {
-                Tms99.ByteOperation.Operate(this, "c", LeftOperand, RightOperand);
+
+            var left = Tms99.Compiler.OperandToString(this, LeftOperand);
+            var right = Tms99.Compiler.OperandToString(this, RightOperand);
+            if (left != null) {
+                if (right != null) {
+                    WriteLine("\tcb\t" + left + "," + right);
+                    goto jump;
+                }
+                ByteOperation.UsingAnyRegister(this, rightRegister =>
+                {
+                    rightRegister.Load(this, RightOperand);
+                    WriteLine("\tcb\t" + left + "," + rightRegister.Name);
+                });
+                goto jump;
             }
+            ByteOperation.UsingAnyRegister(this, leftRegister =>
+            {
+                leftRegister.Load(this, LeftOperand);
+                if (right != null) {
+                    WriteLine("\tcb\t" + leftRegister.Name + "," + right);
+                }
+                else {
+                    ByteOperation.UsingAnyRegister(this, rightRegister =>
+                    {
+                        rightRegister.Load(this, RightOperand);
+                        this.WriteLine("\tcb\t" + leftRegister.Name + "," + rightRegister.Name);
+                    });
+                }
+            });
+
             jump:
             Jump();
         }
@@ -47,10 +77,13 @@ namespace Inu.Cate.Tms99
                 }
                 Tms99.WordOperation.OperateConstant(this, "ci", LeftOperand, integerOperand.IntegerValue);
             }
+            else if (RightOperand is PointerOperand pointerOperand) {
+                Tms99.WordOperation.OperateConstant(this, "ci", LeftOperand, pointerOperand.MemoryAddress());
+            }
             else {
                 Tms99.WordOperation.Operate(this, "c", LeftOperand, RightOperand);
             }
-            jump:
+        jump:
             Jump();
         }
 

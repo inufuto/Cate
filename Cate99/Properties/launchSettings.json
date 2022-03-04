@@ -2,8 +2,8 @@
   "profiles": {
     "Cate99": {
       "commandName": "Project",
-      "commandLineArgs": "aaa.c",
-      "workingDirectory": "D:\\8bit\\cate"
+      "commandLineArgs": "FighterBullet.c",
+      "workingDirectory": "D:\\8bit\\pyuta\\RuptusP"
     }
   }
 }

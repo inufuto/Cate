@@ -24,6 +24,7 @@ namespace Inu.Cate.Tms99
                 {
                     r0.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
+                    WriteLine("\tandi\tr0,>ff00");
                     RemoveVariableRegister(r0);
                     ChangedRegisters.Add(r0);
                     r0.Store(this, DestinationOperand);
@@ -54,8 +55,14 @@ namespace Inu.Cate.Tms99
             ByteOperation.UsingAnyRegisterToChange(this, DestinationOperand, LeftOperand, register =>
             {
                 register.Load(this, LeftOperand);
-                WriteLine("\t" + operation + "\t" + register.Name + "," + count);
+                if (count > 0) {
+                    WriteLine("\t" + operation + "\t" + register.Name + "," + count);
+                    if (OperatorId == Keyword.ShiftRight) {
+                        WriteLine("\tandi\t" + register.Name + ",>ff00");
+                    }
+                }
                 register.Store(this, DestinationOperand);
+                ChangedRegisters.Add(register);
             });
         }
     }

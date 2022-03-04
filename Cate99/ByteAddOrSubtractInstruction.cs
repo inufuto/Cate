@@ -11,7 +11,6 @@ namespace Inu.Cate.Tms99
             if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
                 ExchangeOperands();
             }
-            if (IncrementOrDecrement()) return;
 
             ResultFlags |= Flag.Z;
             if (RightOperand is IntegerOperand integerOperand) {
@@ -22,14 +21,14 @@ namespace Inu.Cate.Tms99
                     _ => throw new NotImplementedException()
                 };
 
-                Tms99.ByteOperation.OperateConstant(this, "ai", DestinationOperand, LeftOperand, value);
+                Tms99.ByteOperation.OperateConstant(this, "ai", DestinationOperand, LeftOperand, ByteRegister.ByteConst(value));
                 return;
             }
             {
                 var operation = OperatorId switch
                 {
-                    '+' => "a",
-                    '-' => "s",
+                    '+' => "ab",
+                    '-' => "sb",
                     _ => throw new NotImplementedException()
                 };
                 Tms99.ByteOperation.Operate(this, operation, DestinationOperand, LeftOperand, RightOperand);

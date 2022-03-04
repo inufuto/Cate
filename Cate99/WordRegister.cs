@@ -53,6 +53,12 @@ namespace Inu.Cate.Tms99
             return base.Conflicts(register);
         }
 
+        public override bool Matches(Register register)
+        {
+            if (register is ByteRegister byteRegister && Equals(byteRegister, ByteRegister)) return true;
+            return base.Matches(register);
+        }
+
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
@@ -139,7 +145,7 @@ namespace Inu.Cate.Tms99
         public override void LoadConstant(Instruction instruction, int value)
         {
             if (value == 0) {
-                instruction.WriteLine("\tclr\t" + Name);
+                Clear(instruction);
                 instruction.ChangedRegisters.Add(this);
                 instruction.RemoveVariableRegister(this);
                 return;
@@ -177,7 +183,8 @@ namespace Inu.Cate.Tms99
                 case VariableOperand sourceVariableOperand: {
                         var sourceVariable = sourceVariableOperand.Variable;
                         var sourceOffset = sourceVariableOperand.Offset;
-                        if (sourceVariable.Register is WordRegister sourceRegister) {
+                        var variableRegister = instruction.GetVariableRegister(sourceVariable, sourceOffset);
+                        if (variableRegister is WordRegister sourceRegister) {
                             Debug.Assert(sourceOffset == 0);
                             if (!Equals(sourceRegister, this)) {
                                 CopyFrom(instruction, sourceRegister);
@@ -220,6 +227,7 @@ namespace Inu.Cate.Tms99
                             return;
                         }
                         StoreToMemory(instruction, destinationVariable.MemoryAddress(destinationOffset));
+                        instruction.SetVariableRegister(destinationVariable, destinationOffset, this);
                         return;
                     }
                 case IndirectOperand destinationIndirectOperand: {
@@ -297,11 +305,17 @@ namespace Inu.Cate.Tms99
         {
             instruction.WriteLine("\tmov\t" + sourceRegister.Name + "," + Name);
             instruction.RemoveVariableRegister(this);
+            instruction.ChangedRegisters.Add(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
             throw new NotImplementedException();
+        }
+
+        public void Clear(Instruction instruction)
+        {
+            instruction.WriteLine("\tclr\t" + Name);
         }
     }
 }
