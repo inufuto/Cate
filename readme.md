@@ -1,7 +1,8 @@
 Cate
 ===
 C-like programming language compiler for retro CPUs
-Use Asm8 (https://github.com/inufuto/asm8) to assemble the generated assembly code.
+
+Use Asm8 (https://github.com/inufuto/asm8) to assemble the generated code.
 
 This repository contains following Visual Studio Solutions:
 
