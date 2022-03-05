@@ -19,10 +19,11 @@ namespace Inu.Cate
         {
             Debug.Assert(array.ElementCount != null, "array.ElementCount != null");
             var compiler = Compiler.Instance;
-            var counter = function.CreateTemporaryVariable(IntegerType.ByteType);
+            var counterType = compiler.CounterType;
+            var counter = function.CreateTemporaryVariable(counterType);
 
             function.Instructions.Add(
-                compiler.CreateLoadInstruction(function, counter.ToAssignableOperand(), new IntegerOperand(IntegerType.ByteType, array.ElementCount.Value)));
+                compiler.CreateLoadInstruction(function, counter.ToAssignableOperand(), new IntegerOperand(counterType, array.ElementCount.Value)));
             function.Instructions.Add(
                 compiler.CreateLoadInstruction(function, pointer.ToAssignableOperand(function), array.ToOperand()));
             var repeatAnchor = function.CreateAnchor();

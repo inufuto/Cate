@@ -48,7 +48,7 @@ namespace Inu.Cate
             var elementValues = bytes.Select(b => (Constant)new ConstantInteger(IntegerType.ByteType, b)).ToList();
             var arrayType = new ArrayType(IntegerType.ByteType, elementValues.Count);
             var value = new ConstantArray(arrayType, elementValues);
-            var name = "@string" + id;
+            var name = "__string" + id;
             var variableId = Identifier.Add(name);
             return globalBlock.AddVariable(variableId, arrayType, Visibility.Private, true, value);
         }
@@ -80,8 +80,10 @@ namespace Inu.Cate
             ShowError(error.Position, error.Message);
         }
 
-        private Token CurrentToken {
-            get {
+        private Token CurrentToken
+        {
+            get
+            {
                 Debug.Assert(tokens != null);
                 return tokens[tokenIndex];
             }
@@ -274,7 +276,7 @@ namespace Inu.Cate
                 AcceptReservedWord(';');
                 return true;
             }
-            cancel:
+        cancel:
             tokenIndex = mark;
             return false;
         }
@@ -365,7 +367,7 @@ namespace Inu.Cate
                 }
             }
             return true;
-            cancel:
+        cancel:
             tokenIndex = mark;
             return false;
         }
@@ -408,7 +410,7 @@ namespace Inu.Cate
                 type = new ArrayType(type, elementCount);
                 return type;
             }
-            cancel:
+        cancel:
             tokenIndex = mark;
             return null;
         }
@@ -591,7 +593,7 @@ namespace Inu.Cate
                 var statement = ParseStatement();
                 return new LabeledStatement(namedLabel, statement);
             }
-            cancel:
+        cancel:
             tokenIndex = mark;
             return null;
         }
@@ -730,7 +732,7 @@ namespace Inu.Cate
 
                 return forEachStatement;
             }
-            cancel:
+        cancel:
             tokenIndex = mark;
             {
                 var initialize = ParseExpression();
@@ -1022,7 +1024,7 @@ namespace Inu.Cate
                 }
                 return new Trinomial(resultType, booleanValue, trueValue, falseValue);
             }
-            cancel:
+        cancel:
             tokenIndex = mark;
             return null;
         }
@@ -1173,7 +1175,7 @@ namespace Inu.Cate
                     return value;
                 }
             }
-            cancel:
+        cancel:
             tokenIndex = mark;
             return null;
         }
@@ -1206,7 +1208,7 @@ namespace Inu.Cate
             var factorToken = CurrentToken;
             var value = ParseFactor();
             if (value == null) { return null; }
-            repeat:
+        repeat:
             if (!(CurrentToken is ReservedWord operatorToken))
                 return value;
             switch (operatorToken.Id) {
@@ -1435,7 +1437,7 @@ namespace Inu.Cate
         {
             if (!ParseReservedWord('{'))
                 return null;
-            List<Constant> memberValues = new List<Constant>();
+            var memberValues = new List<Constant>();
             while (memberValues.Count < type.Members.Count && !CurrentToken.IsReservedWord('}')) {
                 var memberType = type.Members[memberValues.Count].Type;
                 var memberValue = memberType.ParseConstant(this) ?? memberType.DefaultValue();
@@ -1457,7 +1459,11 @@ namespace Inu.Cate
 
         protected virtual void WriteAssembly(StreamWriter writer)
         {
-            globalBlock.WriteAssembly(writer);
+            var codeOffset = 0;
+            var dataOffset = 0;
+            globalBlock.WriteAssembly(writer, ref codeOffset, ref dataOffset);
+            MakeAlignment(writer, "cseg", ref codeOffset);
+            MakeAlignment(writer, "dseg", ref dataOffset);
             if (!externalNames.Any())
                 return;
             writer.WriteLine();
@@ -1465,7 +1471,6 @@ namespace Inu.Cate
                 writer.WriteLine("\textrn\t" + externalName);
             }
         }
-
 
         public abstract ISet<Register> SavingRegisters(Register register);
 
@@ -1605,5 +1610,57 @@ namespace Inu.Cate
         public abstract Operand HighByteOperand(Operand operand);
 
         public abstract void CallExternal(Instruction instruction, string functionName);
+
+        public virtual void WriteBeginningOfFunction(StreamWriter writer, Function function) { }
+
+        public virtual void WriteEndOfFunction(StreamWriter writer, Function function)
+        {
+            writer.WriteLine(EndOfFunction);
+        }
+
+        public virtual int Alignment => 1;
+        public virtual IntegerType CounterType => IntegerType.ByteType;
+
+        public int AlignedSize(int size)
+        {
+            while (size % Alignment != 0) {
+                ++size;
+            }
+            return size;
+        }
+
+        public void WriteAlignment(StreamWriter writer, int count)
+        {
+            if (count > 0) {
+                writer.WriteLine("\tdefs " + count + " ; alignment");
+            }
+        }
+
+        public void MakeAlignment(StreamWriter writer, ref int offset)
+        {
+            var newOffset = AlignedSize(offset);
+            WriteAlignment(writer, newOffset - offset);
+            offset = newOffset;
+        }
+
+        public void MakeAlignment(StreamWriter writer, int elementSize, ref int offset)
+        {
+            var alignment = Alignment / (Alignment / elementSize);
+            var newOffset = offset;
+            while (newOffset % alignment != 0) {
+                ++newOffset;
+            }
+            WriteAlignment(writer, newOffset - offset);
+            offset = newOffset;
+        }
+
+        public void MakeAlignment(StreamWriter writer, string name, ref int offset)
+        {
+            var gap = AlignedSize(offset) - offset;
+            if (gap <= 0) return;
+            writer.WriteLine();
+            writer.WriteLine(name);
+            MakeAlignment(writer, ref offset);
+        }
     }
 }

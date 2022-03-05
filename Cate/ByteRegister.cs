@@ -45,13 +45,14 @@ namespace Inu.Cate
 
         protected virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
-            Compiler.Instance.WordOperation.UsingAnyRegister(instruction,
-                Compiler.Instance.WordOperation.PointerRegisters(offset),
+            var wordOperation = Compiler.Instance.WordOperation;
+            wordOperation.UsingAnyRegister(instruction, 
+                wordOperation.PointerRegisters(offset).Where(r=>!r.Conflicts(this)).ToList(),
                 pointerRegister =>
-                {
-                    pointerRegister.LoadFromMemory(instruction, pointer, 0);
-                    LoadIndirect(instruction, pointerRegister, offset);
-                });
+            {
+                pointerRegister.LoadFromMemory(instruction, pointer, 0);
+                LoadIndirect(instruction, pointerRegister, offset);
+            });
         }
 
         protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)

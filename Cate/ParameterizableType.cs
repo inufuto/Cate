@@ -2,6 +2,8 @@
 {
     public abstract class ParameterizableType : Type
     {
+        public override int MaxElementSize => ByteCount;
+
         public override Value? Cast(Value value, Type type)
         {
             if (type is ParameterizableType parameterizableType) {

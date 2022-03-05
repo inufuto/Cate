@@ -15,9 +15,10 @@ namespace Inu.Cate
         public override void BuildInstructions(Function function)
         {
             var compiler = Compiler.Instance;
-            var counter = function.CreateTemporaryVariable(IntegerType.ByteType);
+            var counterType = Compiler.Instance.CounterType;
+            var counter = function.CreateTemporaryVariable(counterType);
 
-            var loadInstruction = compiler.CreateLoadInstruction(function, counter.ToAssignableOperand(), new IntegerOperand(IntegerType.ByteType, count));
+            var loadInstruction = compiler.CreateLoadInstruction(function, counter.ToAssignableOperand(), new IntegerOperand(counterType, count));
             function.Instructions.Add(loadInstruction);
             var repeatAnchor = function.CreateAnchor();
             repeatAnchor.Address = function.NextAddress;

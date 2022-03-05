@@ -24,7 +24,7 @@ namespace Inu.Cate
             return Label;
         }
 
-        public string Label => Function.Name + "@Anchor" + id;
+        public string Label => Function.Name + "__Anchor" + id;
 
         public void AddOriginAddress(int originAddress)
         {
