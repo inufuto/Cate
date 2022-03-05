@@ -7,7 +7,7 @@ This repository contains following Visual Studio Solutions:
 
 |  |  |
 | --- | --- |
-|Cate80.sln|assembler for Z80|
-|Cate68.sln|assembler for 6800|
-|Cate65.sln|assembler for 6502|
-|Cate09.sln|assembler for 6809|
+|Cate80.sln|for Z80|
+|Cate68.sln|for 6800|
+|Cate65.sln|for 6502|
+|Cate09.sln|for 6809|
