@@ -226,6 +226,7 @@ namespace Inu.Cate.Tms99
 
         public override int Alignment => 2;
         public override IntegerType CounterType => IntegerType.WordType;
+        public override string ParameterPrefix => "__";
 
         public override IEnumerable<Register> IncludedRegisterIds(Register register)
         {

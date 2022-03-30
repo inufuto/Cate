@@ -1620,6 +1620,7 @@ namespace Inu.Cate
 
         public virtual int Alignment => 1;
         public virtual IntegerType CounterType => IntegerType.ByteType;
+        public virtual string ParameterPrefix => "@";
 
         public int AlignedSize(int size)
         {

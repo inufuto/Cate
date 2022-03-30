@@ -232,7 +232,7 @@ namespace Inu.Cate
 
         public string ParameterLabel(Parameter parameter)
         {
-            return Label + "__Param" + Parameters.IndexOf(parameter);
+            return Label + Compiler.Instance.ParameterPrefix + "Param" + Parameters.IndexOf(parameter);
         }
         private void FillFlow()
         {
