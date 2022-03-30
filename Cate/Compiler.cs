@@ -1645,7 +1645,7 @@ namespace Inu.Cate
 
         public void MakeAlignment(StreamWriter writer, int elementSize, ref int offset)
         {
-            var alignment = Alignment / (Alignment / elementSize);
+            var alignment = elementSize < Alignment ? Alignment / (Alignment / elementSize) : Alignment;
             var newOffset = offset;
             while (newOffset % alignment != 0) {
                 ++newOffset;
