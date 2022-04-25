@@ -51,7 +51,7 @@ namespace Inu.Cate.Tms99
 
 
 
-        protected override int Threshold() => 2;
+        protected override int Threshold() => 4;
 
         private void IncrementOrDecrement(string operation, int count)
         {
@@ -84,11 +84,21 @@ namespace Inu.Cate.Tms99
 
         protected override void Increment(int count)
         {
+            while (count > 2) {
+                var half = count / 2;
+                IncrementOrDecrement("inct", half);
+                count -= half * 2;
+            }
             IncrementOrDecrement("inc", count);
         }
 
         protected override void Decrement(int count)
         {
+            while (count > 2) {
+                var half = count / 2;
+                IncrementOrDecrement("dect", half);
+                count -= half * 2;
+            }
             IncrementOrDecrement("dec", count);
         }
     }
