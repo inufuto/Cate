@@ -293,7 +293,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("ShowSprite_(__6,__8,__9,__10,15)")) {
+                if (instruction.ToString().Contains("<< __13")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -28,6 +29,19 @@ namespace Inu.Cate.Tms99
 
         protected override void ShiftVariable(Operand counterOperand)
         {
+            void FromRight(Cate.WordRegister register)
+            {
+                if (RightOperand.Type.ByteCount == 1) {
+                    var wordRegister = ((WordRegister)register);
+                    var byteRegister = wordRegister.ByteRegister;
+                    byteRegister.Load(this, RightOperand);
+                    byteRegister.Expand(this, ((IntegerType)RightOperand.Type).Signed);
+                }
+                else {
+                    register.Load(this, RightOperand);
+                }
+            }
+
             var functionName = OperatorId switch
             {
                 Keyword.ShiftLeft => "cate.ShiftLeft",
@@ -48,14 +62,7 @@ namespace Inu.Cate.Tms99
                     ChangedRegisters.Add(r0);
                     r0.Store(this, DestinationOperand);
                 }
-
-                if (RightOperand.Type.ByteCount == 1) {
-                    r1.ByteRegister.Load(this, RightOperand);
-                    r1.ByteRegister.Expand(this, ((IntegerType)RightOperand.Type).Signed);
-                }
-                else {
-                    r1.Load(this, RightOperand);
-                }
+                FromRight(r1);
 
                 if (Equals(DestinationOperand.Register, r0)) {
                     CallShift();
@@ -70,6 +77,21 @@ namespace Inu.Cate.Tms99
                 return;
             }
             if (Equals(DestinationOperand.Register, r1)) {
+                if (Equals(LeftOperand.Register, r1)) {
+                    WordOperation.UsingRegister(this, r0, () =>
+                    {
+                        var candidates = WordRegister.Registers.Where(r => r != null && !Equals(r, r0) && !Equals(r, r1)).ToList();
+                        WordOperation.UsingAnyRegister(this, candidates, temporaryRegister =>
+                        {
+                            FromRight(temporaryRegister);
+                            r0.CopyFrom(this, r1);
+                            r1.CopyFrom(this, temporaryRegister);
+                            Compiler.CallExternal(this, functionName);
+                            r0.Store(this, DestinationOperand);
+                        });
+                    });
+                    return;
+                }
                 WordOperation.UsingRegister(this, r0, Operate);
                 return;
             }

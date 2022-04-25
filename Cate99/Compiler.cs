@@ -286,7 +286,9 @@ namespace Inu.Cate.Tms99
 
         public override void CallExternal(Instruction instruction, string functionName)
         {
+            instruction.WriteLine("\tdect r10 | mov r11,*r10");
             instruction.WriteLine("\tbl\t@" + functionName);
+            instruction.WriteLine("\tmov *r10+,r11");
             Instance.AddExternalName(functionName);
         }
 
