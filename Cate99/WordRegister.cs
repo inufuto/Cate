@@ -106,7 +106,7 @@ namespace Inu.Cate.Tms99
 
         public static void Save(StreamWriter writer, int index, string? comment)
         {
-            writer.WriteLine("\tai r10,-2 | mov " + NameFromIndex(index) + ",*r10" + comment);
+            writer.WriteLine("\tdect r10 | mov " + NameFromIndex(index) + ",*r10" + comment);
         }
 
         public static void Restore(StreamWriter writer, int index, string? comment)
@@ -116,7 +116,7 @@ namespace Inu.Cate.Tms99
 
         public override void Save(Instruction instruction)
         {
-            instruction.WriteLine("\tai r10,-2 | mov " + NameFromIndex(Index) + ",*r10");
+            instruction.WriteLine("\tdect r10 | mov " + NameFromIndex(Index) + ",*r10");
         }
 
         public override void Restore(Instruction instruction)
