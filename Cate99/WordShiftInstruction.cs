@@ -100,5 +100,7 @@ namespace Inu.Cate.Tms99
                 WordOperation.UsingRegister(this, r0, Operate);
             });
         }
+
+        public override bool IsCalling() => true;
     }
 }

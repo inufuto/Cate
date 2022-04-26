@@ -26,15 +26,22 @@
             });
         }
 
+        private void Reduce(Cate.WordRegister wordRegister)
+        {
+            wordRegister.Load(this, SourceOperand);
+            WriteLine("\tsla\t" + wordRegister + ",8");
+            ChangedRegisters.Add(wordRegister);
+            ((WordRegister)wordRegister).ByteRegister.Store(this, DestinationOperand);
+            RemoveVariableRegister(wordRegister);
+        }
+
         protected override void Reduce()
         {
-            WordOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, wordRegister =>
-            {
-                wordRegister.Load(this, SourceOperand);
-                WriteLine("\tsla\t" + wordRegister + ",8");
-                ((WordRegister)wordRegister).ByteRegister.Store(this, DestinationOperand);
-                RemoveVariableRegister(wordRegister);
-            });
+            if (DestinationOperand.Register is ByteRegister byteRegister) {
+                Reduce(byteRegister.WordRegister);
+                return;
+            }
+            WordOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, Reduce);
         }
 
         public override bool CanAllocateRegister(Variable variable, Register register)

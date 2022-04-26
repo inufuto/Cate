@@ -415,5 +415,7 @@ namespace Inu.Cate
         }
 
         public virtual bool IsResultChanged() => false;
+
+        public virtual bool IsCalling() => false;
     }
 }

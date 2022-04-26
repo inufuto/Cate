@@ -210,7 +210,7 @@ namespace Inu.Cate.Tms99
 
         public override void WriteBeginningOfFunction(StreamWriter writer, Function function)
         {
-            if (function.Instructions.Any(i => i is SubroutineInstruction)) {
+            if (function.Instructions.Any(i => i.IsCalling())) {
                 WordRegister.Save(writer, 11, null);
             }
         }
@@ -218,7 +218,7 @@ namespace Inu.Cate.Tms99
         public override ReadOnlySpan<char> EndOfFunction => "rt";
         public override void WriteEndOfFunction(StreamWriter writer, Function function)
         {
-            if (function.Instructions.Any(i => i is SubroutineInstruction)) {
+            if (function.Instructions.Any(i => i.IsCalling())) {
                 WordRegister.Restore(writer, 11, null);
             }
             base.WriteEndOfFunction(writer, function);
@@ -286,9 +286,7 @@ namespace Inu.Cate.Tms99
 
         public override void CallExternal(Instruction instruction, string functionName)
         {
-            instruction.WriteLine("\tdect r10 | mov r11,*r10");
             instruction.WriteLine("\tbl\t@" + functionName);
-            instruction.WriteLine("\tmov *r10+,r11");
             Instance.AddExternalName(functionName);
         }
 

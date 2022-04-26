@@ -65,5 +65,6 @@ namespace Inu.Cate.Tms99
                 ChangedRegisters.Add(register);
             });
         }
+        public override bool IsCalling() => true;
     }
 }

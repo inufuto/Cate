@@ -83,6 +83,8 @@ namespace Inu.Cate
             return TargetFunction.Parameters.Any(parameter => parameter.Register != null && parameter.Register.Conflicts(returnRegister));
         }
 
+        public override bool IsCalling() => true;
+
         protected SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand,
             List<Operand> sourceOperands) : base(function)
         {
