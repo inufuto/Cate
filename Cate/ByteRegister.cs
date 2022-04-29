@@ -191,8 +191,5 @@ namespace Inu.Cate
         {
             throw new NotImplementedException();
         }
-
-        public abstract void Save(Instruction instruction);
-        public abstract void Restore(Instruction instruction);
     }
 }

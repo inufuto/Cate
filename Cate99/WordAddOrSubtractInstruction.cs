@@ -65,6 +65,13 @@ namespace Inu.Cate.Tms99
             void ForRegister(Cate.WordRegister wordRegister)
             {
                 wordRegister.Load(this, LeftOperand);
+                while (count > 2) {
+                    var half = count / 2;
+                    for (var i = 0; i < half; ++i) {
+                        WriteLine("\t" + operation + "t\t" + wordRegister.Name);
+                    }
+                    count -= half * 2;
+                }
                 for (var i = 0; i < count; ++i) {
                     WriteLine("\t" + operation + "\t" + wordRegister.Name);
                 }
@@ -84,21 +91,11 @@ namespace Inu.Cate.Tms99
 
         protected override void Increment(int count)
         {
-            while (count > 2) {
-                var half = count / 2;
-                IncrementOrDecrement("inct", half);
-                count -= half * 2;
-            }
             IncrementOrDecrement("inc", count);
         }
 
         protected override void Decrement(int count)
         {
-            while (count > 2) {
-                var half = count / 2;
-                IncrementOrDecrement("dect", half);
-                count -= half * 2;
-            }
             IncrementOrDecrement("dec", count);
         }
     }

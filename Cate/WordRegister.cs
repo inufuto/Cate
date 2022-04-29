@@ -48,8 +48,6 @@ namespace Inu.Cate
 
 
         public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
-        public abstract void Save(Instruction instruction);
-        public abstract void Restore(Instruction instruction);
 
         public void TemporaryOffset(Instruction instruction, int offset, Action action)
         {

@@ -123,28 +123,44 @@ namespace Inu.Cate
 
         public override void BuildAssembly()
         {
+            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
+
+            Register? savedRegister = null;
+            if (DestinationOperand != null && !DestinationOperand.Conflicts(returnRegister)) {
+                foreach (var parameter in TargetFunction.Parameters) {
+                    if (parameter.Register == null ||
+                        !DestinationOperand.Conflicts(parameter.Register)) continue;
+                    parameter.Register.Save(this);
+                    savedRegister = parameter.Register;
+                }
+            }
+
+
             FillParameters();
             ResultFlags = 0;
             Call();
 
-            if (DestinationOperand == null)
-                return;
-            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
-            Debug.Assert(returnRegister != null);
-            RemoveVariableRegister(returnRegister);
-            //if (!Equals(returnRegister, DestinationOperand.Register)) {
-            BeginRegister(returnRegister);
-            EndRegister(returnRegister);
-            //}
-            ChangedRegisters.Add(returnRegister);
-            RemoveVariableRegister(returnRegister);
-            switch (returnRegister) {
-                case ByteRegister byteRegister:
-                    byteRegister.Store(this, DestinationOperand);
-                    break;
-                case WordRegister wordRegister:
-                    wordRegister.Store(this, DestinationOperand);
-                    break;
+            if (DestinationOperand != null) {
+                Debug.Assert(returnRegister != null);
+                RemoveVariableRegister(returnRegister);
+                //if (!Equals(returnRegister, DestinationOperand.Register)) {
+                BeginRegister(returnRegister);
+                EndRegister(returnRegister);
+                //}
+                ChangedRegisters.Add(returnRegister);
+                RemoveVariableRegister(returnRegister);
+                if (savedRegister != null) {
+                    savedRegister.Restore(this);
+                    ChangedRegisters.Remove(savedRegister);
+                }
+                switch (returnRegister) {
+                    case ByteRegister byteRegister:
+                        byteRegister.Store(this, DestinationOperand);
+                        break;
+                    case WordRegister wordRegister:
+                        wordRegister.Store(this, DestinationOperand);
+                        break;
+                }
             }
         }
 

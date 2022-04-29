@@ -72,7 +72,7 @@ namespace Inu.Cate.Tms99
                 if (Compiler.Operate(instruction, operation, rightOperand, destinationOperand)) return;
             }
             Debug.Assert(instance != null);
-            var candidates = ByteRegister.Registers.Where(r => !Equals(r, rightOperand.Register)).ToList();
+            var candidates = ByteRegister.Registers.Where(r => !rightOperand.Conflicts(r)).ToList();
             instance.UsingAnyRegisterToChange(instruction, candidates, destinationOperand, leftOperand, register =>
             {
                 register.Load(instruction, leftOperand);
