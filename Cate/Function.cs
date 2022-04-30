@@ -293,7 +293,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("pFire[5] = Sign_(Man,*pFire)")) {
+                if (instruction.ToString().Contains("Sign_(x,FighterX)")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

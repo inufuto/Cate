@@ -126,12 +126,18 @@ namespace Inu.Cate
             var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
 
             Register? savedRegister = null;
-            if (DestinationOperand != null && !DestinationOperand.Conflicts(returnRegister)) {
-                foreach (var parameter in TargetFunction.Parameters) {
-                    if (parameter.Register == null ||
-                        !DestinationOperand.Conflicts(parameter.Register)) continue;
-                    parameter.Register.Save(this);
-                    savedRegister = parameter.Register;
+            if (DestinationOperand != null) {
+                if (!DestinationOperand.Conflicts(returnRegister)) {
+                    foreach (var parameter in TargetFunction.Parameters) {
+                        if (parameter.Register == null ||
+                            !DestinationOperand.Conflicts(parameter.Register)) continue;
+                        parameter.Register.Save(this);
+                        savedRegister = parameter.Register;
+                    }
+                }
+                else {
+                    returnRegister.Save(this);
+                    savedRegister = returnRegister;
                 }
             }
 
@@ -141,6 +147,18 @@ namespace Inu.Cate
             Call();
 
             if (DestinationOperand != null) {
+                void StoreResult(Register register)
+                {
+                    switch (register) {
+                        case ByteRegister byteRegister:
+                            byteRegister.Store(this, DestinationOperand);
+                            break;
+                        case WordRegister wordRegister:
+                            wordRegister.Store(this, DestinationOperand);
+                            break;
+                    }
+                }
+
                 Debug.Assert(returnRegister != null);
                 RemoveVariableRegister(returnRegister);
                 //if (!Equals(returnRegister, DestinationOperand.Register)) {
@@ -150,17 +168,31 @@ namespace Inu.Cate
                 ChangedRegisters.Add(returnRegister);
                 RemoveVariableRegister(returnRegister);
                 if (savedRegister != null) {
+                    if (savedRegister.Conflicts(returnRegister)) {
+                        if (returnRegister.ByteCount == 1) {
+                            ByteOperation.UsingAnyRegister(this, ByteOperation.Registers.Where(r => !r.Conflicts(returnRegister)).ToList(), register =>
+                               {
+                                   register.CopyFrom(this, (ByteRegister)returnRegister);
+                                   savedRegister.Restore(this);
+                                   ChangedRegisters.Remove(savedRegister);
+                                   StoreResult(register);
+                               });
+                        }
+                        else {
+                            WordOperation.UsingAnyRegister(this, WordOperation.Registers.Where(r => !r.Conflicts(returnRegister)).ToList(), register =>
+                            {
+                                register.CopyFrom(this, (WordRegister)returnRegister);
+                                savedRegister.Restore(this);
+                                ChangedRegisters.Remove(savedRegister);
+                                StoreResult(register);
+                            });
+                        }
+                        return;
+                    }
                     savedRegister.Restore(this);
                     ChangedRegisters.Remove(savedRegister);
                 }
-                switch (returnRegister) {
-                    case ByteRegister byteRegister:
-                        byteRegister.Store(this, DestinationOperand);
-                        break;
-                    case WordRegister wordRegister:
-                        wordRegister.Store(this, DestinationOperand);
-                        break;
-                }
+                StoreResult(returnRegister);
             }
         }
 
