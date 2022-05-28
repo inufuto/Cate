@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Inu.Cate.Z80
+namespace Inu.Cate.I8086
 {
     internal class WordOperation : Cate.WordOperation
     {

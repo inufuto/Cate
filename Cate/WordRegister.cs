@@ -41,7 +41,7 @@ namespace Inu.Cate
         public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
 
 
-        public abstract void LoadIndirect(Instruction instruction, WordRegister sourcePointerRegister, int offset);
+        public abstract void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
         public abstract void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
 
         public abstract void CopyFrom(Instruction instruction, WordRegister sourceRegister);

@@ -88,8 +88,7 @@ namespace Inu.Cate
         public ISet<Register> TemporaryRegisterIds {
             get {
                 var temporaryRegisterIds = new HashSet<Register>();
-                IEnumerable<Register> changedRegisters = ResultRegister != null ? ChangedRegisters.Where(r => !Equals(r, ResultRegister)) : ChangedRegisters;
-
+                var changedRegisters = ResultRegister != null ? ChangedRegisters.Where(r => !Equals(r, ResultRegister)) : ChangedRegisters;
                 foreach (var changedRegister in changedRegisters) {
                     var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister);
                     foreach (var savingRegister in savingRegisters) {

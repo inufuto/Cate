@@ -15,16 +15,6 @@ namespace Inu.Cate.Tms99
             instance = this;
         }
 
-        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Operand LowByteOperand(Operand operand)
-        {
-            return Compiler.LowByteOperand(operand);
-        }
-
         public static void Operate(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand)
         {
             if (destinationOperand.SameStorage(leftOperand)) {

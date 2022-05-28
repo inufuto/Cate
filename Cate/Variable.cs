@@ -203,7 +203,7 @@ namespace Inu.Cate
                 for (var address = from; address <= to; ++address) {
                     var instruction = function.Instructions[address];
                     if (instruction.TemporaryRegisterIds.Any(r =>
-                        register.Conflicts(r))) {
+                            register.Conflicts(r))) {
                         instruction.AddSavingVariable(this);
                     }
                 }

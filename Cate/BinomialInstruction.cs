@@ -60,9 +60,7 @@ namespace Inu.Cate
 
         protected void OperateByte(string operation, int count)
         {
-            if (DestinationOperand.Equals(LeftOperand)) {
-                if (count == 0)
-                    return;
+            if (DestinationOperand.Equals(LeftOperand) && count == 1) {
                 ByteOperation.Operate(this, operation, true, DestinationOperand, count);
                 return;
             }
@@ -70,7 +68,9 @@ namespace Inu.Cate
             void ViaRegister(ByteRegister register)
             {
                 register.Load(this, LeftOperand);
-                register.Operate(this, operation, true, count);
+                if (count != 0) {
+                    register.Operate(this, operation, true, count);
+                }
                 RemoveVariableRegister(register);
                 register.Store(this, DestinationOperand);
             }

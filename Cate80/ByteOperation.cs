@@ -9,13 +9,6 @@ namespace Inu.Cate.Z80
         public override List<Cate.ByteRegister> Registers => ByteRegister.Registers;
         public override List<Cate.ByteRegister> Accumulators => ByteRegister.Accumulators;
 
-        protected override void OperateConstant(Instruction instruction, string operation, string value, int count)
-        {
-            for (var i = 0; i < count; ++i) {
-                instruction.WriteLine("\t" + operation + value);
-            }
-        }
-
         protected override void OperateMemory(Instruction instruction, string operation, bool change, Variable variable,
             int offset, int count)
         {

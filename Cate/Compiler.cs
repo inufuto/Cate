@@ -1663,5 +1663,8 @@ namespace Inu.Cate
             writer.WriteLine(name);
             MakeAlignment(writer, ref offset);
         }
+
+        public virtual void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
+        { }
     }
 }

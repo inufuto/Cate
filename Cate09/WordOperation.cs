@@ -8,11 +8,6 @@ namespace Inu.Cate.Mc6809
     {
         public override List<Cate.WordRegister> Registers => WordRegister.Registers;
 
-        public override Operand LowByteOperand(Operand operand)
-        {
-            return Compiler.LowByteOperand(operand);
-        }
-
         private void Operate(Instruction instruction, string operation, bool change, Operand operand, int count)
         {
             switch (operand) {
@@ -102,7 +97,7 @@ namespace Inu.Cate.Mc6809
             });
         }
 
-        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
+        public void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
             Operate(instruction, operation, change, operand, 1);
         }

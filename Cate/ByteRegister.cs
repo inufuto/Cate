@@ -16,8 +16,15 @@ namespace Inu.Cate
         //}
         public override bool Conflicts(Register? register)
         {
-            if (register is WordRegister wordRegister && wordRegister.Contains(this)) {
-                return true;
+            switch (register) {
+                case WordRegister wordRegister:
+                    if (wordRegister.Contains(this))
+                        return true;
+                    break;
+                case ByteRegister byteRegister:
+                    if (PairRegister != null && PairRegister.Contains(byteRegister))
+                        return true;
+                    break;
             }
             return base.Conflicts(register);
         }
@@ -46,8 +53,8 @@ namespace Inu.Cate
         protected virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
             var wordOperation = Compiler.Instance.WordOperation;
-            wordOperation.UsingAnyRegister(instruction, 
-                wordOperation.PointerRegisters(offset).Where(r=>!r.Conflicts(this)).ToList(),
+            wordOperation.UsingAnyRegister(instruction,
+                wordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList(),
                 pointerRegister =>
             {
                 pointerRegister.LoadFromMemory(instruction, pointer, 0);
@@ -161,7 +168,7 @@ namespace Inu.Cate
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
                         var register = instruction.GetVariableRegister(pointer, 0);
-                        if (register is WordRegister pointerRegister) {
+                        if (register is WordRegister pointerRegister && pointerRegister.IsPointer(offset)) {
                             StoreIndirect(instruction, pointerRegister, offset);
                             return;
                         }
@@ -191,5 +198,13 @@ namespace Inu.Cate
         {
             throw new NotImplementedException();
         }
+
+        public bool Conflicts(Operand operand) =>
+            operand switch
+            {
+                VariableOperand variableOperand when Conflicts(variableOperand.Register) => true,
+                IndirectOperand indirectOperand when Conflicts(indirectOperand.Variable.Register) => true,
+                _ => false
+            };
     }
 }

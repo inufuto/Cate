@@ -127,9 +127,6 @@ namespace Inu.Cate
             UsingAnyRegister(instruction, Registers, action);
         }
 
-        public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
-
-
-        public abstract Operand LowByteOperand(Operand operand);
+        public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
     }
 }

@@ -9,7 +9,12 @@ namespace Inu.Cate
     {
         public abstract List<ByteRegister> Accumulators { get; }
 
-        protected abstract void OperateConstant(Instruction instruction, string operation, string value, int count);
+        protected virtual void OperateConstant(Instruction instruction, string operation, string value, int count)
+        {
+            for (var i = 0; i < count; ++i) {
+                instruction.WriteLine("\t" + operation + value);
+            }
+        }
 
         protected abstract void OperateMemory(Instruction instruction, string operation, bool change, Variable variable,
             int offset, int count);
@@ -43,7 +48,7 @@ namespace Inu.Cate
                         var offset = variableOperand.Offset;
                         var register = variable.Register;
                         if (register is ByteRegister byteRegister) {
-                            Debug.Assert(operation.Replace("\t", "").Length == 3);
+                            Debug.Assert(operation.Replace("\t", "").Replace(" ","").Length == 3);
                             //var register = RegisterFromId(Register);
                             byteRegister.Operate(instruction, operation, change, count);
                             instruction.ResultFlags |= Instruction.Flag.Z;

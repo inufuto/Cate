@@ -322,7 +322,8 @@ namespace Inu.Cate
                 if (parameterAssignment.Done || Equals(parameterAssignment.Parameter.Register, register)) continue;
                 switch (parameterAssignment.Operand) {
                     case VariableOperand variableOperand: {
-                            var operandRegister = variableOperand.Variable.Register;
+
+                            var operandRegister = GetVariableRegister(variableOperand.Variable, variableOperand.Offset); //variableOperand.Variable.Register;
                             if (operandRegister != null && operandRegister.Conflicts(register)) return true;
                             break;
                         }
