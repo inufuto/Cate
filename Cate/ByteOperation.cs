@@ -99,6 +99,7 @@ namespace Inu.Cate
                     otherRegister.CopyFrom(instruction, register);
                     action();
                     register.CopyFrom(instruction, otherRegister);
+                    instruction.ChangedRegisters.Add(otherRegister);
                 });
                 return;
             }

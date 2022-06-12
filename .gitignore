@@ -41,3 +41,14 @@
 /Cate87/Properties/PublishProfiles
 .vs
 .vs
+/Cate86/bin
+/Cate86/obj
+/Cate86/Properties
+/Cate99/bin
+/Cate99/obj
+/Cate99/Properties
+/Cate86/Cate86.csproj.user
+*.obj
+*.lst
+ini.bat
+cate*.lib
