@@ -60,7 +60,7 @@ namespace Inu.Cate.Mos6502
                 register.StoreToMemory(instruction, Name);
             });
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
@@ -94,7 +94,7 @@ namespace Inu.Cate.Mos6502
                 register.StoreToMemory(instruction, Name);
             });
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
@@ -115,7 +115,7 @@ namespace Inu.Cate.Mos6502
                 register.StoreToMemory(instruction, Name);
             });
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
@@ -140,7 +140,7 @@ namespace Inu.Cate.Mos6502
                 });
             }
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, int count)
@@ -151,7 +151,7 @@ namespace Inu.Cate.Mos6502
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
@@ -165,7 +165,7 @@ namespace Inu.Cate.Mos6502
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, string operand)
@@ -179,7 +179,7 @@ namespace Inu.Cate.Mos6502
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Save(Instruction instruction)

@@ -64,7 +64,7 @@ namespace Inu.Cate.Mc6809
                     WriteLine("\tlea" + register + "\t" + value + "," + register);
                 }
                 ChangedRegisters.Add(register);
-                RemoveVariableRegister(register);
+                RemoveRegisterAssignment(register);
                 register.Store(this, DestinationOperand);
             });
             return true;

@@ -14,12 +14,34 @@ namespace Inu.Cate
             Z = 1,
         }
 
-        public class RegisterAssignment
+        public abstract class RegisterAssignment
+        {
+        }
+
+        public class RegisterConstantAssignment : RegisterAssignment
+        {
+            public readonly Constant Constant;
+
+            public RegisterConstantAssignment(Constant constant)
+            {
+                Constant = constant;
+            }
+
+            public RegisterConstantAssignment(int value) : this(new ConstantInteger(value)) { }
+
+            public override string ToString()
+            {
+                return Constant.ToString() ?? string.Empty;
+            }
+        }
+
+
+        public class RegisterVariableAssignment : RegisterAssignment
         {
             public readonly Variable Variable;
             public readonly int Offset;
 
-            public RegisterAssignment(Variable variable, int offset)
+            public RegisterVariableAssignment(Variable variable, int offset)
             {
                 Variable = variable;
                 Offset = offset;
@@ -32,7 +54,7 @@ namespace Inu.Cate
 
             public override bool Equals(object? obj)
             {
-                if (obj is RegisterAssignment o) {
+                if (obj is RegisterVariableAssignment o) {
                     return o.Variable.Equals(Variable) && o.Offset == Offset;
                 }
                 return base.Equals(obj);
@@ -47,10 +69,8 @@ namespace Inu.Cate
         public readonly int Address;
         public readonly IList<string> Codes = new List<string>();
         private readonly ISet<Register> sourceRegisterIds = new HashSet<Register>();
-        private readonly ISet<Register> destinationRegisterIds = new HashSet<Register>();
         private readonly ISet<Register> temporaryRegisters = new HashSet<Register>();
         public readonly ISet<Register> ChangedRegisters = new HashSet<Register>();
-        //private readonly IDictionary<Register, bool> temporaryRegisterUsages = new Dictionary<Register, bool>();
         public readonly ISet<Variable> SavingVariables = new HashSet<Variable>();
         public readonly Function Function;
         private readonly List<string> codesToJump = new List<string>();
@@ -85,8 +105,10 @@ namespace Inu.Cate
         }
 
 
-        public ISet<Register> TemporaryRegisterIds {
-            get {
+        public ISet<Register> TemporaryRegisterIds
+        {
+            get
+            {
                 var temporaryRegisterIds = new HashSet<Register>();
                 var changedRegisters = ResultRegister != null ? ChangedRegisters.Where(r => !Equals(r, ResultRegister)) : ChangedRegisters;
                 foreach (var changedRegister in changedRegisters) {
@@ -119,10 +141,11 @@ namespace Inu.Cate
             if (offset == 0 && variable.Register != null) {
                 return variable.Register;
             }
-            foreach (var (registerId, registerUsage) in RegisterAssignments) {
+            foreach (var (registerId, assignment) in RegisterAssignments) {
                 if (
-                    registerUsage.Variable.SameStorage(variable) &&
-                    registerUsage.Offset == offset
+                    assignment is RegisterVariableAssignment variableAssignment &&
+                    variableAssignment.Variable.SameStorage(variable) &&
+                    variableAssignment.Offset == offset
                 )
                     return registerId;
             }
@@ -138,8 +161,11 @@ namespace Inu.Cate
         {
             if (Equals(variable.Register, register) && offset == 0)
                 return true;
-            if (RegisterAssignments.TryGetValue(register, out var usage)) {
-                return usage.Variable.SameStorage(variable) && usage.Offset == offset;
+            if (
+                RegisterAssignments.TryGetValue(register, out var assignment) &&
+                assignment is RegisterVariableAssignment variableAssignment
+            ) {
+                return variableAssignment.Variable.SameStorage(variable) && variableAssignment.Offset == offset;
             }
             return false;
         }
@@ -153,7 +179,7 @@ namespace Inu.Cate
         {
             if (!(operand is VariableOperand variableOperand)) {
                 if (register != null) {
-                    RemoveVariableRegister(register);
+                    RemoveRegisterAssignment(register);
                 }
                 return;
             }
@@ -167,33 +193,33 @@ namespace Inu.Cate
         {
             if (IsRegisterInVariableRange(register, variable)) {
                 if (register != null) {
-                    RemoveVariableRegister(register);
+                    RemoveRegisterAssignment(register);
                 }
                 return;
             }
 
-            var resultRegisterUsage = new RegisterAssignment(variable, offset);
+            var resultRegisterUsage = new RegisterVariableAssignment(variable, offset);
 
             if (register != null) {
                 RegisterAssignments[register] = resultRegisterUsage;
                 if (register is WordRegister wordRegister) {
                     if (wordRegister.Low != null) {
                         RegisterAssignments.Remove(wordRegister.Low);
-                        //RemoveVariableRegister(wordRegister.Low);
+                        //RemoveRegisterAssignment(wordRegister.Low);
                     }
                     if (wordRegister.High != null) {
                         RegisterAssignments.Remove(wordRegister.High);
-                        //RemoveVariableRegister(wordRegister.High);
+                        //RemoveRegisterAssignment(wordRegister.High);
                     }
                 }
             }
         }
 
-        public void RemoveVariableRegister(Register register)
+        public void RemoveRegisterAssignment(Register register)
         {
             RegisterAssignments.Remove(register);
-            foreach (var usage in RegisterAssignments) {
-                var key = usage.Key;
+            foreach (var pair in RegisterAssignments) {
+                var key = pair.Key;
                 if (register.Conflicts(key)) {
                     RegisterAssignments.Remove(key);
                 }
@@ -211,22 +237,20 @@ namespace Inu.Cate
 
         public void RemoveVariableRegister(Variable variable, int offset)
         {
-            foreach (var (key, usage) in RegisterAssignments) {
+            foreach (var (key, assignment) in RegisterAssignments) {
+                if (!(assignment is RegisterVariableAssignment variableAssignment)) continue;
                 var remove = false;
-                if (usage.Variable.SameStorage(variable)) {
-                    if (usage.Offset == offset) {
+                if (variableAssignment.Variable.SameStorage(variable)) {
+                    if (variableAssignment.Offset == offset) {
                         remove = true;
                     }
-                    else if (variable.Type.ByteCount > 1 && usage.Offset == offset + 1) {
+                    else if (variable.Type.ByteCount > 1 && variableAssignment.Offset == offset + 1) {
                         remove = true;
                     }
-                    else if (usage.Variable.Type.ByteCount > 1 && offset == usage.Offset + 1) {
+                    else if (variableAssignment.Variable.Type.ByteCount > 1 && offset == variableAssignment.Offset + 1) {
                         remove = true;
                     }
                 }
-
-                //if (!Equals(usage, registerAssignment))
-                //    continue;
                 if (!remove)
                     continue;
                 RegisterAssignments.Remove(key);
@@ -260,25 +284,54 @@ namespace Inu.Cate
 
         public void BuildResultVariables()
         {
-            var registers = new HashSet<Register>();
+            var variableRegisters = new HashSet<Register>();
+            var constantRegisters = new HashSet<Register>();
             foreach (var previousInstruction in PreviousInstructions) {
-                foreach (var (register, usage) in previousInstruction.RegisterAssignments) {
-                    if (!previousInstruction.IsRegisterInVariableRange(register, usage.Variable)) {
-                        registers.Add(register);
+                foreach (var (register, assignment) in previousInstruction.RegisterAssignments) {
+                    switch (assignment) {
+                        case RegisterVariableAssignment variableAssignment: {
+                                if (!previousInstruction.IsRegisterInVariableRange(register, variableAssignment.Variable)) {
+                                    variableRegisters.Add(register);
+                                }
+                                break;
+                            }
+                        case RegisterConstantAssignment _:
+                            constantRegisters.Add(register);
+                            break;
                     }
                 }
             }
-            foreach (var registerId in registers) {
-                var usages = PreviousInstructions.Select(i => i.RegisterAssignments.TryGetValue(registerId, out var usage) ? usage : null).Distinct().ToList();
+            foreach (var register in variableRegisters) {
+                var usages = PreviousInstructions.Select(i => i.RegisterAssignments.TryGetValue(register, out var usage) ? usage : null).Distinct().ToList();
                 if (usages.Count != 1)
                     continue;
                 {
                     var usage = usages[0];
                     if (usage != null) {
-                        //SetVariableRegisterId(usage.Variable, usage.Offset, registerId);
-                        RegisterAssignments[registerId] = usage;
+                        RegisterAssignments[register] = usage;
                     }
                 }
+            }
+            foreach (var register in constantRegisters) {
+                Constant? value = null;
+                foreach (var previousInstruction in PreviousInstructions) {
+                    if (previousInstruction.RegisterAssignments.TryGetValue(register, out var assignment)) {
+                        if (assignment is RegisterConstantAssignment constantAssignment) {
+                            if (value == null) {
+                                value = constantAssignment.Constant;
+                            }
+                            else if (constantAssignment.Constant != value) {
+                                goto nextRegister;
+                            }
+                        }
+                        else goto nextRegister;
+                    }
+                    else goto nextRegister;
+                }
+                if (value != null) {
+                    RegisterAssignments[register] = new RegisterConstantAssignment(value);
+                }
+            nextRegister:;
             }
         }
 
@@ -416,5 +469,25 @@ namespace Inu.Cate
         public virtual bool IsResultChanged() => false;
 
         public virtual bool IsCalling() => false;
+
+        public bool IsConstantAssigned(Register register, int value)
+        {
+            return RegisterAssignments.TryGetValue(register, out var assignment) && assignment is RegisterConstantAssignment { Constant: ConstantInteger integer } && integer.IntegerValue == value;
+        }
+
+        public void SetRegisterConstant(Register register, int value)
+        {
+            RegisterAssignments[register] = new RegisterConstantAssignment(value);
+        }
+
+        public bool IsConstantAssigned(Register register, PointerOperand pointerOperand)
+        {
+            return RegisterAssignments.TryGetValue(register, out var assignment) && assignment is RegisterConstantAssignment { Constant: ConstantPointer constantPointer } && constantPointer.Variable == pointerOperand.Variable && constantPointer.Offset == pointerOperand.Offset;
+        }
+
+        public void SetRegisterConstant(Register register, PointerOperand pointerOperand)
+        {
+            RegisterAssignments[register] = new RegisterConstantAssignment(new ConstantPointer((PointerType)pointerOperand.Type, pointerOperand.Variable, pointerOperand.Offset));
+        }
     }
 }

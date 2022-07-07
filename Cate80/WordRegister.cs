@@ -102,14 +102,14 @@ namespace Inu.Cate.Z80
             if (count <= threshold) {
                 Loop("inc");
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 return;
             }
             if (count >= 0x10000 - threshold) {
                 count = 0x10000 - count;
                 Loop("dec");
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 return;
             }
             void Loop(string operation)
@@ -149,7 +149,7 @@ namespace Inu.Cate.Z80
                 });
             }
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public static void UsingAny(Instruction instruction, List<Cate.WordRegister> candidates,
@@ -222,14 +222,14 @@ namespace Inu.Cate.Z80
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tld\t" + this + "," + value);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tld\t" + Name + "," + label);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -252,11 +252,14 @@ namespace Inu.Cate.Z80
             switch (sourceOperand) {
                 case IntegerOperand sourceIntegerOperand:
                     var value = sourceIntegerOperand.IntegerValue;
+                    if (instruction.IsConstantAssigned(this, value)) return;
                     LoadConstant(instruction, value.ToString());
+                    instruction.SetRegisterConstant(this, value);
                     return;
                 case PointerOperand sourcePointerOperand:
+                    if (instruction.IsConstantAssigned(this, sourcePointerOperand)) return;
                     instruction.WriteLine("\tld\t" + this + "," + sourcePointerOperand.MemoryAddress());
-                    instruction.RemoveVariableRegister(this);
+                    instruction.SetRegisterConstant(this, sourcePointerOperand);
                     instruction.ChangedRegisters.Add(this);
                     return;
                 case VariableOperand sourceVariableOperand: {
@@ -449,7 +452,7 @@ namespace Inu.Cate.Z80
                 instruction.WriteLine("\tpop\t" + Name);
                 instruction.ChangedRegisters.Add(this);
             }
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)

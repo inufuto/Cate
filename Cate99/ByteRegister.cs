@@ -68,7 +68,7 @@ namespace Inu.Cate.Tms99
         {
             WordRegister.LoadConstant(instruction, ByteConst(value));
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public static string ByteConst(string value) => value + " shl 8";
@@ -79,7 +79,7 @@ namespace Inu.Cate.Tms99
             if (value == 0) {
                 Clear(instruction);
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 return;
             }
             base.LoadConstant(instruction, value);
@@ -127,7 +127,7 @@ namespace Inu.Cate.Tms99
                     });
                 }
             }
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
@@ -159,7 +159,7 @@ namespace Inu.Cate.Tms99
             Clear(instruction);
             instruction.WriteLine("\tmovb\t@" + label + "," + Name);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
@@ -170,7 +170,7 @@ namespace Inu.Cate.Tms99
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
         {
             instruction.WriteLine("\tmov\t" + sourceRegister.Name + "," + Name);
-            instruction.RemoveVariableRegister(WordRegister);
+            instruction.RemoveRegisterAssignment(WordRegister);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -180,7 +180,7 @@ namespace Inu.Cate.Tms99
                 instruction.WriteLine("\t" + operation + "\t" + Name);
             }
             if (change) {
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 instruction.ChangedRegisters.Add(this);
             }
             instruction.ResultFlags |= Instruction.Flag.Z;

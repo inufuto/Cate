@@ -56,7 +56,7 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\tld" + this + "\t#" + value);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
@@ -78,7 +78,7 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\tld" + this + "\t" + label);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
@@ -91,7 +91,7 @@ namespace Inu.Cate.Mc6809
             if (pointer.Register == null && offset == 0) {
                 instruction.WriteLine("\tld" + this + "\t[" + pointer.MemoryAddress(0) + "]");
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 return;
             }
             WordOperation.UsingAnyRegister(instruction, Pointers, pointerRegister =>
@@ -118,7 +118,7 @@ namespace Inu.Cate.Mc6809
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             instruction.WriteLine("\tld" + this + "\t" + OffsetOperand(pointerRegister, offset));
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
@@ -176,7 +176,7 @@ namespace Inu.Cate.Mc6809
                             if (!Equals(destinationRegister, this)) {
                                 destinationRegister.CopyFrom(instruction, this);
                             }
-                            instruction.RemoveVariableRegister(this);
+                            instruction.RemoveRegisterAssignment(this);
                             return;
                         }
                         StoreToMemory(instruction, destinationVariable, destinationOffset);
@@ -204,7 +204,7 @@ namespace Inu.Cate.Mc6809
             if (Equals(sourceRegister, this)) return;
             instruction.WriteLine("\ttfr\t" + sourceRegister + "," + this);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
@@ -277,7 +277,7 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\taddd\t#" + offset);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Save(Instruction instruction)
@@ -312,7 +312,7 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\tlea" + Name + "\t" + OffsetOperand(this, offset));
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override bool IsIndex() => true;

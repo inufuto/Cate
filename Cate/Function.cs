@@ -110,7 +110,7 @@ namespace Inu.Cate
             FillFlow();
             OptimizeVariables();
 
-            WriteLocalVariables(writer);
+            WriteLocalVariables(writer, ref dataOffset);
 
             Compiler.Instance.MakeAlignment(writer, "cseg", ref codeOffset);
             Compiler.Instance.MakeAlignment(writer, "dseg", ref dataOffset);
@@ -198,12 +198,16 @@ namespace Inu.Cate
             compiler.WriteEndOfFunction(writer, this);
         }
 
-        private void WriteLocalVariables(StreamWriter writer)
+        private void WriteLocalVariables(StreamWriter writer, ref int offset)
         {
+            if (Name.Contains("Trace"))
+            {
+                var aaa = 111;
+            }
             if (localVariableIds.Count > 0) {
                 writer.WriteLine("\tdseg");
             }
-            var offset = 0;
+            //var offset = 0;
             foreach (var (id, size) in localVariableIds) {
                 if (size >= Compiler.Instance.Alignment) {
                     Compiler.Instance.MakeAlignment(writer, ref offset);
@@ -294,7 +298,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("if Man >= *pMonster goto DecideDirection__Anchor52")) {
+                if (instruction.ToString().Contains("pPoint[1] = 224")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

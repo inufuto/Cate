@@ -128,5 +128,6 @@ namespace Inu.Cate
         }
 
         public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
+        public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
     }
 }

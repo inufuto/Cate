@@ -21,10 +21,10 @@ namespace Inu.Cate
                     if (wordRegister.Contains(this))
                         return true;
                     break;
-                case ByteRegister byteRegister:
-                    if (PairRegister != null && PairRegister.Contains(byteRegister))
-                        return true;
-                    break;
+                    //case ByteRegister byteRegister:
+                    //    if (PairRegister != null && PairRegister.Contains(byteRegister))
+                    //        return true;
+                    //    break;
             }
             return base.Conflicts(register);
         }
@@ -42,7 +42,9 @@ namespace Inu.Cate
 
         public virtual void LoadConstant(Instruction instruction, int value)
         {
+            if (instruction.IsConstantAssigned(this, value)) return;
             LoadConstant(instruction, value.ToString());
+            instruction.SetRegisterConstant(this, value);
         }
 
         public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
@@ -64,6 +66,10 @@ namespace Inu.Cate
 
         protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
+            if (pointer.Register is WordRegister wordRegister) {
+                StoreIndirect(instruction, wordRegister, offset);
+                return;
+            }
             Compiler.Instance.WordOperation.UsingAnyRegister(instruction,
                 Compiler.Instance.WordOperation.PointerRegisters(offset),
                 pointerRegister =>
@@ -80,10 +86,12 @@ namespace Inu.Cate
         {
             switch (sourceOperand) {
                 case IntegerOperand integerOperand:
+                    if (instruction.IsConstantAssigned(this, integerOperand.IntegerValue)) return;
                     LoadConstant(instruction, integerOperand.IntegerValue);
                     return;
                 case StringOperand stringOperand:
                     LoadConstant(instruction, stringOperand.StringValue);
+                    instruction.RemoveRegisterAssignment(this);
                     return;
                 case VariableOperand variableOperand: {
                         var register = instruction.GetVariableRegister(variableOperand);
@@ -102,7 +110,7 @@ namespace Inu.Cate
                         else {
                             LoadFromMemory(instruction, variableOperand.Variable, variableOperand.Offset);
                             instruction.ChangedRegisters.Add(this);
-                            instruction.RemoveVariableRegister(this);
+                            instruction.RemoveRegisterAssignment(this);
                         }
                         instruction.SetVariableRegister(variableOperand, this);
                         return;

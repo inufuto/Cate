@@ -32,7 +32,9 @@ namespace Inu.Cate
         public abstract void LoadConstant(Instruction instruction, string value);
         public virtual void LoadConstant(Instruction instruction, int value)
         {
+            if (instruction.IsConstantAssigned(this, value)) return;
             LoadConstant(instruction, value.ToString());
+            instruction.SetRegisterConstant(this, value);
         }
         public abstract void LoadFromMemory(Instruction instruction, string label);
         public abstract void StoreToMemory(Instruction instruction, string label);
@@ -64,7 +66,7 @@ namespace Inu.Cate
             else {
                 instruction.BeginRegister(this);
                 Add(instruction, offset);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 instruction.ChangedRegisters.Add(this);
                 action();
                 instruction.EndRegister(this);

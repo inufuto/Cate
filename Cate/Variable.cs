@@ -107,6 +107,9 @@ namespace Inu.Cate
 
         public void WriteAssembly(StreamWriter writer, ref int offset)
         {
+            if (Label.Contains("pChar")) {
+                var aaa = 111;
+            }
             Compiler.Instance.MakeAlignment(writer, Type.MaxElementSize, ref offset);
             if (value != null) {
                 writer.WriteLine(Label + ": ;" + Name);

@@ -247,7 +247,7 @@ namespace Inu.Cate
                      register.Operate(instruction, operation, change, instruction.RightOperand);
                  }
 
-                 instruction.RemoveVariableRegister(register);
+                 instruction.RemoveRegisterAssignment(register);
                  register.Store(instruction, instruction.DestinationOperand);
              });
         }

@@ -45,10 +45,30 @@ namespace Inu.Cate.Z80
             };
             ResultFlags |= Flag.Z;
 
-            Operate(operation);
+            if (Equals(RightOperand.Register, ByteRegister.A)) {
+                var candidates = ByteRegister.Registers.Where(r => !Equals(r, ByteRegister.A)).ToList();
+                ByteOperation.UsingAnyRegister(this, candidates, byteRegister =>
+                {
+                    byteRegister.CopyFrom(this, ByteRegister.A);
+                    ByteRegister.A.Load(this, LeftOperand);
+                    WriteLine("\t" + operation + byteRegister);
+                    ByteRegister.A.Store(this, DestinationOperand);
+                    ChangedRegisters.Add(ByteRegister.A);
+                });
+                return;
+            }
+
+
+            ByteRegister.Using(this, ByteRegister.A, LeftOperand, () =>
+            {
+                ByteRegister.A.Load(this, LeftOperand);
+                ByteRegister.A.Operate(this, operation, true, RightOperand);
+                ByteRegister.A.Store(this, DestinationOperand);
+                ChangedRegisters.Add(ByteRegister.A);
+            });
         }
 
-        
+
 
         protected override int Threshold()
         {

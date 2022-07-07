@@ -284,7 +284,7 @@ namespace Inu.Cate
         {
             Register.CopyFrom(instruction, register);
             instruction.ChangedRegisters.Add(this.Register);
-            instruction.RemoveVariableRegister(this.Register);
+            instruction.RemoveRegisterAssignment(this.Register);
         }
 
         public void CopyTo(Instruction instruction, ByteRegister register)

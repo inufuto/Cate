@@ -92,7 +92,7 @@ namespace Inu.Cate.Mc6809
                 WordRegister.X.Load(this, LeftOperand);
                 WriteLine("\tstx\t" + DirectPage.Word);
                 ByteRegister.B.Load(this, counterOperand);
-                RemoveVariableRegister(ByteRegister.B);
+                RemoveRegisterAssignment(ByteRegister.B);
                 Compiler.CallExternal(this, functionName);
                 WriteLine("\tldx\t" + DirectPage.Word);
                 WordRegister.X.Store(this, DestinationOperand);

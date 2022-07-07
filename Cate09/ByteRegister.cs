@@ -43,16 +43,17 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\tld" + Name + "\t#" + value);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
         public override void LoadConstant(Instruction instruction, int value)
         {
+            if (instruction.IsConstantAssigned(this, value)) return;
             if (value == 0) {
                 instruction.WriteLine("\tclr" + Name);
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.SetRegisterConstant(this, 0);
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
             }
@@ -77,7 +78,7 @@ namespace Inu.Cate.Mc6809
             Debug.Assert(!Equals(pointerRegister, WordRegister.D));
             instruction.WriteLine("\tld" + this + "\t" + WordRegister.OffsetOperand(pointerRegister, offset));
             instruction.ResultFlags |= Instruction.Flag.Z;
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -91,7 +92,7 @@ namespace Inu.Cate.Mc6809
         {
             if (offset == 0) {
                 instruction.WriteLine("\tld" + this + "\t[" + pointer.MemoryAddress(0) + "]");
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 instruction.ChangedRegisters.Add(this);
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
@@ -111,7 +112,7 @@ namespace Inu.Cate.Mc6809
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tld" + Name + "\t" + label);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
@@ -124,15 +125,15 @@ namespace Inu.Cate.Mc6809
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
         {
             instruction.WriteLine("\ttfr\t" + sourceRegister + "," + this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
         public override void Exchange(Instruction instruction, Cate.ByteRegister register)
         {
             instruction.WriteLine("\texg\t" + register + "," + this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(register);
+            instruction.RemoveRegisterAssignment(register);
             instruction.ChangedRegisters.Add(register);
         }
 
@@ -142,7 +143,7 @@ namespace Inu.Cate.Mc6809
                 instruction.WriteLine("\t" + operation + Name);
             }
             if (change) {
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 instruction.ChangedRegisters.Add(this);
             }
             instruction.ResultFlags |= Instruction.Flag.Z;
@@ -161,7 +162,7 @@ namespace Inu.Cate.Mc6809
             end:
             if (!change)
                 return;
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -169,7 +170,7 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\t" + operation + Name + "\t" + operand);
             if (change) {
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 instruction.ChangedRegisters.Add(this);
             }
             instruction.ResultFlags |= Instruction.Flag.Z;
@@ -180,7 +181,7 @@ namespace Inu.Cate.Mc6809
             if (register is WordRegister wordRegister && wordRegister.Contains(this)) {
                 return true;
             }
-            return base.Conflicts(register);
+            return Equals(this, register);
         }
 
         public override bool Matches(Cate.Register register)

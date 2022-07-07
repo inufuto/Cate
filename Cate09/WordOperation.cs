@@ -97,7 +97,7 @@ namespace Inu.Cate.Mc6809
             });
         }
 
-        public void Operate(Instruction instruction, string operation, bool change, Operand operand)
+        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
             Operate(instruction, operation, change, operand, 1);
         }

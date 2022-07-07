@@ -19,7 +19,7 @@
             ByteOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, byteRegister =>
             {
                 byteRegister.Load(this, SourceOperand);
-                RemoveVariableRegister(byteRegister);
+                RemoveRegisterAssignment(byteRegister);
                 var wordRegister = ((ByteRegister)byteRegister).Expand(this, signed);
                 ChangedRegisters.Add(wordRegister);
                 wordRegister.Store(this, DestinationOperand);
@@ -32,7 +32,7 @@
             WriteLine("\tsla\t" + wordRegister + ",8");
             ChangedRegisters.Add(wordRegister);
             ((WordRegister)wordRegister).ByteRegister.Store(this, DestinationOperand);
-            RemoveVariableRegister(wordRegister);
+            RemoveRegisterAssignment(wordRegister);
         }
 
         protected override void Reduce()

@@ -86,7 +86,7 @@ namespace Inu.Cate.Z80
                 WriteLine("\tor\ta");
                 WriteLine("\tsbc\thl," + rightRegister.Name);
                 ChangedRegisters.Add(WordRegister.Hl);
-                RemoveVariableRegister(WordRegister.Hl);
+                RemoveRegisterAssignment(WordRegister.Hl);
             }
 
 
@@ -119,7 +119,7 @@ namespace Inu.Cate.Z80
                     Subtract(WordRegister.De);
                     WriteLine("\tex\tde,hl");
                     ChangedRegisters.Add(WordRegister.De);
-                    RemoveVariableRegister(WordRegister.De);
+                    RemoveRegisterAssignment(WordRegister.De);
                 }
 
                 if (Equals(LeftOperand.Register, WordRegister.De)) {
@@ -154,7 +154,7 @@ namespace Inu.Cate.Z80
                 ByteRegister.A.CopyFrom(this, leftRegister.Low);
                 WriteLine("\tor\t" + leftRegister.High.Name);
                 ChangedRegisters.Add(ByteRegister.A);
-                RemoveVariableRegister(ByteRegister.A);
+                RemoveRegisterAssignment(ByteRegister.A);
             });
         }
 

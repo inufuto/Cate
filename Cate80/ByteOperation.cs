@@ -92,7 +92,7 @@ namespace Inu.Cate.Z80
 
         public override void ClearByte(Instruction instruction, string label)
         {
-            instruction.RemoveVariableRegister(ByteRegister.A);
+            instruction.RemoveRegisterAssignment(ByteRegister.A);
             instruction.WriteLine("\txor\ta");
             instruction.WriteLine("\tld\t(" + label + "),a");
             instruction.ChangedRegisters.Add(ByteRegister.A);

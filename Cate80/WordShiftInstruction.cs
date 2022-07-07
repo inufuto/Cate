@@ -65,7 +65,7 @@ namespace Inu.Cate.Z80
                 action();
             }
             ChangedRegisters.Add(register);
-            RemoveVariableRegister(register);
+            RemoveRegisterAssignment(register);
         }
 
         protected override void ShiftVariable(Operand counterOperand)
@@ -87,7 +87,7 @@ namespace Inu.Cate.Z80
                     Compiler.CallExternal(this, functionName);
                 });
                 ChangedRegisters.Add(WordRegister.Hl);
-                RemoveVariableRegister(WordRegister.Hl);
+                RemoveRegisterAssignment(WordRegister.Hl);
                 WordRegister.Hl.Store(this, DestinationOperand);
             });
         }

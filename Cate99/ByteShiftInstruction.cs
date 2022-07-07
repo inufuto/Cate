@@ -25,7 +25,7 @@ namespace Inu.Cate.Tms99
                     r0.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
                     WriteLine("\tandi\tr0,>ff00");
-                    RemoveVariableRegister(r0);
+                    RemoveRegisterAssignment(r0);
                     ChangedRegisters.Add(r0);
                     r0.Store(this, DestinationOperand);
                 }

@@ -54,9 +54,9 @@ namespace Inu.Cate.Mos6502
             {
                 ByteRegister.A.Load(this, LeftOperand);
                 Compiler.CallExternal(this, functionName);
-                RemoveVariableRegister(ByteRegister.A);
+                RemoveRegisterAssignment(ByteRegister.A);
                 ChangedRegisters.Add(ByteRegister.A);
-                RemoveVariableRegister(ByteRegister.Y);
+                RemoveRegisterAssignment(ByteRegister.Y);
                 ChangedRegisters.Add(ByteRegister.Y);
                 ByteRegister.A.Store(this, DestinationOperand);
             });

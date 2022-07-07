@@ -35,7 +35,7 @@ namespace Inu.Cate.Mc6800
                 {
                     ByteRegister.A.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
-                    RemoveVariableRegister(ByteRegister.A);
+                    RemoveRegisterAssignment(ByteRegister.A);
                     ChangedRegisters.Add(ByteRegister.A);
                     ByteRegister.A.Store(this, DestinationOperand);
                 });

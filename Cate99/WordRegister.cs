@@ -128,7 +128,7 @@ namespace Inu.Cate.Tms99
         {
             instruction.WriteLine("\tai\t" + Name + "," + offset);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override bool IsOffsetInRange(int offset) => Index != 0 || offset == 0;
@@ -139,7 +139,7 @@ namespace Inu.Cate.Tms99
         {
             instruction.WriteLine("\tli\t" + Name + "," + value);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void LoadConstant(Instruction instruction, int value)
@@ -147,7 +147,7 @@ namespace Inu.Cate.Tms99
             if (value == 0) {
                 Clear(instruction);
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 return;
             }
             base.LoadConstant(instruction, value);
@@ -157,7 +157,7 @@ namespace Inu.Cate.Tms99
         {
             instruction.WriteLine("\tmov\t@" + label + "," + Name);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
@@ -223,7 +223,7 @@ namespace Inu.Cate.Tms99
                             if (!Equals(destinationRegister, this)) {
                                 destinationRegister.CopyFrom(instruction, this);
                             }
-                            instruction.RemoveVariableRegister(this);
+                            instruction.RemoveRegisterAssignment(this);
                             return;
                         }
                         StoreToMemory(instruction, destinationVariable.MemoryAddress(destinationOffset));
@@ -273,7 +273,7 @@ namespace Inu.Cate.Tms99
                     });
                 }
             }
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
@@ -304,7 +304,7 @@ namespace Inu.Cate.Tms99
         public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
         {
             instruction.WriteLine("\tmov\t" + sourceRegister.Name + "," + Name);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 

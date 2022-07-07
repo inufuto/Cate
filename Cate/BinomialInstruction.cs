@@ -71,7 +71,7 @@ namespace Inu.Cate
                 if (count != 0) {
                     register.Operate(this, operation, true, count);
                 }
-                RemoveVariableRegister(register);
+                RemoveRegisterAssignment(register);
                 register.Store(this, DestinationOperand);
             }
             ByteOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, ViaRegister);

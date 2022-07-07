@@ -124,22 +124,21 @@ namespace Inu.Cate
         public override void BuildAssembly()
         {
             var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
-
-            Register? savedRegister = null;
-            if (DestinationOperand != null) {
-                if (!DestinationOperand.Conflicts(returnRegister)) {
-                    foreach (var parameter in TargetFunction.Parameters) {
-                        if (parameter.Register == null ||
-                            !DestinationOperand.Conflicts(parameter.Register)) continue;
-                        parameter.Register.Save(this);
-                        savedRegister = parameter.Register;
-                    }
-                }
-                else {
-                    returnRegister.Save(this);
-                    savedRegister = returnRegister;
-                }
-            }
+            //Register? savedRegister = null;
+            //if (DestinationOperand != null) {
+            //    if (!DestinationOperand.Conflicts(returnRegister)) {
+            //        foreach (var parameter in TargetFunction.Parameters) {
+            //            if (parameter.Register == null ||
+            //                !DestinationOperand.Conflicts(parameter.Register)) continue;
+            //            parameter.Register.Save(this);
+            //            savedRegister = parameter.Register;
+            //        }
+            //    }
+            //    else {
+            //        returnRegister.Save(this);
+            //        savedRegister = returnRegister;
+            //    }
+            //}
 
 
             FillParameters();
@@ -160,38 +159,38 @@ namespace Inu.Cate
                 }
 
                 Debug.Assert(returnRegister != null);
-                RemoveVariableRegister(returnRegister);
+                RemoveRegisterAssignment(returnRegister);
                 //if (!Equals(returnRegister, DestinationOperand.Register)) {
                 BeginRegister(returnRegister);
                 EndRegister(returnRegister);
                 //}
                 ChangedRegisters.Add(returnRegister);
-                RemoveVariableRegister(returnRegister);
-                if (savedRegister != null) {
-                    if (savedRegister.Conflicts(returnRegister)) {
-                        if (returnRegister.ByteCount == 1) {
-                            ByteOperation.UsingAnyRegister(this, ByteOperation.Registers.Where(r => !r.Conflicts(returnRegister)).ToList(), register =>
-                               {
-                                   register.CopyFrom(this, (ByteRegister)returnRegister);
-                                   savedRegister.Restore(this);
-                                   ChangedRegisters.Remove(savedRegister);
-                                   StoreResult(register);
-                               });
-                        }
-                        else {
-                            WordOperation.UsingAnyRegister(this, WordOperation.Registers.Where(r => !r.Conflicts(returnRegister)).ToList(), register =>
-                            {
-                                register.CopyFrom(this, (WordRegister)returnRegister);
-                                savedRegister.Restore(this);
-                                ChangedRegisters.Remove(savedRegister);
-                                StoreResult(register);
-                            });
-                        }
-                        return;
-                    }
-                    savedRegister.Restore(this);
-                    ChangedRegisters.Remove(savedRegister);
-                }
+                RemoveRegisterAssignment(returnRegister);
+                //if (savedRegister != null) {
+                //    if (savedRegister.Conflicts(returnRegister)) {
+                //        if (returnRegister.ByteCount == 1) {
+                //            ByteOperation.UsingAnyRegister(this, ByteOperation.Registers.Where(r => !r.Conflicts(returnRegister)).ToList(), register =>
+                //               {
+                //                   register.CopyFrom(this, (ByteRegister)returnRegister);
+                //                   savedRegister.Restore(this);
+                //                   ChangedRegisters.Remove(savedRegister);
+                //                   StoreResult(register);
+                //               });
+                //        }
+                //        else {
+                //            WordOperation.UsingAnyRegister(this, WordOperation.Registers.Where(r => !r.Conflicts(returnRegister)).ToList(), register =>
+                //            {
+                //                register.CopyFrom(this, (WordRegister)returnRegister);
+                //                savedRegister.Restore(this);
+                //                ChangedRegisters.Remove(savedRegister);
+                //                StoreResult(register);
+                //            });
+                //        }
+                //        return;
+                //    }
+                //    savedRegister.Restore(this);
+                //    ChangedRegisters.Remove(savedRegister);
+                //}
                 StoreResult(returnRegister);
             }
         }

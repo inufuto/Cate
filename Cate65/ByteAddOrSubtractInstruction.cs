@@ -70,7 +70,7 @@ namespace Inu.Cate.Mos6502
                     WriteLine("\t" + registerOperation + register);
                 }
                 register.Store(this, DestinationOperand);
-                RemoveVariableRegister(register);
+                RemoveRegisterAssignment(register);
                 ChangedRegisters.Add(register);
             });
         }

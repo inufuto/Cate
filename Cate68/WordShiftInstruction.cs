@@ -86,7 +86,7 @@ namespace Inu.Cate.Mc6800
             {
                 WordRegister.X.Load(this, LeftOperand);
                 ByteRegister.B.Load(this, counterOperand);
-                RemoveVariableRegister(ByteRegister.B);
+                RemoveRegisterAssignment(ByteRegister.B);
                 Compiler.CallExternal(this, functionName);
                 WordRegister.X.Store(this, DestinationOperand);
             });
