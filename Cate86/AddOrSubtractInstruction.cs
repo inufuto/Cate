@@ -117,7 +117,7 @@ namespace Inu.Cate.I8086
                 for (var i = 0; i < count; ++i) {
                     WriteLine("\t" + operation + temporaryRegister);
                 }
-                RemoveVariableRegister(temporaryRegister);
+                RemoveRegisterAssignment(temporaryRegister);
                 temporaryRegister.Store(this, DestinationOperand);
             });
         }

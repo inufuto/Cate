@@ -90,14 +90,14 @@ namespace Inu.Cate.I8086
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tmov " + this + "," + value);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tmov " + this + "," + label);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -110,7 +110,7 @@ namespace Inu.Cate.I8086
             }
             string label = variable.MemoryAddress(offset);
             instruction.WriteLine("\tmov " + this + ",[" + label + "]");
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -131,7 +131,7 @@ namespace Inu.Cate.I8086
             }
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
             instruction.WriteLine("\tmov " + this + ",[" + AsPointer(pointerRegister) + addition + "]");
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -159,7 +159,7 @@ namespace Inu.Cate.I8086
                     return;
                 case PointerOperand sourcePointerOperand:
                     instruction.WriteLine("\tmov " + this + "," + sourcePointerOperand.MemoryAddress());
-                    instruction.RemoveVariableRegister(this);
+                    instruction.RemoveRegisterAssignment(this);
                     instruction.ChangedRegisters.Add(this);
                     return;
                 case VariableOperand sourceVariableOperand: {
@@ -245,7 +245,7 @@ namespace Inu.Cate.I8086
             if (Equals(this, sourceRegister)) return;
             instruction.WriteLine("\tmov " + this + "," + sourceRegister);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)

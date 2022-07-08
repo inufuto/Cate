@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace Inu.Cate.I8086
@@ -17,10 +18,11 @@ namespace Inu.Cate.I8086
 
         private static Register SavingRegister(Register register)
         {
-            //if (Equals(register, ByteRegister.Al))
-            //    return register;
-            if (!(register is ByteRegister byteRegister))
+            //if (!(register is ByteRegister byteRegister) || Equals(byteRegister, ByteRegister.Ah) ||
+            //    Equals(byteRegister, ByteRegister.Al)) return register;
+            if (!(register is ByteRegister byteRegister)) {
                 return register;
+            }
             Debug.Assert(byteRegister.PairRegister != null);
             return byteRegister.PairRegister;
         }
@@ -28,15 +30,13 @@ namespace Inu.Cate.I8086
 
         public override void AllocateRegisters(List<Variable> variables, Function function)
         {
-            var byteRegisters = function.Type.ByteCount == 1 ? ByteRegister.Registers.Where(r => !Equals(r, ByteRegister.Ah)).ToList() : ByteRegister.Registers;
-
             void Allocate1(List<Variable> list)
             {
                 foreach (var variable in list) {
                     var variableType = variable.Type;
                     Register? register;
                     if (variableType.ByteCount == 1) {
-                        register = AllocatableRegister(variable, byteRegisters, function);
+                        register = AllocatableRegister(variable, ByteRegister.Registers, function);
                     }
                     else {
                         List<Cate.WordRegister> registers;
@@ -56,6 +56,7 @@ namespace Inu.Cate.I8086
 
             var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
                 .ThenBy(v => v.Usages.Count).ToList();
+
             Allocate1(rangeOrdered);
             var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
             Allocate1(usageOrdered);
@@ -68,7 +69,7 @@ namespace Inu.Cate.I8086
                     variable.Register = byteRegister;
                 }
                 else if (register is ByteRegister) {
-                    register = AllocatableRegister(variable, byteRegisters, function);
+                    register = AllocatableRegister(variable, ByteRegister.Registers, function);
                     if (register != null) {
                         variable.Register = register;
                     }
@@ -76,7 +77,7 @@ namespace Inu.Cate.I8086
                 else if (register is WordRegister wordRegister) {
                     if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, wordRegister)) {
                         List<Cate.WordRegister> candidates;
-                        if (variable.Type is PointerType pointerType) {
+                        if (variable.Type is PointerType) {
                             candidates = WordRegister.PointerRegisters;
                         }
                         else {
@@ -258,11 +259,30 @@ namespace Inu.Cate.I8086
 
         public override int Alignment => 2;
 
-        public override void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
+        //public override void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
+        //{
+        //    //if (byteCount == 1 && savedRegisterIds.Contains(WordRegister.Ax)) {
+        //    //    savedRegisterIds.Remove(WordRegister.Ax);
+        //    //    savedRegisterIds.Add(ByteRegister.Ah);
+        //    //}
+        //}
+
+        protected override void RestoreRegister(StreamWriter writer, Register register, int byteCount)
         {
-            if (byteCount == 1) {
-                savedRegisterIds.Remove(WordRegister.Ax);
+            if (Equals(register, WordRegister.Ax) && byteCount == 1) {
+                writer.WriteLine("\tmov [@Temporary@Byte],al");
+                register.Restore(writer, null, false, 0);
+                writer.WriteLine("\tmov al,[@Temporary@Byte]");
             }
+            else {
+                register.Restore(writer, null, false, 0);
+            }
+        }
+
+        protected override void WriteAssembly(StreamWriter writer)
+        {
+            writer.WriteLine("\textrn @Temporary@Byte");
+            base.WriteAssembly(writer);
         }
     }
 }

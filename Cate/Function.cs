@@ -125,6 +125,7 @@ namespace Inu.Cate
             compiler.WriteBeginningOfFunction(writer, this);
 
             ISet<Register> savedRegisterIds = new HashSet<Register>();
+            var resultRegister = compiler.ReturnRegister(Type.ByteCount);
             foreach (var instruction in Instructions.Where(i => !i.IsEmpty())) {
                 foreach (var changedRegister in instruction.ChangedRegisters) {
                     var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister);
@@ -143,10 +144,9 @@ namespace Inu.Cate
             }
 
             if (Type.ByteCount > 0) {
-                var returnRegisterId = compiler.ReturnRegister(Type.ByteCount);
-                savedRegisterIds.Remove(returnRegisterId);
-                compiler.RemoveSavingRegister(savedRegisterIds, Type.ByteCount);
-                foreach (var includedIds in compiler.IncludedRegisterIds(returnRegisterId)) {
+                savedRegisterIds.Remove(resultRegister);
+                //compiler.RemoveSavingRegister(savedRegisterIds, Type.ByteCount);
+                foreach (var includedIds in compiler.IncludedRegisterIds(resultRegister)) {
                     savedRegisterIds.Remove(includedIds);
                 }
             }
@@ -194,16 +194,12 @@ namespace Inu.Cate
             }
 
             //writer.WriteLine(ExitLabel + ":");
-            compiler.RestoreRegisters(writer, savedRegisterIds);
+            compiler.RestoreRegisters(writer, savedRegisterIds, Type.ByteCount);
             compiler.WriteEndOfFunction(writer, this);
         }
 
         private void WriteLocalVariables(StreamWriter writer, ref int offset)
         {
-            if (Name.Contains("Trace"))
-            {
-                var aaa = 111;
-            }
             if (localVariableIds.Count > 0) {
                 writer.WriteLine("\tdseg");
             }
@@ -298,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("pPoint[1] = 224")) {
+                if (instruction.ToString().Contains("oldDirection = Man[5] & 6")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

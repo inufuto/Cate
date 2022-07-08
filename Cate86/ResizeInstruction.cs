@@ -27,7 +27,8 @@ namespace Inu.Cate.I8086
         {
             if (Equals(DestinationOperand.Register, WordRegister.Ax)) {
                 ByteRegister.Al.Load(this, SourceOperand);
-                WriteLine("\tcbw");
+                //WriteLine("\tcbw");
+                WriteLine("\txor ah,ah");
                 WordRegister.Ax.Store(this, DestinationOperand);
                 return;
             }
@@ -35,7 +36,8 @@ namespace Inu.Cate.I8086
                 ByteOperation.UsingRegister(this, ByteRegister.Al, () =>
                 {
                     ByteRegister.Al.Load(this, SourceOperand);
-                    WriteLine("\tcbw");
+                    //WriteLine("\tcbw");
+                    WriteLine("\txor ah,ah");
                     WordRegister.Ax.Store(this, DestinationOperand);
                 });
                 return;

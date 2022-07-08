@@ -1478,7 +1478,7 @@ namespace Inu.Cate
         {
             var savingRegisterIds = new HashSet<Register>();
             foreach (var register in registers) {
-                var set = SavingRegisters((Register)register);
+                var set = SavingRegisters(register);
                 foreach (var r in set) {
                     savingRegisterIds.Add(r);
                 }
@@ -1487,9 +1487,9 @@ namespace Inu.Cate
         }
 
 
-        public virtual void SaveRegisters(StreamWriter writer, ISet<Register> register)
+        public virtual void SaveRegisters(StreamWriter writer, ISet<Register> registers)
         {
-            var set = SavingRegisterIds((ISet<Register>)register).ToImmutableSortedSet();
+            var set = SavingRegisterIds((ISet<Register>)registers).ToImmutableSortedSet();
             foreach (var r in set) {
                 r.Save(writer, null, false, 0);
             }
@@ -1504,13 +1504,19 @@ namespace Inu.Cate
             }
         }
 
-        public virtual void RestoreRegisters(StreamWriter writer, ISet<Register> registers)
+        public virtual void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int byteCount)
         {
-            var ids = SavingRegisterIds(registers).ToImmutableSortedSet().Reverse();
-            foreach (var id in ids) {
-                id.Restore(writer, null, false, 0);
+            foreach (var register in SavingRegisterIds(registers).ToImmutableSortedSet().Reverse())
+            {
+                RestoreRegister(writer, register, byteCount);
             }
         }
+
+        protected virtual void RestoreRegister(StreamWriter writer, Register register, int byteCount)
+        {
+            register.Restore(writer, null, false, 0);
+        }
+
         public virtual void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
         {
             var dictionary = DistinctRegisters(variables);
@@ -1664,7 +1670,7 @@ namespace Inu.Cate
             MakeAlignment(writer, ref offset);
         }
 
-        public virtual void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
-        { }
+        //public virtual void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
+        //{ }
     }
 }
