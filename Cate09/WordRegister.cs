@@ -216,7 +216,7 @@ namespace Inu.Cate.Mc6809
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
             }
-            WordOperation.Operate(instruction, operation + Name, change, operand);
+            Mc6809.WordOperation.Operate(instruction, operation, change, operand, 1);
         }
 
 

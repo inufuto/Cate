@@ -62,14 +62,14 @@ namespace Inu.Cate.I8086
             else {
                 base.LoadConstant(instruction, value);
             }
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tmov " + this + ",[" + label + "]");
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -94,7 +94,7 @@ namespace Inu.Cate.I8086
             Debug.Assert(pointerRegister.IsPointer(offset));
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
             instruction.WriteLine("\tmov " + this + ",[" + WordRegister.AsPointer(pointerRegister) + addition + "]");
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -108,7 +108,7 @@ namespace Inu.Cate.I8086
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
         {
             instruction.WriteLine("\tmov " + this + "," + sourceRegister);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 

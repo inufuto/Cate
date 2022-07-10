@@ -10,7 +10,7 @@
             if (Equals(Operand.Register, WordRegister.Cx)) {
                 WriteLine("\tloop " + Anchor.Label);
                 ChangedRegisters.Add(WordRegister.Cx);
-                RemoveVariableRegister(WordRegister.Cx);
+                RemoveRegisterAssignment(WordRegister.Cx);
                 return;
             }
             ByteOperation.Operate(this, "dec\t", true, Operand);
