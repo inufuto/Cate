@@ -32,7 +32,10 @@ namespace Inu.Cate
         public abstract void LoadConstant(Instruction instruction, string value);
         public virtual void LoadConstant(Instruction instruction, int value)
         {
-            if (instruction.IsConstantAssigned(this, value)) return;
+            if (instruction.IsConstantAssigned(this, value)) {
+                instruction.ChangedRegisters.Add(this);
+                return;
+            }
             LoadConstant(instruction, value.ToString());
             instruction.SetRegisterConstant(this, value);
         }
@@ -53,8 +56,7 @@ namespace Inu.Cate
 
         public void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
-            if (instruction.IsRegisterInUse(this))
-            {
+            if (instruction.IsRegisterInUse(this)) {
                 var changed = instruction.ChangedRegisters.Contains(this);
                 Add(instruction, offset);
                 action();

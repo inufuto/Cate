@@ -42,7 +42,10 @@ namespace Inu.Cate
 
         public virtual void LoadConstant(Instruction instruction, int value)
         {
-            if (instruction.IsConstantAssigned(this, value)) return;
+            if (instruction.IsConstantAssigned(this, value)) {
+                instruction.ChangedRegisters.Add(this);
+                return;
+            }
             LoadConstant(instruction, value.ToString());
             instruction.SetRegisterConstant(this, value);
         }
@@ -86,7 +89,6 @@ namespace Inu.Cate
         {
             switch (sourceOperand) {
                 case IntegerOperand integerOperand:
-                    if (instruction.IsConstantAssigned(this, integerOperand.IntegerValue)) return;
                     LoadConstant(instruction, integerOperand.IntegerValue);
                     return;
                 case StringOperand stringOperand:

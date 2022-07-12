@@ -49,7 +49,10 @@ namespace Inu.Cate.Mc6809
 
         public override void LoadConstant(Instruction instruction, int value)
         {
-            if (instruction.IsConstantAssigned(this, value)) return;
+            if (instruction.IsConstantAssigned(this, value)) {
+                instruction.ChangedRegisters.Add(this);
+                return;
+            }
             if (value == 0) {
                 instruction.WriteLine("\tclr" + Name);
                 instruction.ChangedRegisters.Add(this);
@@ -159,7 +162,7 @@ namespace Inu.Cate.Mc6809
                 goto end;
             }
             Cate.Compiler.Instance.ByteOperation.Operate(instruction, operation + Name, change, operand);
-            end:
+        end:
             if (!change)
                 return;
             instruction.RemoveRegisterAssignment(this);
