@@ -200,10 +200,6 @@ namespace Inu.Cate
 
         private void WriteLocalVariables(StreamWriter writer, ref int offset)
         {
-            if (Name.Contains("Trace"))
-            {
-                var aaa = 111;
-            }
             if (localVariableIds.Count > 0) {
                 writer.WriteLine("\tdseg");
             }
@@ -298,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("p[5] = 255")) {
+                if (instruction.ToString().Contains("TestMap2_(newX,newY)")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

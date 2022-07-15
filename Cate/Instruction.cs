@@ -295,8 +295,11 @@ namespace Inu.Cate
                                 }
                                 break;
                             }
-                        case RegisterConstantAssignment _:
-                            constantRegisters.Add(register);
+                        case RegisterConstantAssignment constantAssignment:
+                            if (!previousInstruction.IsRegisterInVariableRange(register, null)) {
+                                constantRegisters.Add(register);
+                            }
+
                             break;
                     }
                 }
