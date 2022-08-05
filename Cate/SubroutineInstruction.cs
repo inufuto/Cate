@@ -124,77 +124,28 @@ namespace Inu.Cate
 
         public override void BuildAssembly()
         {
-            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
-            //Register? savedRegister = null;
-            //if (DestinationOperand != null) {
-            //    if (!DestinationOperand.Conflicts(returnRegister)) {
-            //        foreach (var parameter in TargetFunction.Parameters) {
-            //            if (parameter.Register == null ||
-            //                !DestinationOperand.Conflicts(parameter.Register)) continue;
-            //            parameter.Register.Save(this);
-            //            savedRegister = parameter.Register;
-            //        }
-            //    }
-            //    else {
-            //        returnRegister.Save(this);
-            //        savedRegister = returnRegister;
-            //    }
-            //}
-
-
             FillParameters();
             ResultFlags = 0;
             Call();
 
-            if (returnRegister != null) {
-                ChangedRegisters.Add(returnRegister);
-                RemoveRegisterAssignment(returnRegister);
-                if (DestinationOperand != null) {
-                    void StoreResult(Register register)
-                    {
-                        switch (register) {
-                            case ByteRegister byteRegister:
-                                byteRegister.Store(this, DestinationOperand);
-                                break;
-                            case WordRegister wordRegister:
-                                wordRegister.Store(this, DestinationOperand);
-                                break;
-                        }
-                    }
-
-                    Debug.Assert(returnRegister != null);
-                    RemoveRegisterAssignment(returnRegister);
-                    //if (!Equals(returnRegister, DestinationOperand.Register)) {
-                    BeginRegister(returnRegister);
-                    EndRegister(returnRegister);
-                    //}
-                    //if (savedRegister != null) {
-                    //    if (savedRegister.Conflicts(returnRegister)) {
-                    //        if (returnRegister.ByteCount == 1) {
-                    //            ByteOperation.UsingAnyRegister(this, ByteOperation.Registers.Where(r => !r.Conflicts(returnRegister)).ToList(), register =>
-                    //               {
-                    //                   register.CopyFrom(this, (ByteRegister)returnRegister);
-                    //                   savedRegister.Restore(this);
-                    //                   ChangedRegisters.Remove(savedRegister);
-                    //                   StoreResult(register);
-                    //               });
-                    //        }
-                    //        else {
-                    //            WordOperation.UsingAnyRegister(this, WordOperation.Registers.Where(r => !r.Conflicts(returnRegister)).ToList(), register =>
-                    //            {
-                    //                register.CopyFrom(this, (WordRegister)returnRegister);
-                    //                savedRegister.Restore(this);
-                    //                ChangedRegisters.Remove(savedRegister);
-                    //                StoreResult(register);
-                    //            });
-                    //        }
-                    //        return;
-                    //    }
-                    //    savedRegister.Restore(this);
-                    //    ChangedRegisters.Remove(savedRegister);
-                    //}
-                    StoreResult(returnRegister);
-                }
+            if (DestinationOperand == null)
+                return;
+            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
+            Debug.Assert(returnRegister != null);
+            RemoveRegisterAssignment(returnRegister);
+            //if (!Equals(returnRegister, DestinationOperand.Register)) {
+            BeginRegister(returnRegister);
+            EndRegister(returnRegister);
+            //}
+            ChangedRegisters.Add(returnRegister);
+            RemoveRegisterAssignment(returnRegister);
+            switch (returnRegister) {
+                case ByteRegister byteRegister:
+                    byteRegister.Store(this, DestinationOperand);
+                    break;
+                case WordRegister wordRegister:
+                    wordRegister.Store(this, DestinationOperand);
+                    break;
             }
         }
 
@@ -229,8 +180,14 @@ namespace Inu.Cate
         protected void FillParameters()
         {
             StoreParameters();
-            foreach (var assignment in ParameterAssignments.Where(assignment => !Equals(assignment.Parameter.Register, assignment.Operand.Register))) {
-                if (assignment.Parameter.Register != null) RemoveRegisterAssignment(assignment.Parameter.Register);
+            foreach (var assignment in ParameterAssignments.Where(assignment => !Equals(assignment.Parameter.Register, assignment.Operand.Register)))
+            {
+                if (assignment.Parameter.Register == null) continue;
+                if (!(assignment.Operand is VariableOperand variableOperand) ||
+                    !Equals(GetVariableRegister(variableOperand.Variable, variableOperand.Offset), assignment.Parameter.Register))
+                {
+                    RemoveRegisterAssignment(assignment.Parameter.Register);
+                }
             }
 
             var changed = true;

@@ -82,7 +82,7 @@ namespace Inu.Cate
 
         public Variable CreateTemporaryVariable(Type type)
         {
-            var name = Variable.TemporaryVariablePrefix + (++lastTemporaryVariableIndex).ToString();
+            var name = Compiler.Instance.LabelPrefix + (++lastTemporaryVariableIndex).ToString();
             var id = Identifier.Add(name);
             Debug.Assert(functionBlock != null);
             return functionBlock.AddVariable(id, type, Visibility.Private, false, null);
@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("TestMap2_(newX,newY)")) {
+                if (instruction.ToString().Contains("direction = CellToDirection_(cell)")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

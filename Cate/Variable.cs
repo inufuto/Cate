@@ -10,9 +10,6 @@ namespace Inu.Cate
 {
     public class Variable : NamedValue
     {
-        public const string TemporaryVariablePrefix = "__";
-
-
         [Flags]
         public enum Usage
         {
@@ -87,7 +84,7 @@ namespace Inu.Cate
 
         public static string LocalVariableName(int id)
         {
-            return TemporaryVariablePrefix + "Local" + id.ToString();
+            return Compiler.Instance.LabelPrefix + "Local" + id.ToString();
         }
 
         public int Range
@@ -146,7 +143,7 @@ namespace Inu.Cate
 
         public bool IsTemporary()
         {
-            return Name.StartsWith(TemporaryVariablePrefix);
+            return Name.StartsWith(Compiler.Instance.LabelPrefix);
         }
 
 

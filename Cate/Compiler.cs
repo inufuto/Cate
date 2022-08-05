@@ -48,7 +48,7 @@ namespace Inu.Cate
             var elementValues = bytes.Select(b => (Constant)new ConstantInteger(IntegerType.ByteType, b)).ToList();
             var arrayType = new ArrayType(IntegerType.ByteType, elementValues.Count);
             var value = new ConstantArray(arrayType, elementValues);
-            var name = "__string" + id;
+            var name = LabelPrefix + "string" + id;
             var variableId = Identifier.Add(name);
             return globalBlock.AddVariable(variableId, arrayType, Visibility.Private, true, value);
         }
@@ -1621,6 +1621,7 @@ namespace Inu.Cate
         public virtual int Alignment => 1;
         public virtual IntegerType CounterType => IntegerType.ByteType;
         public virtual string ParameterPrefix => "@";
+        public virtual string LabelPrefix => "@";
 
         public int AlignedSize(int size)
         {
