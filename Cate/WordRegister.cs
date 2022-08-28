@@ -54,7 +54,7 @@ namespace Inu.Cate
 
         public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
 
-        public void TemporaryOffset(Instruction instruction, int offset, Action action)
+        public virtual void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
             if (instruction.IsRegisterInUse(this)) {
                 var changed = instruction.ChangedRegisters.Contains(this);
@@ -66,12 +66,17 @@ namespace Inu.Cate
                 }
             }
             else {
+                var changed = instruction.ChangedRegisters.Contains(this);
                 instruction.BeginRegister(this);
                 Add(instruction, offset);
                 instruction.RemoveRegisterAssignment(this);
                 instruction.ChangedRegisters.Add(this);
                 action();
+                Add(instruction, -offset);
                 instruction.EndRegister(this);
+                if (!changed) {
+                    instruction.ChangedRegisters.Remove(this);
+                }
             }
         }
     }

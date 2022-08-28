@@ -66,3 +66,7 @@ Cate99/Properties/
 /build_cate.bat
 /runtime/8086/.vscode
 /.vscode
+/Cate80i/.vs
+/Cate80i/bin
+/Cate80i/obj
+/Cate80i/Properties

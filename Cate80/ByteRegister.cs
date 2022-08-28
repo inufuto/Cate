@@ -331,6 +331,8 @@ namespace Inu.Cate.Z80
 
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
         {
+            if (Equals(sourceRegister, this)) return;
+
             instruction.WriteLine("\tld\t" + this + "," + sourceRegister);
             instruction.ChangedRegisters.Add(this);
             instruction.RemoveRegisterAssignment(this);

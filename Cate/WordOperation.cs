@@ -18,7 +18,7 @@ namespace Inu.Cate
             return Registers.Where(r => r.IsPointer(offset)).ToList();
         }
 
-        public void UsingRegister(Instruction instruction, WordRegister register, Action action)
+        public virtual void UsingRegister(Instruction instruction, WordRegister register, Action action)
         {
             if (instruction.IsRegisterInUse(register)) {
                 var candidates = Registers.Where(

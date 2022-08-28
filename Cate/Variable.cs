@@ -199,7 +199,7 @@ namespace Inu.Cate
                 var to = nextKey - modify;
                 for (var address = from; address <= to; ++address) {
                     var instruction = function.Instructions[address];
-                    if (instruction.TemporaryRegisterIds.Any(r =>
+                    if (instruction.TemporaryRegisters.Any(r =>
                             register.Conflicts(r))) {
                         instruction.AddSavingVariable(this);
                     }

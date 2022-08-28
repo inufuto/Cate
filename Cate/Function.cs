@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -165,7 +166,6 @@ namespace Inu.Cate
 
             for (var address = 0; address < Instructions.Count; ++address) {
                 var instruction = Instructions[address];
-
                 var nextInstruction = address + 1 < Instructions.Count ? Instructions[address + 1] : null;
                 lastAddress = address;
                 foreach (var anchor in Anchors.Where(anchor => anchor.Address == address)) {
@@ -294,9 +294,10 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("direction = CellToDirection_(cell)")) {
+                if (instruction.ToString().Contains("@19 = GetCell_(x,y)")) {
                     var aaa = 111;
                 }
+                        //Debug.Print(instruction.ToString());
                 instruction.BuildAssembly();
             }
 
