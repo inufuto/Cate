@@ -259,6 +259,20 @@ namespace Inu.Cate
             }
         }
 
+        public void RemoveStaticVariableAssignments()
+        {
+            var removedRegisters = new HashSet<Register>();
+            foreach (var (key, assignment) in RegisterAssignments) {
+                if (!(assignment is RegisterVariableAssignment variableAssignment)) continue;
+                var variable = variableAssignment.Variable;
+                if (variable.Static) {
+                    removedRegisters.Add(key);
+                }
+            }
+            foreach (var assignment in removedRegisters) {
+                RegisterAssignments.Remove(assignment);
+            }
+        }
 
         public bool IsRegisterInVariableRange(Register? register, Variable? excludedVariable)
         {

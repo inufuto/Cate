@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("@19 = GetCell_(x,y)")) {
+                if (instruction.ToString().Contains("RotBit_()")) {
                     var aaa = 111;
                 }
                         //Debug.Print(instruction.ToString());

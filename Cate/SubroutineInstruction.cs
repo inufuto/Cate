@@ -136,6 +136,7 @@ namespace Inu.Cate
             FillParameters();
             ResultFlags = 0;
             Call();
+            RemoveStaticVariableAssignments();
 
             if (DestinationOperand == null)
                 return;
