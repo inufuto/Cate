@@ -193,7 +193,8 @@ namespace Inu.Cate.I8080
                 case VariableOperand sourceVariableOperand: {
                         var sourceVariable = sourceVariableOperand.Variable;
                         var sourceOffset = sourceVariableOperand.Offset;
-                        if (sourceVariable.Register is WordRegister sourceRegister) {
+                        var variableRegister = instruction.GetVariableRegister(sourceVariableOperand);
+                        if (variableRegister is WordRegister sourceRegister) {
                             Debug.Assert(sourceOffset == 0);
                             if (!Equals(sourceRegister, this)) {
                                 CopyFrom(instruction, sourceRegister);

@@ -58,9 +58,8 @@ namespace Inu.Cate
         protected virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
             var wordOperation = Compiler.Instance.WordOperation;
-            wordOperation.UsingAnyRegister(instruction,
-                wordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList(),
-                pointerRegister =>
+            var candidates = wordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList();
+            wordOperation.UsingAnyRegister(instruction, candidates, pointerRegister =>
             {
                 pointerRegister.LoadFromMemory(instruction, pointer, 0);
                 LoadIndirect(instruction, pointerRegister, offset);

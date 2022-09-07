@@ -172,6 +172,9 @@ namespace Inu.Cate
             foreach (var sourceOperand in SourceOperands) {
                 AddSourceRegister(sourceOperand);
             }
+            if (DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register != null) {
+                AddSourceRegister(DestinationOperand);
+            }
         }
 
         //public override void RemoveDestinationRegister()
