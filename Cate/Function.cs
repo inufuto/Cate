@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("*pMonster = ToMapSize_(*pStage)")) {
+                if (instruction.ToString().Contains("@8 = @9 << 8")) {
                     var aaa = 111;
                 }
                         //Debug.Print(instruction.ToString());

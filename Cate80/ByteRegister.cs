@@ -289,6 +289,18 @@ namespace Inu.Cate.Z80
                 return;
             }
 
+            if (pointerRegister.Conflicts(this)) {
+                WordOperation.UsingAnyRegister(instruction, WordRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList(), temporaryRegister =>
+                {
+                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                    temporaryRegister.TemporaryOffset(instruction, offset, () =>
+                    {
+                        LoadIndirect(instruction, temporaryRegister, 0);
+                    });
+                });
+                return;
+            }
+
             pointerRegister.TemporaryOffset(instruction, offset, () =>
             {
                 LoadIndirect(instruction, pointerRegister, 0);
