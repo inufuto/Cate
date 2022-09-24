@@ -1540,7 +1540,7 @@ namespace Inu.Cate
 
         public abstract void AllocateRegisters(List<Variable> variables, Function function);
         public abstract Register? ParameterRegister(int index, ParameterizableType type);
-        public abstract Register ReturnRegister(int byteCount);
+        public abstract Register? ReturnRegister(int byteCount);
 
         public LoadInstruction CreateLoadInstruction(Function function, AssignableOperand destinationOperand,
             Operand sourceOperand)
@@ -1580,7 +1580,7 @@ namespace Inu.Cate
             AssignableOperand destinationOperand,
             Operand leftOperand, int rightValue);
 
-        public abstract IEnumerable<Register> IncludedRegisterIds(Register register);
+        public abstract IEnumerable<Register> IncludedRegisterIds(Register? register);
 
         public void AddExternalName(string externalName)
         {

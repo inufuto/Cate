@@ -152,7 +152,7 @@ namespace Inu.Cate.Z80
             return SubroutineInstruction.ParameterRegister(index, type);
         }
 
-        public override Register ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(int byteCount)
         {
             return SubroutineInstruction.ReturnRegister(byteCount);
         }
@@ -273,7 +273,7 @@ namespace Inu.Cate.Z80
             return new MultiplyInstruction(function, destinationOperand, leftOperand, rightValue);
         }
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register register)
+        public override IEnumerable<Register> IncludedRegisterIds(Register? register)
         {
             if (register is WordRegister wordRegister) {
                 return wordRegister.ByteRegisters;

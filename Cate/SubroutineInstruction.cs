@@ -138,6 +138,10 @@ namespace Inu.Cate
             Call();
             RemoveStaticVariableAssignments();
 
+            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
+            if (returnRegister != null) {
+                ChangedRegisters.Add(returnRegister);
+            }
             if (DestinationOperand == null)
                 return;
             if (savedRegister != null) {
@@ -147,14 +151,12 @@ namespace Inu.Cate
                     ChangedRegisters.Remove(removedRegister);
                 }
             }
-            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
             Debug.Assert(returnRegister != null);
             RemoveRegisterAssignment(returnRegister);
             //if (!Equals(returnRegister, DestinationOperand.Register)) {
             BeginRegister(returnRegister);
             EndRegister(returnRegister);
             //}
-            ChangedRegisters.Add(returnRegister);
             RemoveRegisterAssignment(returnRegister);
             switch (returnRegister) {
                 case ByteRegister byteRegister:
