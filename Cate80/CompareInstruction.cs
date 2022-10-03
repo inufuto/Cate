@@ -98,7 +98,7 @@ namespace Inu.Cate.Z80
                         return;
                     }
                 }
-                List<Cate.WordRegister> candidates = new List<Cate.WordRegister>() { WordRegister.De, WordRegister.Bc }.ToList();
+                var candidates = new List<Cate.WordRegister>() { WordRegister.De, WordRegister.Bc }.ToList();
                 WordRegister.UsingAny(this, candidates, temporaryRegister =>
                 {
                     temporaryRegister.Load(this, RightOperand);

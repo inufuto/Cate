@@ -275,7 +275,16 @@ namespace Inu.Cate
                         continue;
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
-                    var other = ParameterAssignments.Find(a => !a.Done && Equals(a.Operand.Register, parameter.Register));
+                    var other = ParameterAssignments.Find(a =>
+                    {
+                        if (a.Done) return false;
+                        Register? variableRegister = null;
+                        if (a.Operand is VariableOperand variableOperand) {
+                            var variable = variableOperand.Variable;
+                            variableRegister = GetVariableRegister(variable, variableOperand.Offset);
+                        }
+                        return Equals(variableRegister, parameter.Register);
+                    });
                     if (other != null && Equals(other.Parameter.Register, operand.Register)) {
                         assignment.Exchange(this, other);
                     }
@@ -284,14 +293,23 @@ namespace Inu.Cate
 
             List<ParameterAssignment> Twisted()
             {
-                return ParameterAssignments.Where(a => a.Done && !Equals(a.Parameter.Register, a.Register)).ToList();
+                return ParameterAssignments.Where(a =>
+                {
+                    if (!a.Done) return false;
+                    if (a.Operand is VariableOperand variableOperand) {
+                        if (Equals(GetVariableRegister(variableOperand), a.Register)) return false;
+                    }
+                    return !Equals(a.Parameter.Register, a.Register);
+                }).ToList();
             }
-            var l = Twisted();
-            while (l.Count > 1) {
-                foreach (var parameterAssignment in l.Where(parameterAssignment => !l.Any(a => a != parameterAssignment && Equals(a.Register, parameterAssignment.Parameter.Register)))) {
+            var twisted = Twisted();
+            while (twisted.Count > 1) {
+                var parameterAssignments = twisted.Where(parameterAssignment => !twisted.Any(a => a != parameterAssignment && Equals(a.Register, parameterAssignment.Parameter.Register))).ToList();
+                if (!parameterAssignments.Any()) break;
+                foreach (var parameterAssignment in parameterAssignments) {
                     parameterAssignment.Close(this);
                 }
-                l = Twisted();
+                twisted = Twisted();
             }
             foreach (var assignment in ParameterAssignments.Where(assignment => assignment.Done)) {
                 assignment.Close(this);
@@ -306,12 +324,12 @@ namespace Inu.Cate
                     case VariableOperand variableOperand: {
 
                             var operandRegister = GetVariableRegister(variableOperand.Variable, variableOperand.Offset); //variableOperand.Variable.Register;
-                            if (operandRegister != null && operandRegister.Conflicts(register)) return true;
+                            if (operandRegister != null && operandRegister.Matches(register)) return true;
                             break;
                         }
                     case IndirectOperand indirectOperand: {
                             var operandRegister = indirectOperand.Variable.Register;
-                            if (operandRegister != null && operandRegister.Conflicts(register)) return true;
+                            if (operandRegister != null && operandRegister.Matches(register)) return true;
                             break;
                         }
                 }

@@ -72,15 +72,16 @@ namespace Inu.Cate
                 StoreIndirect(instruction, wordRegister, offset);
                 return;
             }
-            Compiler.Instance.WordOperation.UsingAnyRegister(instruction,
-                Compiler.Instance.WordOperation.PointerRegisters(offset),
-                pointerRegister =>
-                {
-                    pointerRegister.LoadFromMemory(instruction, pointer, 0);
-                    //instruction.RemoveVariableRegisterId(pointerRegister.Id);
-                    StoreIndirect(instruction, pointerRegister, offset);
-                });
-            //instruction.RemoveVariableRegisterId(Id);
+
+            var pointerRegisters = Compiler.Instance.WordOperation.PointerRegisters(offset);
+            if (pointerRegisters.Count == 0) {
+                pointerRegisters = Compiler.Instance.WordOperation.Registers;
+            }
+            Compiler.Instance.WordOperation.UsingAnyRegister(instruction, pointerRegisters, pointerRegister =>
+            {
+                pointerRegister.LoadFromMemory(instruction, pointer, 0);
+                StoreIndirect(instruction, pointerRegister, offset);
+            });
         }
 
 
