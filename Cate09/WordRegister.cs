@@ -118,6 +118,7 @@ namespace Inu.Cate.Mc6809
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             instruction.WriteLine("\tld" + this + "\t" + OffsetOperand(pointerRegister, offset));
+            instruction.ChangedRegisters.Add(this);
             instruction.RemoveRegisterAssignment(this);
         }
 

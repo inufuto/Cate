@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("ShowSprite_(sprite,x,y,pattern)")) {
+                if (instruction.ToString().Contains("pMember = *@5")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();
