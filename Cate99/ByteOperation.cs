@@ -73,27 +73,25 @@ namespace Inu.Cate.Tms99
             }
             Debug.Assert(instance != null);
             var candidates = ByteRegister.Registers.Where(r => !rightOperand.Conflicts(r)).ToList();
-            instance.UsingAnyRegisterToChange(instruction, candidates, destinationOperand, leftOperand, register =>
+            instance.UsingAnyRegisterToChange(instruction, candidates, destinationOperand, leftOperand, destinationRegister =>
             {
-                register.Load(instruction, leftOperand);
+                destinationRegister.Load(instruction, leftOperand);
                 var right = Compiler.OperandToString(instruction, rightOperand);
                 if (right != null) {
-                    instruction.WriteLine("\t" + operation + "\t" + right + "," + register.Name);
-                    instruction.ChangedRegisters.Add(register);
-                    register.Store(instruction, destinationOperand);
+                    instruction.WriteLine("\t" + operation + "\t" + right + "," + destinationRegister.Name);
+                    instruction.ChangedRegisters.Add(destinationRegister);
+                    destinationRegister.Store(instruction, destinationOperand);
                 }
                 else {
-                    instance.UsingAnyRegisterToChange(instruction, destinationOperand, leftOperand, destinationRegister =>
+                    instruction.BeginRegister(destinationRegister);
+                    instance.UsingAnyRegister(instruction, null, rightOperand, rightRegister =>
                     {
-                        instance.UsingAnyRegister(instruction, rightRegister =>
-                        {
-                            rightRegister.Load(instruction, rightOperand);
-                            destinationRegister.Load(instruction, leftOperand);
-                            instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," + destinationRegister.Name);
-                            instruction.ChangedRegisters.Add(destinationRegister);
-                            destinationRegister.Store(instruction, destinationOperand);
-                        });
+                        rightRegister.Load(instruction, rightOperand);
+                        instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," + destinationRegister.Name);
+                        instruction.ChangedRegisters.Add(destinationRegister);
+                        destinationRegister.Store(instruction, destinationOperand);
                     });
+                    instruction.EndRegister(destinationRegister);
                 }
             });
         }
@@ -107,6 +105,7 @@ namespace Inu.Cate.Tms99
                 instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
                 register.Store(instruction, destinationOperand);
                 instruction.ChangedRegisters.Add(register);
+                instruction.RemoveRegisterAssignment(register);
             });
         }
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)
