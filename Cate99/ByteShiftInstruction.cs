@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -9,20 +8,34 @@ namespace Inu.Cate.Tms99
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            var operation = Operation();
-
-            var r0 = ByteRegister.FromIndex(0);
-            var candidates = ByteRegister.Registers.Where(r => !r.Conflicts(r0)).ToList();
-            ByteOperation.UsingAnyRegister(this, candidates, DestinationOperand, LeftOperand, leftRegister =>
+            var functionName = OperatorId switch
             {
-                leftRegister.Load(this, LeftOperand);
-                ByteOperation.UsingRegister(this, r0, RightOperand, () =>
+                Keyword.ShiftLeft => "cate.ShiftLeft",
+                Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
+                    ? "cate.ShiftRightSigned"
+                    : "cate.ShiftRight",
+                _ => throw new NotImplementedException()
+            };
+            var r0 = ByteRegister.FromIndex(0);
+            var r1 = ByteRegister.FromIndex(1);
+            ByteOperation.UsingRegister(this, r1, () =>
+            {
+                void CallShift()
                 {
-                    r0.Load(this, RightOperand);
-                    WriteLine("\tsrl\tr0,8");
-                    WriteLine("\t" + operation + "\t" + leftRegister + ",r0");
-                });
-                leftRegister.Store(this, DestinationOperand);
+                    r0.Load(this, LeftOperand);
+                    Compiler.CallExternal(this, functionName);
+                    WriteLine("\tandi\tr0,>ff00");
+                    RemoveRegisterAssignment(r0);
+                    ChangedRegisters.Add(r0);
+                    r0.Store(this, DestinationOperand);
+                }
+                r1.Load(this, RightOperand);
+                if (Equals(DestinationOperand.Register, r0)) {
+                    CallShift();
+                }
+                else {
+                    ByteOperation.UsingRegister(this, r0, CallShift);
+                }
             });
         }
 

@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("__10 = 1 << __11")) {
+                if (instruction.ToString().Contains("@8 = 1 << @9")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();
