@@ -274,6 +274,7 @@ namespace Inu.Cate.Tms99
                 }
             }
             instruction.RemoveRegisterAssignment(this);
+            instruction.ChangedRegisters.Add(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)

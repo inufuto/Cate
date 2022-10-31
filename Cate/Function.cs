@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("@8 = 1 << @9")) {
+                if (instruction.ToString().Contains("if *ppMember == 0 goto MoveTeams__Anchor66")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();
