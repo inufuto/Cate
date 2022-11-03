@@ -48,9 +48,10 @@ namespace Inu.Cate
                         var offset = variableOperand.Offset;
                         var register = variable.Register;
                         if (register is ByteRegister byteRegister) {
-                            Debug.Assert(operation.Replace("\t", "").Replace(" ","").Length == 3);
+                            Debug.Assert(operation.Replace("\t", "").Replace(" ", "").Length == 3);
                             //var register = RegisterFromId(Register);
                             byteRegister.Operate(instruction, operation, change, count);
+                            instruction.ChangedRegisters.Remove(byteRegister);
                             instruction.ResultFlags |= Instruction.Flag.Z;
                             return;
                         }
@@ -110,6 +111,17 @@ namespace Inu.Cate
             instruction.BeginRegister(register);
             action();
             instruction.EndRegister(register);
+        }
+
+        public void UsingRegister(Instruction instruction, ByteRegister register, Operand operand, Action action)
+        {
+            if (Equals(operand.Register, register)) {
+                instruction.BeginRegister(operand.Register);
+                action();
+                instruction.EndRegister(operand.Register);
+                return;
+            }
+            UsingRegister(instruction, register, action);
         }
 
         public void UsingAnyRegister(Instruction instruction, List<ByteRegister> candidates,
@@ -252,7 +264,8 @@ namespace Inu.Cate
              });
         }
 
-        public abstract string ToTemporaryByte(Instruction instruction, ByteRegister rightRegister);
+        public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);
 
+      
     }
 }

@@ -68,7 +68,8 @@ namespace Inu.Cate
 
         public readonly int Address;
         public readonly IList<string> Codes = new List<string>();
-        private readonly ISet<Register> sourceRegisterIds = new HashSet<Register>();
+        private readonly ISet<Register> sourceRegisters = new HashSet<Register>();
+        private readonly ISet<Register> sourceRegisters2 = new HashSet<Register>();
         private readonly ISet<Register> temporaryRegisters = new HashSet<Register>();
         public readonly ISet<Register> ChangedRegisters = new HashSet<Register>();
         public readonly ISet<Variable> SavingVariables = new HashSet<Variable>();
@@ -105,7 +106,7 @@ namespace Inu.Cate
         }
 
 
-        public ISet<Register> TemporaryRegisterIds
+        public ISet<Register> TemporaryRegisters
         {
             get
             {
@@ -258,6 +259,20 @@ namespace Inu.Cate
             }
         }
 
+        public void RemoveStaticVariableAssignments()
+        {
+            var removedRegisters = new HashSet<Register>();
+            foreach (var (key, assignment) in RegisterAssignments) {
+                if (!(assignment is RegisterVariableAssignment variableAssignment)) continue;
+                var variable = variableAssignment.Variable;
+                if (variable.Static) {
+                    removedRegisters.Add(key);
+                }
+            }
+            foreach (var assignment in removedRegisters) {
+                RegisterAssignments.Remove(assignment);
+            }
+        }
 
         public bool IsRegisterInVariableRange(Register? register, Variable? excludedVariable)
         {
@@ -295,8 +310,11 @@ namespace Inu.Cate
                                 }
                                 break;
                             }
-                        case RegisterConstantAssignment _:
-                            constantRegisters.Add(register);
+                        case RegisterConstantAssignment constantAssignment:
+                            if (!previousInstruction.IsRegisterInVariableRange(register, null)) {
+                                constantRegisters.Add(register);
+                            }
+
                             break;
                     }
                 }
@@ -343,7 +361,7 @@ namespace Inu.Cate
             //if (temporaryRegisters.Contains(register))
             //    return true;
             var pairs = temporaryRegisters.Where(pair => pair.Matches(register)).ToList();
-            return pairs.Count > 0 || sourceRegisterIds.Any(id => id.Matches(register));
+            return pairs.Count > 0 || sourceRegisters.Any(id => id.Matches(register));
         }
 
         public Register? PreviousRegisterId(Variable variable, int offset)
@@ -386,7 +404,8 @@ namespace Inu.Cate
             {
                 var register = variable.Register;
                 if (register != null) {
-                    sourceRegisterIds.Add(register);
+                    sourceRegisters.Add(register);
+                    sourceRegisters2.Add(register);
                 }
             }
 
@@ -414,7 +433,7 @@ namespace Inu.Cate
         protected bool RemoveSourceRegister(Operand operand)
         {
             var register = RegisterOfOperand(operand);
-            return register != null && sourceRegisterIds.Remove(register);
+            return register != null && sourceRegisters.Remove(register);
         }
 
         public void WriteAssembly(StreamWriter writer, int tabCount)
@@ -456,7 +475,7 @@ namespace Inu.Cate
 
         public bool IsSourceOperand(Variable variable)
         {
-            return variable.Register != null && sourceRegisterIds.Contains(variable.Register);
+            return variable.Register != null && sourceRegisters2.Contains(variable.Register);
         }
 
         public static void Repeat(Action action, int count)

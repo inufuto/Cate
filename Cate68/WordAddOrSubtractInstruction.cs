@@ -38,6 +38,7 @@ namespace Inu.Cate.Mc6800
                         ByteRegister.Using(this, ByteRegister.A, () =>
                         {
                             AddByte(ByteRegister.A);
+                            RemoveRegisterAssignment(ByteRegister.A);
                         });
                         return;
                     }
@@ -45,6 +46,7 @@ namespace Inu.Cate.Mc6800
                         ByteRegister.Using(this, ByteRegister.B, () =>
                         {
                             AddByte(ByteRegister.B);
+                            RemoveRegisterAssignment(ByteRegister.B);
                         });
                         return;
                     }

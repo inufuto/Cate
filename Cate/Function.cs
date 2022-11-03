@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -82,7 +83,7 @@ namespace Inu.Cate
 
         public Variable CreateTemporaryVariable(Type type)
         {
-            var name = Variable.TemporaryVariablePrefix + (++lastTemporaryVariableIndex).ToString();
+            var name = Compiler.Instance.LabelPrefix + (++lastTemporaryVariableIndex).ToString();
             var id = Identifier.Add(name);
             Debug.Assert(functionBlock != null);
             return functionBlock.AddVariable(id, type, Visibility.Private, false, null);
@@ -125,7 +126,6 @@ namespace Inu.Cate
             compiler.WriteBeginningOfFunction(writer, this);
 
             ISet<Register> savedRegisterIds = new HashSet<Register>();
-            var resultRegister = compiler.ReturnRegister(Type.ByteCount);
             foreach (var instruction in Instructions.Where(i => !i.IsEmpty())) {
                 foreach (var changedRegister in instruction.ChangedRegisters) {
                     var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister);
@@ -144,10 +144,13 @@ namespace Inu.Cate
             }
 
             if (Type.ByteCount > 0) {
-                savedRegisterIds.Remove(resultRegister);
-                //compiler.RemoveSavingRegister(savedRegisterIds, Type.ByteCount);
-                foreach (var includedIds in compiler.IncludedRegisterIds(resultRegister)) {
-                    savedRegisterIds.Remove(includedIds);
+                var returnRegister = compiler.ReturnRegister(Type.ByteCount);
+                if (returnRegister != null) {
+                    savedRegisterIds.Remove(returnRegister);
+                    compiler.RemoveSavingRegister(savedRegisterIds, Type.ByteCount);
+                    foreach (var includedIds in compiler.IncludedRegisterIds(returnRegister)) {
+                        savedRegisterIds.Remove(includedIds);
+                    }
                 }
             }
             compiler.SaveRegisters(writer, savedRegisterIds);
@@ -165,7 +168,6 @@ namespace Inu.Cate
 
             for (var address = 0; address < Instructions.Count; ++address) {
                 var instruction = Instructions[address];
-
                 var nextInstruction = address + 1 < Instructions.Count ? Instructions[address + 1] : null;
                 lastAddress = address;
                 foreach (var anchor in Anchors.Where(anchor => anchor.Address == address)) {
@@ -294,7 +296,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("__3 = (sword)pFormation[1]")) {
+                if (instruction.ToString().Contains("pTarget[1] = cType + 6")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

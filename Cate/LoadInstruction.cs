@@ -62,9 +62,9 @@ namespace Inu.Cate
         protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers;
     }
 
-    public abstract class WordLoadInstruction : LoadInstruction
+    public class WordLoadInstruction : LoadInstruction
     {
-        protected WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
+        public WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
 
         public override void BuildAssembly()
         {

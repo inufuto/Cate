@@ -211,7 +211,7 @@ namespace Inu.Cate.I8086
 
         public override ReadOnlySpan<char> EndOfFunction => "\tret";
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register register)
+        public override IEnumerable<Register> IncludedRegisterIds(Register? register)
         {
             if (register is WordRegister wordRegister) {
                 return wordRegister.ByteRegisters;

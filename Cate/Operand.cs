@@ -16,7 +16,7 @@ namespace Inu.Cate
         {
             return Equals(operand);
         }
-
+       
     }
 
     public abstract class ConstantOperand : Operand

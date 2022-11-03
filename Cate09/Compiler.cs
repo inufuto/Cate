@@ -287,7 +287,7 @@ namespace Inu.Cate.Mc6809
             return new MultiplyInstruction(function, destinationOperand, leftOperand, rightValue);
         }
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register register)
+        public override IEnumerable<Register> IncludedRegisterIds(Register? register)
         {
             return Equals(register, WordRegister.D) ? new List<Register>() { ByteRegister.A, ByteRegister.B } : new List<Register>();
         }

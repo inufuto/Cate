@@ -53,6 +53,7 @@ namespace Inu.Cate.Mc6800
                     ByteRegister.Using(instruction, ByteRegister.A, () =>
                     {
                         AddByte(ByteRegister.A);
+                        instruction.RemoveRegisterAssignment(ByteRegister.A);
                     });
                     return;
                 }
@@ -60,6 +61,7 @@ namespace Inu.Cate.Mc6800
                     ByteRegister.Using(instruction, ByteRegister.B, () =>
                     {
                         AddByte(ByteRegister.B);
+                        instruction.RemoveRegisterAssignment(ByteRegister.B);
                     });
                     return;
                 }
@@ -72,6 +74,8 @@ namespace Inu.Cate.Mc6800
                 ByteRegister.B.LoadConstant(instruction, "low " + offset);
                 instruction.Compiler.CallExternal(instruction, "Cate.AddXAB");
                 instruction.RemoveRegisterAssignment(X);
+                instruction.RemoveRegisterAssignment(ByteRegister.A);
+                instruction.RemoveRegisterAssignment(ByteRegister.B);
             });
         }
 

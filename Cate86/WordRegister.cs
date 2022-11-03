@@ -110,7 +110,7 @@ namespace Inu.Cate.I8086
             }
             string label = variable.MemoryAddress(offset);
             instruction.WriteLine("\tmov " + this + ",[" + label + "]");
-            instruction.RemoveRegisterAssignment(this);
+            instruction.SetVariableRegister(variable, offset, this);
             instruction.ChangedRegisters.Add(this);
         }
 

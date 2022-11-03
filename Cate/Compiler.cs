@@ -48,7 +48,7 @@ namespace Inu.Cate
             var elementValues = bytes.Select(b => (Constant)new ConstantInteger(IntegerType.ByteType, b)).ToList();
             var arrayType = new ArrayType(IntegerType.ByteType, elementValues.Count);
             var value = new ConstantArray(arrayType, elementValues);
-            var name = "__string" + id;
+            var name = LabelPrefix + "string" + id;
             var variableId = Identifier.Add(name);
             return globalBlock.AddVariable(variableId, arrayType, Visibility.Private, true, value);
         }
@@ -1546,7 +1546,7 @@ namespace Inu.Cate
 
         public abstract void AllocateRegisters(List<Variable> variables, Function function);
         public abstract Register? ParameterRegister(int index, ParameterizableType type);
-        public abstract Register ReturnRegister(int byteCount);
+        public abstract Register? ReturnRegister(int byteCount);
 
         public LoadInstruction CreateLoadInstruction(Function function, AssignableOperand destinationOperand,
             Operand sourceOperand)
@@ -1586,7 +1586,7 @@ namespace Inu.Cate
             AssignableOperand destinationOperand,
             Operand leftOperand, int rightValue);
 
-        public abstract IEnumerable<Register> IncludedRegisterIds(Register register);
+        public abstract IEnumerable<Register> IncludedRegisterIds(Register? register);
 
         public void AddExternalName(string externalName)
         {
@@ -1627,6 +1627,7 @@ namespace Inu.Cate
         public virtual int Alignment => 1;
         public virtual IntegerType CounterType => IntegerType.ByteType;
         public virtual string ParameterPrefix => "@";
+        public virtual string LabelPrefix => "@";
 
         public int AlignedSize(int size)
         {
@@ -1670,7 +1671,7 @@ namespace Inu.Cate
             MakeAlignment(writer, ref offset);
         }
 
-        //public virtual void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
-        //{ }
+        public virtual void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
+        { }
     }
 }

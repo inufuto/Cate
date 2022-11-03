@@ -364,7 +364,9 @@ namespace Inu.Cate.Z80
                             byteRegister.LoadIndirect(instruction, pointerRegister, 0);
                             instruction.WriteLine("\tinc\t" + pointerRegister);
                             High.LoadIndirect(instruction, pointerRegister, 0);
-                            instruction.WriteLine("\tdec\t" + pointerRegister);
+                            if (!Equals(this, pointerRegister)) {
+                                instruction.WriteLine("\tdec\t" + pointerRegister);
+                            }
                             Low.CopyFrom(instruction, byteRegister);
                         });
                         return;
@@ -419,10 +421,10 @@ namespace Inu.Cate.Z80
                 }
                 ByteRegister.UsingAccumulator(instruction, () =>
                 {
-                    ByteRegister.A.CopyFrom(instruction,Low);
+                    ByteRegister.A.CopyFrom(instruction, Low);
                     ByteRegister.A.StoreIndirect(instruction, pointerRegister, 0);
                     instruction.WriteLine("\tinc\t" + pointerRegister);
-                    ByteRegister.A.CopyFrom(instruction,High);
+                    ByteRegister.A.CopyFrom(instruction, High);
                     ByteRegister.A.StoreIndirect(instruction, pointerRegister, 0);
                     instruction.WriteLine("\tdec\t" + pointerRegister);
                 });

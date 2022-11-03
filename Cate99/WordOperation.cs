@@ -9,10 +9,6 @@ namespace Inu.Cate.Tms99
     {
         private static WordOperation? instance;
         public override List<Cate.WordRegister> Registers => WordRegister.Registers;
-        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-        {
-            throw new NotImplementedException();
-        }
 
         public WordOperation()
         {
@@ -57,6 +53,8 @@ namespace Inu.Cate.Tms99
             {
                 register.Load(instruction, leftOperand);
                 instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
+                instruction.ChangedRegisters.Add(register);
+                instruction.RemoveRegisterAssignment(register);
                 register.Store(instruction, destinationOperand);
             }
             if (destinationOperand.Register is WordRegister destinationRegister) {

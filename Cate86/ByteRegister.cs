@@ -173,7 +173,7 @@ namespace Inu.Cate.I8086
                                 temporaryRegister =>
                             {
                                 temporaryRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
-                                instruction.SetVariableRegister(indirectOperand.Variable,0,temporaryRegister);
+                                instruction.SetVariableRegister(indirectOperand.Variable, 0, temporaryRegister);
                                 ForRegister(temporaryRegister);
                             });
                             return;
@@ -186,6 +186,10 @@ namespace Inu.Cate.I8086
         public override void Operate(Instruction instruction, string operation, bool change, string operand)
         {
             instruction.WriteLine("\t" + operation + this + "," + operand);
+            if (change) {
+                instruction.ChangedRegisters.Add(this);
+                instruction.RemoveRegisterAssignment(this);
+            }
         }
 
         public override Cate.WordRegister? PairRegister => I8086.PairRegister.FromName(Name.ToCharArray()[0] + "x");

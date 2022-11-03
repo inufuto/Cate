@@ -228,7 +228,7 @@ namespace Inu.Cate.Tms99
         public override IntegerType CounterType => IntegerType.WordType;
         public override string ParameterPrefix => "__";
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register register)
+        public override IEnumerable<Register> IncludedRegisterIds(Register? register)
         {
             return register switch
             {
@@ -335,5 +335,7 @@ namespace Inu.Cate.Tms99
             instruction.WriteLine("\t" + operation + "\t" + destination);
             return true;
         }
+
+        public override string LabelPrefix =>"__";
     }
 }

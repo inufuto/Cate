@@ -42,7 +42,10 @@ namespace Inu.Cate
 
         public virtual void LoadConstant(Instruction instruction, int value)
         {
-            if (instruction.IsConstantAssigned(this, value)) return;
+            if (instruction.IsConstantAssigned(this, value)) {
+                instruction.ChangedRegisters.Add(this);
+                return;
+            }
             LoadConstant(instruction, value.ToString());
             instruction.SetRegisterConstant(this, value);
         }
@@ -55,9 +58,8 @@ namespace Inu.Cate
         protected virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
             var wordOperation = Compiler.Instance.WordOperation;
-            wordOperation.UsingAnyRegister(instruction,
-                wordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList(),
-                pointerRegister =>
+            var candidates = wordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList();
+            wordOperation.UsingAnyRegister(instruction, candidates, pointerRegister =>
             {
                 pointerRegister.LoadFromMemory(instruction, pointer, 0);
                 LoadIndirect(instruction, pointerRegister, offset);
@@ -70,15 +72,16 @@ namespace Inu.Cate
                 StoreIndirect(instruction, wordRegister, offset);
                 return;
             }
-            Compiler.Instance.WordOperation.UsingAnyRegister(instruction,
-                Compiler.Instance.WordOperation.PointerRegisters(offset),
-                pointerRegister =>
-                {
-                    pointerRegister.LoadFromMemory(instruction, pointer, 0);
-                    //instruction.RemoveVariableRegisterId(pointerRegister.Id);
-                    StoreIndirect(instruction, pointerRegister, offset);
-                });
-            //instruction.RemoveVariableRegisterId(Id);
+
+            var pointerRegisters = Compiler.Instance.WordOperation.PointerRegisters(offset);
+            if (pointerRegisters.Count == 0) {
+                pointerRegisters = Compiler.Instance.WordOperation.Registers;
+            }
+            Compiler.Instance.WordOperation.UsingAnyRegister(instruction, pointerRegisters, pointerRegister =>
+            {
+                pointerRegister.LoadFromMemory(instruction, pointer, 0);
+                StoreIndirect(instruction, pointerRegister, offset);
+            });
         }
 
 
@@ -86,7 +89,6 @@ namespace Inu.Cate
         {
             switch (sourceOperand) {
                 case IntegerOperand integerOperand:
-                    if (instruction.IsConstantAssigned(this, integerOperand.IntegerValue)) return;
                     LoadConstant(instruction, integerOperand.IntegerValue);
                     return;
                 case StringOperand stringOperand:
@@ -126,13 +128,15 @@ namespace Inu.Cate
                                 return;
                             }
                             var candidates = WordOperation.Registers.Where(r => r.IsPointer(offset)).ToList();
-                            WordOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
-                            {
-                                temporaryRegister.CopyFrom(instruction, pointerRegister);
-                                LoadIndirect(instruction, temporaryRegister, offset);
-                            });
-                            instruction.ChangedRegisters.Add(this);
-                            return;
+                            if (candidates.Any()) {
+                                WordOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
+                                {
+                                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                                    LoadIndirect(instruction, temporaryRegister, offset);
+                                });
+                                instruction.ChangedRegisters.Add(this);
+                                return;
+                            }
                         }
                         LoadIndirect(instruction, pointer, offset);
                         instruction.ChangedRegisters.Add(this);
