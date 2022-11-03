@@ -53,6 +53,8 @@ namespace Inu.Cate.Tms99
             {
                 register.Load(instruction, leftOperand);
                 instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
+                instruction.ChangedRegisters.Add(register);
+                instruction.RemoveRegisterAssignment(register);
                 register.Store(instruction, destinationOperand);
             }
             if (destinationOperand.Register is WordRegister destinationRegister) {
