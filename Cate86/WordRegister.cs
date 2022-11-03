@@ -229,6 +229,7 @@ namespace Inu.Cate.I8086
                         }
                         WordOperation.UsingAnyRegister(instruction, PointerRegisters, pointerRegister =>
                         {
+                            pointerRegister.LoadFromMemory(instruction, destinationPointer, 0);
                             StoreIndirect(instruction, pointerRegister, destinationOffset);
                         });
                         return;
