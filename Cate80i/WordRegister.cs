@@ -127,15 +127,12 @@ namespace Inu.Cate.I8080
             instruction.RemoveRegisterAssignment(this);
         }
 
-        public override bool IsOffsetInRange(int offset)
-        {
-            return offset == 0;
-        }
+        public override bool IsOffsetInRange(int offset) => offset == 0;
 
-        public override bool IsPointer(int offset)
-        {
-            return offset == 0;
-        }
+        public override bool IsPointer(int offset) => offset == 0;
+
+        public override bool IsPair() => Equals(this, Hl) || Equals(this, De) || Equals(this, Bc);
+        public override bool IsAddable() => Equals(this, Hl);
 
         public override void LoadConstant(Instruction instruction, string value)
         {
@@ -258,7 +255,7 @@ namespace Inu.Cate.I8080
                 case IndirectOperand destinationIndirectOperand: {
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
-                        var pointerRegister = instruction.GetVariableRegister(pointer, offset);
+                        var pointerRegister = pointer.Register ?? instruction.GetVariableRegister(pointer, offset);
                         if (pointerRegister is WordRegister pointerWordRegister) {
                             StoreIndirect(instruction, pointerWordRegister, offset);
                             return;
@@ -273,6 +270,7 @@ namespace Inu.Cate.I8080
                                 {
                                     Hl.LoadFromMemory(instruction, pointer, 0);
                                     temporaryRegister.StoreIndirect(instruction, Hl, offset);
+                                    instruction.RemoveRegisterAssignment(Hl);
                                 });
                             });
                             return;
@@ -337,6 +335,8 @@ namespace Inu.Cate.I8080
                     instruction.WriteLine("\tldax\t" + pointerRegister);
                     High.CopyFrom(instruction, ByteRegister.A);
                     instruction.WriteLine("\tdcx\t" + pointerRegister);
+                    instruction.ChangedRegisters.Add(ByteRegister.A);
+                    instruction.RemoveRegisterAssignment(ByteRegister.A);
                 });
                 return;
             }

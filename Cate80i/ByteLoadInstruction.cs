@@ -10,7 +10,7 @@
                 if (DestinationOperand is IndirectOperand destinationIndirectOperand) {
                     var pointer = destinationIndirectOperand.Variable;
                     var offset = destinationIndirectOperand.Offset;
-                    var register = GetVariableRegister(pointer, 0);
+                    var register = pointer.Register?? GetVariableRegister(pointer, 0);
                     {
                         if (register is WordRegister pointerRegister) {
                             ByteOperation.StoreConstantIndirect(
