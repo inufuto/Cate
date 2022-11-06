@@ -52,3 +52,9 @@
 *.lst
 ini.bat
 cate*.lib
+/build_cate.bat
+/Cate80i/bin
+/Cate80i/obj
+/Cate80i/Properties
+/runtime/8086/.vscode
+/.vscode
