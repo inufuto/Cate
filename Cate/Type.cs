@@ -10,6 +10,7 @@ namespace Inu.Cate
         public virtual bool IsVoid() => false;
 
         public abstract int Incremental { get; }
+        public abstract int MaxElementSize { get; }
 
         public abstract Constant DefaultValue();
         public abstract Constant? ParseConstant(Compiler compiler);

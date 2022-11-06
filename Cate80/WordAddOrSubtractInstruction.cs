@@ -109,7 +109,7 @@ namespace Inu.Cate.Z80
                 RemoveSourceRegister(RightOperand);
                 register.Load(this, LeftOperand);
                 WriteLine("\tadd\t" + register + "," + rightRegister);
-                RemoveVariableRegister(register);
+                RemoveRegisterAssignment(register);
                 ChangedRegisters.Add(register);
                 register.Store(this, DestinationOperand);
             });
@@ -126,8 +126,8 @@ namespace Inu.Cate.Z80
                 register.Load(this, LeftOperand);
                 WriteLine("\tor\ta");
                 WriteLine("\tsbc\t" + register + "," + rightRegister);
-                RemoveVariableRegister(register);
-                RemoveVariableRegister(register);
+                RemoveRegisterAssignment(register);
+                RemoveRegisterAssignment(register);
                 register.Store(this, DestinationOperand);
             });
         }
@@ -163,7 +163,7 @@ namespace Inu.Cate.Z80
             for (var i = 0; i < count; ++i) {
                 instruction.WriteLine("\t" + operation + "\t" + leftRegister);
             }
-            instruction.RemoveVariableRegister(leftRegister);
+            instruction.RemoveRegisterAssignment(leftRegister);
             instruction.ChangedRegisters.Add(leftRegister);
         }
     }

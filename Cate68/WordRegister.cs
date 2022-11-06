@@ -30,7 +30,7 @@ namespace Inu.Cate.Mc6800
                     instruction.WriteLine("\tinx");
                     --offset;
                 }
-                instruction.RemoveVariableRegister(WordRegister.X);
+                instruction.RemoveRegisterAssignment(X);
                 return;
             }
             if (offset < 0 && offset >= -16) {
@@ -38,7 +38,7 @@ namespace Inu.Cate.Mc6800
                     instruction.WriteLine("\tdex");
                     ++offset;
                 }
-                instruction.RemoveVariableRegister(WordRegister.X);
+                instruction.RemoveRegisterAssignment(X);
                 return;
             }
 
@@ -47,12 +47,13 @@ namespace Inu.Cate.Mc6800
                 {
                     byteRegister.LoadConstant(instruction, offset);
                     instruction.Compiler.CallExternal(instruction, "Cate.AddX" + byteRegister.Name.ToUpper());
-                    instruction.RemoveVariableRegister(X);
+                    instruction.RemoveRegisterAssignment(X);
                 }
                 if (!instruction.IsRegisterInUse(ByteRegister.A)) {
                     ByteRegister.Using(instruction, ByteRegister.A, () =>
                     {
                         AddByte(ByteRegister.A);
+                        instruction.RemoveRegisterAssignment(ByteRegister.A);
                     });
                     return;
                 }
@@ -60,6 +61,7 @@ namespace Inu.Cate.Mc6800
                     ByteRegister.Using(instruction, ByteRegister.B, () =>
                     {
                         AddByte(ByteRegister.B);
+                        instruction.RemoveRegisterAssignment(ByteRegister.B);
                     });
                     return;
                 }
@@ -71,7 +73,9 @@ namespace Inu.Cate.Mc6800
                 ByteRegister.A.LoadConstant(instruction, "high " + offset);
                 ByteRegister.B.LoadConstant(instruction, "low " + offset);
                 instruction.Compiler.CallExternal(instruction, "Cate.AddXAB");
-                instruction.RemoveVariableRegister(X);
+                instruction.RemoveRegisterAssignment(X);
+                instruction.RemoveRegisterAssignment(ByteRegister.A);
+                instruction.RemoveRegisterAssignment(ByteRegister.B);
             });
         }
 
@@ -83,7 +87,7 @@ namespace Inu.Cate.Mc6800
         {
             instruction.WriteLine("\tldx\t#" + value);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(X);
+            instruction.RemoveRegisterAssignment(X);
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
@@ -100,11 +104,13 @@ namespace Inu.Cate.Mc6800
             switch (sourceOperand) {
                 case IntegerOperand integerOperand:
                     var value = integerOperand.IntegerValue;
+                    if (instruction.IsConstantAssigned(this, value)) return;
                     LoadConstant(instruction, value.ToString());
+                    instruction.SetRegisterConstant(this, value);
                     return;
                 case PointerOperand pointerOperand:
                     instruction.WriteLine("\tldx\t#" + pointerOperand.MemoryAddress());
-                    instruction.RemoveVariableRegister(X);
+                    instruction.RemoveRegisterAssignment(X);
                     return;
                 case VariableOperand variableOperand: {
                         var register = instruction.GetVariableRegister(variableOperand);
@@ -168,7 +174,7 @@ namespace Inu.Cate.Mc6800
         public override void StoreToMemory(Instruction instruction, string label)
         {
             Debug.Assert(Equals(X));
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.WriteLine("\tstx\t" + label);
         }
 
@@ -181,7 +187,7 @@ namespace Inu.Cate.Mc6800
                 if (X.IsOffsetInRange(offset)) {
                     instruction.WriteLine("\tldx\t" + offset + ",x");
                     instruction.ResultFlags |= Instruction.Flag.Z;
-                    instruction.RemoveVariableRegister(X);
+                    instruction.RemoveRegisterAssignment(X);
                     return;
                 }
 
@@ -223,7 +229,7 @@ namespace Inu.Cate.Mc6800
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         private void OperateConstant(Instruction instruction, string operation, bool change, int value)
@@ -237,7 +243,7 @@ namespace Inu.Cate.Mc6800
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         private void OperateMemory(Instruction instruction, string operation, bool change, Variable variable, int offset)

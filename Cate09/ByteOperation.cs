@@ -25,7 +25,7 @@ namespace Inu.Cate.Mc6809
             {
                 instruction.WriteLine("\tld" + register + "\t#" + value);
                 register.StoreIndirect(instruction, pointerRegister, offset);
-                instruction.RemoveVariableRegister(register);
+                instruction.RemoveRegisterAssignment(register);
             });
         }
 

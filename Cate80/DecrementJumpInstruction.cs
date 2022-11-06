@@ -9,7 +9,7 @@
             if (Equals(Operand.Register, ByteRegister.B)) {
                 WriteLine("\tdjnz\t" + Anchor.Label);
                 ChangedRegisters.Add(ByteRegister.B);
-                RemoveVariableRegister(ByteRegister.B);
+                RemoveRegisterAssignment(ByteRegister.B);
                 return;
             }
             ByteOperation.Operate(this, "dec\t", true, Operand);

@@ -11,7 +11,6 @@ namespace Inu.Cate
         {
             public readonly Function.Parameter Parameter;
             public readonly Operand Operand;
-            private bool began;
             public Register? Register { get; private set; }
             public bool Done { get; private set; }
 
@@ -32,8 +31,8 @@ namespace Inu.Cate
                 Done = true;
                 instruction.RemoveSourceRegister(Operand);
                 if (register != null) {
+                    //instruction.RemoveRegisterAssignment(register);
                     instruction.BeginRegister(register);
-                    began = true;
                 }
             }
 
@@ -50,7 +49,7 @@ namespace Inu.Cate
                 other.SetDone(instruction, Operand.Register);
             }
 
-            public void Close(SubroutineInstruction instruction)
+            public void Close(Instruction instruction)
             {
                 Debug.Assert(Done);
                 if (Register == null)
@@ -58,23 +57,16 @@ namespace Inu.Cate
                 if (!Equals(Register, Parameter.Register)) {
                     Debug.Assert(Parameter.Register != null);
                     if (Parameter.Register is ByteRegister byteRegister) {
-                        var br = (ByteRegister)Register;
-                        instruction.CopyByte(instruction, byteRegister, br);
+                        byteRegister.CopyFrom(instruction, (ByteRegister)Register);
                     }
                     if (Parameter.Register is WordRegister wordRegister) {
                         wordRegister.CopyFrom(instruction, (WordRegister)Register);
                     }
                 }
-                if (began) {
-                    instruction.EndRegister(Register);
-                }
+                instruction.EndRegister(Register);
+                Register = null;
                 Done = false;
             }
-        }
-
-        protected virtual void CopyByte(Instruction instruction, ByteRegister destination, ByteRegister source)
-        {
-            destination.CopyFrom(instruction, source);
         }
 
         public readonly Function TargetFunction;
@@ -82,18 +74,6 @@ namespace Inu.Cate
         public readonly List<Operand> SourceOperands;
 
         protected readonly List<ParameterAssignment> ParameterAssignments = new List<ParameterAssignment>();
-
-        public override bool IsSourceOperand(Variable variable)
-        {
-            foreach (var sourceOperand in SourceOperands) {
-                switch (sourceOperand) {
-                    case VariableOperand variableOperand when variableOperand.Variable == variable:
-                    case IndirectOperand indirectOperand when indirectOperand.Variable == variable:
-                        return true;
-                }
-            }
-            return base.IsSourceOperand(variable);
-        }
 
         public override bool IsResultChanged()
         {
@@ -103,6 +83,8 @@ namespace Inu.Cate
             var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
             return TargetFunction.Parameters.Any(parameter => parameter.Register != null && parameter.Register.Conflicts(returnRegister));
         }
+
+        public override bool IsCalling() => true;
 
         protected SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand,
             List<Operand> sourceOperands) : base(function)
@@ -142,29 +124,80 @@ namespace Inu.Cate
 
         public override void BuildAssembly()
         {
+            Register? savedRegister = null;
+            if (DestinationOperand is IndirectOperand destinationIndirectOperand && destinationIndirectOperand.Variable.Register != null) {
+                var destinationRegister = destinationIndirectOperand.Variable.Register;
+                if (ParameterAssignments.Any(p => p.Parameter.Register != null && p.Parameter.Register.Conflicts(destinationRegister))) {
+                    savedRegister = destinationRegister;
+                    savedRegister.Save(this);
+                }
+            }
+
             FillParameters();
             ResultFlags = 0;
             Call();
+            RemoveStaticVariableAssignments();
 
+            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
+            if (returnRegister != null) {
+                ChangedRegisters.Add(returnRegister);
+            }
             if (DestinationOperand == null)
                 return;
-            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
-            Debug.Assert(returnRegister != null);
-            RemoveVariableRegister(returnRegister);
-            //if (!Equals(returnRegister, DestinationOperand.Register)) {
-            BeginRegister(returnRegister);
-            EndRegister(returnRegister);
-            //}
-            ChangedRegisters.Add(returnRegister);
-            RemoveVariableRegister(returnRegister);
-            switch (returnRegister) {
-                case ByteRegister byteRegister:
-                    byteRegister.Store(this, DestinationOperand);
-                    break;
-                case WordRegister wordRegister:
-                    wordRegister.Store(this, DestinationOperand);
-                    break;
+
+            void StoreResult(Register rr)
+            {
+                if (savedRegister != null) {
+                    savedRegister.Restore(this);
+                    var removedRegisters = ChangedRegisters.Where(r =>
+                        Equals(savedRegister, r) || (r is ByteRegister changedByteRegister &&
+                                                     Equals(changedByteRegister.PairRegister, savedRegister))).ToList();
+                    foreach (var removedRegister in removedRegisters) {
+                        ChangedRegisters.Remove(removedRegister);
+                    }
+                }
+
+                RemoveRegisterAssignment(rr);
+                if (!IsRegisterInUse(rr)) {
+                    BeginRegister(rr);
+                    EndRegister(rr);
+                }
+                RemoveRegisterAssignment(rr);
+                switch (rr) {
+                    case ByteRegister byteRegister:
+                        byteRegister.Store(this, DestinationOperand);
+                        break;
+                    case WordRegister wordRegister:
+                        wordRegister.Store(this, DestinationOperand);
+                        break;
+                }
             }
+
+            Debug.Assert(returnRegister != null);
+            if (savedRegister != null && returnRegister.Conflicts(savedRegister)) {
+                switch (returnRegister) {
+                    case ByteRegister byteRegister: {
+                            var candidates = ByteOperation.Registers.Where(r => !IsRegisterInUse(r) && !r.Conflicts(savedRegister)).ToList();
+                            ByteOperation.UsingAnyRegister(this, candidates, register =>
+                            {
+                                register.CopyFrom(this, byteRegister);
+                                StoreResult(register);
+                            });
+                            break;
+                        }
+                    case WordRegister wordRegister: {
+                            var candidates = WordOperation.Registers.Where(r => !IsRegisterInUse(r) && !r.Conflicts(savedRegister)).ToList();
+                            WordOperation.UsingAnyRegister(this, candidates, register =>
+                            {
+                                register.CopyFrom(this, wordRegister);
+                                StoreResult(register);
+                            });
+                            break;
+                        }
+                }
+                return;
+            }
+            StoreResult(returnRegister);
         }
 
 
@@ -172,6 +205,9 @@ namespace Inu.Cate
         {
             foreach (var sourceOperand in SourceOperands) {
                 AddSourceRegister(sourceOperand);
+            }
+            if (DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register != null) {
+                AddSourceRegister(DestinationOperand);
             }
         }
 
@@ -198,6 +234,13 @@ namespace Inu.Cate
         protected void FillParameters()
         {
             StoreParameters();
+            //foreach (var assignment in ParameterAssignments.Where(assignment => !Equals(assignment.Parameter.Register, assignment.Operand.Register))) {
+            //    if (assignment.Parameter.Register == null) continue;
+            //    if (!(assignment.Operand is VariableOperand variableOperand) ||
+            //        !Equals(GetVariableRegister(variableOperand.Variable, variableOperand.Offset), assignment.Parameter.Register)) {
+            //        RemoveRegisterAssignment(assignment.Parameter.Register);
+            //    }
+            //}
 
             var changed = true;
             while (changed) {
@@ -206,17 +249,32 @@ namespace Inu.Cate
                     var assignment = ParameterAssignments[i];
                     if (assignment.Done)
                         continue;
+
+                    // the source register and the parameter register match
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
                     Debug.Assert(parameter.Register != null);
-                    if (operand is VariableOperand variableOperand) {
-                        var register = variableOperand.Variable.Register
-                                       ?? GetVariableRegister(variableOperand.Variable, variableOperand.Offset);
-                        if (Equals(register, parameter.Register)) {
-                            assignment.SetDone(this, SaveAccumulator(register, assignment));
-                            changed = true;
-                        }
-                    }
+                    if (!(operand is VariableOperand variableOperand)) continue;
+                    var register = variableOperand.Variable.Register
+                                   ?? GetVariableRegister(variableOperand.Variable, variableOperand.Offset);
+                    if (!Equals(register, parameter.Register)) continue;
+                    assignment.SetDone(this, register);
+                    changed = true;
+                }
+                if (changed)
+                    continue;
+                for (var i = ParameterAssignments.Count - 1; i >= 0; i--) {
+                    var assignment = ParameterAssignments[i];
+                    if (assignment.Done)
+                        continue;
+                    // load straight
+                    var parameter = assignment.Parameter;
+                    var operand = assignment.Operand;
+                    Debug.Assert(parameter.Register != null);
+                    if (IsRegisterInUse(parameter.Register) || IsSourceVariable(parameter.Register)) continue;
+                    Load(parameter.Register, operand);
+                    assignment.SetDone(this, parameter.Register);
+                    changed = true;
                 }
                 if (changed)
                     continue;
@@ -225,22 +283,6 @@ namespace Inu.Cate
                     if (assignment.Done)
                         continue;
                     var parameter = assignment.Parameter;
-                    var operand = assignment.Operand;
-                    Debug.Assert(parameter.Register != null);
-                    if (!IsRegisterInUse(parameter.Register) && !ConflictsSourceRegister(parameter)) {
-                        Load(parameter.Register, operand);
-                        assignment.SetDone(this, SaveAccumulator(parameter.Register, assignment));
-                        changed = true;
-                    }
-                }
-                if (changed)
-                    continue;
-                for (var i = ParameterAssignments.Count - 1; i >= 0; i--) {
-                    var assignment = ParameterAssignments[i];
-                    if (assignment.Done)
-                        continue;
-                    var parameter = assignment.Parameter;
-                    Debug.Assert(parameter.Register != null);
                     var operand = assignment.Operand;
                     {
                         Register? register;
@@ -253,9 +295,8 @@ namespace Inu.Cate
                         if (register == null)
                             continue;
                         Load(register, operand);
-                        assignment.SetDone(this, SaveAccumulator(register, assignment));
+                        assignment.SetDone(this, register);
                         changed = true;
-                        break;
                     }
                 }
                 if (changed)
@@ -265,35 +306,67 @@ namespace Inu.Cate
                     if (assignment.Done)
                         continue;
                     var parameter = assignment.Parameter;
-                    Debug.Assert(parameter.Register != null);
                     var operand = assignment.Operand;
-                    var other = ParameterAssignments.Find(a => !a.Done && Equals(a.Operand.Register, parameter.Register));
+                    var other = ParameterAssignments.Find(a =>
+                    {
+                        if (a.Done) return false;
+                        Register? variableRegister = null;
+                        if (a.Operand is VariableOperand variableOperand) {
+                            var variable = variableOperand.Variable;
+                            variableRegister = GetVariableRegister(variable, variableOperand.Offset);
+                        }
+                        return Equals(variableRegister, parameter.Register);
+                    });
                     if (other != null && Equals(other.Parameter.Register, operand.Register)) {
                         assignment.Exchange(this, other);
                     }
                 }
             }
 
-            foreach (var assignment in ParameterAssignments) {
+            List<ParameterAssignment> Twisted()
+            {
+                return ParameterAssignments.Where(a =>
+                {
+                    if (!a.Done) return false;
+                    if (a.Operand is VariableOperand variableOperand) {
+                        if (Equals(GetVariableRegister(variableOperand), a.Register)) return false;
+                    }
+                    return !Equals(a.Parameter.Register, a.Register);
+                }).ToList();
+            }
+            var twisted = Twisted();
+            while (twisted.Count > 1) {
+                var parameterAssignments = twisted.Where(parameterAssignment => !twisted.Any(a => a != parameterAssignment && Equals(a.Register, parameterAssignment.Parameter.Register))).ToList();
+                if (!parameterAssignments.Any()) break;
+                foreach (var parameterAssignment in parameterAssignments) {
+                    parameterAssignment.Close(this);
+                }
+                twisted = Twisted();
+            }
+            foreach (var assignment in ParameterAssignments.Where(assignment => assignment.Done)) {
                 assignment.Close(this);
             }
         }
 
-        private bool ConflictsSourceRegister(Function.Parameter parameter)
+        private bool IsSourceVariable(Register register)
         {
-            foreach (var parameterAssignment in ParameterAssignments.Where(p => !p.Done && p.Parameter != parameter)) {
-                var operand = parameterAssignment.Operand;
-                var operandRegister = operand.Register;
-                if (operandRegister != null && operandRegister.Conflicts(parameter.Register)) return true;
-                if (!(operand is IndirectOperand indirectOperand)) continue;
-                if (indirectOperand.Variable.Register != null && indirectOperand.Variable.Register.Conflicts(parameter.Register)) return true;
+            foreach (var parameterAssignment in ParameterAssignments) {
+                if (parameterAssignment.Done || Equals(parameterAssignment.Parameter.Register, register)) continue;
+                switch (parameterAssignment.Operand) {
+                    case VariableOperand variableOperand: {
+
+                            var operandRegister = GetVariableRegister(variableOperand.Variable, variableOperand.Offset); //variableOperand.Variable.Register;
+                            if (operandRegister != null && operandRegister.Matches(register)) return true;
+                            break;
+                        }
+                    case IndirectOperand indirectOperand: {
+                            var operandRegister = indirectOperand.Variable.Register;
+                            if (operandRegister != null && operandRegister.Matches(register)) return true;
+                            break;
+                        }
+                }
             }
             return false;
-        }
-
-        protected virtual Register? SaveAccumulator(Register register, ParameterAssignment assignment)
-        {
-            return register;
         }
 
         private void Load(Register register, Operand operand)
@@ -305,6 +378,10 @@ namespace Inu.Cate
                 case WordRegister wordRegister:
                     wordRegister.Load(this, operand);
                     break;
+            }
+
+            if (!Equals(operand.Register, register)) {
+                ChangedRegisters.Add(register);
             }
         }
 
@@ -379,7 +456,7 @@ namespace Inu.Cate
                         }
                     }
 
-                    void StoreWord(WordRegister register)
+                    void StoreWordViaRegister(WordRegister register)
                     {
                         Debug.Assert(register.Low != null);
                         Debug.Assert(register.High != null);
@@ -393,7 +470,6 @@ namespace Inu.Cate
 
                     var operand = assignment.Operand;
                     if (index == 0) {
-                        //pointerRegister.LoadFromMemory(this, TargetFunction.ParameterLabel(parameter));
                         pointerRegister.LoadConstant(this, TargetFunction.ParameterLabel(parameter));
                     }
 
@@ -430,13 +506,13 @@ namespace Inu.Cate
                     else {
                         if (operand.Register is WordRegister wordRegister && wordRegister.IsPair()) {
                             wordRegister.Load(this, operand);
-                            StoreWord(wordRegister);
+                            StoreWordViaRegister(wordRegister);
                         }
                         else {
                             WordOperation.UsingAnyRegister(this, WordOperation.PairRegisters, register =>
                             {
                                 register.Load(this, operand);
-                                StoreWord(register);
+                                StoreWordViaRegister(register);
                             });
                         }
                     }

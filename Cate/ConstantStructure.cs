@@ -6,12 +6,24 @@ namespace Inu.Cate
 {
     public class ConstantStructure : Constant
     {
-        public readonly Constant[] MemberValues;
-        public ConstantStructure(StructureType type, List<Constant> memberValues) : base(type)
+        public class MemberValue
         {
-            MemberValues = new Constant[type.Members.Count];
+            public readonly StructureType.Member Member;
+            public readonly Constant Value;
+
+            public MemberValue(StructureType.Member member, Constant value)
+            {
+                Member = member;
+                Value = value;
+            }
+        }
+        public readonly MemberValue[] MemberValues;
+        public ConstantStructure(StructureType type, IReadOnlyList<Constant> memberValues) : base(type)
+        {
+            MemberValues = new MemberValue[type.Members.Count];
             for (var i = 0; i < MemberValues.Length; ++i) {
-                MemberValues[i] = i < memberValues.Count ? memberValues[i] : type.Members[i].Type.DefaultValue();
+                var value = i < memberValues.Count ? memberValues[i] : type.Members[i].Type.DefaultValue();
+                MemberValues[i] = new MemberValue(type.Members[i], value);
             }
         }
 
@@ -19,8 +31,13 @@ namespace Inu.Cate
 
         public override void WriteAssembly(StreamWriter writer)
         {
-            foreach (var memberValue in MemberValues) {
-                memberValue.WriteAssembly(writer);
+            for (var i = 0; i < MemberValues.Length; i++) {
+                var memberValue = MemberValues[i];
+                memberValue.Value.WriteAssembly(writer);
+                if (i >= MemberValues.Length - 1) continue;
+                var offset = MemberValues[i].Member.Offset;
+                var nextOffset = MemberValues[i + 1].Member.Offset;
+                Compiler.Instance.WriteAlignment(writer, nextOffset - (offset + MemberValues[i].Member.Type.ByteCount));
             }
         }
 

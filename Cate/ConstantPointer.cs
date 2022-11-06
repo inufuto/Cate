@@ -103,6 +103,7 @@ namespace Inu.Cate
         public override bool IsVoid() => true;
 
         public override int Incremental => throw new System.NotImplementedException();
+        public override int MaxElementSize => ByteCount;
 
         public override Constant DefaultValue()
         {

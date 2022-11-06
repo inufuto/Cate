@@ -18,7 +18,7 @@ namespace Inu.Cate
             return Registers.Where(r => r.IsPointer(offset)).ToList();
         }
 
-        public void UsingRegister(Instruction instruction, WordRegister register, Action action)
+        public virtual void UsingRegister(Instruction instruction, WordRegister register, Action action)
         {
             if (instruction.IsRegisterInUse(register)) {
                 var candidates = Registers.Where(
@@ -132,9 +132,7 @@ namespace Inu.Cate
             UsingAnyRegister(instruction, Registers, action);
         }
 
-        public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
-
-
-        public abstract Operand LowByteOperand(Operand operand);
+        public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
+        //public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
     }
 }

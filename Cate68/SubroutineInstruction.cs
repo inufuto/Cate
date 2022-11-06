@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Inu.Cate.Mc6800
 {
@@ -16,7 +15,7 @@ namespace Inu.Cate.Mc6800
             else {
                 WriteLine("\tbsr\t" + TargetFunction.Label);
             }
-            RemoveVariableRegister(WordRegister.X);
+            RemoveRegisterAssignment(WordRegister.X);
         }
 
         protected override void StoreParameters()

@@ -7,6 +7,7 @@ namespace Inu.Cate
     public abstract class Operand
     {
         public virtual Register? Register => null;
+        public virtual bool Conflicts(Register register) => false;
         public abstract Type Type { get; }
         public abstract Operand Cast(ParameterizableType type);
         public abstract void AddUsage(int address, Variable.Usage usage);
@@ -15,6 +16,7 @@ namespace Inu.Cate
         {
             return Equals(operand);
         }
+       
     }
 
     public abstract class ConstantOperand : Operand
@@ -169,6 +171,11 @@ namespace Inu.Cate
 
         public override Register? Register => Variable.Register;
 
+        public override bool Conflicts(Register register)
+        {
+            return Variable.Register != null && Variable.Register.Conflicts(register);
+        }
+
         public virtual bool IsMemory() => Register == null;
         public override AssignableOperand ToMember(Type type, int offset)
         {
@@ -195,6 +202,11 @@ namespace Inu.Cate
     public class IndirectOperand : AssignableOperand
     {
         public readonly Variable Variable;
+        public override bool Conflicts(Register register)
+        {
+            return Variable.Register != null && Variable.Register.Conflicts(register);
+        }
+
         public override Type Type { get; }
         public readonly int Offset;
 
@@ -272,7 +284,7 @@ namespace Inu.Cate
         {
             Register.CopyFrom(instruction, register);
             instruction.ChangedRegisters.Add(this.Register);
-            instruction.RemoveVariableRegister(this.Register);
+            instruction.RemoveRegisterAssignment(this.Register);
         }
 
         public void CopyTo(Instruction instruction, ByteRegister register)

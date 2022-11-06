@@ -1,0 +1,81 @@
+module ::= (constant-definition | type-definition | variable-declaration | function-definition)*
+
+constant-definition ::= "constexpr" parameterizable-type identifier "=" constant-expression ("," identifier "=" constant-expression)*  ";"
+
+type-definition ::= "struct" identifier ("{" (type identifier ("," identifier)* ";")* "}") ";"
+
+variable-declaration ::= ( | "static" | "extern") ( | "const") type identifier ( | "=" constant-value) ("," identifier ( | "=" constant-value))* ";"
+
+function-definition ::= ( | "static" | "extern") (parameterizable-type | "void") identifier "(" parameterizable-type ( | identifier) ("," parameterizable-type ( | identifier))* ")" (composite-statement | ";")
+
+type ::= (parameterizable-type | identifier) ( | "[" constant-expression "]")
+
+parameterizable-type ::= (primitive-type | "ptr" "<" type ">")
+
+primitive-type ::= ("byte" | "sbyte" | "word" | "sword" | "bool")
+
+statement ::= (";" | composite-statement | if-statement | while-statement | do-statement | for-statement | repeat-statement | switch-statement | case-statement | default-statement | break-statement | continue-statement | goto-statement | return-statement | labeled-statement | expression ";")
+
+composite-statement ::= "{" (constant-definition | type-definition | variable-declaration)* (statement)* "}"
+
+labeled-statement ::= identifier ":" statement
+
+if-statement ::= "if" "(" expression ")" statement
+
+while-statement ::= "while" "(" expression ")" statement
+
+do-statement ::= "do" statement "while" "(" expression ")" ";"
+
+for-statement ::= "for" "(" (trinomial ":" trinomial | expression ";" expression ";" expression) ")" statement
+
+repeat-statement ::= "repeat" "(" expression ")" statement
+
+switch-statement ::= "switch" "(" expression ")" statement
+
+case-statement ::= "case" expression ":" statement
+
+default-statement ::= "default" ":"
+
+break-statement ::= "break" ";"
+
+continue-statement ::= "continue" ";"
+
+goto-statement ::= "goto" identifier ";"
+
+return-statement ::= "return" (expression)? ";"
+
+expression ::= unit-expression ("," unit-expression)*
+
+unit-expression ::= assignment-expression | trinomial
+
+assignment-expression ::= trinomial ("=" | "+=" | "-=" | "&=" | "^=" | "|=" | ">>=" | "<<=" | "||=" | "&&=") assignment-expression
+
+constant-expression ::= trinomial
+
+trinomial ::= binomial ("?" expression ":" trinomial)
+
+binomial ::= (prefix-expression | binomial) ("||" | "&&" | "|" | "^" | "&" | "==" | "!=" | "<" | ">" | ">>" | "<<" | "+" | "-" | "*" | "/" | "&") (prefix-expression | binomial)
+
+prefix-expression ::= (sizeof-expression | cast-expression | monomial | dereference | reference | pre-increment-or-decrement | postfix-expression)
+
+sizeof-expression ::= "sizeof" type expression 
+
+dereference ::= "*" prefix-expression
+
+reference ::= "&" prefix-expression
+
+pre-increment-or-decrement ::= ("++" | "--") prefix-expression
+
+cast-expression ::= "(" type ")" prefix-expression
+
+monomial ::= ("+" | "-" | "~" | "!") prefix-expression
+
+postfix-expression ::= factor (("[" expression "]") | ("." identifier) | ("->" identifier) | "++" | "--")
+
+factor ::= ("(" expression ")") | named-value | literal
+
+named-value ::= identifier ( | function-call)
+
+function-call ::= "(" ( | (unit-expression ("," unit-expression)* )) ")"
+
+literal ::= numeric-value | string-value | ("true" | "false" | "nullptr")

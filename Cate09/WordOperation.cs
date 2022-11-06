@@ -8,12 +8,7 @@ namespace Inu.Cate.Mc6809
     {
         public override List<Cate.WordRegister> Registers => WordRegister.Registers;
 
-        public override Operand LowByteOperand(Operand operand)
-        {
-            return Compiler.LowByteOperand(operand);
-        }
-
-        private void Operate(Instruction instruction, string operation, bool change, Operand operand, int count)
+        public static void Operate(Instruction instruction, string operation, bool change, Operand operand, int count)
         {
             switch (operand) {
                 case IntegerOperand integerOperand:
@@ -87,7 +82,7 @@ namespace Inu.Cate.Mc6809
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
-        private void OperateIndirect(Instruction instruction, string operation, Variable pointer, int offset, int count)
+        private static void OperateIndirect(Instruction instruction, string operation, Variable pointer, int offset, int count)
         {
             if (offset == 0) {
                 for (var i = 0; i < count; ++i) {
@@ -95,16 +90,11 @@ namespace Inu.Cate.Mc6809
                 }
                 return;
             }
-            UsingAnyRegister(instruction, WordRegister.IndexRegisters, pointerRegister =>
+            Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, WordRegister.IndexRegisters, pointerRegister =>
             {
                 pointerRegister.LoadFromMemory(instruction, pointer, 0);
                 OperateIndirect(instruction, operation, pointerRegister, offset, count);
             });
-        }
-
-        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-        {
-            Operate(instruction, operation, change, operand, 1);
         }
     }
 }

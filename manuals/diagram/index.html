@@ -1,0 +1,969 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+   
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      
+      
+      <meta name="generator" content="Railroad Diagram Generator 1.63">
+      
+      <style type="text/css">
+    ::-moz-selection
+    {
+      color: #FFFCF0;
+      background: #0F0C00;
+    }
+    ::selection
+    {
+      color: #FFFCF0;
+      background: #0F0C00;
+    }
+    .ebnf a, .grammar a
+    {
+      text-decoration: none;
+    }
+    .ebnf a:hover, .grammar a:hover
+    {
+      color: #050400;
+      text-decoration: underline;
+    }
+    .signature
+    {
+      color: #806600;
+      font-size: 11px;
+      text-align: right;
+    }
+    body
+    {
+      font: normal 12px Verdana, sans-serif;
+      color: #0F0C00;
+      background: #FFFCF0;
+    }
+    a:link, a:visited
+    {
+      color: #0F0C00;
+    }
+    a:link.signature, a:visited.signature
+    {
+      color: #806600;
+    }
+    a.button, #tabs li a
+    {
+      padding: 0.25em 0.5em;
+      border: 1px solid #806600;
+      background: #F1E8C6;
+      color: #806600;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a.button:hover, #tabs li a:hover
+    {
+      color: #050400;
+      background: #FFF6D1;
+      border-color: #050400;
+    }
+    #tabs
+    {
+      padding: 3px 10px;
+      margin-left: 0;
+      margin-top: 58px;
+      border-bottom: 1px solid #0F0C00;
+    }
+    #tabs li
+    {
+      list-style: none;
+      margin-left: 5px;
+      display: inline;
+    }
+    #tabs li a
+    {
+      border-bottom: 1px solid #0F0C00;
+    }
+    #tabs li a.active
+    {
+      color: #0F0C00;
+      background: #FFFCF0;
+      border-color: #0F0C00;
+      border-bottom: 1px solid #FFFCF0;
+      outline: none;
+    }
+    #divs div
+    {
+      display: none;
+      overflow:auto;
+    }
+    #divs div.active
+    {
+      display: block;
+    }
+    #text
+    {
+      border-color: #806600;
+      background: #FFFEFA;
+      color: #050400;
+    }
+    .small
+    {
+      vertical-align: top;
+      text-align: right;
+      font-size: 9px;
+      font-weight: normal;
+      line-height: 120%;
+    }
+    td.small
+    {
+      padding-top: 0px;
+    }
+    .hidden
+    {
+      visibility: hidden;
+    }
+    td:hover .hidden
+    {
+      visibility: visible;
+    }
+    div.download
+    {
+      display: none;
+      background: #FFFCF0;
+      position: absolute;
+      right: 34px;
+      top: 94px;
+      padding: 10px;
+      border: 1px dotted #0F0C00;
+    }
+    #divs div.ebnf, .ebnf code
+    {
+      display: block;
+      padding: 10px;
+      background: #FFF6D1;
+      width: 992px;
+    }
+    #divs div.grammar
+    {
+      display: block;
+      padding-left: 16px;
+      padding-top: 2px;
+      padding-bottom: 2px;
+      background: #FFF6D1;
+    }
+    pre
+    {
+      margin: 0px;
+    }
+    .ebnf div
+    {
+      padding-left: 13ch;
+      text-indent: -13ch;
+    }
+    .ebnf code, .grammar code, textarea, pre
+    {
+      font:12px SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+    }
+    tr.option-line td:first-child
+    {
+      text-align: right
+    }
+    tr.option-text td
+    {
+      padding-bottom: 10px
+    }
+    table.palette
+    {
+      border-top: 1px solid #050400;
+      border-right: 1px solid #050400;
+      margin-bottom: 4px
+    }
+    td.palette
+    {
+      border-bottom: 1px solid #050400;
+      border-left: 1px solid #050400;
+    }
+    a.palette
+    {
+      padding: 2px 3px 2px 10px;
+      text-decoration: none;
+    }
+    .palette
+    {
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -o-user-select: none;
+      -ms-user-select: none;
+    }
+  </style>
+   </head>
+   
+   <body class="vsc-initialized">
+      
+      <p style="font-size: 14px; font-weight:bold"><a name="module">module:</a></p><img border="0" src="diagram/module.png" height="189" width="245" usemap="#module.map"><map name="module.map"><area shape="rect" coords="49,133,189,165" href="#constant-definition" title="constant-definition"><area shape="rect" coords="49,89,161,121" href="#type-definition" title="type-definition"><area shape="rect" coords="49,45,195,77" href="#variable-declaration" title="variable-declaration"><area shape="rect" coords="49,1,183,33" href="#function-definition" title="function-definition"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#module" title="module">module</a>&nbsp;&nbsp;&nbsp;::= ( <a href="#constant-definition" title="constant-definition">constant-definition</a> | <a href="#type-definition" title="type-definition">type-definition</a> | <a href="#variable-declaration" title="variable-declaration">variable-declaration</a> | <a href="#function-definition" title="function-definition">function-definition</a> )*</div></code></div>
+         </p>
+      
+      <p>no references</p><br><p style="font-size: 14px; font-weight:bold"><a name="constant-definition">constant-definition:</a></p><img border="0" src="diagram/constant-definition.png" height="81" width="723" usemap="#constant-definition.map"><map name="constant-definition.map"><area shape="rect" coords="135,45,293,77" href="#parameterizable-type" title="parameterizable-type"><area shape="rect" coords="333,45,409,77" href="#identifier" title="identifier"><area shape="rect" coords="479,45,629,77" href="#constant-expression" title="constant-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#constant-definition" title="constant-definition">constant-definition</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'constexpr' <a href="#parameterizable-type" title="parameterizable-type">parameterizable-type</a> <a href="#identifier" title="identifier">identifier</a> '=' <a href="#constant-expression" title="constant-expression">constant-expression</a> ( ',' <a href="#identifier" title="identifier">identifier</a> '=' <a href="#constant-expression" title="constant-expression">constant-expression</a> )* ';'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#composite-statement" title="composite-statement">composite-statement</a></li>
+            
+            <li><a href="#module" title="module">module</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="type-definition">type-definition:</a></p><img border="0" src="diagram/type-definition.png" height="113" width="681" usemap="#type-definition.map"><map name="type-definition.map"><area shape="rect" coords="107,61,183,93" href="#identifier" title="identifier"><area shape="rect" coords="291,61,339,93" href="#type" title="type"><area shape="rect" coords="379,61,455,93" href="#identifier" title="identifier"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#type-definition" title="type-definition">type-definition</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'struct' <a href="#identifier" title="identifier">identifier</a> '{' ( <a href="#type" title="type">type</a> <a href="#identifier" title="identifier">identifier</a> ( ',' <a href="#identifier" title="identifier">identifier</a> )* ';' )* '}' ';'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#composite-statement" title="composite-statement">composite-statement</a></li>
+            
+            <li><a href="#module" title="module">module</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="variable-declaration">variable-declaration:</a></p><img border="0" src="diagram/variable-declaration.png" height="157" width="751" usemap="#variable-declaration.map"><map name="variable-declaration.map"><area shape="rect" coords="269,45,317,77" href="#type" title="type"><area shape="rect" coords="357,45,433,77" href="#identifier" title="identifier"><area shape="rect" coords="523,77,637,109" href="#constant-value" title="constant-value"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#variable-declaration" title="variable-declaration">variable-declaration</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= ( 'static' | 'extern' )? 'const'? <a href="#type" title="type">type</a> <a href="#identifier" title="identifier">identifier</a> ( '=' <a href="#constant-value" title="constant-value">constant-value</a> )? ( ',' <a href="#identifier" title="identifier">identifier</a> ( '=' <a href="#constant-value" title="constant-value">constant-value</a> )? )* ';'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#composite-statement" title="composite-statement">composite-statement</a></li>
+            
+            <li><a href="#module" title="module">module</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="function-definition">function-definition:</a></p><img border="0" src="diagram/function-definition.png" height="267" width="917" usemap="#function-definition.map"><map name="function-definition.map"><area shape="rect" coords="173,45,331,77" href="#parameterizable-type" title="parameterizable-type"><area shape="rect" coords="371,45,447,77" href="#identifier" title="identifier"><area shape="rect" coords="533,45,691,77" href="#parameterizable-type" title="parameterizable-type"><area shape="rect" coords="731,77,807,109" href="#identifier" title="identifier"><area shape="rect" coords="711,187,867,219" href="#composite-statement" title="composite-statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#function-definition" title="function-definition">function-definition</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= ( 'static' | 'extern' )? ( <a href="#parameterizable-type" title="parameterizable-type">parameterizable-type</a> | 'void' ) <a href="#identifier" title="identifier">identifier</a> '(' <a href="#parameterizable-type" title="parameterizable-type">parameterizable-type</a> <a href="#identifier" title="identifier">identifier</a>? ( ',' <a href="#parameterizable-type" title="parameterizable-type">parameterizable-type</a> <a href="#identifier" title="identifier">identifier</a>? )* ')' ( <a href="#composite-statement" title="composite-statement">composite-statement</a> | ';' )</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#module" title="module">module</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="type">type:</a></p><img border="0" src="diagram/type.png" height="81" width="559" usemap="#type.map"><map name="type.map"><area shape="rect" coords="49,1,207,33" href="#parameterizable-type" title="parameterizable-type"><area shape="rect" coords="49,45,125,77" href="#identifier" title="identifier"><area shape="rect" coords="313,33,463,65" href="#constant-expression" title="constant-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#type" title="type">type</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= ( <a href="#parameterizable-type" title="parameterizable-type">parameterizable-type</a> | <a href="#identifier" title="identifier">identifier</a> ) ( '[' <a href="#constant-expression" title="constant-expression">constant-expression</a> ']' )?</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#cast-expression" title="cast-expression">cast-expression</a></li>
+            
+            <li><a href="#parameterizable-type" title="parameterizable-type">parameterizable-type</a></li>
+            
+            <li><a href="#sizeof-expression" title="sizeof-expression">sizeof-expression</a></li>
+            
+            <li><a href="#type-definition" title="type-definition">type-definition</a></li>
+            
+            <li><a href="#variable-declaration" title="variable-declaration">variable-declaration</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="parameterizable-type">parameterizable-type:</a></p><img border="0" src="diagram/parameterizable-type.png" height="81" width="307" usemap="#parameterizable-type.map"><map name="parameterizable-type.map"><area shape="rect" coords="49,1,157,33" href="#primitive-type" title="primitive-type"><area shape="rect" coords="159,45,207,77" href="#type" title="type"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#parameterizable-type" title="parameterizable-type">parameterizable-type</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#primitive-type" title="primitive-type">primitive-type</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 'ptr' '&lt;' <a href="#type" title="type">type</a> '&gt;'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#constant-definition" title="constant-definition">constant-definition</a></li>
+            
+            <li><a href="#function-definition" title="function-definition">function-definition</a></li>
+            
+            <li><a href="#type" title="type">type</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="primitive-type">primitive-type:</a></p><img border="0" src="diagram/primitive-type.png" height="213" width="161"><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#primitive-type" title="primitive-type">primitive-type</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'byte'</div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 'sbyte'</div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 'word'</div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 'sword'</div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 'bool'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#parameterizable-type" title="parameterizable-type">parameterizable-type</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="statement">statement:</a></p><img border="0" src="diagram/statement.png" height="685" width="273" usemap="#statement.map"><map name="statement.map"><area shape="rect" coords="69,33,159,65" href="#expression" title="expression"><area shape="rect" coords="49,77,205,109" href="#composite-statement" title="composite-statement"><area shape="rect" coords="49,121,147,153" href="#if-statement" title="if-statement"><area shape="rect" coords="49,165,171,197" href="#while-statement" title="while-statement"><area shape="rect" coords="49,209,155,241" href="#do-statement" title="do-statement"><area shape="rect" coords="49,253,157,285" href="#for-statement" title="for-statement"><area shape="rect" coords="49,297,181,329" href="#repeat-statement" title="repeat-statement"><area shape="rect" coords="49,341,179,373" href="#switch-statement" title="switch-statement"><area shape="rect" coords="49,385,169,417" href="#case-statement" title="case-statement"><area shape="rect" coords="49,429,185,461" href="#default-statement" title="default-statement"><area shape="rect" coords="49,473,175,505" href="#break-statement" title="break-statement"><area shape="rect" coords="49,517,195,549" href="#continue-statement" title="continue-statement"><area shape="rect" coords="49,561,169,593" href="#goto-statement" title="goto-statement"><area shape="rect" coords="49,605,179,637" href="#return-statement" title="return-statement"><area shape="rect" coords="49,649,187,681" href="#labeled-statement" title="labeled-statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#statement" title="statement">statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#expression" title="expression">expression</a>? ';'</div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#composite-statement" title="composite-statement">composite-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#if-statement" title="if-statement">if-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#while-statement" title="while-statement">while-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#do-statement" title="do-statement">do-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#for-statement" title="for-statement">for-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#repeat-statement" title="repeat-statement">repeat-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#switch-statement" title="switch-statement">switch-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#case-statement" title="case-statement">case-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#default-statement" title="default-statement">default-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#break-statement" title="break-statement">break-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#continue-statement" title="continue-statement">continue-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#goto-statement" title="goto-statement">goto-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#return-statement" title="return-statement">return-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#labeled-statement" title="labeled-statement">labeled-statement</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#case-statement" title="case-statement">case-statement</a></li>
+            
+            <li><a href="#composite-statement" title="composite-statement">composite-statement</a></li>
+            
+            <li><a href="#do-statement" title="do-statement">do-statement</a></li>
+            
+            <li><a href="#for-statement" title="for-statement">for-statement</a></li>
+            
+            <li><a href="#if-statement" title="if-statement">if-statement</a></li>
+            
+            <li><a href="#labeled-statement" title="labeled-statement">labeled-statement</a></li>
+            
+            <li><a href="#repeat-statement" title="repeat-statement">repeat-statement</a></li>
+            
+            <li><a href="#switch-statement" title="switch-statement">switch-statement</a></li>
+            
+            <li><a href="#while-statement" title="while-statement">while-statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="composite-statement">composite-statement:</a></p><img border="0" src="diagram/composite-statement.png" height="159" width="487" usemap="#composite-statement.map"><map name="composite-statement.map"><area shape="rect" coords="97,89,237,121" href="#constant-definition" title="constant-definition"><area shape="rect" coords="97,45,209,77" href="#type-definition" title="type-definition"><area shape="rect" coords="97,1,243,33" href="#variable-declaration" title="variable-declaration"><area shape="rect" coords="303,89,389,121" href="#statement" title="statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#composite-statement" title="composite-statement">composite-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= '{' ( <a href="#constant-definition" title="constant-definition">constant-definition</a> | <a href="#type-definition" title="type-definition">type-definition</a> | <a href="#variable-declaration" title="variable-declaration">variable-declaration</a> )* <a href="#statement" title="statement">statement</a>* '}'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#function-definition" title="function-definition">function-definition</a></li>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="labeled-statement">labeled-statement:</a></p><img border="0" src="diagram/labeled-statement.png" height="37" width="285" usemap="#labeled-statement.map"><map name="labeled-statement.map"><area shape="rect" coords="29,1,105,33" href="#identifier" title="identifier"><area shape="rect" coords="169,1,255,33" href="#statement" title="statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#labeled-statement" title="labeled-statement">labeled-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#identifier" title="identifier">identifier</a> ':' <a href="#statement" title="statement">statement</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="if-statement">if-statement:</a></p><img border="0" src="diagram/if-statement.png" height="37" width="395" usemap="#if-statement.map"><map name="if-statement.map"><area shape="rect" coords="123,1,213,33" href="#expression" title="expression"><area shape="rect" coords="279,1,365,33" href="#statement" title="statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#if-statement" title="if-statement">if-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'if' '(' <a href="#expression" title="expression">expression</a> ')' <a href="#statement" title="statement">statement</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="while-statement">while-statement:</a></p><img border="0" src="diagram/while-statement.png" height="37" width="423" usemap="#while-statement.map"><map name="while-statement.map"><area shape="rect" coords="151,1,241,33" href="#expression" title="expression"><area shape="rect" coords="307,1,393,33" href="#statement" title="statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#while-statement" title="while-statement">while-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'while' '(' <a href="#expression" title="expression">expression</a> ')' <a href="#statement" title="statement">statement</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="do-statement">do-statement:</a></p><img border="0" src="diagram/do-statement.png" height="37" width="523" usemap="#do-statement.map"><map name="do-statement.map"><area shape="rect" coords="85,1,171,33" href="#statement" title="statement"><area shape="rect" coords="313,1,403,33" href="#expression" title="expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#do-statement" title="do-statement">do-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'do' <a href="#statement" title="statement">statement</a> 'while' '(' <a href="#expression" title="expression">expression</a> ')' ';'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="for-statement">for-statement:</a></p><img border="0" src="diagram/for-statement.png" height="81" width="753" usemap="#for-statement.map"><map name="for-statement.map"><area shape="rect" coords="153,1,229,33" href="#trinomial" title="trinomial"><area shape="rect" coords="293,1,369,33" href="#trinomial" title="trinomial"><area shape="rect" coords="153,45,243,77" href="#expression" title="expression"><area shape="rect" coords="307,45,397,77" href="#expression" title="expression"><area shape="rect" coords="461,45,551,77" href="#expression" title="expression"><area shape="rect" coords="637,1,723,33" href="#statement" title="statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#for-statement" title="for-statement">for-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'for' '(' ( <a href="#trinomial" title="trinomial">trinomial</a> ':' <a href="#trinomial" title="trinomial">trinomial</a> | <a href="#expression" title="expression">expression</a> ';' <a href="#expression" title="expression">expression</a> ';' <a href="#expression" title="expression">expression</a> ) ')' <a href="#statement" title="statement">statement</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="repeat-statement">repeat-statement:</a></p><img border="0" src="diagram/repeat-statement.png" height="37" width="431" usemap="#repeat-statement.map"><map name="repeat-statement.map"><area shape="rect" coords="159,1,249,33" href="#expression" title="expression"><area shape="rect" coords="315,1,401,33" href="#statement" title="statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#repeat-statement" title="repeat-statement">repeat-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'repeat' '(' <a href="#expression" title="expression">expression</a> ')' <a href="#statement" title="statement">statement</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="switch-statement">switch-statement:</a></p><img border="0" src="diagram/switch-statement.png" height="37" width="431" usemap="#switch-statement.map"><map name="switch-statement.map"><area shape="rect" coords="159,1,249,33" href="#expression" title="expression"><area shape="rect" coords="315,1,401,33" href="#statement" title="statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#switch-statement" title="switch-statement">switch-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'switch' '(' <a href="#expression" title="expression">expression</a> ')' <a href="#statement" title="statement">statement</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="case-statement">case-statement:</a></p><img border="0" src="diagram/case-statement.png" height="37" width="369" usemap="#case-statement.map"><map name="case-statement.map"><area shape="rect" coords="99,1,189,33" href="#expression" title="expression"><area shape="rect" coords="253,1,339,33" href="#statement" title="statement"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#case-statement" title="case-statement">case-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'case' <a href="#expression" title="expression">expression</a> ':' <a href="#statement" title="statement">statement</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="default-statement">default-statement:</a></p><img border="0" src="diagram/default-statement.png" height="37" width="171"><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#default-statement" title="default-statement">default-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'default' ':'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="break-statement">break-statement:</a></p><img border="0" src="diagram/break-statement.png" height="37" width="161"><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#break-statement" title="break-statement">break-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'break' ';'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="continue-statement">continue-statement:</a></p><img border="0" src="diagram/continue-statement.png" height="37" width="181"><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#continue-statement" title="continue-statement">continue-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'continue' ';'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="goto-statement">goto-statement:</a></p><img border="0" src="diagram/goto-statement.png" height="37" width="249" usemap="#goto-statement.map"><map name="goto-statement.map"><area shape="rect" coords="99,1,175,33" href="#identifier" title="identifier"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#goto-statement" title="goto-statement">goto-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'goto' <a href="#identifier" title="identifier">identifier</a> ';'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="return-statement">return-statement:</a></p><img border="0" src="diagram/return-statement.png" height="69" width="315" usemap="#return-statement.map"><map name="return-statement.map"><area shape="rect" coords="131,33,221,65" href="#expression" title="expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#return-statement" title="return-statement">return-statement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'return' <a href="#expression" title="expression">expression</a>? ';'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="expression">expression:</a></p><img border="0" src="diagram/expression.png" height="81" width="217" usemap="#expression.map"><map name="expression.map"><area shape="rect" coords="49,45,167,77" href="#unit-expression" title="unit-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#expression" title="expression">expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#unit-expression" title="unit-expression">unit-expression</a> ( ',' <a href="#unit-expression" title="unit-expression">unit-expression</a> )*</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#case-statement" title="case-statement">case-statement</a></li>
+            
+            <li><a href="#do-statement" title="do-statement">do-statement</a></li>
+            
+            <li><a href="#factor" title="factor">factor</a></li>
+            
+            <li><a href="#for-statement" title="for-statement">for-statement</a></li>
+            
+            <li><a href="#if-statement" title="if-statement">if-statement</a></li>
+            
+            <li><a href="#postfix-expression" title="postfix-expression">postfix-expression</a></li>
+            
+            <li><a href="#repeat-statement" title="repeat-statement">repeat-statement</a></li>
+            
+            <li><a href="#return-statement" title="return-statement">return-statement</a></li>
+            
+            <li><a href="#sizeof-expression" title="sizeof-expression">sizeof-expression</a></li>
+            
+            <li><a href="#statement" title="statement">statement</a></li>
+            
+            <li><a href="#switch-statement" title="switch-statement">switch-statement</a></li>
+            
+            <li><a href="#trinomial" title="trinomial">trinomial</a></li>
+            
+            <li><a href="#while-statement" title="while-statement">while-statement</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="unit-expression">unit-expression:</a></p><img border="0" src="diagram/unit-expression.png" height="81" width="267" usemap="#unit-expression.map"><map name="unit-expression.map"><area shape="rect" coords="49,1,217,33" href="#assignment-expression" title="assignment-expression"><area shape="rect" coords="49,45,125,77" href="#trinomial" title="trinomial"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#unit-expression" title="unit-expression">unit-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#assignment-expression" title="assignment-expression">assignment-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#trinomial" title="trinomial">trinomial</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#expression" title="expression">expression</a></li>
+            
+            <li><a href="#function-call" title="function-call">function-call</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="assignment-expression">assignment-expression:</a></p><img border="0" src="diagram/assignment-expression.png" height="433" width="433" usemap="#assignment-expression.map"><map name="assignment-expression.map"><area shape="rect" coords="29,1,105,33" href="#trinomial" title="trinomial"><area shape="rect" coords="235,1,403,33" href="#assignment-expression" title="assignment-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#assignment-expression" title="assignment-expression">assignment-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#trinomial" title="trinomial">trinomial</a> ( '=' | '+=' | '-=' | '&amp;=' | '^=' | '|=' | '&gt;&gt;=' | '&lt;&lt;=' | '||=' | '&amp;&amp;=' ) <a href="#assignment-expression" title="assignment-expression">assignment-expression</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#assignment-expression" title="assignment-expression">assignment-expression</a></li>
+            
+            <li><a href="#unit-expression" title="unit-expression">unit-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="constant-expression">constant-expression:</a></p><img border="0" src="diagram/constant-expression.png" height="37" width="135" usemap="#constant-expression.map"><map name="constant-expression.map"><area shape="rect" coords="29,1,105,33" href="#trinomial" title="trinomial"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#constant-expression" title="constant-expression">constant-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#trinomial" title="trinomial">trinomial</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#constant-definition" title="constant-definition">constant-definition</a></li>
+            
+            <li><a href="#type" title="type">type</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="trinomial">trinomial:</a></p><img border="0" src="diagram/trinomial.png" height="37" width="429" usemap="#trinomial.map"><map name="trinomial.map"><area shape="rect" coords="29,1,103,33" href="#binomial" title="binomial"><area shape="rect" coords="169,1,259,33" href="#expression" title="expression"><area shape="rect" coords="323,1,399,33" href="#trinomial" title="trinomial"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#trinomial" title="trinomial">trinomial</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#binomial" title="binomial">binomial</a> '?' <a href="#expression" title="expression">expression</a> ':' <a href="#trinomial" title="trinomial">trinomial</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#assignment-expression" title="assignment-expression">assignment-expression</a></li>
+            
+            <li><a href="#constant-expression" title="constant-expression">constant-expression</a></li>
+            
+            <li><a href="#for-statement" title="for-statement">for-statement</a></li>
+            
+            <li><a href="#trinomial" title="trinomial">trinomial</a></li>
+            
+            <li><a href="#unit-expression" title="unit-expression">unit-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="binomial">binomial:</a></p><img border="0" src="diagram/binomial.png" height="653" width="519" usemap="#binomial.map"><map name="binomial.map"><area shape="rect" coords="49,1,179,33" href="#prefix-expression" title="prefix-expression"><area shape="rect" coords="49,45,123,77" href="#binomial" title="binomial"><area shape="rect" coords="339,1,469,33" href="#prefix-expression" title="prefix-expression"><area shape="rect" coords="339,45,413,77" href="#binomial" title="binomial"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#binomial" title="binomial">binomial</a>&nbsp;::= ( <a href="#prefix-expression" title="prefix-expression">prefix-expression</a> | <a href="#binomial" title="binomial">binomial</a> ) ( '||' | '&amp;&amp;' | '|' | '^' | '&amp;' | '==' | '!=' | '&lt;' | '&gt;' | '&gt;&gt;' | '&lt;&lt;' | '+' |
+                  '-' | '*' | '/' ) ( <a href="#prefix-expression" title="prefix-expression">prefix-expression</a> | <a href="#binomial" title="binomial">binomial</a> )</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#binomial" title="binomial">binomial</a></li>
+            
+            <li><a href="#trinomial" title="trinomial">trinomial</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="prefix-expression">prefix-expression:</a></p><img border="0" src="diagram/prefix-expression.png" height="301" width="301" usemap="#prefix-expression.map"><map name="prefix-expression.map"><area shape="rect" coords="49,1,181,33" href="#sizeof-expression" title="sizeof-expression"><area shape="rect" coords="49,45,169,77" href="#cast-expression" title="cast-expression"><area shape="rect" coords="49,89,131,121" href="#monomial" title="monomial"><area shape="rect" coords="49,133,145,165" href="#dereference" title="dereference"><area shape="rect" coords="49,177,129,209" href="#reference" title="reference"><area shape="rect" coords="49,221,251,253" href="#pre-increment-or-decrement" title="pre-increment-or-decrement"><area shape="rect" coords="49,265,187,297" href="#postfix-expression" title="postfix-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#prefix-expression" title="prefix-expression">prefix-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#sizeof-expression" title="sizeof-expression">sizeof-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#cast-expression" title="cast-expression">cast-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#monomial" title="monomial">monomial</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#dereference" title="dereference">dereference</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#reference" title="reference">reference</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#pre-increment-or-decrement" title="pre-increment-or-decrement">pre-increment-or-decrement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#postfix-expression" title="postfix-expression">postfix-expression</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#binomial" title="binomial">binomial</a></li>
+            
+            <li><a href="#cast-expression" title="cast-expression">cast-expression</a></li>
+            
+            <li><a href="#dereference" title="dereference">dereference</a></li>
+            
+            <li><a href="#monomial" title="monomial">monomial</a></li>
+            
+            <li><a href="#pre-increment-or-decrement" title="pre-increment-or-decrement">pre-increment-or-decrement</a></li>
+            
+            <li><a href="#reference" title="reference">reference</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="sizeof-expression">sizeof-expression:</a></p><img border="0" src="diagram/sizeof-expression.png" height="37" width="297" usemap="#sizeof-expression.map"><map name="sizeof-expression.map"><area shape="rect" coords="109,1,157,33" href="#type" title="type"><area shape="rect" coords="177,1,267,33" href="#expression" title="expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#sizeof-expression" title="sizeof-expression">sizeof-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= 'sizeof' <a href="#type" title="type">type</a> <a href="#expression" title="expression">expression</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#prefix-expression" title="prefix-expression">prefix-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="dereference">dereference:</a></p><img border="0" src="diagram/dereference.png" height="37" width="237" usemap="#dereference.map"><map name="dereference.map"><area shape="rect" coords="77,1,207,33" href="#prefix-expression" title="prefix-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#dereference" title="dereference">dereference</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= '*' <a href="#prefix-expression" title="prefix-expression">prefix-expression</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#prefix-expression" title="prefix-expression">prefix-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="reference">reference:</a></p><img border="0" src="diagram/reference.png" height="37" width="239" usemap="#reference.map"><map name="reference.map"><area shape="rect" coords="79,1,209,33" href="#prefix-expression" title="prefix-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#reference" title="reference">reference</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= '&amp;' <a href="#prefix-expression" title="prefix-expression">prefix-expression</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#prefix-expression" title="prefix-expression">prefix-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="pre-increment-or-decrement">pre-increment-or-decrement:</a></p><img border="0" src="diagram/pre-increment-or-decrement.png" height="81" width="289" usemap="#pre-increment-or-decrement.map"><map name="pre-increment-or-decrement.map"><area shape="rect" coords="129,1,259,33" href="#prefix-expression" title="prefix-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#pre-increment-or-decrement" title="pre-increment-or-decrement">pre-increment-or-decrement</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= ( '++' | '--' ) <a href="#prefix-expression" title="prefix-expression">prefix-expression</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#prefix-expression" title="prefix-expression">prefix-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="cast-expression">cast-expression:</a></p><img border="0" src="diagram/cast-expression.png" height="37" width="349" usemap="#cast-expression.map"><map name="cast-expression.map"><area shape="rect" coords="75,1,123,33" href="#type" title="type"><area shape="rect" coords="189,1,319,33" href="#prefix-expression" title="prefix-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#cast-expression" title="cast-expression">cast-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= '(' <a href="#type" title="type">type</a> ')' <a href="#prefix-expression" title="prefix-expression">prefix-expression</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#prefix-expression" title="prefix-expression">prefix-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="monomial">monomial:</a></p><img border="0" src="diagram/monomial.png" height="169" width="279" usemap="#monomial.map"><map name="monomial.map"><area shape="rect" coords="119,1,249,33" href="#prefix-expression" title="prefix-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#monomial" title="monomial">monomial</a>&nbsp;::= ( '+' | '-' | '~' | '!' ) <a href="#prefix-expression" title="prefix-expression">prefix-expression</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#prefix-expression" title="prefix-expression">prefix-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="postfix-expression">postfix-expression:</a></p><img border="0" src="diagram/postfix-expression.png" height="213" width="357" usemap="#postfix-expression.map"><map name="postfix-expression.map"><area shape="rect" coords="29,1,85,33" href="#factor" title="factor"><area shape="rect" coords="171,1,261,33" href="#expression" title="expression"><area shape="rect" coords="221,45,297,77" href="#identifier" title="identifier"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#postfix-expression" title="postfix-expression">postfix-expression</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#factor" title="factor">factor</a> ( '[' <a href="#expression" title="expression">expression</a> ']' | ( '.' | '-&gt;' ) <a href="#identifier" title="identifier">identifier</a> | '++' | '--' )</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#prefix-expression" title="prefix-expression">prefix-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="factor">factor:</a></p><img border="0" src="diagram/factor.png" height="125" width="281" usemap="#factor.map"><map name="factor.map"><area shape="rect" coords="95,1,185,33" href="#expression" title="expression"><area shape="rect" coords="49,45,151,77" href="#named-value" title="named-value"><area shape="rect" coords="49,89,105,121" href="#literal" title="literal"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#factor" title="factor">factor</a>&nbsp;&nbsp;&nbsp;::= '(' <a href="#expression" title="expression">expression</a> ')'</div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#named-value" title="named-value">named-value</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#literal" title="literal">literal</a></div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#postfix-expression" title="postfix-expression">postfix-expression</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="named-value">named-value:</a></p><img border="0" src="diagram/named-value.png" height="69" width="291" usemap="#named-value.map"><map name="named-value.map"><area shape="rect" coords="29,1,105,33" href="#identifier" title="identifier"><area shape="rect" coords="145,33,241,65" href="#function-call" title="function-call"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#named-value" title="named-value">named-value</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= <a href="#identifier" title="identifier">identifier</a> <a href="#function-call" title="function-call">function-call</a>?</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#factor" title="factor">factor</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="function-call">function-call:</a></p><img border="0" src="diagram/function-call.png" height="97" width="349" usemap="#function-call.map"><map name="function-call.map"><area shape="rect" coords="115,45,233,77" href="#unit-expression" title="unit-expression"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#function-call" title="function-call">function-call</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::= '(' ( <a href="#unit-expression" title="unit-expression">unit-expression</a> ( ',' <a href="#unit-expression" title="unit-expression">unit-expression</a> )* )? ')'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#named-value" title="named-value">named-value</a></li>
+            </ul>
+         </p><br><p style="font-size: 14px; font-weight:bold"><a name="literal">literal:</a></p><img border="0" src="diagram/literal.png" height="213" width="209" usemap="#literal.map"><map name="literal.map"><area shape="rect" coords="49,1,159,33" href="#numeric-value" title="numeric-value"><area shape="rect" coords="49,45,145,77" href="#string-value" title="string-value"></map><p>
+         
+         <div class="ebnf"><code>
+               
+               <div><a href="#literal" title="literal">literal</a>&nbsp;&nbsp;::= <a href="#numeric-value" title="numeric-value">numeric-value</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a href="#string-value" title="string-value">string-value</a></div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 'true'</div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 'false'</div>
+               
+               <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 'nullptr'</div></code></div>
+         </p>
+      
+      <p>referenced by:
+         
+         <ul>
+            
+            <li><a href="#factor" title="factor">factor</a></li>
+            </ul>
+         </p><br><hr>
+      
+      <p>
+         
+         <table border="0" class="signature">
+            
+            <tr>
+               
+               <td style="width: 100%">&nbsp;</td>
+               
+               <td valign="top">
+                  
+                  <nobr class="signature">... generated by <a name="Railroad-Diagram-Generator" class="signature" title="https://www.bottlecaps.de/rr/ui" href="https://www.bottlecaps.de/rr/ui" target="_blank">RR - Railroad Diagram Generator</a></nobr>
+                  </td>
+               
+               <td><a name="Railroad-Diagram-Generator" title="https://www.bottlecaps.de/rr/ui" href="https://www.bottlecaps.de/rr/ui" target="_blank"><img border="0" src="diagram/rr-1.63.png" height="16" width="16"></a></td>
+               </tr>
+            </table>
+         </p>
+      </body>
+   </html>

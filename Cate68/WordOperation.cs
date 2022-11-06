@@ -8,13 +8,6 @@ namespace Inu.Cate.Mc6800
 
         public override List<Cate.WordRegister> Registers => WordRegister.Registers;
 
-        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-        {
-            // cannot operate
-            throw new System.NotImplementedException();
-        }
-
-        public override Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
 
         public static void OperatePair(
             Instruction instruction,

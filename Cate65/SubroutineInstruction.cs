@@ -10,8 +10,8 @@ namespace Inu.Cate.Mos6502
         protected override void Call()
         {
             WriteLine("\tjsr\t" + TargetFunction.Label);
-            RemoveVariableRegister(ByteRegister.X);
-            RemoveVariableRegister(ByteRegister.Y);
+            RemoveRegisterAssignment(ByteRegister.X);
+            RemoveRegisterAssignment(ByteRegister.Y);
         }
 
         protected override void StoreParameters()

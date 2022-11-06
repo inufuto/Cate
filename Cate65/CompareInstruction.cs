@@ -283,7 +283,7 @@ namespace Inu.Cate.Mos6502
             }
 
             // Register value is not guaranteed due to branching
-            RemoveVariableRegister(ByteRegister.A);
+            RemoveRegisterAssignment(ByteRegister.A);
         }
     }
 }

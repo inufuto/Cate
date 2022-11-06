@@ -48,7 +48,7 @@ namespace Inu.Cate.Z80
                 WriteLine("\tsbc\ta,a");
                 WriteLine("\tld\t" + wordRegister.High.Name + ",a");
                 ChangedRegisters.Add(ByteRegister.A);
-                RemoveVariableRegister(ByteRegister.A);
+                RemoveRegisterAssignment(ByteRegister.A);
             }
 
             void ExpandA()

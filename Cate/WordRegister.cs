@@ -30,48 +30,53 @@ namespace Inu.Cate
         public abstract bool IsPointer(int offset);
 
         public abstract void LoadConstant(Instruction instruction, string value);
-        public void LoadConstant(Instruction instruction, int value)
+        public virtual void LoadConstant(Instruction instruction, int value)
         {
+            if (instruction.IsConstantAssigned(this, value)) {
+                instruction.ChangedRegisters.Add(this);
+                return;
+            }
             LoadConstant(instruction, value.ToString());
+            instruction.SetRegisterConstant(this, value);
         }
         public abstract void LoadFromMemory(Instruction instruction, string label);
         public abstract void StoreToMemory(Instruction instruction, string label);
-        public abstract void Load(Instruction instruction, Operand operand);
-        public abstract void Store(Instruction instruction, AssignableOperand operand);
+        public abstract void Load(Instruction instruction, Operand sourceOperand);
+        public abstract void Store(Instruction instruction, AssignableOperand destinationOperand);
         public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
 
 
         public abstract void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
         public abstract void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
 
-        public abstract void CopyFrom(Instruction instruction, WordRegister register);
+        public abstract void CopyFrom(Instruction instruction, WordRegister sourceRegister);
 
 
         public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
-        public abstract void Save(Instruction instruction);
-        public abstract void Restore(Instruction instruction);
 
-        public void TemporaryOffset(Instruction instruction, int offset, Action action)
+        public virtual void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
-            void MakeOffset()
-            {
-                var oldOffset = instruction.GetRegisterOffset(this);
-                if (oldOffset == offset) return;
-                Add(instruction, offset - oldOffset);
-                instruction.RemoveVariableRegister(this);
-                instruction.ChangedRegisters.Add(this);
-                instruction.SetRegisterOffset(this, offset);
-            }
-
             if (instruction.IsRegisterInUse(this)) {
-                MakeOffset();
+                var changed = instruction.ChangedRegisters.Contains(this);
+                Add(instruction, offset);
                 action();
+                if (!changed) {
+                    Add(instruction, -offset);
+                    instruction.ChangedRegisters.Remove(this);
+                }
             }
             else {
+                var changed = instruction.ChangedRegisters.Contains(this);
                 instruction.BeginRegister(this);
-                MakeOffset();
+                Add(instruction, offset);
+                instruction.RemoveRegisterAssignment(this);
+                instruction.ChangedRegisters.Add(this);
                 action();
+                Add(instruction, -offset);
                 instruction.EndRegister(this);
+                if (!changed) {
+                    instruction.ChangedRegisters.Remove(this);
+                }
             }
         }
     }
