@@ -59,6 +59,9 @@ namespace Inu.Cate
         {
             var wordOperation = Compiler.Instance.WordOperation;
             var candidates = wordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList();
+            if (candidates.Count == 0) {
+                candidates = wordOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
+            }
             wordOperation.UsingAnyRegister(instruction, candidates, pointerRegister =>
             {
                 pointerRegister.LoadFromMemory(instruction, pointer, 0);
@@ -120,9 +123,9 @@ namespace Inu.Cate
                 case IndirectOperand sourceIndirectOperand: {
                         var pointer = sourceIndirectOperand.Variable;
                         var offset = sourceIndirectOperand.Offset;
-                        var register = instruction.GetVariableRegister(pointer, 0);
+                        var register = pointer.Register ?? instruction.GetVariableRegister(pointer, 0);
                         if (register is WordRegister pointerRegister) {
-                            if (pointerRegister.IsPointer(offset)) {
+                            if (pointerRegister.IsPointer(0)) {
                                 LoadIndirect(instruction, pointerRegister, offset);
                                 instruction.ChangedRegisters.Add(this);
                                 return;
@@ -168,6 +171,7 @@ namespace Inu.Cate
                             }
                             else {
                                 register.CopyFrom(instruction, this);
+                                instruction.ChangedRegisters.Add(register);
                             }
                         }
                         else {
