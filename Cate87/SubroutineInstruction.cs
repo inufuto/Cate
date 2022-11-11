@@ -35,15 +35,15 @@ namespace Inu.Cate.MuCom87
             WriteLine("\tcall\t" + TargetFunction.Label);
         }
 
-        protected override Register? SaveAccumulator(Register register, ParameterAssignment assignment)
-        {
-            if (Equals(register, ByteRegister.A) && ParameterAssignments.Any(a => !a.Equals(assignment) && !a.Done)) {
-                WriteLine("\tstaw\t" + TemporaryByte);
-                accumulatorSaved = true;
-                return null;
-            }
-            return base.SaveAccumulator(register, assignment);
-        }
+        //protected override Register? SaveAccumulator(Register register, ParameterAssignment assignment)
+        //{
+        //    if (Equals(register, ByteRegister.A) && ParameterAssignments.Any(a => !a.Equals(assignment) && !a.Done)) {
+        //        WriteLine("\tstaw\t" + TemporaryByte);
+        //        accumulatorSaved = true;
+        //        return null;
+        //    }
+        //    return base.SaveAccumulator(register, assignment);
+        //}
 
         protected override void StoreParameters()
         {

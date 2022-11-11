@@ -131,14 +131,14 @@ namespace Inu.Cate.MuCom87
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tlxi\t" + HighName + "," + value);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tl" + Name + "d\t" + label);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -164,6 +164,8 @@ namespace Inu.Cate.MuCom87
                             Debug.Assert(sourceOffset == 0);
                             if (!Equals(sourceRegister, this)) {
                                 CopyFrom(instruction, sourceRegister);
+                                instruction.ChangedRegisters.Add(this);
+                                instruction.RemoveRegisterAssignment(this);
                             }
                             return;
                         }
@@ -174,7 +176,16 @@ namespace Inu.Cate.MuCom87
                         var pointer = sourceIndirectOperand.Variable;
                         var offset = sourceIndirectOperand.Offset;
                         if (pointer.Register is WordRegister pointerRegister) {
-                            LoadIndirect(instruction, pointerRegister, offset);
+                            if (!Equals(pointerRegister, this)) {
+                                LoadIndirect(instruction, pointerRegister, offset);
+                            }
+                            else {
+                                WordOperation.UsingAnyRegister(instruction, WordRegister.Registers, temporaryRegister =>
+                                {
+                                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                                    LoadIndirect(instruction, temporaryRegister, offset);
+                                });
+                            }
                             return;
                         }
                         WordOperation.UsingAnyRegister(instruction, WordRegister.Registers, temporaryRegister =>
@@ -209,8 +220,7 @@ namespace Inu.Cate.MuCom87
                         var destinationPointer = destinationIndirectOperand.Variable;
                         var destinationOffset = destinationIndirectOperand.Offset;
                         if (destinationPointer.Register is Cate.WordRegister destinationPointerRegister) {
-                            StoreIndirect(instruction,
-                                destinationPointerRegister, destinationOffset);
+                            StoreIndirect(instruction, destinationPointerRegister, destinationOffset);
                             return;
                         }
                         WordOperation.UsingAnyRegister(instruction, WordRegister.Registers,
@@ -317,6 +327,7 @@ namespace Inu.Cate.MuCom87
                 ByteRegister.A.CopyFrom(instruction, High);
                 ByteRegister.A.StoreIndirect(instruction, wordRegister);
                 instruction.WriteLine("\tdcx\t" + wordRegister.HighName);
+                instruction.ChangedRegisters.Add(ByteRegister.A);
             });
         }
 
@@ -332,13 +343,29 @@ namespace Inu.Cate.MuCom87
                 ByteRegister.A.CopyFrom(instruction, register.High);
                 Debug.Assert(High != null);
                 High.CopyFrom(instruction, ByteRegister.A);
-                instruction.ChangedRegisters.Add(this);
             });
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
             throw new NotImplementedException();
+        }
+
+        public override void TemporaryOffset(Instruction instruction, int offset, Action action)
+        {
+            if (Math.Abs(offset) <= 1) {
+                base.TemporaryOffset(instruction, offset, action);
+                return;
+            }
+            //if (instruction.SourceRegisterCount(this) > 1) {
+            var changed = instruction.ChangedRegisters.Contains(this);
+            Save(instruction);
+            Add(instruction, offset);
+            action();
+            Restore(instruction);
+            if (!changed) {
+                instruction.ChangedRegisters.Remove(this);
+            }
         }
 
         public override void Save(Instruction instruction)

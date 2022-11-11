@@ -143,8 +143,8 @@ namespace Inu.Cate
                 }
             }
 
-            if (Type.ByteCount > 0) {
-                var returnRegisterId = compiler.ReturnRegister(Type.ByteCount);
+            var returnRegisterId = compiler.ReturnRegister(Type.ByteCount);
+            if (returnRegisterId != null) {
                 savedRegisterIds.Remove(returnRegisterId);
                 compiler.RemoveSavingRegister(savedRegisterIds, Type.ByteCount);
                 foreach (var includedIds in compiler.IncludedRegisterIds(returnRegisterId)) {
@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("__19 = columnIndex << 3")) {
+                if (instruction.ToString().Contains("@6 = 1 << @7")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

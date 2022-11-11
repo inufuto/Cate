@@ -44,6 +44,8 @@ namespace Inu.Cate.MuCom87
             void Call()
             {
                 WordRegister.Hl.Load(this, LeftOperand);
+                ChangedRegisters.Add(WordRegister.Hl);
+                RemoveRegisterAssignment(WordRegister.Hl);
                 ByteOperation.UsingRegister(this, ByteRegister.C, () =>
                 {
                     ByteRegister.C.LoadConstant(this, RightValue);
@@ -52,7 +54,7 @@ namespace Inu.Cate.MuCom87
                 WordRegister.Hl.Store(this, DestinationOperand);
             }
 
-            if (DestinationOperand.Register == WordRegister.Hl) {
+            if (Equals(DestinationOperand.Register, WordRegister.Hl)) {
                 Call();
                 return;
             }

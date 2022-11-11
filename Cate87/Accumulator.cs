@@ -24,9 +24,13 @@ namespace Inu.Cate.MuCom87
             switch (sourceRegister) {
                 case ByteRegister byteRegister:
                     instruction.WriteLine("\tmov\ta," + byteRegister.Name);
+                    instruction.ChangedRegisters.Add(this);
+                    instruction.RemoveRegisterAssignment(this);
                     return;
                 case ByteWorkingRegister workingRegister:
                     instruction.WriteLine("\tldaw\t" + workingRegister.Name);
+                    instruction.ChangedRegisters.Add(this);
+                    instruction.RemoveRegisterAssignment(this);
                     return;
             }
             throw new NotImplementedException();
@@ -37,11 +41,11 @@ namespace Inu.Cate.MuCom87
             switch (operand) {
                 case IntegerOperand integerOperand:
                     instruction.WriteLine("\t" + operation.Split('|')[1] + "\ta," + integerOperand.IntegerValue);
-                    instruction.RemoveVariableRegister(A);
+                    instruction.RemoveRegisterAssignment(A);
                     return;
                 case StringOperand stringOperand:
                     instruction.WriteLine("\t" + operation.Split('|')[1] + "\ta," + stringOperand.StringValue);
-                    instruction.RemoveVariableRegister(A);
+                    instruction.RemoveRegisterAssignment(A);
                     return;
                 case ByteRegisterOperand registerOperand: {
                         switch (registerOperand.Register) {

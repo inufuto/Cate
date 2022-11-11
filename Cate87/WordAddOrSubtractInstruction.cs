@@ -81,7 +81,7 @@ namespace Inu.Cate.MuCom87
             for (var i = 0; i < count; ++i) {
                 instruction.WriteLine("\t" + operation + "\t" + leftRegister.High.Name);
             }
-            instruction.RemoveVariableRegister(leftRegister);
+            instruction.RemoveRegisterAssignment(leftRegister);
             instruction.ChangedRegisters.Add(leftRegister);
         }
     }

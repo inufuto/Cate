@@ -47,7 +47,7 @@ namespace Inu.Cate.MuCom87
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            string functionName = OperatorId switch
+            var functionName = OperatorId switch
             {
                 Keyword.ShiftLeft => "cate.ShiftLeftA",
                 Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
@@ -62,15 +62,20 @@ namespace Inu.Cate.MuCom87
             });
         }
 
+        public override bool IsRegisterInUse(Register register)
+        {
+            return !Equals(DestinationOperand.Register, register) && base.IsRegisterInUse(register);
+        }
+
         private void CallExternal(string functionName)
         {
             ByteOperation.UsingRegister(this, ByteRegister.A, () =>
             {
                 ByteRegister.A.Load(this, LeftOperand);
                 Compiler.CallExternal(this, functionName);
-                RemoveVariableRegister(ByteRegister.A);
+                RemoveRegisterAssignment(ByteRegister.A);
                 ChangedRegisters.Add(ByteRegister.A);
-                RemoveVariableRegister(ByteRegister.B);
+                RemoveRegisterAssignment(ByteRegister.B);
                 ChangedRegisters.Add(ByteRegister.B);
                 ByteRegister.A.Store(this, DestinationOperand);
             });
