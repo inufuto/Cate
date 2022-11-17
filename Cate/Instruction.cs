@@ -497,6 +497,7 @@ namespace Inu.Cate
 
         public void SetRegisterConstant(Register register, int value)
         {
+            RemoveRegisterAssignment(register);
             RegisterAssignments[register] = new RegisterConstantAssignment(value);
         }
 
