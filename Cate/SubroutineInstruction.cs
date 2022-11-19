@@ -314,8 +314,8 @@ namespace Inu.Cate
                         else {
                             register = WordOperation.Registers.Find(r => !IsRegisterInUse(r));
                         }
-                        if (register == null)
-                            continue;
+                        if (register == null || Equals(register, firstRegister)) continue;
+                        if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
                         assignment.SetDone(this, register);
                         Load(register, operand);
                         changed = true;
@@ -354,9 +354,7 @@ namespace Inu.Cate
                 return ParameterAssignments.Where(a =>
                 {
                     if (!a.Done) return false;
-                    if (a.Operand is VariableOperand variableOperand) {
-                        if (Equals(GetVariableRegister(variableOperand), a.Register)) return false;
-                    }
+                    if (a.Operand is VariableOperand variableOperand && Equals(GetVariableRegister(variableOperand), a.Register)) return false;
                     return !Equals(a.Parameter.Register, a.Register);
                 }).ToList();
             }
