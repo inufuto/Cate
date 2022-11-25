@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("pStage = pStage + 1")) {
+                if (instruction.ToString().Contains("bit = bit << 1")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();
