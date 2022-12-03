@@ -25,7 +25,7 @@ namespace Inu.Cate.Z80
                     register.Load(this, LeftOperand);
                     Shift(() => WriteLine("\tadd\t" + register.Name + "," + register.Name));
                     ChangedRegisters.Add(register);
-                    RemoveVariableRegister(register);
+                    RemoveRegisterAssignment(register);
                     register.Store(this, DestinationOperand);
                 });
                 return;
@@ -48,9 +48,9 @@ namespace Inu.Cate.Z80
                         WriteLine("\trl\t" + addition.High.Name);
                     });
                     ChangedRegisters.Add(addedRegister);
-                    RemoveVariableRegister(addedRegister);
+                    RemoveRegisterAssignment(addedRegister);
                     ChangedRegisters.Add(addition);
-                    RemoveVariableRegister(addition);
+                    RemoveRegisterAssignment(addition);
                 });
                 addedRegister.Store(this, DestinationOperand);
             });

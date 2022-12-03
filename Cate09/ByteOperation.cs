@@ -21,11 +21,19 @@ namespace Inu.Cate.Mc6809
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
             int offset, int value)
         {
-            UsingAnyRegister(instruction, register =>
+            if (pointerRegister != WordRegister.D) {
+                UsingAnyRegister(instruction, register =>
+                {
+                    instruction.RemoveRegisterAssignment(register);
+                    register.LoadConstant(instruction, value);
+                    register.StoreIndirect(instruction, pointerRegister, offset);
+                });
+                return;
+            }
+            Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, WordRegister.IndexRegisters, temporaryRegister =>
             {
-                instruction.WriteLine("\tld" + register + "\t#" + value);
-                register.StoreIndirect(instruction, pointerRegister, offset);
-                instruction.RemoveVariableRegister(register);
+                temporaryRegister.CopyFrom(instruction, pointerRegister);
+                StoreConstantIndirect(instruction, temporaryRegister, offset, value);
             });
         }
 

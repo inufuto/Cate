@@ -40,10 +40,23 @@ namespace Inu.Cate.Mc6809
                 }
             }
 
-            if (LeftOperand.SameStorage(DestinationOperand)) {
-                if (Equals(DestinationOperand.Register, WordRegister.D))
+            void ViaD()
+            {
+                WordOperation.UsingRegister(this, WordRegister.D, DestinationOperand, () =>
                 {
+                    WordRegister.D.Load(this, LeftOperand);
                     ShiftPairRegister();
+                    WordRegister.D.Store(this, DestinationOperand);
+                });
+            }
+
+            if (LeftOperand.SameStorage(DestinationOperand)) {
+                if (Equals(DestinationOperand.Register, WordRegister.D)) {
+                    ShiftPairRegister();
+                    return;
+                }
+                if (DestinationOperand.Register != null) {
+                    ViaD();
                     return;
                 }
                 if (!(DestinationOperand is IndirectOperand indirectOperand) || WordRegister.X.IsOffsetInRange(indirectOperand.Offset + 1)) {
@@ -60,12 +73,7 @@ namespace Inu.Cate.Mc6809
                 }
             }
 
-            WordOperation.UsingRegister(this, WordRegister.D, DestinationOperand, () =>
-            {
-                WordRegister.D.Load(this, LeftOperand);
-                ShiftPairRegister();
-                WordRegister.D.Store(this, DestinationOperand);
-            });
+            ViaD();
             //ByteOperation.UsingRegister(this, ByteRegister.A, () =>
             //{
             //    ByteOperation.UsingRegister(this, ByteRegister.B, () =>
@@ -92,7 +100,7 @@ namespace Inu.Cate.Mc6809
                 WordRegister.X.Load(this, LeftOperand);
                 WriteLine("\tstx\t" + DirectPage.Word);
                 ByteRegister.B.Load(this, counterOperand);
-                RemoveVariableRegister(ByteRegister.B);
+                RemoveRegisterAssignment(ByteRegister.B);
                 Compiler.CallExternal(this, functionName);
                 WriteLine("\tldx\t" + DirectPage.Word);
                 WordRegister.X.Store(this, DestinationOperand);

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -82,14 +83,14 @@ namespace Inu.Cate
 
         public Variable CreateTemporaryVariable(Type type)
         {
-            var name = Variable.TemporaryVariablePrefix + (++lastTemporaryVariableIndex).ToString();
+            var name = Compiler.Instance.LabelPrefix + (++lastTemporaryVariableIndex).ToString();
             var id = Identifier.Add(name);
             Debug.Assert(functionBlock != null);
             return functionBlock.AddVariable(id, type, Visibility.Private, false, null);
         }
 
 
-        public void WriteAssembly(StreamWriter writer)
+        public void WriteAssembly(StreamWriter writer, ref int codeOffset, ref int dataOffset)
         {
             ExitAnchor.Address = NextAddress;
 
@@ -105,25 +106,29 @@ namespace Inu.Cate
             writer.WriteLine(";\tfunction " + Name);
             writer.WriteLine(";");
 
-            if (functionBlock == null)
-                return;
+            if (functionBlock == null) return;
 
             FillFlow();
             OptimizeVariables();
 
-            WriteLocalVariables(writer);
+            WriteLocalVariables(writer, ref dataOffset);
 
-            functionBlock.WriteAssembly(writer);
+            Compiler.Instance.MakeAlignment(writer, "cseg", ref codeOffset);
+            Compiler.Instance.MakeAlignment(writer, "dseg", ref dataOffset);
+            functionBlock.WriteAssembly(writer, ref codeOffset, ref dataOffset);
             writer.WriteLine("\tcseg");
             writer.WriteLine(Label + ":");
             if (Visibility == Visibility.Public) {
                 writer.WriteLine("\tpublic\t" + Label);
             }
 
-            ISet<Register> savedRegisterIds = new HashSet<Register>();
+            var compiler = Compiler.Instance;
+            compiler.WriteBeginningOfFunction(writer, this);
+
+            ISet<Register> savedRegisters = new HashSet<Register>();
             foreach (var instruction in Instructions.Where(i => !i.IsEmpty())) {
                 foreach (var changedRegister in instruction.ChangedRegisters) {
-                    var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister);
+                    var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister).Where(r => !savedRegisters.Contains(r));
                     foreach (var savingRegister in savingRegisters) {
                         var saved = false;
                         foreach (var variable in instruction.SavingVariables) {
@@ -132,21 +137,21 @@ namespace Inu.Cate
                             }
                         }
                         if (!saved) {
-                            savedRegisterIds.Add(savingRegister);
+                            savedRegisters.Add(savingRegister);
                         }
                     }
                 }
             }
 
-            var compiler = Compiler.Instance;
-            if (Type.ByteCount > 0) {
-                var returnRegisterId = compiler.ReturnRegister(Type.ByteCount);
-                savedRegisterIds.Remove(returnRegisterId);
+            var returnRegisterId = compiler.ReturnRegister(Type.ByteCount);
+            if (returnRegisterId != null) {
+                savedRegisters.Remove(returnRegisterId);
+                compiler.RemoveSavingRegister(savedRegisters, Type.ByteCount);
                 foreach (var includedIds in compiler.IncludedRegisterIds(returnRegisterId)) {
-                    savedRegisterIds.Remove(includedIds);
+                    savedRegisters.Remove(includedIds);
                 }
             }
-            compiler.SaveRegisters(writer, savedRegisterIds);
+            compiler.SaveRegisters(writer, savedRegisters);
 
             Instruction? prevInstruction = null;
             var tabCount = 0;
@@ -161,7 +166,6 @@ namespace Inu.Cate
 
             for (var address = 0; address < Instructions.Count; ++address) {
                 var instruction = Instructions[address];
-
                 var nextInstruction = address + 1 < Instructions.Count ? Instructions[address + 1] : null;
                 lastAddress = address;
                 foreach (var anchor in Anchors.Where(anchor => anchor.Address == address)) {
@@ -190,20 +194,22 @@ namespace Inu.Cate
             }
 
             //writer.WriteLine(ExitLabel + ":");
-            compiler.RestoreRegisters(writer, savedRegisterIds);
-            writer.WriteLine(compiler.EndOfFunction);
+            compiler.RestoreRegisters(writer, savedRegisters);
+            compiler.WriteEndOfFunction(writer, this);
         }
 
-
-        private void WriteLocalVariables(StreamWriter writer)
+        private void WriteLocalVariables(StreamWriter writer, ref int offset)
         {
             if (localVariableIds.Count > 0) {
                 writer.WriteLine("\tdseg");
             }
-            foreach (var pair in localVariableIds) {
-                var id = pair.Key;
-                var size = pair.Value;
+            //var offset = 0;
+            foreach (var (id, size) in localVariableIds) {
+                if (size >= Compiler.Instance.Alignment) {
+                    Compiler.Instance.MakeAlignment(writer, ref offset);
+                }
                 writer.WriteLine(Label + Variable.LocalVariableName(id) + ":\tdefs " + size);
+                offset += size;
             }
         }
 
@@ -227,7 +233,7 @@ namespace Inu.Cate
 
         public string ParameterLabel(Parameter parameter)
         {
-            return Label + "@Param" + Parameters.IndexOf(parameter);
+            return Label + Compiler.Instance.ParameterPrefix + "Param" + Parameters.IndexOf(parameter);
         }
         private void FillFlow()
         {
@@ -288,9 +294,9 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("if @2 != 0 goto MapToVVram@Anchor29")) {
-                    var aaa = 111;
-                }
+                //if (instruction.ToString().Contains("bit = bit << 1")) {
+                //    var aaa = 111;
+                //}
                 instruction.BuildAssembly();
             }
 

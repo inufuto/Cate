@@ -25,7 +25,7 @@ namespace Inu.Cate.Mos6502
         {
             instruction.WriteLine("\tld" + Name + "\t#" + value);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
@@ -47,7 +47,7 @@ namespace Inu.Cate.Mos6502
         {
             instruction.WriteLine("\tld" + Name + "\t" + label);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
@@ -68,7 +68,7 @@ namespace Inu.Cate.Mos6502
                     instruction.WriteLine("\tld" + Name + "\t(" + pointerRegister.Name + "),y");
                 });
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 instruction.ResultFlags |= Instruction.Flag.Z;
             }
             else {
@@ -77,7 +77,7 @@ namespace Inu.Cate.Mos6502
                     temporaryRegister.CopyFrom(instruction, pointerRegister);
                     temporaryRegister.Add(instruction, offset);
                     LoadIndirect(instruction, temporaryRegister, 0);
-                    instruction.RemoveVariableRegister(temporaryRegister);
+                    instruction.RemoveRegisterAssignment(temporaryRegister);
                     instruction.ChangedRegisters.Add(temporaryRegister);
                 });
             }
@@ -94,7 +94,7 @@ namespace Inu.Cate.Mos6502
             else {
                 pointerRegister.Add(instruction, offset);
                 StoreIndirect(instruction, pointerRegister, 0);
-                instruction.RemoveVariableRegister(pointerRegister);
+                instruction.RemoveRegisterAssignment(pointerRegister);
                 instruction.ChangedRegisters.Add(pointerRegister);
             }
         }
@@ -108,7 +108,7 @@ namespace Inu.Cate.Mos6502
                 case ByteRegister byteRegister:
                     instruction.WriteLine("\tt" + byteRegister + this);
                     instruction.ChangedRegisters.Add(this);
-                    instruction.RemoveVariableRegister(this);
+                    instruction.RemoveRegisterAssignment(this);
                     instruction.ResultFlags |= Instruction.Flag.Z;
                     return;
                 case ByteZeroPage zeroPage:
@@ -126,7 +126,7 @@ namespace Inu.Cate.Mos6502
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
 
@@ -151,7 +151,7 @@ namespace Inu.Cate.Mos6502
                         if (!change)
                             return;
                         instruction.ChangedRegisters.Add(this);
-                        instruction.RemoveVariableRegister(this);
+                        instruction.RemoveRegisterAssignment(this);
                         return;
                     case ByteRegister byteRegister:
                         Cate.Compiler.Instance.ByteOperation.UsingAnyRegister(instruction, ByteZeroPage.Registers,
@@ -164,7 +164,7 @@ namespace Inu.Cate.Mos6502
                         if (!change)
                             return;
                         instruction.ChangedRegisters.Add(this);
-                        instruction.RemoveVariableRegister(this);
+                        instruction.RemoveRegisterAssignment(this);
                         return;
                 }
             }
@@ -184,7 +184,7 @@ namespace Inu.Cate.Mos6502
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
 

@@ -18,13 +18,12 @@ namespace Inu.Cate
             return Registers.Where(r => r.IsPointer(offset)).ToList();
         }
 
-        public void UsingRegister(Instruction instruction, WordRegister register, Action action)
+        public virtual void UsingRegister(Instruction instruction, WordRegister register, Action action)
         {
             if (instruction.IsRegisterInUse(register)) {
                 var candidates = Registers.Where(
                     r => !Equals(r, register) &&
-                    (instruction.ResultOperand == null || !Equals(r, instruction.ResultOperand.Register)) &&
-                    !instruction.IsRegisterInVariableRange(r, null)
+                    CanCopyRegisterToSave(instruction, r)
                 ).ToList();
                 if (candidates.Any()) {
                     UsingAnyRegister(instruction, candidates, otherRegister =>
@@ -45,6 +44,12 @@ namespace Inu.Cate
             instruction.BeginRegister(register);
             action();
             instruction.EndRegister(register);
+        }
+
+        protected virtual bool CanCopyRegisterToSave(Instruction instruction, WordRegister register)
+        {
+            return ((instruction.ResultOperand == null || !Equals(register, instruction.ResultOperand.Register)) &&
+                    !instruction.IsRegisterInVariableRange(register, null));
         }
 
         public void UsingRegister(Instruction instruction, WordRegister register, Operand operand, Action action)
@@ -127,9 +132,7 @@ namespace Inu.Cate
             UsingAnyRegister(instruction, Registers, action);
         }
 
-        public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
-
-
-        public abstract Operand LowByteOperand(Operand operand);
+        public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
+        //public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
     }
 }

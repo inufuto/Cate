@@ -159,7 +159,7 @@ namespace Inu.Cate.Z80
         {
             instruction.WriteLine("\tld\t" + Name + "," + value);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void LoadConstant(Instruction instruction, int value)
@@ -167,7 +167,7 @@ namespace Inu.Cate.Z80
             if (value == 0 && Equals(this, A)) {
                 instruction.WriteLine("\txor\ta");
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 return;
             }
             base.LoadConstant(instruction, value);
@@ -177,7 +177,7 @@ namespace Inu.Cate.Z80
         {
             Debug.Assert(Equals(A));
             instruction.WriteLine("\tld\ta,(" + label + ")");
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -269,7 +269,7 @@ namespace Inu.Cate.Z80
                 }
 
                 instruction.ChangedRegisters.Add(register);
-                instruction.RemoveVariableRegister(register);
+                instruction.RemoveRegisterAssignment(register);
             }
 
             if (pointerRegister.IsIndex() && pointerRegister.IsOffsetInRange(offset)) {
@@ -285,6 +285,18 @@ namespace Inu.Cate.Z80
                 {
                     Write(A);
                     CopyFrom(instruction, A);
+                });
+                return;
+            }
+
+            if (pointerRegister.Conflicts(this)) {
+                WordOperation.UsingAnyRegister(instruction, WordRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList(), temporaryRegister =>
+                {
+                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                    temporaryRegister.TemporaryOffset(instruction, offset, () =>
+                    {
+                        LoadIndirect(instruction, temporaryRegister, 0);
+                    });
                 });
                 return;
             }
@@ -331,9 +343,11 @@ namespace Inu.Cate.Z80
 
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
         {
+            if (Equals(sourceRegister, this)) return;
+
             instruction.WriteLine("\tld\t" + this + "," + sourceRegister);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, int count)
@@ -351,7 +365,7 @@ namespace Inu.Cate.Z80
             switch (operand) {
                 case IntegerOperand integerOperand:
                     instruction.WriteLine("\t" + operation + integerOperand.IntegerValue);
-                    instruction.RemoveVariableRegister(A);
+                    instruction.RemoveRegisterAssignment(A);
                     return;
                 case VariableOperand variableOperand: {
                         var variable = variableOperand.Variable;

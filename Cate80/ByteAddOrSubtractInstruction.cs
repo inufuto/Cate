@@ -46,7 +46,7 @@ namespace Inu.Cate.Z80
             ResultFlags |= Flag.Z;
 
             if (Equals(RightOperand.Register, ByteRegister.A)) {
-                var candidates = ByteRegister.Registers.Where(r => r != ByteRegister.A).ToList();
+                var candidates = ByteRegister.Registers.Where(r => !Equals(r, ByteRegister.A)).ToList();
                 ByteOperation.UsingAnyRegister(this, candidates, byteRegister =>
                 {
                     byteRegister.CopyFrom(this, ByteRegister.A);
@@ -60,13 +60,15 @@ namespace Inu.Cate.Z80
 
 
             ByteRegister.Using(this, ByteRegister.A, LeftOperand, () =>
-             {
-                 ByteRegister.A.Load(this, LeftOperand);
-                 ByteRegister.A.Operate(this, operation, true, RightOperand);
-                 ByteRegister.A.Store(this, DestinationOperand);
-                 ChangedRegisters.Add(ByteRegister.A);
-             });
+            {
+                ByteRegister.A.Load(this, LeftOperand);
+                ByteRegister.A.Operate(this, operation, true, RightOperand);
+                ByteRegister.A.Store(this, DestinationOperand);
+                ChangedRegisters.Add(ByteRegister.A);
+            });
         }
+
+
 
         protected override int Threshold()
         {

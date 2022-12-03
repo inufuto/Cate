@@ -46,7 +46,7 @@ namespace Inu.Cate.Mos6502
                     register.Load(this, Compiler.HighByteOperand(LeftOperand));
                     register.StoreToMemory(this, word.Name + "+1");
                     ChangedRegisters.Add(word);
-                    RemoveVariableRegister(word);
+                    RemoveRegisterAssignment(word);
 
                     register.LoadConstant(this, 0);
                     register.Store(this, Compiler.LowByteOperand(DestinationOperand));

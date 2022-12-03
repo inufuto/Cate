@@ -125,7 +125,7 @@ namespace Inu.Cate.Mc6800
                         throw new NotImplementedException();
                 }
                 // Register value is not guaranteed due to branching
-                RemoveVariableRegister(register);
+                RemoveRegisterAssignment(register);
             });
         }
     }

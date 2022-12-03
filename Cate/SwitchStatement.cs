@@ -28,15 +28,19 @@ namespace Inu.Cate
             var leftOperand = value.ToOperand(function);
             foreach (var caseStatement in caseStatements) {
                 var rightOperand = caseStatement.Value.ToOperand(function);
-                var instruction = compiler.CreateCompareInstruction(function, 
-                    Keyword.Equal, 
-                    leftOperand, 
-                    rightOperand, 
+                var instruction = compiler.CreateCompareInstruction(function,
+                    Keyword.Equal,
+                    leftOperand,
+                    rightOperand,
                     caseStatement.Anchor);
                 function.Instructions.Add(instruction);
             }
             if (DefaultStatement != null) {
                 var instruction = compiler.CreateJumpInstruction(function, DefaultStatement.Anchor);
+                function.Instructions.Add(instruction);
+            }
+            else {
+                var instruction = compiler.CreateJumpInstruction(function, BreakAnchor);
                 function.Instructions.Add(instruction);
             }
             Debug.Assert(Statement != null);

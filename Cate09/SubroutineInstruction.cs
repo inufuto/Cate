@@ -33,9 +33,14 @@ namespace Inu.Cate.Mc6809
             StoreParametersDirect();
         }
 
-        public static Register ReturnRegister(in int byteCount)
+        public static Register? ReturnRegister(in int byteCount)
         {
-            return byteCount == 1 ? (Register) ByteRegister.A : WordRegister.D;
+            return byteCount switch
+            {
+                1 => ByteRegister.A,
+                2 => WordRegister.D,
+                _ => null
+            };
         }
 
 

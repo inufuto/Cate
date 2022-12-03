@@ -10,9 +10,6 @@ namespace Inu.Cate
 {
     public class Variable : NamedValue
     {
-        public const char TemporaryVariablePrefix = '@';
-
-
         [Flags]
         public enum Usage
         {
@@ -44,7 +41,8 @@ namespace Inu.Cate
         public bool Static
         {
             get => @static;
-            set {
+            set
+            {
                 Debug.Assert(register == null);
                 Debug.Assert(localVariableId == null);
                 @static = value;
@@ -55,7 +53,8 @@ namespace Inu.Cate
         public Register? Register
         {
             get => register;
-            set {
+            set
+            {
                 Debug.Assert(localVariableId == null);
                 Debug.Assert(!@static);
                 register = value;
@@ -65,7 +64,8 @@ namespace Inu.Cate
         public int? LocalVariableId
         {
             get => localVariableId;
-            set {
+            set
+            {
                 Debug.Assert(register == null);
                 Debug.Assert(!@static);
                 localVariableId = value;
@@ -75,7 +75,8 @@ namespace Inu.Cate
 
         public override string Label
         {
-            get {
+            get
+            {
                 if (localVariableId != null) {
                     Debug.Assert(Block.Function != null);
                     return Block.Function.Label + LocalVariableName(localVariableId.Value);
@@ -87,12 +88,13 @@ namespace Inu.Cate
 
         public static string LocalVariableName(int id)
         {
-            return TemporaryVariablePrefix + "Local" + id.ToString();
+            return Compiler.Instance.LabelPrefix + "Local" + id.ToString();
         }
 
         public int Range
         {
-            get {
+            get
+            {
                 if (Usages.Count > 0) {
                     return Usages.Last().Key - Usages.First().Key;
                 }
@@ -105,14 +107,16 @@ namespace Inu.Cate
 
         public bool IsConstant() => value != null;
 
-        public void WriteAssembly(StreamWriter writer)
+        public void WriteAssembly(StreamWriter writer, ref int offset)
         {
+            Compiler.Instance.MakeAlignment(writer, Type.MaxElementSize, ref offset);
             if (value != null) {
                 writer.WriteLine(Label + ": ;" + Name);
                 if (Visibility == Visibility.Public) {
                     writer.WriteLine("\tpublic\t" + Label);
                 }
                 value.WriteAssembly(writer);
+                offset += Type.ByteCount;
             }
             else {
                 if (register != null) {
@@ -130,6 +134,9 @@ namespace Inu.Cate
                         writer.WriteLine("\textrn\t" + Label);
                     }
                     else {
+                        var size = Type.ByteCount;
+                        offset += size;
+                        Compiler.Instance.MakeAlignment(writer, Type.MaxElementSize, ref offset);
                         writer.WriteLine(Label + ":\tdefs " + Type.ByteCount);
                         if (Visibility == Visibility.Public) {
                             writer.WriteLine("\tpublic\t" + Label);
@@ -141,7 +148,7 @@ namespace Inu.Cate
 
         public bool IsTemporary()
         {
-            return Name.StartsWith(TemporaryVariablePrefix);
+            return Name.StartsWith(Compiler.Instance.LabelPrefix);
         }
 
 
@@ -197,8 +204,8 @@ namespace Inu.Cate
                 var to = nextKey - modify;
                 for (var address = from; address <= to; ++address) {
                     var instruction = function.Instructions[address];
-                    if (instruction.TemporaryRegisterIds.Any(r =>
-                        register.Conflicts(r))) {
+                    if (instruction.TemporaryRegisters.Any(r =>
+                            register.Conflicts(r))) {
                         instruction.AddSavingVariable(this);
                     }
                 }

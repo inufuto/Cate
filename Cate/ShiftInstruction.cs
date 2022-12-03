@@ -17,7 +17,7 @@ namespace Inu.Cate
                     return;
                 }
             }
-            Operand counterOperand = RightOperand.Type.ByteCount == 1 ? RightOperand : WordOperation.LowByteOperand(RightOperand);
+            var counterOperand = RightOperand.Type.ByteCount == 1 ? RightOperand : WordOperation.LowByteOperand(RightOperand);
             ShiftVariable(counterOperand);
         }
 

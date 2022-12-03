@@ -30,9 +30,14 @@ namespace Inu.Cate
         public abstract bool IsPointer(int offset);
 
         public abstract void LoadConstant(Instruction instruction, string value);
-        public void LoadConstant(Instruction instruction, int value)
+        public virtual void LoadConstant(Instruction instruction, int value)
         {
+            if (instruction.IsConstantAssigned(this, value)) {
+                instruction.ChangedRegisters.Add(this);
+                return;
+            }
             LoadConstant(instruction, value.ToString());
+            instruction.SetRegisterConstant(this, value);
         }
         public abstract void LoadFromMemory(Instruction instruction, string label);
         public abstract void StoreToMemory(Instruction instruction, string label);
@@ -41,20 +46,17 @@ namespace Inu.Cate
         public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
 
 
-        public abstract void LoadIndirect(Instruction instruction, WordRegister sourcePointerRegister, int sourceOffset);
-        public abstract void StoreIndirect(Instruction instruction, WordRegister destinationPointerRegister, int destinationOffset);
+        public abstract void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
+        public abstract void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
 
         public abstract void CopyFrom(Instruction instruction, WordRegister sourceRegister);
 
 
         public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
-        public abstract void Save(Instruction instruction);
-        public abstract void Restore(Instruction instruction);
 
-        public void TemporaryOffset(Instruction instruction, int offset, Action action)
+        public virtual void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
-            if (instruction.IsRegisterInUse(this))
-            {
+            if (instruction.IsRegisterInUse(this)) {
                 var changed = instruction.ChangedRegisters.Contains(this);
                 Add(instruction, offset);
                 action();
@@ -64,12 +66,17 @@ namespace Inu.Cate
                 }
             }
             else {
+                var changed = instruction.ChangedRegisters.Contains(this);
                 instruction.BeginRegister(this);
                 Add(instruction, offset);
-                instruction.RemoveVariableRegister(this);
+                instruction.RemoveRegisterAssignment(this);
                 instruction.ChangedRegisters.Add(this);
                 action();
+                Add(instruction, -offset);
                 instruction.EndRegister(this);
+                if (!changed) {
+                    instruction.ChangedRegisters.Remove(this);
+                }
             }
         }
     }

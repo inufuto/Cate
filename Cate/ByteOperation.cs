@@ -9,7 +9,12 @@ namespace Inu.Cate
     {
         public abstract List<ByteRegister> Accumulators { get; }
 
-        protected abstract void OperateConstant(Instruction instruction, string operation, string value, int count);
+        protected virtual void OperateConstant(Instruction instruction, string operation, string value, int count)
+        {
+            for (var i = 0; i < count; ++i) {
+                instruction.WriteLine("\t" + operation + value);
+            }
+        }
 
         protected abstract void OperateMemory(Instruction instruction, string operation, bool change, Variable variable,
             int offset, int count);
@@ -43,9 +48,10 @@ namespace Inu.Cate
                         var offset = variableOperand.Offset;
                         var register = variable.Register;
                         if (register is ByteRegister byteRegister) {
-                            Debug.Assert(operation.Replace("\t", "").Length == 3);
+                            Debug.Assert(operation.Replace("\t", "").Replace(" ", "").Length == 3);
                             //var register = RegisterFromId(Register);
                             byteRegister.Operate(instruction, operation, change, count);
+                            instruction.ChangedRegisters.Remove(byteRegister);
                             instruction.ResultFlags |= Instruction.Flag.Z;
                             return;
                         }
@@ -93,18 +99,37 @@ namespace Inu.Cate
         public void UsingRegister(Instruction instruction, ByteRegister register, Action action)
         {
             if (instruction.IsRegisterInUse(register)) {
-                var candidates = Registers.Where(r => !Equals(r, register)).ToList();
-                UsingAnyRegister(instruction, candidates, otherRegister =>
-                {
-                    otherRegister.CopyFrom(instruction, register);
-                    action();
-                    register.CopyFrom(instruction, otherRegister);
-                });
+                var candidates = Registers.Where(r => !Equals(r, register) && !instruction.IsRegisterInUse(r)).ToList();
+                if (candidates.Any()) {
+                    UsingAnyRegister(instruction, candidates, otherRegister =>
+                    {
+                        otherRegister.CopyFrom(instruction, register);
+                        action();
+                        register.CopyFrom(instruction, otherRegister);
+                        instruction.ChangedRegisters.Add(otherRegister);
+                        instruction.RemoveRegisterAssignment(otherRegister);
+                    });
+                    return;
+                }
+                register.Save(instruction);
+                action();
+                register.Restore(instruction);
                 return;
             }
             instruction.BeginRegister(register);
             action();
             instruction.EndRegister(register);
+        }
+
+        public void UsingRegister(Instruction instruction, ByteRegister register, Operand operand, Action action)
+        {
+            if (Equals(operand.Register, register)) {
+                instruction.BeginRegister(operand.Register);
+                action();
+                instruction.EndRegister(operand.Register);
+                return;
+            }
+            UsingRegister(instruction, register, action);
         }
 
         public void UsingAnyRegister(Instruction instruction, List<ByteRegister> candidates,
@@ -166,7 +191,7 @@ namespace Inu.Cate
 
         protected virtual void SaveAndRestore(Instruction instruction, ByteRegister register, Action action)
         {
-            var temporaryRegister = Registers.Find(r => r != register && !instruction.IsRegisterInUse(r));
+            var temporaryRegister = Registers.Find(r => !Equals(r, register) && !instruction.IsRegisterInUse(r));
             if (temporaryRegister != null) {
                 temporaryRegister.CopyFrom(instruction, register);
                 action();
@@ -242,12 +267,16 @@ namespace Inu.Cate
                      register.Operate(instruction, operation, change, instruction.RightOperand);
                  }
 
-                 instruction.RemoveVariableRegister(register);
+                 instruction.RemoveRegisterAssignment(register);
                  register.Store(instruction, instruction.DestinationOperand);
              });
         }
 
-        public abstract string ToTemporaryByte(Instruction instruction, ByteRegister rightRegister);
+        public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);
 
+        public List<ByteRegister> RegistersOtherThan(Cate.ByteRegister register)
+        {
+            return Registers.FindAll(r => !Equals(r, register));
+        }
     }
 }

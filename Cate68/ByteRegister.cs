@@ -98,16 +98,17 @@ namespace Inu.Cate.Mc6800
         {
             instruction.WriteLine("\tlda" + Name + "\t#" + value);
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
         public override void LoadConstant(Instruction instruction, int value)
         {
+            if (instruction.IsConstantAssigned(this, value)) return;
             if (value == 0) {
                 instruction.WriteLine("\tclr" + Name);
                 instruction.ChangedRegisters.Add(this);
-                instruction.RemoveVariableRegister(this);
+                instruction.SetRegisterConstant(this,value);
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
             }
@@ -136,7 +137,7 @@ namespace Inu.Cate.Mc6800
                 if (pointerRegister.IsOffsetInRange(offset)) {
                     instruction.WriteLine("\tlda" + this + "\t" + offset + ",x");
                     instruction.ResultFlags |= Instruction.Flag.Z;
-                    instruction.RemoveVariableRegister(this);
+                    instruction.RemoveRegisterAssignment(this);
                     instruction.ChangedRegisters.Add(this);
                     return;
                 }
@@ -162,7 +163,7 @@ namespace Inu.Cate.Mc6800
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tlda" + Name + "\t" + label);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -176,7 +177,7 @@ namespace Inu.Cate.Mc6800
         {
             instruction.WriteLine("\tt" + sourceRegister + this);
             instruction.ResultFlags |= Instruction.Flag.Z;
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -188,7 +189,7 @@ namespace Inu.Cate.Mc6800
 
             if (!change)
                 return;
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
             instruction.ChangedRegisters.Add(this);
         }
 
@@ -209,7 +210,7 @@ namespace Inu.Cate.Mc6800
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, string operand)
@@ -218,7 +219,7 @@ namespace Inu.Cate.Mc6800
             if (!change)
                 return;
             instruction.ChangedRegisters.Add(this);
-            instruction.RemoveVariableRegister(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Save(Instruction instruction)

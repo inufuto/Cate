@@ -117,14 +117,15 @@ namespace Inu.Cate
         public virtual void Clear()
         { }
 
-        public virtual void WriteAssembly(StreamWriter writer)
+        public virtual void WriteAssembly(StreamWriter writer, ref int codeOffset, ref int dataOffset)
         {
             var codeSegmentVariables = Variables.Values.Where(v => v.IsConstant()).ToList();
             if (codeSegmentVariables.Any()) {
                 writer.WriteLine("\tcseg");
                 foreach (var variable in codeSegmentVariables) {
-                    variable.WriteAssembly(writer);
+                    variable.WriteAssembly(writer, ref codeOffset);
                 }
+                Compiler.Instance.MakeAlignment(writer, ref codeOffset);
             }
             var dataSegmentVariables = Variables.Values.Where(v => !v.IsConstant()).ToList();
             if (!dataSegmentVariables.Any()) return;
@@ -134,15 +135,16 @@ namespace Inu.Cate
                 if (dataSegmentVariables.Any()) {
                     writer.WriteLine("\tdseg");
                 }
+
                 foreach (var variable in dataSegmentVariables) {
-                    WriteVariableAssembly(writer, variable, index++);
+                    WriteVariableAssembly(writer, variable, index++, ref dataOffset);
                 }
             }
         }
 
-        protected virtual void WriteVariableAssembly(StreamWriter writer, Variable variable, int index)
+        protected virtual void WriteVariableAssembly(StreamWriter writer, Variable variable, int index, ref int offset)
         {
-            variable.WriteAssembly(writer);
+            variable.WriteAssembly(writer, ref offset);
         }
 
         public void End(Function function)
@@ -196,11 +198,11 @@ namespace Inu.Cate
             return functions.Find(f => f.Id == id);
         }
 
-        public override void WriteAssembly(StreamWriter writer)
+        public override void WriteAssembly(StreamWriter writer, ref int codeOffset, ref int dataOffset)
         {
-            base.WriteAssembly(writer);
+            base.WriteAssembly(writer, ref codeOffset, ref dataOffset);
             foreach (var function in functions) {
-                function.WriteAssembly(writer);
+                function.WriteAssembly(writer, ref codeOffset, ref dataOffset);
             }
         }
     }
@@ -222,11 +224,11 @@ namespace Inu.Cate
             Children.Clear();
         }
 
-        public override void WriteAssembly(StreamWriter writer)
+        public override void WriteAssembly(StreamWriter writer, ref int codeOffset, ref int dataOffset)
         {
-            base.WriteAssembly(writer);
+            base.WriteAssembly(writer, ref codeOffset, ref dataOffset);
             foreach (var child in Children) {
-                child.WriteAssembly(writer);
+                child.WriteAssembly(writer, ref codeOffset, ref dataOffset);
             }
         }
 
@@ -238,8 +240,10 @@ namespace Inu.Cate
             Children.Add(block);
         }
 
-        public List<Variable> AllVariables {
-            get {
+        public List<Variable> AllVariables
+        {
+            get
+            {
                 var allVariables = new List<Variable>(this.Variables.Values);
                 foreach (var child in Children) {
                     allVariables.AddRange(child.AllVariables);
@@ -262,10 +266,10 @@ namespace Inu.Cate
         public override Function? Function => function;
 
 
-        protected override void WriteVariableAssembly(StreamWriter writer, Variable variable, int index)
+        protected override void WriteVariableAssembly(StreamWriter writer, Variable variable, int index, ref int offset)
         {
             function.WriteParameterLabel(writer, index, variable.Parameter);
-            base.WriteVariableAssembly(writer, variable, index);
+            base.WriteVariableAssembly(writer, variable, index, ref offset);
         }
     }
 }

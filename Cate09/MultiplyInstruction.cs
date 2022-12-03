@@ -79,7 +79,7 @@ namespace Inu.Cate.Mc6809
             WordOperation.UsingRegister(this, WordRegister.D, ActToRegister);
 
             end:
-            RemoveVariableRegister(WordRegister.D);
+            RemoveRegisterAssignment(WordRegister.D);
             ChangedRegisters.Add(WordRegister.D);
         }
 
