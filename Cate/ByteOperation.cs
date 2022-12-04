@@ -215,7 +215,9 @@ namespace Inu.Cate
         {
             if (destinationOperand.Register is ByteRegister destinationRegister) {
                 if (candidates.Contains(destinationRegister)) {
+                    instruction.BeginRegister(destinationRegister);
                     action(destinationRegister);
+                    instruction.EndRegister(destinationRegister);
                     return;
                 }
             }

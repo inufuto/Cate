@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Cate99": {
+      "commandName": "Project",
+      "commandLineArgs": "EnemyRow.c",
+      "workingDirectory": "D:\\8bit\\pyuta\\guntusTP"
+    }
+  }
+}
