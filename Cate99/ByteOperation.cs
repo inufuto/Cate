@@ -88,6 +88,7 @@ namespace Inu.Cate.Tms99
                     destinationRegister.Store(instruction, destinationOperand);
                 }
                 else {
+                    instruction.BeginRegister(destinationRegister);
                     instance.UsingAnyRegister(instruction, rightRegister =>
                     {
                         rightRegister.Load(instruction, rightOperand);
@@ -96,6 +97,7 @@ namespace Inu.Cate.Tms99
                         instruction.ChangedRegisters.Add(destinationRegister);
                         destinationRegister.Store(instruction, destinationOperand);
                     });
+                    instruction.EndRegister(destinationRegister);
                 }
             });
         }
