@@ -85,6 +85,7 @@ namespace Inu.Cate.Tms99
                 if (right != null) {
                     instruction.WriteLine("\t" + operation + "\t" + right + "," + destinationRegister.Name);
                     instruction.ChangedRegisters.Add(destinationRegister);
+                    instruction.RemoveRegisterAssignment(destinationRegister);
                     destinationRegister.Store(instruction, destinationOperand);
                 }
                 else {
@@ -95,6 +96,7 @@ namespace Inu.Cate.Tms99
                         //destinationRegister.Load(instruction, leftOperand);
                         instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," + destinationRegister.Name);
                         instruction.ChangedRegisters.Add(destinationRegister);
+                        instruction.RemoveRegisterAssignment(destinationRegister);
                         destinationRegister.Store(instruction, destinationOperand);
                     });
                     instruction.EndRegister(destinationRegister);
@@ -105,12 +107,13 @@ namespace Inu.Cate.Tms99
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, string value)
         {
             Debug.Assert(instance != null);
-            instance.UsingAnyRegisterToChange(instruction, destinationOperand, leftOperand, register =>
+            instance.UsingAnyRegisterToChange(instruction, destinationOperand, leftOperand, destinationRegister =>
             {
-                register.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
-                register.Store(instruction, destinationOperand);
-                instruction.ChangedRegisters.Add(register);
+                destinationRegister.Load(instruction, leftOperand);
+                instruction.WriteLine("\t" + operation + "\t" + destinationRegister.Name + "," + value);
+                destinationRegister.Store(instruction, destinationOperand);
+                instruction.ChangedRegisters.Add(destinationRegister);
+                instruction.RemoveRegisterAssignment(destinationRegister);
             });
         }
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)

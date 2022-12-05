@@ -254,11 +254,13 @@ namespace Inu.Cate.Tms99
         {
             if (offset == 0) {
                 instruction.WriteLine("\tmov\t*" + pointerRegister.Name + "," + Name);
+                instruction.ChangedRegisters.Add(this);
             }
             else {
                 void ForRegister(Register wordRegister)
                 {
                     instruction.WriteLine("\tmov\t@" + offset + "(" + wordRegister.Name + ")," + Name);
+                    instruction.ChangedRegisters.Add(this);
                 }
 
                 if (pointerRegister.IsOffsetInRange(offset)) {
