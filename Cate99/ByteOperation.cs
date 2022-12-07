@@ -53,7 +53,12 @@ namespace Inu.Cate.Tms99
 
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
         {
-            throw new System.NotImplementedException();
+            var candidates = Registers.Where(r => !r.Conflicts(pointerRegister)).ToList();
+            UsingAnyRegister(instruction, candidates, temporaryRegister =>
+            {
+                temporaryRegister.LoadConstant(instruction, value);
+                temporaryRegister.StoreIndirect(instruction, pointerRegister, offset);
+            });
         }
 
         public override void ClearByte(Instruction instruction, string label)
@@ -80,15 +85,18 @@ namespace Inu.Cate.Tms99
                 if (right != null) {
                     instruction.WriteLine("\t" + operation + "\t" + right + "," + destinationRegister.Name);
                     instruction.ChangedRegisters.Add(destinationRegister);
+                    instruction.RemoveRegisterAssignment(destinationRegister);
                     destinationRegister.Store(instruction, destinationOperand);
                 }
                 else {
                     instruction.BeginRegister(destinationRegister);
-                    instance.UsingAnyRegister(instruction, null, rightOperand, rightRegister =>
+                    instance.UsingAnyRegister(instruction, rightRegister =>
                     {
                         rightRegister.Load(instruction, rightOperand);
+                        //destinationRegister.Load(instruction, leftOperand);
                         instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," + destinationRegister.Name);
                         instruction.ChangedRegisters.Add(destinationRegister);
+                        instruction.RemoveRegisterAssignment(destinationRegister);
                         destinationRegister.Store(instruction, destinationOperand);
                     });
                     instruction.EndRegister(destinationRegister);
@@ -99,13 +107,13 @@ namespace Inu.Cate.Tms99
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, string value)
         {
             Debug.Assert(instance != null);
-            instance.UsingAnyRegisterToChange(instruction, destinationOperand, leftOperand, register =>
+            instance.UsingAnyRegisterToChange(instruction, destinationOperand, leftOperand, destinationRegister =>
             {
-                register.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
-                register.Store(instruction, destinationOperand);
-                instruction.ChangedRegisters.Add(register);
-                instruction.RemoveRegisterAssignment(register);
+                destinationRegister.Load(instruction, leftOperand);
+                instruction.WriteLine("\t" + operation + "\t" + destinationRegister.Name + "," + value);
+                destinationRegister.Store(instruction, destinationOperand);
+                instruction.ChangedRegisters.Add(destinationRegister);
+                instruction.RemoveRegisterAssignment(destinationRegister);
             });
         }
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)

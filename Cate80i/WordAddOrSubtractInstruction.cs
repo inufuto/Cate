@@ -26,15 +26,13 @@ namespace Inu.Cate.I8080
 
             if (OperatorId == '+' && !Equals(RightOperand.Register, WordRegister.Hl)) {
                 var candidates = new List<Cate.WordRegister>() { WordRegister.Bc, WordRegister.De };
-                WordOperation.UsingAnyRegister(this, candidates,null,RightOperand, rightRegister =>
+                WordOperation.UsingAnyRegister(this, candidates, rightRegister =>
                 {
                     void OperateHl()
                     {
                         WordRegister.Hl.Load(this, LeftOperand);
                         WriteLine("\tdad\t" + rightRegister);
                         WordRegister.Hl.Store(this, DestinationOperand);
-                        ChangedRegisters.Add(WordRegister.Hl);
-                        RemoveRegisterAssignment(WordRegister.Hl);
                     }
 
                     rightRegister.Load(this, RightOperand);

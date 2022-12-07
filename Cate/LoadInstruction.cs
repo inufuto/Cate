@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Inu.Cate
 {
@@ -50,6 +51,26 @@ namespace Inu.Cate
                 DestinationOperand.Type.ByteCount == SourceOperand.Type.ByteCount
             ) {
                 return;
+            }
+
+            if (SourceOperand is IntegerOperand integerOperand && DestinationOperand is IndirectOperand indirectOperand) {
+                var pointer = indirectOperand.Variable;
+                var offset = indirectOperand.Offset;
+                var register = GetVariableRegister(pointer, 0);
+                if (register is WordRegister pointerRegister) {
+                    ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
+                    return;
+                }
+                var pointerRegisters = WordOperation.PointerRegisters(offset);
+                if (pointerRegisters.Any()) {
+                    WordOperation.UsingAnyRegister(this, pointerRegisters, DestinationOperand, SourceOperand,
+                        temporaryRegister =>
+                        {
+                            temporaryRegister.LoadFromMemory(this, pointer, 0);
+                            ByteOperation.StoreConstantIndirect(this, temporaryRegister, offset, integerOperand.IntegerValue);
+                        });
+                    return;
+                }
             }
 
             ByteOperation.UsingAnyRegister(this, Candidates(), DestinationOperand, SourceOperand, register =>

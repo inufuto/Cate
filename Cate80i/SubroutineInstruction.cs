@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Inu.Cate.I8080
 {
     internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
-        public static Register? ReturnRegister(int byteCount)
+        public static Register ReturnRegister(int byteCount)
         {
             return byteCount switch
             {
                 1 => ByteRegister.A,
-                2 => WordRegister.Hl,
-                _ => null
+                _ => WordRegister.Hl
             };
         }
 

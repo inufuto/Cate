@@ -23,6 +23,7 @@ namespace Inu.Cate.Tms99
                 void CallShift()
                 {
                     r0.Load(this, LeftOperand);
+                    r1.Expand(this, ((IntegerType)RightOperand.Type).Signed);
                     Compiler.CallExternal(this, functionName);
                     WriteLine("\tandi\tr0,>ff00");
                     RemoveRegisterAssignment(r0);

@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Cate99": {
+      "commandName": "Project",
+      "commandLineArgs": "Team.c",
+      "workingDirectory": "D:\\8bit\\ti99\\guntus99"
+    }
+  }
+}

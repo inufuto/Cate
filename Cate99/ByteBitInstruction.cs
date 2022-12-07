@@ -25,7 +25,7 @@ namespace Inu.Cate.Tms99
                         var candidates = ByteOperation.Registers.Where(r => !Equals(r, destinationRegister)).ToList();
                         ByteOperation.UsingAnyRegister(this, candidates, null, RightOperand, sourceRegister =>
                         {
-                            if (LeftOperand.Conflicts(destinationRegister)) {
+                            if (destinationRegister.Conflicts(LeftOperand)) {
                                 destinationRegister.Load(this, LeftOperand);
                                 sourceRegister.Load(this, RightOperand);
                             }

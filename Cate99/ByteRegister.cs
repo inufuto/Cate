@@ -8,6 +8,17 @@ namespace Inu.Cate.Tms99
 {
     internal class ByteRegister : Cate.ByteRegister
     {
+        public override void Exchange(Instruction instruction, Cate.ByteRegister register)
+        {
+            var candidates = ByteRegister.Registers.Where(r => !Equals(r, this) && !Equals(r, register)).ToList();
+            ByteOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
+            {
+                temporaryRegister.CopyFrom(instruction, this);
+                CopyFrom(instruction, register);
+                register.CopyFrom(instruction, temporaryRegister);
+            });
+        }
+
         private const int MinId = 100;
 
         private static List<Cate.ByteRegister>? registers;

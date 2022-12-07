@@ -15,12 +15,12 @@
                         WriteLine("\tmvi\tm," + low);
                         WriteLine("\tinx\th");
                         WriteLine("\tmvi\tm," + high);
-                        WriteLine("\tdcx\th");
+                        ChangedRegisters.Add(WordRegister.Hl);
                     }
 
                     var pointer = destinationIndirectOperand.Variable;
                     var offset = destinationIndirectOperand.Offset;
-                    var pointerRegister = pointer.Register?? GetVariableRegister(pointer, 0);
+                    var pointerRegister = GetVariableRegister(pointer, 0);
                     if (Equals(pointerRegister, WordRegister.Hl)) {
                         if (offset == 0) {
                             ViaHl();

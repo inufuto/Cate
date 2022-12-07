@@ -78,6 +78,7 @@ namespace Inu.Cate
         public readonly ISet<Instruction> PreviousInstructions = new HashSet<Instruction>();
         public readonly IDictionary<Register, RegisterAssignment> RegisterAssignments = new Dictionary<Register, RegisterAssignment>();
         public Flag ResultFlags;
+        public readonly Dictionary<WordRegister, int> RegisterOffsets = new Dictionary<WordRegister, int>();
 
         protected Instruction(Function function)
         {
@@ -496,6 +497,7 @@ namespace Inu.Cate
 
         public void SetRegisterConstant(Register register, int value)
         {
+            RemoveRegisterAssignment(register);
             RegisterAssignments[register] = new RegisterConstantAssignment(value);
         }
 
@@ -507,6 +509,33 @@ namespace Inu.Cate
         public void SetRegisterConstant(Register register, PointerOperand pointerOperand)
         {
             RegisterAssignments[register] = new RegisterConstantAssignment(new ConstantPointer((PointerType)pointerOperand.Type, pointerOperand.Variable, pointerOperand.Offset));
+        }
+
+        public int GetRegisterOffset(WordRegister register)
+        {
+            if (RegisterOffsets.TryGetValue(register, out var offset)) {
+                return offset;
+            }
+            return 0;
+        }
+
+        public void SetRegisterOffset(WordRegister register, int offset)
+        {
+            RegisterOffsets[register] = offset;
+            //foreach (var pair in RegisterAssignments) {
+            //    var registerAssignment = pair.Value;
+            //    if (!Equals(pair.Key, register) || registerAssignment.Offset == offset) continue;
+            //    RegisterAssignments[register] = new RegisterAssignment(registerAssignment.Variable, offset);
+            //}
+        }
+
+        public bool IsRegisterOffsetEmpty()
+        {
+            foreach (var (key, offset) in RegisterOffsets) {
+                if (!ChangedRegisters.Contains(key)) continue;
+                if (offset != 0) return false;
+            }
+            return true;
         }
     }
 }
