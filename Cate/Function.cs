@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("if *ppMember != pEnemy goto RemoveMember__Anchor85")) {
+                if (instruction.ToString().Contains("pFront = offset + VVramFront_")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

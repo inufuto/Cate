@@ -32,6 +32,8 @@ namespace Inu.Cate.I8080
                     {
                         WordRegister.Hl.Load(this, LeftOperand);
                         WriteLine("\tdad\t" + rightRegister);
+                        ChangedRegisters.Add(WordRegister.Hl);
+                        RemoveRegisterAssignment(WordRegister.Hl);
                         WordRegister.Hl.Store(this, DestinationOperand);
                     }
 
