@@ -16,6 +16,7 @@
                         WriteLine("\tinx\th");
                         WriteLine("\tmvi\tm," + high);
                         ChangedRegisters.Add(WordRegister.Hl);
+                        RemoveRegisterAssignment(WordRegister.Hl);
                     }
 
                     var pointer = destinationIndirectOperand.Variable;

@@ -293,7 +293,6 @@ namespace Inu.Cate.I8080
         {
             if (Equals(this, Hl)) {
                 instruction.WriteLine("\tlhld\t" + variable.MemoryAddress(offset));
-                instruction.SetVariableRegister(variable, offset, Hl);
             }
             else {
                 WordOperation.UsingRegister(instruction, Hl, () =>
