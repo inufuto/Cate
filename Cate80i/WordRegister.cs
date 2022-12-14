@@ -336,6 +336,8 @@ namespace Inu.Cate.I8080
                     instruction.WriteLine("\tldax\t" + pointerRegister);
                     High.CopyFrom(instruction, ByteRegister.A);
                     instruction.WriteLine("\tdcx\t" + pointerRegister);
+                    instruction.ChangedRegisters.Add(ByteRegister.A);
+                    instruction.RemoveRegisterAssignment(ByteRegister.A);
                 });
                 return;
             }

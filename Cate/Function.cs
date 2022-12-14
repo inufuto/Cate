@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("*ppMember = 0")) {
+                if (instruction.ToString().Contains("pMember = *ppMember")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();
