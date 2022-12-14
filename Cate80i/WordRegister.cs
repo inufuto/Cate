@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Channels;
 
 namespace Inu.Cate.I8080
 {
@@ -126,6 +124,8 @@ namespace Inu.Cate.I8080
             instruction.ChangedRegisters.Add(this);
             instruction.RemoveRegisterAssignment(this);
         }
+
+        public override bool IsAddable() => Equals(this, Hl);
 
         public override bool IsOffsetInRange(int offset)
         {

@@ -25,24 +25,32 @@ namespace Inu.Cate.I8080
                 return;
 
             if (OperatorId == '+' && !Equals(RightOperand.Register, WordRegister.Hl)) {
+                void OperateHl(Cate.WordRegister rightRegister)
+                {
+                    WordRegister.Hl.Load(this, LeftOperand);
+                    WriteLine("\tdad\t" + rightRegister);
+                    ChangedRegisters.Add(WordRegister.Hl);
+                    RemoveRegisterAssignment(WordRegister.Hl);
+                    WordRegister.Hl.Store(this, DestinationOperand);
+                }
+
+                if (RightOperand.Register is WordRegister rightWordRegister && (Equals(rightWordRegister, WordRegister.De) || Equals(rightWordRegister, WordRegister.Bc))) {
+                    OperateHl(rightWordRegister);
+                    return;
+                }
+
                 var candidates = new List<Cate.WordRegister>() { WordRegister.Bc, WordRegister.De };
                 WordOperation.UsingAnyRegister(this, candidates, rightRegister =>
                 {
-                    void OperateHl()
-                    {
-                        WordRegister.Hl.Load(this, LeftOperand);
-                        WriteLine("\tdad\t" + rightRegister);
-                        ChangedRegisters.Add(WordRegister.Hl);
-                        RemoveRegisterAssignment(WordRegister.Hl);
-                        WordRegister.Hl.Store(this, DestinationOperand);
-                    }
-
                     rightRegister.Load(this, RightOperand);
                     if (Equals(DestinationOperand.Register, WordRegister.Hl)) {
-                        OperateHl();
+                        OperateHl(rightRegister);
                     }
                     else {
-                        WordOperation.UsingRegister(this, WordRegister.Hl, OperateHl);
+                        WordOperation.UsingRegister(this, WordRegister.Hl, () =>
+                        {
+                            OperateHl(rightRegister);
+                        });
                     }
                 });
                 return;
