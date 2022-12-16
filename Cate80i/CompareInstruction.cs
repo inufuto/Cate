@@ -23,6 +23,20 @@ namespace Inu.Cate.I8080
 
         protected override void CompareByte()
         {
+            if (Signed && OperatorId != Keyword.Equal && OperatorId != Keyword.NotEqual) {
+                ByteOperation.UsingRegister(this, ByteRegister.E, RightOperand, () =>
+                {
+                    ByteOperation.UsingRegister(this, ByteRegister.A, LeftOperand, () =>
+                    {
+                        ByteRegister.A.Load(this, LeftOperand);
+                        ByteRegister.E.Load(this, RightOperand);
+                        Compiler.CallExternal(this, "cate.CompareAESigned");
+                    });
+                });
+                Jump(false);
+                return;
+            }
+
             var operandZero = false;
             if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
                 CompareByteZero();
@@ -66,6 +80,20 @@ namespace Inu.Cate.I8080
 
         protected override void CompareWord()
         {
+            if (Signed && OperatorId != Keyword.Equal && OperatorId != Keyword.NotEqual) {
+                WordOperation.UsingRegister(this, WordRegister.De, RightOperand, () =>
+                {
+                    WordOperation.UsingRegister(this, WordRegister.Hl, LeftOperand, () =>
+                    {
+                        WordRegister.De.Load(this, RightOperand);
+                        WordRegister.Hl.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, "cate.CompareHlDeSigned");
+                    });
+                });
+                Jump(false);
+                return;
+            }
+
             if (RightOperand is IntegerOperand { IntegerValue: 0 } || RightOperand is NullPointerOperand) {
                 if (LeftOperand.Register is WordRegister leftRegister) {
                     if (leftRegister.IsPair()) {
@@ -121,82 +149,82 @@ namespace Inu.Cate.I8080
                     WriteJumpLine("\tjnz\t" + Anchor);
                     break;
                 case '<':
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjm\t" + Anchor);
-                        }
-                        else {
-                            WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
-                            WriteJumpLine("\tjm\t" + Anchor);
-                            WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
-                            WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
-                            WriteJumpLine("\tjp\t" + Anchor);
-                            WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
-                            ++subLabelIndex;
-                        }
-                    }
-                    else {
+                    //if (Signed) {
+                    //    if (operandZero) {
+                    //        WriteJumpLine("\tjm\t" + Anchor);
+                    //    }
+                    //    else {
+                    //        WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
+                    //        WriteJumpLine("\tjm\t" + Anchor);
+                    //        WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
+                    //        WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
+                    //        WriteJumpLine("\tjp\t" + Anchor);
+                    //        WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
+                    //        ++subLabelIndex;
+                    //    }
+                    //}
+                    //else {
                         WriteJumpLine("\tjc\t" + Anchor);
-                    }
+                    //}
                     break;
                 case '>':
                     WriteJumpLine("\tjz\t" + Anchor + "_F" + subLabelIndex);
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjp\t" + Anchor);
-                        }
-                        else {
-                            WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
-                            WriteJumpLine("\tjp\t" + Anchor);
-                            WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
-                            WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
-                            WriteJumpLine("\tjm\t" + Anchor);
-                        }
-                    }
-                    else {
+                    //if (Signed) {
+                    //    if (operandZero) {
+                    //        WriteJumpLine("\tjp\t" + Anchor);
+                    //    }
+                    //    else {
+                    //        WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
+                    //        WriteJumpLine("\tjp\t" + Anchor);
+                    //        WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
+                    //        WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
+                    //        WriteJumpLine("\tjm\t" + Anchor);
+                    //    }
+                    //}
+                    //else {
                         WriteJumpLine("\tjnc\t" + Anchor);
-                    }
+                    //}
                     WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
                     ++subLabelIndex;
                     break;
                 case Keyword.LessEqual:
                     WriteJumpLine("\tjz\t" + Anchor);
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjm\t" + Anchor);
-                        }
-                        else {
-                            WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
-                            WriteJumpLine("\tjm\t" + Anchor);
-                            WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
-                            WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
-                            WriteJumpLine("\tjp\t" + Anchor);
-                            WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
-                            ++subLabelIndex;
-                        }
-                    }
-                    else {
+                    //if (Signed) {
+                    //    if (operandZero) {
+                    //        WriteJumpLine("\tjm\t" + Anchor);
+                    //    }
+                    //    else {
+                    //        WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
+                    //        WriteJumpLine("\tjm\t" + Anchor);
+                    //        WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
+                    //        WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
+                    //        WriteJumpLine("\tjp\t" + Anchor);
+                    //        WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
+                    //        ++subLabelIndex;
+                    //    }
+                    //}
+                    //else {
                         WriteJumpLine("\tjc\t" + Anchor);
-                    }
+                    //}
                     break;
                 case Keyword.GreaterEqual:
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjp\t" + Anchor);
-                        }
-                        else {
-                            WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
-                            WriteJumpLine("\tjp\t" + Anchor);
-                            WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
-                            WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
-                            WriteJumpLine("\tjm\t" + Anchor);
-                            WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
-                            ++subLabelIndex;
-                        }
-                    }
-                    else {
+                    //if (Signed) {
+                    //    if (operandZero) {
+                    //        WriteJumpLine("\tjp\t" + Anchor);
+                    //    }
+                    //    else {
+                    //        WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
+                    //        WriteJumpLine("\tjp\t" + Anchor);
+                    //        WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
+                    //        WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
+                    //        WriteJumpLine("\tjm\t" + Anchor);
+                    //        WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
+                    //        ++subLabelIndex;
+                    //    }
+                    //}
+                    //else {
                         WriteJumpLine("\tjnc\t" + Anchor);
-                    }
+                    //}
                     break;
                 default:
                     throw new NotImplementedException();
