@@ -209,8 +209,9 @@ namespace Inu.Cate.I8080
                 case IndirectOperand sourceIndirectOperand: {
                         var pointer = sourceIndirectOperand.Variable;
                         var offset = sourceIndirectOperand.Offset;
-                        if (pointer.Register is WordRegister pointerRegister) {
-                            LoadIndirect(instruction, pointerRegister, offset);
+                        var pointerRegister = instruction.GetVariableRegister(pointer, 0);
+                        if (pointerRegister is WordRegister pointerWordRegister) {
+                            LoadIndirect(instruction, pointerWordRegister, offset);
                             return;
                         }
 
@@ -258,7 +259,7 @@ namespace Inu.Cate.I8080
                 case IndirectOperand destinationIndirectOperand: {
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
-                        var pointerRegister = instruction.GetVariableRegister(pointer, offset);
+                        var pointerRegister = instruction.GetVariableRegister(pointer, 0);
                         if (pointerRegister is WordRegister pointerWordRegister) {
                             StoreIndirect(instruction, pointerWordRegister, offset);
                             return;
@@ -389,12 +390,16 @@ namespace Inu.Cate.I8080
                 StoreIndirect(instruction, wordRegister, 0);
             }
 
-            if (instruction.TemporaryRegisters.Contains(pointerRegister)) {
+            if (!instruction.TemporaryRegisters.Contains(pointerRegister)) {
                 AddAndStore(pointerRegister);
             }
             else {
-                var candidates = Registers.Where(r => r != pointerRegister).ToList();
-                WordOperation.UsingAnyRegister(instruction, candidates, AddAndStore);
+                var candidates = Registers.Where(r => !Equals(r, pointerRegister)).ToList();
+                WordOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
+                {
+                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                    AddAndStore(temporaryRegister);
+                });
             }
         }
 
