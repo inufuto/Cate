@@ -13,3 +13,4 @@ This repository contains following Visual Studio Solutions:
 |Cate65.sln|for 6502|
 |Cate09.sln|for 6809|
 |Cate99.sln|for TMS9900|
+|Cate80i.sln|for 8080|
