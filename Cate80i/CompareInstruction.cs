@@ -150,13 +150,8 @@ namespace Inu.Cate.I8080
                     WriteJumpLine("\tjnz\t" + Anchor);
                     break;
                 case '<':
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjm\t" + Anchor);
-                        }
-                        else {
-                            throw new NotImplementedException();
-                        }
+                    if (Signed && operandZero) {
+                        WriteJumpLine("\tjm\t" + Anchor);
                     }
                     else {
                         WriteJumpLine("\tjc\t" + Anchor);
@@ -164,13 +159,8 @@ namespace Inu.Cate.I8080
                     break;
                 case '>':
                     WriteJumpLine("\tjz\t" + Anchor + "_F" + subLabelIndex);
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjp\t" + Anchor);
-                        }
-                        else {
-                            throw new NotImplementedException();
-                        }
+                    if (Signed && operandZero) {
+                        WriteJumpLine("\tjp\t" + Anchor);
                     }
                     else {
                         WriteJumpLine("\tjnc\t" + Anchor);
@@ -180,26 +170,16 @@ namespace Inu.Cate.I8080
                     break;
                 case Keyword.LessEqual:
                     WriteJumpLine("\tjz\t" + Anchor);
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjm\t" + Anchor);
-                        }
-                        else {
-                            throw new NotImplementedException();
-                        }
+                    if (Signed && operandZero) {
+                        WriteJumpLine("\tjm\t" + Anchor);
                     }
                     else {
                         WriteJumpLine("\tjc\t" + Anchor);
                     }
                     break;
                 case Keyword.GreaterEqual:
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjp\t" + Anchor);
-                        }
-                        else {
-                            throw new NotImplementedException();
-                        }
+                    if (Signed && operandZero) {
+                        WriteJumpLine("\tjp\t" + Anchor);
                     }
                     else {
                         WriteJumpLine("\tjnc\t" + Anchor);
