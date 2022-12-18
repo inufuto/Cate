@@ -12,6 +12,7 @@ cate.CompareAESigned: public cate.CompareAESigned
             else
                 mvi a,1
                 cpi 0
+                mov a,d
             endif
         else
             mov d,a
@@ -23,6 +24,7 @@ cate.CompareAESigned: public cate.CompareAESigned
             else
                 xra a
                 cpi 1
+                mov a,d
             endif
         endif
     pop d
