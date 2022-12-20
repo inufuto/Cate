@@ -242,7 +242,15 @@ namespace Inu.Cate.I8080
                 });
                 return;
             }
-
+            if (pointerRegister.Matches(this)) {
+                var candidates = Registers.Where(r => !r.Matches(pointerRegister)).ToList();
+                ByteOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
+                {
+                    temporaryRegister.LoadIndirect(instruction, pointerRegister, offset);
+                    CopyFrom(instruction, temporaryRegister);
+                });
+                return;
+            }
             pointerRegister.TemporaryOffset(instruction, offset, () =>
             {
                 LoadIndirect(instruction, pointerRegister, 0);

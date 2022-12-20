@@ -125,10 +125,10 @@ namespace Inu.Cate
             var compiler = Compiler.Instance;
             compiler.WriteBeginningOfFunction(writer, this);
 
-            ISet<Register> savedRegisterIds = new HashSet<Register>();
+            ISet<Register> savedRegisters = new HashSet<Register>();
             foreach (var instruction in Instructions.Where(i => !i.IsEmpty())) {
                 foreach (var changedRegister in instruction.ChangedRegisters) {
-                    var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister);
+                    var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister).Where(r => !savedRegisters.Contains(r));
                     foreach (var savingRegister in savingRegisters) {
                         var saved = false;
                         foreach (var variable in instruction.SavingVariables) {
@@ -137,7 +137,7 @@ namespace Inu.Cate
                             }
                         }
                         if (!saved) {
-                            savedRegisterIds.Add(savingRegister);
+                            savedRegisters.Add(savingRegister);
                         }
                     }
                 }
@@ -145,13 +145,13 @@ namespace Inu.Cate
 
             var returnRegisterId = compiler.ReturnRegister(Type.ByteCount);
             if (returnRegisterId != null) {
-                savedRegisterIds.Remove(returnRegisterId);
-                compiler.RemoveSavingRegister(savedRegisterIds, Type.ByteCount);
+                savedRegisters.Remove(returnRegisterId);
+                compiler.RemoveSavingRegister(savedRegisters, Type.ByteCount);
                 foreach (var includedIds in compiler.IncludedRegisterIds(returnRegisterId)) {
-                    savedRegisterIds.Remove(includedIds);
+                    savedRegisters.Remove(includedIds);
                 }
             }
-            compiler.SaveRegisters(writer, savedRegisterIds);
+            compiler.SaveRegisters(writer, savedRegisters);
 
             Instruction? prevInstruction = null;
             var tabCount = 0;
@@ -194,7 +194,7 @@ namespace Inu.Cate
             }
 
             //writer.WriteLine(ExitLabel + ":");
-            compiler.RestoreRegisters(writer, savedRegisterIds);
+            compiler.RestoreRegisters(writer, savedRegisters);
             compiler.WriteEndOfFunction(writer, this);
         }
 
@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("@6 = 1 << @7")) {
+                if (instruction.ToString().Contains("if dx >= 0 goto DecideDirection@Anchor62")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

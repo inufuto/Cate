@@ -23,11 +23,24 @@ namespace Inu.Cate.I8080
 
         protected override void CompareByte()
         {
-            var operandZero = false;
             if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
                 CompareByteZero();
-                operandZero = true;
-                goto jump;
+                Jump(true);
+                return;
+            }
+
+            if (Signed && OperatorId != Keyword.Equal && OperatorId != Keyword.NotEqual) {
+                ByteOperation.UsingRegister(this, ByteRegister.E, RightOperand, () =>
+                {
+                    ByteOperation.UsingRegister(this, ByteRegister.A, LeftOperand, () =>
+                    {
+                        ByteRegister.A.Load(this, LeftOperand);
+                        ByteRegister.E.Load(this, RightOperand);
+                        Compiler.CallExternal(this, "cate.CompareAESigned");
+                    });
+                });
+                Jump(false);
+                return;
             }
 
             const string operation = "cmp|cpi";
@@ -44,7 +57,7 @@ namespace Inu.Cate.I8080
             EndRegister(ByteRegister.A);
 
         jump:
-            Jump(operandZero);
+            Jump(false);
         }
 
         private void CompareByteZero()
@@ -66,11 +79,26 @@ namespace Inu.Cate.I8080
 
         protected override void CompareWord()
         {
+            if (Signed && OperatorId != Keyword.Equal && OperatorId != Keyword.NotEqual) {
+                WordOperation.UsingRegister(this, WordRegister.De, RightOperand, () =>
+                {
+                    WordOperation.UsingRegister(this, WordRegister.Hl, LeftOperand, () =>
+                    {
+                        WordRegister.De.Load(this, RightOperand);
+                        WordRegister.Hl.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, "cate.CompareHlDeSigned");
+                    });
+                });
+                Jump(false);
+                return;
+            }
+
             if (RightOperand is IntegerOperand { IntegerValue: 0 } || RightOperand is NullPointerOperand) {
                 if (LeftOperand.Register is WordRegister leftRegister) {
                     if (leftRegister.IsPair()) {
                         CompareWordZero(leftRegister);
-                        goto jump;
+                        Jump(false);
+                        return;
                     }
                 }
                 WordOperation.UsingAnyRegister(this, WordRegister.Registers, temporaryRegister =>
@@ -78,8 +106,10 @@ namespace Inu.Cate.I8080
                     temporaryRegister.Load(this, LeftOperand);
                     CompareWordZero(temporaryRegister);
                 });
-                goto jump;
+                Jump(false);
+                return;
             }
+
             WordOperation.UsingRegister(this, WordRegister.De, () =>
             {
                 WordRegister.De.Load(this, RightOperand);
@@ -94,7 +124,6 @@ namespace Inu.Cate.I8080
                     });
                 }
             });
-        jump:
             Jump(false);
         }
 
@@ -121,19 +150,8 @@ namespace Inu.Cate.I8080
                     WriteJumpLine("\tjnz\t" + Anchor);
                     break;
                 case '<':
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjm\t" + Anchor);
-                        }
-                        else {
-                            WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
-                            WriteJumpLine("\tjm\t" + Anchor);
-                            WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
-                            WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
-                            WriteJumpLine("\tjp\t" + Anchor);
-                            WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
-                            ++subLabelIndex;
-                        }
+                    if (Signed && operandZero) {
+                        WriteJumpLine("\tjm\t" + Anchor);
                     }
                     else {
                         WriteJumpLine("\tjc\t" + Anchor);
@@ -141,17 +159,8 @@ namespace Inu.Cate.I8080
                     break;
                 case '>':
                     WriteJumpLine("\tjz\t" + Anchor + "_F" + subLabelIndex);
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjp\t" + Anchor);
-                        }
-                        else {
-                            WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
-                            WriteJumpLine("\tjp\t" + Anchor);
-                            WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
-                            WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
-                            WriteJumpLine("\tjm\t" + Anchor);
-                        }
+                    if (Signed && operandZero) {
+                        WriteJumpLine("\tjp\t" + Anchor);
                     }
                     else {
                         WriteJumpLine("\tjnc\t" + Anchor);
@@ -161,38 +170,16 @@ namespace Inu.Cate.I8080
                     break;
                 case Keyword.LessEqual:
                     WriteJumpLine("\tjz\t" + Anchor);
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjm\t" + Anchor);
-                        }
-                        else {
-                            WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
-                            WriteJumpLine("\tjm\t" + Anchor);
-                            WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
-                            WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
-                            WriteJumpLine("\tjp\t" + Anchor);
-                            WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
-                            ++subLabelIndex;
-                        }
+                    if (Signed && operandZero) {
+                        WriteJumpLine("\tjm\t" + Anchor);
                     }
                     else {
                         WriteJumpLine("\tjc\t" + Anchor);
                     }
                     break;
                 case Keyword.GreaterEqual:
-                    if (Signed) {
-                        if (operandZero) {
-                            WriteJumpLine("\tjp\t" + Anchor);
-                        }
-                        else {
-                            WriteJumpLine("\tjpe\t" + Anchor + "_OF" + subLabelIndex);
-                            WriteJumpLine("\tjp\t" + Anchor);
-                            WriteJumpLine("\tjmp\t" + Anchor + "_F" + subLabelIndex);
-                            WriteJumpLine(Anchor + "_OF" + subLabelIndex + ":");
-                            WriteJumpLine("\tjm\t" + Anchor);
-                            WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
-                            ++subLabelIndex;
-                        }
+                    if (Signed && operandZero) {
+                        WriteJumpLine("\tjp\t" + Anchor);
                     }
                     else {
                         WriteJumpLine("\tjnc\t" + Anchor);

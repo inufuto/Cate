@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -9,7 +8,6 @@ namespace Inu.Cate.Tms99
     {
         private static WordOperation? instance;
         public override List<Cate.WordRegister> Registers => WordRegister.Registers;
-
         public WordOperation()
         {
             instance = this;
@@ -28,15 +26,6 @@ namespace Inu.Cate.Tms99
                 register.Store(instruction, destinationOperand);
             }
 
-            //if (destinationOperand.Register is WordRegister destinationRegister) {
-            //    OperateRegister(destinationRegister);
-            //    return;
-            //}
-
-            //if (leftOperand.Register is WordRegister leftRegister) {
-            //    OperateRegister(leftRegister);
-            //    return;
-            //}
             Debug.Assert(instance != null);
             var candidates = WordRegister.Registers.Where(r=>!Equals(r, rightOperand.Register)).ToList();
             instance.UsingAnyRegister(instruction, candidates, destinationOperand, leftOperand, OperateRegister);

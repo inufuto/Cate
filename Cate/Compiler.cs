@@ -1580,7 +1580,7 @@ namespace Inu.Cate
             AssignableOperand destinationOperand,
             Operand leftOperand, int rightValue);
 
-        public abstract IEnumerable<Register> IncludedRegisterIds(Register? register);
+        public abstract IEnumerable<Register> IncludedRegisterIds(Register register);
 
         public void AddExternalName(string externalName)
         {

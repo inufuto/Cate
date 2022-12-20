@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Channels;
 
 namespace Inu.Cate.I8080
 {
@@ -127,6 +125,8 @@ namespace Inu.Cate.I8080
             instruction.RemoveRegisterAssignment(this);
         }
 
+        public override bool IsAddable() => Equals(this, Hl);
+
         public override bool IsOffsetInRange(int offset)
         {
             return offset == 0;
@@ -209,8 +209,9 @@ namespace Inu.Cate.I8080
                 case IndirectOperand sourceIndirectOperand: {
                         var pointer = sourceIndirectOperand.Variable;
                         var offset = sourceIndirectOperand.Offset;
-                        if (pointer.Register is WordRegister pointerRegister) {
-                            LoadIndirect(instruction, pointerRegister, offset);
+                        var pointerRegister = instruction.GetVariableRegister(pointer, 0);
+                        if (pointerRegister is WordRegister pointerWordRegister) {
+                            LoadIndirect(instruction, pointerWordRegister, offset);
                             return;
                         }
 
@@ -258,7 +259,7 @@ namespace Inu.Cate.I8080
                 case IndirectOperand destinationIndirectOperand: {
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
-                        var pointerRegister = instruction.GetVariableRegister(pointer, offset);
+                        var pointerRegister = instruction.GetVariableRegister(pointer, 0);
                         if (pointerRegister is WordRegister pointerWordRegister) {
                             StoreIndirect(instruction, pointerWordRegister, offset);
                             return;
@@ -293,7 +294,6 @@ namespace Inu.Cate.I8080
         {
             if (Equals(this, Hl)) {
                 instruction.WriteLine("\tlhld\t" + variable.MemoryAddress(offset));
-                instruction.SetVariableRegister(variable, offset, Hl);
             }
             else {
                 WordOperation.UsingRegister(instruction, Hl, () =>
@@ -337,6 +337,8 @@ namespace Inu.Cate.I8080
                     instruction.WriteLine("\tldax\t" + pointerRegister);
                     High.CopyFrom(instruction, ByteRegister.A);
                     instruction.WriteLine("\tdcx\t" + pointerRegister);
+                    instruction.ChangedRegisters.Add(ByteRegister.A);
+                    instruction.RemoveRegisterAssignment(ByteRegister.A);
                 });
                 return;
             }
@@ -388,12 +390,16 @@ namespace Inu.Cate.I8080
                 StoreIndirect(instruction, wordRegister, 0);
             }
 
-            if (instruction.TemporaryRegisters.Contains(pointerRegister)) {
+            if (!instruction.TemporaryRegisters.Contains(pointerRegister)) {
                 AddAndStore(pointerRegister);
             }
             else {
-                var candidates = Registers.Where(r => r != pointerRegister).ToList();
-                WordOperation.UsingAnyRegister(instruction, candidates, AddAndStore);
+                var candidates = Registers.Where(r => !Equals(r, pointerRegister)).ToList();
+                WordOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
+                {
+                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                    AddAndStore(temporaryRegister);
+                });
             }
         }
 

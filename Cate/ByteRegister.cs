@@ -102,6 +102,7 @@ namespace Inu.Cate
                         var register = instruction.GetVariableRegister(variableOperand);
                         if (register is ByteRegister byteRegister) {
                             if (Equals(byteRegister, this)) {
+                                instruction.RemoveRegisterAssignment(this);
                             }
                             else if (byteRegister.ByteCount == 1) {
                                 CopyFrom(instruction, byteRegister);
