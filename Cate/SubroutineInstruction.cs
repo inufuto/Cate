@@ -11,7 +11,7 @@ namespace Inu.Cate
         {
             public readonly Function.Parameter Parameter;
             public readonly Operand Operand;
-            public Register? Register { get; private set; }
+            public Register? Register;
             public bool Done { get; private set; }
 
             public ParameterAssignment(Function.Parameter parameter, Operand operand)
@@ -31,7 +31,6 @@ namespace Inu.Cate
                 Done = true;
                 instruction.RemoveSourceRegister(Operand);
                 if (register != null) {
-                    //instruction.RemoveRegisterAssignment(register);
                     instruction.BeginRegister(register);
                 }
             }
@@ -128,6 +127,11 @@ namespace Inu.Cate
             foreach (var assignment in ParameterAssignments) {
                 if (assignment.Done) {
                     if (assignment.Parameter.Register != null && assignment.Parameter.Register.Matches(register)) {
+                        return true;
+                    }
+                }
+                else if (assignment.Register != null) {
+                    if (assignment.Register.Matches(register)) {
                         return true;
                     }
                 }
@@ -294,8 +298,9 @@ namespace Inu.Cate
                     var operand = assignment.Operand;
                     Debug.Assert(parameter.Register != null);
                     if (IsRegisterInUse(parameter.Register) || IsSourceVariable(parameter.Register)) continue;
-                    assignment.SetDone(this, parameter.Register);
+                    assignment.Register = parameter.Register;
                     Load(parameter.Register, operand);
+                    assignment.SetDone(this, parameter.Register);
                     changed = true;
                 }
                 if (changed)
@@ -316,8 +321,9 @@ namespace Inu.Cate
                         }
                         if (register == null || Equals(register, firstRegister)) continue;
                         if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
-                        assignment.SetDone(this, register);
+                        assignment.Register = register;
                         Load(register, operand);
+                        assignment.SetDone(this, register);
                         changed = true;
                     }
                 }
