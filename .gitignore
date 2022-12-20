@@ -60,3 +60,8 @@ ini.bat
 /Cate99/Properties/PublishProfiles
 /runtime/8086/.vscode
 /build_cate.bat
+/Cate80i/.vs
+/Cate80i/bin
+/Cate80i/obj
+/Cate80i/Properties
+/runtime/8080/.vscode
