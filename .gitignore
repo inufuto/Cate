@@ -65,3 +65,6 @@ ini.bat
 /Cate80i/obj
 /Cate80i/Properties
 /runtime/8080/.vscode
+/Cate87/.vs
+/Cate87/bin/Debug/netcoreapp3.1
+/Cate87/obj
