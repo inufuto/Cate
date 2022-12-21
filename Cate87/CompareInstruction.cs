@@ -86,7 +86,7 @@ namespace Inu.Cate.MuCom87
                     return;
                 case VariableOperand variableOperand: {
                         var register = GetVariableRegister(variableOperand);
-                        if (register is Cate.ByteRegister byteRegister) {
+                        if (register is Cate.ByteRegister byteRegister && !Equals(byteRegister, ByteRegister.A)) {
                             OperateRegister(operation, action, byteRegister);
                             return;
                         }

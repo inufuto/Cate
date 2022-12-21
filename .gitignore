@@ -68,3 +68,5 @@ ini.bat
 /Cate87/.vs
 /Cate87/bin/Debug/netcoreapp3.1
 /Cate87/obj
+/Cate87/bin/Release/netcoreapp3.1
+/Cate87/Properties
