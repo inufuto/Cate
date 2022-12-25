@@ -261,6 +261,7 @@ namespace Inu.Cate.Z80
                     instruction.WriteLine("\tld\t" + this + "," + sourcePointerOperand.MemoryAddress());
                     instruction.SetRegisterConstant(this, sourcePointerOperand);
                     instruction.ChangedRegisters.Add(this);
+                    instruction.RemoveRegisterAssignment(this);
                     return;
                 case VariableOperand sourceVariableOperand: {
                         var sourceVariable = sourceVariableOperand.Variable;
