@@ -13,7 +13,7 @@ namespace Inu.Cate.MuCom87
                 ByteRegister.A.Load(this, SourceOperand);
                 ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                 WriteLine("\tshal");
-                List<Cate.ByteRegister> candidates = ByteOperation.RegistersOtherThan(ByteRegister.A);
+                var candidates = ByteOperation.RegistersOtherThan(ByteRegister.A);
                 ByteOperation.UsingAnyRegister(this, candidates, temporary =>
                 {
                     temporary.CopyFrom(this, ByteRegister.A);

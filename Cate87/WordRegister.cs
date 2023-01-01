@@ -81,6 +81,8 @@ namespace Inu.Cate.MuCom87
                         instruction.WriteLine("\tinx\t" + HighName);
                         --count;
                     }
+                    instruction.RemoveRegisterAssignment(this);
+                    instruction.ChangedRegisters.Add(this);
                     return;
                 }
                 ByteOperation.UsingRegister(instruction, ByteRegister.A, () =>

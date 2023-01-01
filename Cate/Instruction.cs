@@ -454,7 +454,7 @@ namespace Inu.Cate
             }
         }
 
-        protected void WriteJumpLine(string line)
+        public void WriteJumpLine(string line)
         {
             codesToJump.Add(line);
         }

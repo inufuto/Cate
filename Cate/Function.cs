@@ -294,7 +294,7 @@ namespace Inu.Cate
             foreach (var instruction in Instructions) {
                 instruction.AddSourceRegisters();
                 instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("if xx >= @6 goto HitBulletFort@Anchor84")) {
+                if (instruction.ToString().Contains("pActor[5] = @3 | direction")) {
                     var aaa = 111;
                 }
                 instruction.BuildAssembly();

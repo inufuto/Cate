@@ -4,7 +4,7 @@ using static System.String;
 
 namespace Inu.Cate.MuCom87
 {
-    internal class CompareInstruction : Cate.CompareInstruction
+    internal abstract class CompareInstruction : Cate.CompareInstruction
     {
         private static int subLabelIndex;
 
@@ -105,13 +105,10 @@ namespace Inu.Cate.MuCom87
                     }
             }
 
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
-                ByteRegister.A.Load(this, RightOperand);
-                WriteLine("\tstaw\t" + MuCom87.Compiler.TemporaryByte);
-            });
-            OperateWorkingRegister(operation, action, MuCom87.Compiler.TemporaryByte);
+            OperateViaAccumulator(operation, action);
         }
+
+        protected abstract void OperateViaAccumulator(string operation, Action action);
 
         private void OperateIndirect(string operation, Action action, WordRegister register)
         {
@@ -126,19 +123,13 @@ namespace Inu.Cate.MuCom87
                 case ByteRegister byteRegister:
                     OperateRegister(operation, action, byteRegister.Name);
                     return;
-                case ByteWorkingRegister workingRegister:
-                    OperateWorkingRegister(operation, action, workingRegister.Name);
-                    return;
+                    //case ByteWorkingRegister workingRegister:
+                    //    OperateWorkingRegister(operation, action, workingRegister.Name);
+                    //    return;
             }
             throw new NotImplementedException();
         }
 
-        private void OperateWorkingRegister(string operation, Action action, string name)
-        {
-            ByteRegister.A.Load(this, LeftOperand);
-            WriteJumpLine("\t" + operation.Split('|')[0] + "w\t" + name);
-            action();
-        }
 
         private void OperateRegister(string operation, Action action, string name)
         {
@@ -165,7 +156,12 @@ namespace Inu.Cate.MuCom87
                     Compiler.CallExternal(this, functionName);
                 });
             });
-            WriteJumpLine("\t" + skip);
+            if (skip.Equals("skz")) {
+                ((Compiler)Compiler).SkipIfZero(this);
+            }
+            else {
+                WriteJumpLine("\t" + skip);
+            }
             WriteJumpLine("\tjr\t" + Anchor);
         }
 
@@ -206,7 +202,12 @@ namespace Inu.Cate.MuCom87
                 });
                 ChangedRegisters.Add(WordRegister.Hl);
             });
-            WriteJumpLine("\t" + skip);
+            if (skip.Equals("skz")) {
+                ((Compiler)Compiler).SkipIfZero(this);
+            }
+            else {
+                WriteJumpLine("\t" + skip);
+            }
             WriteJumpLine("\tjr\t" + Anchor);
         }
     }

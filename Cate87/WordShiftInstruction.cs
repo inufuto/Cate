@@ -13,23 +13,37 @@ namespace Inu.Cate.MuCom87
 
         protected override void ShiftConstant(int count)
         {
-            if (count == 8) {
+            if (count == -8) {
                 ByteOperation.UsingRegister(this, ByteRegister.A, () =>
                 {
                     ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
                     ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                    ByteRegister.A.LoadConstant(this, 0);
-                    ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                    if (DestinationOperand.Register is WordRegister destinationOperandRegister)
+                    {
+                        Debug.Assert(destinationOperandRegister.Low != null);
+                        destinationOperandRegister.Low.LoadConstant(this, 0);
+                    }
+                    else {
+                        ByteRegister.A.LoadConstant(this, 0);
+                        ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                    }
                 });
                 return;
             }
-            if (count == -8) {
+            if (count == 8) {
                 ByteOperation.UsingRegister(this, ByteRegister.A, () =>
                 {
                     ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
                     ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                    ByteRegister.A.LoadConstant(this, 0);
-                    ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
+                    if (DestinationOperand.Register is WordRegister destinationOperandRegister)
+                    {
+                        Debug.Assert(destinationOperandRegister.High != null);
+                        destinationOperandRegister.High.LoadConstant(this, 0);
+                    }
+                    else {
+                        ByteRegister.A.LoadConstant(this, 0);
+                        ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
+                    }
                 });
                 return;
             }

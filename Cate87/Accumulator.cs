@@ -12,6 +12,8 @@ namespace Inu.Cate.MuCom87
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister wordRegister)
         {
             instruction.WriteLine("\tldax\t" + ((WordRegister)wordRegister).HighName);
+            instruction.ChangedRegisters.Add(A);
+            instruction.RemoveRegisterAssignment(A);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister wordRegister)
@@ -27,11 +29,11 @@ namespace Inu.Cate.MuCom87
                     instruction.ChangedRegisters.Add(this);
                     instruction.RemoveRegisterAssignment(this);
                     return;
-                case ByteWorkingRegister workingRegister:
-                    instruction.WriteLine("\tldaw\t" + workingRegister.Name);
-                    instruction.ChangedRegisters.Add(this);
-                    instruction.RemoveRegisterAssignment(this);
-                    return;
+                //case ByteWorkingRegister workingRegister:
+                //    instruction.WriteLine("\tldaw\t" + workingRegister.Name);
+                //    instruction.ChangedRegisters.Add(this);
+                //    instruction.RemoveRegisterAssignment(this);
+                //    return;
             }
             throw new NotImplementedException();
         }
@@ -52,9 +54,9 @@ namespace Inu.Cate.MuCom87
                             case ByteRegister byteRegister:
                                 instruction.WriteLine("\t" + operation.Split('|')[0] + "\ta," + byteRegister.Name);
                                 break;
-                            case ByteWorkingRegister workingRegister:
-                                instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
-                                break;
+                            //case ByteWorkingRegister workingRegister:
+                            //    instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
+                            //    break;
                         }
                         return;
                     }
@@ -67,10 +69,10 @@ namespace Inu.Cate.MuCom87
                                 Debug.Assert(offset == 0);
                                 instruction.WriteLine("\t" + operation.Split('|')[0] + "\ta," + byteRegister);
                                 return;
-                            case ByteWorkingRegister workingRegister:
-                                Debug.Assert(offset == 0);
-                                instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
-                                return;
+                            //case ByteWorkingRegister workingRegister:
+                            //    Debug.Assert(offset == 0);
+                            //    instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
+                            //    return;
                             default:
                                 WordOperation.UsingAnyRegister(instruction, WordRegister.Registers, pointerRegister =>
                                 {

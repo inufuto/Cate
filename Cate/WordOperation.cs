@@ -120,7 +120,7 @@ namespace Inu.Cate
             var savedRegister = candidates.Last();
             var changed = instruction.ChangedRegisters.Contains(savedRegister);
             savedRegister.Save(instruction);
-            action(savedRegister);
+            Invoke(savedRegister);
             savedRegister.Restore(instruction);
             if (!changed) {
                 instruction.ChangedRegisters.Remove(savedRegister);

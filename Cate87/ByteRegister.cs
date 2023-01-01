@@ -178,12 +178,16 @@ namespace Inu.Cate.MuCom87
         {
             if (Equals(sourceRegister, A)) {
                 instruction.WriteLine("\tmov\t" + Name + ",a");
+                instruction.ChangedRegisters.Add(this);
+                instruction.RemoveRegisterAssignment(this);
                 return;
             }
             ByteOperation.UsingRegister(instruction, A, () =>
             {
                 A.CopyFrom(instruction, sourceRegister);
                 instruction.WriteLine("\tmov\t" + Name + ",a");
+                instruction.ChangedRegisters.Add(this);
+                instruction.RemoveRegisterAssignment(this);
             });
         }
 

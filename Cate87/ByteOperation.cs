@@ -5,19 +5,11 @@ using System.Linq;
 
 namespace Inu.Cate.MuCom87
 {
-    class ByteOperation : Cate.ByteOperation
+    internal abstract class ByteOperation : Cate.ByteOperation
     {
-        public override List<Cate.ByteRegister> Registers => ByteRegister.RegistersOtherThan(ByteRegister.A).Union(ByteWorkingRegister.Registers).ToList();
+        public override List<Cate.ByteRegister> Registers => ByteRegister.RegistersOtherThan(ByteRegister.A);
         public override List<Cate.ByteRegister> Accumulators => new List<Cate.ByteRegister>() { ByteRegister.A };
 
-
-        //protected override void OperateByteBinomial(BinomialInstruction instruction, Cate.ByteRegister register, string operation, bool change,
-        //    Cate.ByteRegister rightRegister)
-        //{
-        //    var temporaryByte = ToTemporaryByte(instruction, rightRegister);
-        //    register.Load(instruction, instruction.LeftOperand);
-        //    instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + temporaryByte);
-        //}
 
         protected override void OperateConstant(Instruction instruction, string operation, string value, int count)
         {
@@ -64,8 +56,8 @@ namespace Inu.Cate.MuCom87
         {
             switch (pointerRegister) {
                 case WordRegister wordRegister when offset == 0:
-                    instruction.WriteLine("\tmvix\t" + wordRegister.HighName + "," + value);
-                    return;
+                    //TODO
+                    break;
                 case WordRegister wordRegister:
                     wordRegister.TemporaryOffset(instruction, offset, () =>
                     {

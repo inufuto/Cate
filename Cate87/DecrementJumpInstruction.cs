@@ -16,7 +16,8 @@
             if (registerInUse) {
                 WriteLine("\tldaw\t" + MuCom87.Compiler.TemporaryByte);
             }
-            WriteJumpLine("\tskz");
+
+            ((MuCom87.Compiler)Compiler).SkipIfZero(this);
             WriteJumpLine("\tjr\t" + Anchor.Label);
         }
     }

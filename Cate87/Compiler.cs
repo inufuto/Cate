@@ -6,19 +6,19 @@ using System.Linq;
 
 namespace Inu.Cate.MuCom87
 {
-    internal class Compiler : Cate.Compiler
+    internal abstract class Compiler : Cate.Compiler
     {
         public const string TemporaryByte = "@TemporaryByte";
         public const string TemporaryWord = "@TemporaryWord";
 
-        public Compiler() : base(new ByteOperation(), new WordOperation()) { }
+        protected Compiler(Cate.ByteOperation byteOperation, Cate.WordOperation wordOperation) : base(byteOperation, wordOperation) { }
+
 
         protected override void WriteAssembly(StreamWriter writer)
         {
             writer.WriteLine("\text " + TemporaryByte);
             writer.WriteLine("\text " + SubroutineInstruction.TemporaryByte);
             writer.WriteLine("\text " + TemporaryWord);
-            writer.WriteLine("extrn " + ByteWorkingRegister.WorkingRegisterLabel);
             base.WriteAssembly(writer);
         }
 
@@ -40,18 +40,9 @@ namespace Inu.Cate.MuCom87
 
         public override void AllocateRegisters(List<Variable> variables, Function function)
         {
-            var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Type.ByteCount).ThenBy(v => v.Range)
+            var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Type.ByteCount).ThenBy(v => v.Range)
                 .ThenBy(v => v.Usages.Count).ToList();
-            //var accumulatorVariables = rangeOrdered.Where(variable =>
-            //    !variable.IsTemporary() &&
-            //    variable.Type.ByteCount == 1 &&
-            //    !Conflict(variable.Intersections, ByteRegister.A) &&
-            //    CanAllocate(variable, ByteRegister.A)
-            //).ToList();
-            //if (allocatableByteVariables.Any()) {
-            //    allocatableByteVariables.First().Register = ByteRegister.A;
-            //}
-            var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Type.ByteCount).ThenByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
+            var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Type.ByteCount).ThenByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
             var byteRegisters = ByteOperation.RegistersOtherThan(ByteRegister.A);
             foreach (var variable in usageOrdered) {
                 var register = variable.Type.ByteCount == 1 ? AllocatableRegister(variable, byteRegisters, function) : AllocatableRegister(variable, WordOperation.Registers, function);
@@ -124,7 +115,7 @@ namespace Inu.Cate.MuCom87
             return SubroutineInstruction.ParameterRegister(index, type);
         }
 
-        public override Register ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(int byteCount)
         {
             return SubroutineInstruction.ReturnRegister(byteCount);
         }
@@ -154,7 +145,7 @@ namespace Inu.Cate.MuCom87
                         return new ByteBinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                     case Keyword.ShiftLeft:
                     case Keyword.ShiftRight:
-                        return new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                        return CreateByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                     default:
                         throw new NotImplementedException();
                 }
@@ -180,6 +171,8 @@ namespace Inu.Cate.MuCom87
             }
         }
 
+        protected abstract ByteShiftInstruction CreateByteShiftInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand);
+
         public override Cate.MonomialInstruction CreateMonomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
             Operand sourceOperand)
         {
@@ -190,12 +183,6 @@ namespace Inu.Cate.MuCom87
             IntegerType destinationType, Operand sourceOperand, IntegerType sourceType)
         {
             return new ResizeInstruction(function, destinationOperand, destinationType, sourceOperand, sourceType);
-        }
-
-        public override Cate.CompareInstruction CreateCompareInstruction(Function function, int operatorId, Operand leftOperand,
-            Operand rightOperand, Anchor anchor)
-        {
-            return new CompareInstruction(function, operatorId, leftOperand, rightOperand, anchor);
         }
 
         public override Cate.JumpInstruction CreateJumpInstruction(Function function, Anchor anchor)
@@ -240,7 +227,7 @@ namespace Inu.Cate.MuCom87
             var newType = ToByteType(operand);
             switch (operand) {
                 case ConstantOperand constantOperand:
-                    return new StringOperand(newType, "low " + constantOperand.MemoryAddress());
+                    return new StringOperand(newType, "low(" + constantOperand.MemoryAddress() + ")");
                 case VariableOperand variableOperand:
                     if (variableOperand.Register is Cate.WordRegister wordRegister) {
                         Debug.Assert(wordRegister.Low != null);
@@ -261,7 +248,7 @@ namespace Inu.Cate.MuCom87
             var newType = ToByteType(operand);
             switch (operand) {
                 case ConstantOperand constantOperand:
-                    return new StringOperand(newType, "high " + constantOperand.MemoryAddress());
+                    return new StringOperand(newType, "high(" + constantOperand.MemoryAddress() + ")");
                 case VariableOperand variableOperand:
                     if (variableOperand.Register is Cate.WordRegister wordRegister) {
                         Debug.Assert(wordRegister.High != null);
@@ -283,63 +270,64 @@ namespace Inu.Cate.MuCom87
             Instance.AddExternalName(externalName);
         }
 
-        public override void SaveRegisters(StreamWriter writer, ISet<Register> registers)
-        {
-            var actualRegisters = ActualRegisters(registers, out List<ByteWorkingRegister> workingRegisters);
-            base.SaveRegisters(writer, actualRegisters);
+        //public override void SaveRegisters(StreamWriter writer, ISet<Register> registers)
+        //{
+        //    //var actualRegisters = ActualRegisters(registers, out List<ByteWorkingRegister> workingRegisters);
+        //    base.SaveRegisters(writer, actualRegisters);
 
-            if (!workingRegisters.Any()) return;
-            workingRegisters.Sort((a, b) => a.Id - b.Id);
-            writer.WriteLine("\tshld\t" + TemporaryWord);
-            for (var i = 0; i < workingRegisters.Count; ++i) {
-                var current = workingRegisters[i];
-                writer.WriteLine("\tlhld\t" + current.Name + " | push h");
-                if (i + 1 >= workingRegisters.Count) continue;
-                var next = workingRegisters[i + 1];
-                if (next.Id == current.Id + 1) {
-                    ++i;
-                }
-            }
-            writer.WriteLine("\tlhld\t" + TemporaryWord);
-        }
+        //    if (!workingRegisters.Any()) return;
+        //    workingRegisters.Sort((a, b) => a.Id - b.Id);
+        //    writer.WriteLine("\tshld\t" + TemporaryWord);
+        //    for (var i = 0; i < workingRegisters.Count; ++i) {
+        //        var current = workingRegisters[i];
+        //        writer.WriteLine("\tlhld\t" + current.Name + " | push h");
+        //        if (i + 1 >= workingRegisters.Count) continue;
+        //        var next = workingRegisters[i + 1];
+        //        if (next.Id == current.Id + 1) {
+        //            ++i;
+        //        }
+        //    }
+        //    writer.WriteLine("\tlhld\t" + TemporaryWord);
+        //}
 
-        public override void RestoreRegisters(StreamWriter writer, ISet<Register> registers)
-        {
-            var actualRegisters = ActualRegisters(registers, out List<ByteWorkingRegister> workingRegisters);
-            if (workingRegisters.Any()) {
-                workingRegisters.Sort((a, b) => a.Id - b.Id);
-                writer.WriteLine("\tshld\t" + TemporaryWord);
-                Stack<string> stack = new Stack<string>();
-                for (var i = 0; i < workingRegisters.Count; ++i) {
-                    var current = workingRegisters[i];
-                    stack.Push("\tpop h | shld\t" + current.Name);
-                    if (i + 1 >= workingRegisters.Count) continue;
-                    var next = workingRegisters[i + 1];
-                    if (next.Id == current.Id + 1) {
-                        ++i;
-                    }
-                }
-                while (stack.Any()) {
-                    writer.WriteLine(stack.Pop());
-                }
-                writer.WriteLine("\tlhld\t" + TemporaryWord);
-            }
-            base.RestoreRegisters(writer, actualRegisters);
-        }
+        //public override void RestoreRegisters(StreamWriter writer, ISet<Register> registers)
+        //{
+        //    //var actualRegisters = ActualRegisters(registers, out List<ByteWorkingRegister> workingRegisters);
+        //    if (workingRegisters.Any()) {
+        //        workingRegisters.Sort((a, b) => a.Id - b.Id);
+        //        writer.WriteLine("\tshld\t" + TemporaryWord);
+        //        Stack<string> stack = new Stack<string>();
+        //        for (var i = 0; i < workingRegisters.Count; ++i) {
+        //            var current = workingRegisters[i];
+        //            stack.Push("\tpop h | shld\t" + current.Name);
+        //            if (i + 1 >= workingRegisters.Count) continue;
+        //            var next = workingRegisters[i + 1];
+        //            if (next.Id == current.Id + 1) {
+        //                ++i;
+        //            }
+        //        }
+        //        while (stack.Any()) {
+        //            writer.WriteLine(stack.Pop());
+        //        }
+        //        writer.WriteLine("\tlhld\t" + TemporaryWord);
+        //    }
+        //    base.RestoreRegisters(writer, actualRegisters);
+        //}
 
-        private static ISet<Register> ActualRegisters(ISet<Register> registers, out List<ByteWorkingRegister> workingRegisters)
-        {
-            ISet<Register> actualRegisters = new HashSet<Register>();
-            workingRegisters = new List<ByteWorkingRegister>();
-            foreach (var register in registers) {
-                if (register is ByteWorkingRegister byteWorkingRegister) {
-                    workingRegisters.Add(byteWorkingRegister);
-                }
-                else {
-                    actualRegisters.Add(register);
-                }
-            }
-            return actualRegisters;
-        }
+        //private static ISet<Register> ActualRegisters(ISet<Register> registers, out List<ByteWorkingRegister> workingRegisters)
+        //{
+        //    ISet<Register> actualRegisters = new HashSet<Register>();
+        //    workingRegisters = new List<ByteWorkingRegister>();
+        //    foreach (var register in registers) {
+        //        if (register is ByteWorkingRegister byteWorkingRegister) {
+        //            workingRegisters.Add(byteWorkingRegister);
+        //        }
+        //        else {
+        //            actualRegisters.Add(register);
+        //        }
+        //    }
+        //    return actualRegisters;
+        //}
+        public abstract void SkipIfZero(Instruction instruction);
     }
 }

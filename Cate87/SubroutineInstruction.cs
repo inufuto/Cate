@@ -64,12 +64,13 @@ namespace Inu.Cate.MuCom87
             };
         }
 
-        public static Register ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(int byteCount)
         {
             return byteCount switch
             {
                 1 => ByteRegister.A,
-                _ => WordRegister.Hl
+                2 => WordRegister.Hl,
+                _ => null
             };
         }
     }
