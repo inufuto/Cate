@@ -72,7 +72,7 @@ namespace Inu.Cate
         protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
             var register = instruction.GetVariableRegister(pointer, 0);
-            if (register is WordRegister wordRegister) {
+            if (register is WordRegister wordRegister && (Equals(wordRegister, pointer.Register) ||wordRegister.IsPointer(offset))) {
                 StoreIndirect(instruction, wordRegister, offset);
                 return;
             }
@@ -185,11 +185,11 @@ namespace Inu.Cate
                 case IndirectOperand destinationIndirectOperand: {
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
-                        var register = instruction.GetVariableRegister(pointer, 0);
-                        if (register is WordRegister pointerRegister && pointerRegister.IsPointer(offset)) {
-                            StoreIndirect(instruction, pointerRegister, offset);
-                            return;
-                        }
+                        //var register = instruction.GetVariableRegister(pointer, 0);
+                        //if (register is WordRegister pointerRegister && pointerRegister.IsPointer(offset)) {
+                        //    StoreIndirect(instruction, pointerRegister, offset);
+                        //    return;
+                        //}
                         StoreIndirect(instruction, pointer, offset);
                         return;
                     }

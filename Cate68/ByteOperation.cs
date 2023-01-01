@@ -25,7 +25,6 @@ namespace Inu.Cate.Mc6800
             {
                 register.LoadConstant(instruction, value);
                 register.StoreIndirect(instruction, pointerRegister, offset);
-                instruction.RemoveRegisterAssignment(register);
             });
         }
 

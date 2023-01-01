@@ -265,6 +265,10 @@ namespace Inu.Cate.I8080
                     instruction.WriteLine("\tmov\tm," + this);
                     return;
                 }
+                if (Equals(this, A)) {
+                    instruction.WriteLine("\tstax\t" + pointerRegister);
+                    return;
+                }
                 ByteOperation.UsingRegister(instruction, A, () =>
                 {
                     A.CopyFrom(instruction, this);
@@ -389,14 +393,14 @@ namespace Inu.Cate.I8080
                             {
                                 var register = instruction.GetVariableRegister(pointer, 0);
                                 if (register is WordRegister pointerRegister) {
-                                    if (offset != 0) {
-                                        ByteOperation.UsingAnyRegister(instruction, Registers.Where(r => !Equals(r, A)).ToList(), rightRegister =>
-                                        {
-                                            rightRegister.LoadIndirect(instruction, pointerRegister, offset);
-                                            instruction.WriteLine("\t" + operation.Split('|')[0] + "\t" + rightRegister);
-                                        });
-                                        return;
-                                    }
+                                    //if (offset != 0) {
+                                    //    ByteOperation.UsingAnyRegister(instruction, Registers.Where(r => !Equals(r, A)).ToList(), rightRegister =>
+                                    //    {
+                                    //        rightRegister.LoadIndirect(instruction, pointerRegister, offset);
+                                    //        instruction.WriteLine("\t" + operation.Split('|')[0] + "\t" + rightRegister);
+                                    //    });
+                                    //    return;
+                                    //}
                                     if (Equals(pointerRegister, WordRegister.Hl)) {
                                         OperateIndirect(instruction, operation, offset);
                                     }
