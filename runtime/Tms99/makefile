@@ -1,6 +1,6 @@
 name=cate99
 
-out= ..\$(name).lib
+out= $(name).lib
 
 all: $(out)
 
@@ -12,4 +12,3 @@ objects = \
 
 $(out): $(objects)
 	Lib8.exe $(name).lib $(objects)
-	copy $(name).lib $(out) /y
