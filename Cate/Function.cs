@@ -194,7 +194,7 @@ namespace Inu.Cate
             }
 
             //writer.WriteLine(ExitLabel + ":");
-            compiler.RestoreRegisters(writer, savedRegisters);
+            compiler.RestoreRegisters(writer, savedRegisters, Type.ByteCount);
             compiler.WriteEndOfFunction(writer, this);
         }
 

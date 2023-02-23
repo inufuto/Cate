@@ -54,12 +54,13 @@ namespace Inu.Cate.I8086
             };
         }
 
-        public static Register ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(int byteCount)
         {
             return byteCount switch
             {
                 1 => ByteRegister.Al,
-                _ => WordRegister.Ax
+                2 => WordRegister.Ax,
+                _ => null
             };
         }
     }
