@@ -58,7 +58,7 @@ namespace Inu.Cate
             (LeftOperand, RightOperand) = (RightOperand, LeftOperand);
         }
 
-        protected void OperateByte(string operation, int count)
+        protected virtual void OperateByte(string operation, int count)
         {
             if (DestinationOperand.Equals(LeftOperand) && count == 1) {
                 ByteOperation.Operate(this, operation, true, DestinationOperand, count);

@@ -23,8 +23,7 @@ namespace Inu.Cate
             if (instruction.IsRegisterInUse(register)) {
                 var candidates = Registers.Where(
                     r => !Equals(r, register) &&
-                    (instruction.ResultOperand == null || !Equals(r, instruction.ResultOperand.Register)) &&
-                    !instruction.IsRegisterInVariableRange(r, null)
+                    CanCopyRegisterToSave(instruction, r)
                 ).ToList();
                 if (candidates.Any()) {
                     UsingAnyRegister(instruction, candidates, otherRegister =>
@@ -45,6 +44,12 @@ namespace Inu.Cate
             instruction.BeginRegister(register);
             action();
             instruction.EndRegister(register);
+        }
+
+        protected virtual bool CanCopyRegisterToSave(Instruction instruction, WordRegister register)
+        {
+            return ((instruction.ResultOperand == null || !Equals(register, instruction.ResultOperand.Register)) &&
+                    !instruction.IsRegisterInVariableRange(register, null));
         }
 
         public void UsingRegister(Instruction instruction, WordRegister register, Operand operand, Action action)
@@ -115,7 +120,7 @@ namespace Inu.Cate
             var savedRegister = candidates.Last();
             var changed = instruction.ChangedRegisters.Contains(savedRegister);
             savedRegister.Save(instruction);
-            action(savedRegister);
+            Invoke(savedRegister);
             savedRegister.Restore(instruction);
             if (!changed) {
                 instruction.ChangedRegisters.Remove(savedRegister);

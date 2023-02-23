@@ -2,7 +2,7 @@
 
 namespace Inu.Cate.Mos6502
 {
-    class ByteShiftInstruction : Cate.ByteShiftInstruction
+    internal class ByteShiftInstruction : Cate.ByteShiftInstruction
     {
         public ByteShiftInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
         { }
@@ -66,6 +66,24 @@ namespace Inu.Cate.Mos6502
                 return;
             }
             ByteOperation.UsingRegister(this, ByteRegister.A, Call);
+        }
+
+        protected override void OperateByte(string operation, int count)
+        {
+            if (DestinationOperand.Equals(LeftOperand) && count == 1) {
+                base.OperateByte(operation, count);
+                return;
+            }
+
+            ByteOperation.UsingRegister(this, ByteRegister.A, LeftOperand, () =>
+            {
+                ByteRegister.A.Load(this, LeftOperand);
+                if (count != 0) {
+                    ByteRegister.A.Operate(this, operation, true, count);
+                }
+                RemoveRegisterAssignment(ByteRegister.A);
+                ByteRegister.A.Store(this, DestinationOperand);
+            });
         }
     }
 }

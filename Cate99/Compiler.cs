@@ -106,9 +106,21 @@ namespace Inu.Cate.Tms99
             return type.ByteCount == 1 ? (Register?)ByteRegister.FromIndex(index) : WordRegister.FromIndex(index);
         }
 
-        public override Register ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(int byteCount)
         {
-            var register = byteCount == 1 ? (Register)ByteRegister.FromIndex(0) : WordRegister.FromIndex(0);
+            Register? register;
+            switch (byteCount)
+            {
+                case 1:
+                    register = (Register)ByteRegister.FromIndex(0);
+                    break;
+                case 2:
+                    register = WordRegister.FromIndex(0);
+                    break;
+                default:
+                    return null;
+            }
+
             Debug.Assert(register != null);
             return register;
         }
@@ -228,7 +240,7 @@ namespace Inu.Cate.Tms99
         public override IntegerType CounterType => IntegerType.WordType;
         public override string ParameterPrefix => "__";
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register? register)
+        public override IEnumerable<Register> IncludedRegisterIds(Register register)
         {
             return register switch
             {
@@ -328,6 +340,8 @@ namespace Inu.Cate.Tms99
             return null;
         }
 
+        public override string LabelPrefix => "__";
+
         public static bool Operate(Instruction instruction, string operation, AssignableOperand destinationOperand)
         {
             var destination = OperandToString(instruction, destinationOperand);
@@ -335,7 +349,5 @@ namespace Inu.Cate.Tms99
             instruction.WriteLine("\t" + operation + "\t" + destination);
             return true;
         }
-
-        public override string LabelPrefix =>"__";
     }
 }

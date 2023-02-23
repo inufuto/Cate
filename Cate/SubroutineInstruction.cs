@@ -11,7 +11,7 @@ namespace Inu.Cate
         {
             public readonly Function.Parameter Parameter;
             public readonly Operand Operand;
-            public Register? Register { get; private set; }
+            public Register? Register;
             public bool Done { get; private set; }
 
             public ParameterAssignment(Function.Parameter parameter, Operand operand)
@@ -31,7 +31,6 @@ namespace Inu.Cate
                 Done = true;
                 instruction.RemoveSourceRegister(Operand);
                 if (register != null) {
-                    //instruction.RemoveRegisterAssignment(register);
                     instruction.BeginRegister(register);
                 }
             }
@@ -122,6 +121,29 @@ namespace Inu.Cate
             return s.ToString();
         }
 
+        public override bool IsRegisterInUse(Register register)
+        {
+            if (base.IsRegisterInUse(register)) return true;
+            foreach (var assignment in ParameterAssignments) {
+                if (assignment.Done) {
+                    if (assignment.Parameter.Register != null && assignment.Parameter.Register.Matches(register)) {
+                        return true;
+                    }
+                }
+                else if (assignment.Register != null) {
+                    if (assignment.Register.Matches(register)) {
+                        return true;
+                    }
+                }
+                else {
+                    if (assignment.Operand.Matches(register)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         public override void BuildAssembly()
         {
             Register? savedRegister = null;
@@ -158,9 +180,9 @@ namespace Inu.Cate
                 }
 
                 RemoveRegisterAssignment(rr);
-                if (!IsRegisterInUse(rr)) {
+                var resultSaved = !IsRegisterInUse(rr);
+                if (resultSaved) {
                     BeginRegister(rr);
-                    EndRegister(rr);
                 }
                 RemoveRegisterAssignment(rr);
                 switch (rr) {
@@ -170,6 +192,9 @@ namespace Inu.Cate
                     case WordRegister wordRegister:
                         wordRegister.Store(this, DestinationOperand);
                         break;
+                }
+                if (resultSaved) {
+                    EndRegister(rr);
                 }
             }
 
@@ -220,7 +245,7 @@ namespace Inu.Cate
 
         protected Dictionary<Function.Parameter, Operand> OperandPairs()
         {
-            Dictionary<Function.Parameter, Operand> pairs = new Dictionary<Function.Parameter, Operand>();
+            var pairs = new Dictionary<Function.Parameter, Operand>();
             for (var index = SourceOperands.Count - 1; index >= 0; --index) {
                 pairs[TargetFunction.Parameters[index]] = SourceOperands[index];
             }
@@ -242,6 +267,7 @@ namespace Inu.Cate
             //    }
             //}
 
+            var firstRegister = Compiler.ParameterRegister(0, IntegerType.ByteType);
             var changed = true;
             while (changed) {
                 changed = false;
@@ -265,13 +291,14 @@ namespace Inu.Cate
                     continue;
                 for (var i = ParameterAssignments.Count - 1; i >= 0; i--) {
                     var assignment = ParameterAssignments[i];
-                    if (assignment.Done)
-                        continue;
+                    if (assignment.Done) continue;
+                    if (Equals(assignment.Parameter.Register, firstRegister)) continue;
                     // load straight
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
                     Debug.Assert(parameter.Register != null);
                     if (IsRegisterInUse(parameter.Register) || IsSourceVariable(parameter.Register)) continue;
+                    assignment.Register = parameter.Register;
                     Load(parameter.Register, operand);
                     assignment.SetDone(this, parameter.Register);
                     changed = true;
@@ -280,8 +307,8 @@ namespace Inu.Cate
                     continue;
                 for (var i = ParameterAssignments.Count - 1; i >= 0; i--) {
                     var assignment = ParameterAssignments[i];
-                    if (assignment.Done)
-                        continue;
+                    if (assignment.Done) continue;
+                    if (Equals(assignment.Parameter.Register, firstRegister)) continue;
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
                     {
@@ -292,8 +319,9 @@ namespace Inu.Cate
                         else {
                             register = WordOperation.Registers.Find(r => !IsRegisterInUse(r));
                         }
-                        if (register == null)
-                            continue;
+                        if (register == null || Equals(register, firstRegister)) continue;
+                        if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
+                        assignment.Register = register;
                         Load(register, operand);
                         assignment.SetDone(this, register);
                         changed = true;
@@ -321,6 +349,10 @@ namespace Inu.Cate
                         assignment.Exchange(this, other);
                     }
                 }
+                if (!changed && firstRegister != null) {
+                    firstRegister = null;
+                    changed = true;
+                }
             }
 
             List<ParameterAssignment> Twisted()
@@ -328,9 +360,7 @@ namespace Inu.Cate
                 return ParameterAssignments.Where(a =>
                 {
                     if (!a.Done) return false;
-                    if (a.Operand is VariableOperand variableOperand) {
-                        if (Equals(GetVariableRegister(variableOperand), a.Register)) return false;
-                    }
+                    if (a.Operand is VariableOperand variableOperand && Equals(GetVariableRegister(variableOperand), a.Register)) return false;
                     return !Equals(a.Parameter.Register, a.Register);
                 }).ToList();
             }

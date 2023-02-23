@@ -20,7 +20,7 @@ namespace Inu.Cate.Mc6800
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            string functionName = OperatorId switch
+            var functionName = OperatorId switch
             {
                 Keyword.ShiftLeft => "cate.ShiftLeftA",
                 Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
@@ -28,10 +28,10 @@ namespace Inu.Cate.Mc6800
                     : "cate.ShiftRightA",
                 _ => throw new NotImplementedException()
             };
-            ByteOperation.UsingRegister(this, ByteRegister.B,  () =>
+            ByteOperation.UsingRegister(this, ByteRegister.B, RightOperand,  () =>
             {
                 ByteRegister.B.Load(this, RightOperand);
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
+                ByteOperation.UsingRegister(this, ByteRegister.A,LeftOperand, () =>
                 {
                     ByteRegister.A.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);

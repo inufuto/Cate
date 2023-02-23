@@ -254,11 +254,13 @@ namespace Inu.Cate.Tms99
         {
             if (offset == 0) {
                 instruction.WriteLine("\tmov\t*" + pointerRegister.Name + "," + Name);
+                instruction.ChangedRegisters.Add(this);
             }
             else {
                 void ForRegister(Register wordRegister)
                 {
                     instruction.WriteLine("\tmov\t@" + offset + "(" + wordRegister.Name + ")," + Name);
+                    instruction.ChangedRegisters.Add(this);
                 }
 
                 if (pointerRegister.IsOffsetInRange(offset)) {
@@ -274,7 +276,6 @@ namespace Inu.Cate.Tms99
                 }
             }
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)

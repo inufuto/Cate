@@ -1,25 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Inu.Language
 {
     public class NormalArgument
     {
         public readonly List<string> Values = new List<string>();
-        public readonly Dictionary<string, List<string>> Options = new Dictionary<string, List<string>>();
 
-        public NormalArgument(string[] args)
+        public NormalArgument(string[] args, Func<string, string?, bool>? function = null)
         {
             var i = 0;
             while (i < args.Length) {
                 if (IsOption(args[i])) {
-                    ++i;
                     var key = args[i].Substring(1).ToUpper();
-                    if (!Options.TryGetValue(key, out var values)) {
-                        values = new List<string>();
-                    }
-                    if (i >= args.Length) continue;
-                    values.Add(args[i]);
                     ++i;
+                    if (function == null) continue;
+                    var value = (i < args.Length) ? args[i] : null;
+                    if (function(key, value)) {
+                        ++i;
+                    }
                 }
                 else {
                     Values.Add(args[i]);
@@ -27,6 +26,7 @@ namespace Inu.Language
                 }
             }
         }
+
 
         private static bool IsOption(string arg)
         {

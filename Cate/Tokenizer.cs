@@ -112,7 +112,7 @@ namespace Inu.Cate
                 s.Append(LastChar);
                 NextChar();
             }
-            return Convert.ToInt16(s.ToString(), fromBase);
+            return Convert.ToInt32(s.ToString(), fromBase);
         }
 
         protected override bool IsNumericValueHead(char c)

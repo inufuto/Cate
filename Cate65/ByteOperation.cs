@@ -51,9 +51,10 @@ namespace Inu.Cate.Mos6502
         {
             UsingAnyRegister(instruction, register =>
             {
-                instruction.WriteLine("\tld" + register + "\t#" + value);
+                register.LoadConstant(instruction,value);
+                //instruction.WriteLine("\tld" + register + "\t#" + value);
+                //instruction.SetRegisterConstant(register, value);
                 register.StoreIndirect(instruction, pointerRegister, offset);
-                instruction.RemoveRegisterAssignment(register);
             });
         }
 

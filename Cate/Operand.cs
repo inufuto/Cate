@@ -8,6 +8,7 @@ namespace Inu.Cate
     {
         public virtual Register? Register => null;
         public virtual bool Conflicts(Register register) => false;
+        public virtual bool Matches(Register register) => false;
         public abstract Type Type { get; }
         public abstract Operand Cast(ParameterizableType type);
         public abstract void AddUsage(int address, Variable.Usage usage);
@@ -16,7 +17,6 @@ namespace Inu.Cate
         {
             return Equals(operand);
         }
-       
     }
 
     public abstract class ConstantOperand : Operand
@@ -175,6 +175,10 @@ namespace Inu.Cate
         {
             return Variable.Register != null && Variable.Register.Conflicts(register);
         }
+        public override bool Matches(Register register)
+        {
+            return Variable.Register != null && Variable.Register.Matches(register);
+        }
 
         public virtual bool IsMemory() => Register == null;
         public override AssignableOperand ToMember(Type type, int offset)
@@ -205,6 +209,10 @@ namespace Inu.Cate
         public override bool Conflicts(Register register)
         {
             return Variable.Register != null && Variable.Register.Conflicts(register);
+        }
+        public override bool Matches(Register register)
+        {
+            return Variable.Register != null && Variable.Register.Matches(register);
         }
 
         public override Type Type { get; }

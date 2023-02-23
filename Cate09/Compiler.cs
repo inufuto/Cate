@@ -177,7 +177,7 @@ namespace Inu.Cate.Mc6809
             return SubroutineInstruction.ParameterRegister(index, type);
         }
 
-        public override Register ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(int byteCount)
         {
             return SubroutineInstruction.ReturnRegister(byteCount);
         }

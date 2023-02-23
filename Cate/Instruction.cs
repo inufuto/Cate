@@ -68,7 +68,7 @@ namespace Inu.Cate
 
         public readonly int Address;
         public readonly IList<string> Codes = new List<string>();
-        private readonly ISet<Register> sourceRegisters = new HashSet<Register>();
+        private readonly Dictionary<Register, int> sourceRegisters = new Dictionary<Register, int>();
         private readonly ISet<Register> sourceRegisters2 = new HashSet<Register>();
         private readonly ISet<Register> temporaryRegisters = new HashSet<Register>();
         public readonly ISet<Register> ChangedRegisters = new HashSet<Register>();
@@ -78,6 +78,7 @@ namespace Inu.Cate
         public readonly ISet<Instruction> PreviousInstructions = new HashSet<Instruction>();
         public readonly IDictionary<Register, RegisterAssignment> RegisterAssignments = new Dictionary<Register, RegisterAssignment>();
         public Flag ResultFlags;
+        public readonly Dictionary<WordRegister, int> RegisterOffsets = new Dictionary<WordRegister, int>();
 
         protected Instruction(Function function)
         {
@@ -360,8 +361,8 @@ namespace Inu.Cate
         {
             //if (temporaryRegisters.Contains(register))
             //    return true;
-            var pairs = temporaryRegisters.Where(pair => pair.Matches(register)).ToList();
-            return pairs.Count > 0 || sourceRegisters.Any(id => id.Matches(register));
+            var registers = temporaryRegisters.Where(r => r.Matches(register)).ToList();
+            return registers.Count > 0 || sourceRegisters.Any(pair => pair.Value > 0 && pair.Key.Matches(register));
         }
 
         public Register? PreviousRegisterId(Variable variable, int offset)
@@ -403,10 +404,14 @@ namespace Inu.Cate
             void Add(Variable variable)
             {
                 var register = variable.Register;
-                if (register != null) {
-                    sourceRegisters.Add(register);
-                    sourceRegisters2.Add(register);
+                if (register == null) return;
+                if (sourceRegisters.ContainsKey(register)) {
+                    ++sourceRegisters[register];
                 }
+                else {
+                    sourceRegisters[register] = 1;
+                }
+                sourceRegisters2.Add(register);
             }
 
             switch (operand) {
@@ -433,7 +438,12 @@ namespace Inu.Cate
         protected bool RemoveSourceRegister(Operand operand)
         {
             var register = RegisterOfOperand(operand);
-            return register != null && sourceRegisters.Remove(register);
+            if (register == null) return false;
+            if (!sourceRegisters.ContainsKey(register)) return false;
+            if (--sourceRegisters[register] <= 0) {
+                sourceRegisters.Remove(register);
+            }
+            return true;
         }
 
         public void WriteAssembly(StreamWriter writer, int tabCount)
@@ -444,7 +454,7 @@ namespace Inu.Cate
             }
         }
 
-        protected void WriteJumpLine(string line)
+        public void WriteJumpLine(string line)
         {
             codesToJump.Add(line);
         }
@@ -496,6 +506,7 @@ namespace Inu.Cate
 
         public void SetRegisterConstant(Register register, int value)
         {
+            RemoveRegisterAssignment(register);
             RegisterAssignments[register] = new RegisterConstantAssignment(value);
         }
 
@@ -507,6 +518,33 @@ namespace Inu.Cate
         public void SetRegisterConstant(Register register, PointerOperand pointerOperand)
         {
             RegisterAssignments[register] = new RegisterConstantAssignment(new ConstantPointer((PointerType)pointerOperand.Type, pointerOperand.Variable, pointerOperand.Offset));
+        }
+
+        public int GetRegisterOffset(WordRegister register)
+        {
+            if (RegisterOffsets.TryGetValue(register, out var offset)) {
+                return offset;
+            }
+            return 0;
+        }
+
+        public void SetRegisterOffset(WordRegister register, int offset)
+        {
+            RegisterOffsets[register] = offset;
+            //foreach (var pair in RegisterAssignments) {
+            //    var registerAssignment = pair.Value;
+            //    if (!Equals(pair.Key, register) || registerAssignment.Offset == offset) continue;
+            //    RegisterAssignments[register] = new RegisterAssignment(registerAssignment.Variable, offset);
+            //}
+        }
+
+        public bool IsRegisterOffsetEmpty()
+        {
+            foreach (var (key, offset) in RegisterOffsets) {
+                if (!ChangedRegisters.Contains(key)) continue;
+                if (offset != 0) return false;
+            }
+            return true;
         }
     }
 }
