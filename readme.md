@@ -15,3 +15,4 @@ This repository contains following Visual Studio Solutions:
 |Cate99.sln|for TMS9900|
 |Cate80i.sln|for 8080|
 |Cate87.sln|for μCOM87(μPD7800~7806)|
+|Cate86.sln|for 8086|

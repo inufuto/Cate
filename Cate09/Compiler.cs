@@ -65,9 +65,7 @@ namespace Inu.Cate.Mc6809
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpshs\t" + names + comment);
         }
-
-
-        public override void RestoreRegisters(StreamWriter writer, ISet<Register> registers)
+        public override void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int byteCount)
         {
             RestoreRegisters(writer, registers, null, 0);
         }
