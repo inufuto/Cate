@@ -21,14 +21,12 @@
                             return;
                         }
                     }
-                    WordOperation.UsingAnyRegister(this, WordRegister.Pointers(offset), pointerRegister =>
-                    {
-                        pointerRegister.LoadFromMemory(this, pointer, 0);
-                        ByteOperation.StoreConstantIndirect(
-                            this, pointerRegister, offset,
-                            sourceIntegerOperand.IntegerValue
-                        );
-                    });
+                    using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Pointers(offset));
+                    reservation.WordRegister.LoadFromMemory(this, pointer, 0);
+                    ByteOperation.StoreConstantIndirect(
+                        this, reservation.WordRegister, offset,
+                        sourceIntegerOperand.IntegerValue
+                    );
                     return;
                 }
             }

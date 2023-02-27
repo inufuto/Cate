@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Inu.Cate.Mc6800
 {
@@ -21,11 +20,10 @@ namespace Inu.Cate.Mc6800
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
             int offset, int value)
         {
-            UsingAnyRegister(instruction, register =>
-            {
-                register.LoadConstant(instruction, value);
-                register.StoreIndirect(instruction, pointerRegister, offset);
-            });
+            using var reservation = ReserveAnyRegister(instruction);
+            var register = reservation.ByteRegister;
+            register.LoadConstant(instruction, value);
+            register.StoreIndirect(instruction, pointerRegister, offset);
         }
 
         public override List<Cate.ByteRegister> Registers => ByteRegister.Registers;

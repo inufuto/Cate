@@ -24,25 +24,25 @@ namespace Inu.Cate.Mc6809
             Registers.Add(this);
         }
 
-        public static Cate.ByteRegister TemporaryRegister(Instruction instruction, List<Cate.ByteRegister> registers)
-        {
-            var register = registers.First(r => !instruction.IsRegisterInUse(r));
-            return register;
-        }
+        //public static Cate.ByteRegister TemporaryRegister(Instruction instruction, List<Cate.ByteRegister> registers)
+        //{
+        //    var register = registers.First(r => !instruction.IsRegisterReserved(r));
+        //    return register;
+        //}
 
-        public static void Using(Instruction instruction, List<Cate.ByteRegister> candidates,
-            Action<Cate.ByteRegister> action)
-        {
-            Cate.ByteRegister temporaryRegister = TemporaryRegister(instruction, candidates);
-            instruction.BeginRegister(temporaryRegister);
-            action(temporaryRegister);
-            instruction.EndRegister(temporaryRegister);
-        }
+        //public static void Using(Instruction instruction, List<Cate.ByteRegister> candidates,
+        //    Action<Cate.ByteRegister> action)
+        //{
+        //    Cate.ByteRegister temporaryRegister = TemporaryRegister(instruction, candidates);
+        //    instruction.BeginRegister(temporaryRegister);
+        //    action(temporaryRegister);
+        //    instruction.EndRegister(temporaryRegister);
+        //}
 
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tld" + Name + "\t#" + value);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
@@ -50,12 +50,12 @@ namespace Inu.Cate.Mc6809
         public override void LoadConstant(Instruction instruction, int value)
         {
             if (instruction.IsConstantAssigned(this, value)) {
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 return;
             }
             if (value == 0) {
                 instruction.WriteLine("\tclr" + Name);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.SetRegisterConstant(this, 0);
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
@@ -66,7 +66,7 @@ namespace Inu.Cate.Mc6809
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
         {
             instruction.WriteLine("\tld" + Name + "\t" + variable.MemoryAddress(offset));
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.SetVariableRegister(variable, offset, this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
@@ -82,7 +82,7 @@ namespace Inu.Cate.Mc6809
             instruction.WriteLine("\tld" + this + "\t" + WordRegister.OffsetOperand(pointerRegister, offset));
             instruction.ResultFlags |= Instruction.Flag.Z;
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
@@ -91,12 +91,12 @@ namespace Inu.Cate.Mc6809
             instruction.WriteLine("\tst" + this + "\t" + WordRegister.OffsetOperand(pointerRegister, offset));
         }
 
-        protected override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
+        public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
             if (offset == 0) {
                 instruction.WriteLine("\tld" + this + "\t[" + pointer.MemoryAddress(0) + "]");
                 instruction.RemoveRegisterAssignment(this);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
             }
@@ -116,7 +116,7 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\tld" + Name + "\t" + label);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
@@ -129,15 +129,15 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\ttfr\t" + sourceRegister + "," + this);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
         public override void Exchange(Instruction instruction, Cate.ByteRegister register)
         {
             instruction.WriteLine("\texg\t" + register + "," + this);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(register);
-            instruction.ChangedRegisters.Add(register);
+            instruction.AddChanged(register);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, int count)
@@ -147,7 +147,7 @@ namespace Inu.Cate.Mc6809
             }
             if (change) {
                 instruction.RemoveRegisterAssignment(this);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
             }
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
@@ -166,7 +166,7 @@ namespace Inu.Cate.Mc6809
             if (!change)
                 return;
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, string operand)
@@ -174,7 +174,7 @@ namespace Inu.Cate.Mc6809
             instruction.WriteLine("\t" + operation + Name + "\t" + operand);
             if (change) {
                 instruction.RemoveRegisterAssignment(this);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
             }
             instruction.ResultFlags |= Instruction.Flag.Z;
         }

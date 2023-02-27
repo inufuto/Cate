@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Inu.Cate.I8086
 {
-    enum SegmentRegister
+    internal enum SegmentRegister
     {
         Es, Cs, Ss, Ds
     }
@@ -91,14 +90,14 @@ namespace Inu.Cate.I8086
         {
             instruction.WriteLine("\tmov " + this + "," + value);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tmov " + this + "," + label);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
@@ -111,7 +110,7 @@ namespace Inu.Cate.I8086
             string label = variable.MemoryAddress(offset);
             instruction.WriteLine("\tmov " + this + ",[" + label + "]");
             instruction.SetVariableRegister(variable, offset, this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
@@ -122,27 +121,25 @@ namespace Inu.Cate.I8086
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             if (!pointerRegister.IsPointer(offset)) {
-                WordOperation.UsingAnyRegister(instruction, PointerRegisters, temporaryRegister =>
-                {
-                    temporaryRegister.CopyFrom(instruction, pointerRegister);
-                    LoadIndirect(instruction, temporaryRegister, offset);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegisters);
+                var temporaryRegister = reservation.WordRegister;
+                temporaryRegister.CopyFrom(instruction, pointerRegister);
+                LoadIndirect(instruction, temporaryRegister, offset);
                 return;
             }
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
             instruction.WriteLine("\tmov " + this + ",[" + AsPointer(pointerRegister) + addition + "]");
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             if (!pointerRegister.IsPointer(offset)) {
-                WordOperation.UsingAnyRegister(instruction, PointerRegisters, temporaryRegister =>
-                {
-                    temporaryRegister.CopyFrom(instruction, pointerRegister);
-                    StoreIndirect(instruction, temporaryRegister, offset);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegisters);
+                var temporaryRegister = reservation.WordRegister;
+                temporaryRegister.CopyFrom(instruction, pointerRegister);
+                StoreIndirect(instruction, temporaryRegister, offset);
                 return;
             }
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
@@ -160,7 +157,7 @@ namespace Inu.Cate.I8086
                 case PointerOperand sourcePointerOperand:
                     instruction.WriteLine("\tmov " + this + "," + sourcePointerOperand.MemoryAddress());
                     instruction.RemoveRegisterAssignment(this);
-                    instruction.ChangedRegisters.Add(this);
+                    instruction.AddChanged(this);
                     return;
                 case VariableOperand sourceVariableOperand: {
                         var sourceVariable = sourceVariableOperand.Variable;
@@ -184,11 +181,12 @@ namespace Inu.Cate.I8086
                                 return;
                             }
                         }
-                        WordOperation.UsingAnyRegister(instruction, PointerRegisters, pointerRegister =>
+                        using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegisters);
                         {
+                            var pointerRegister = reservation.WordRegister;
                             pointerRegister.LoadFromMemory(instruction, pointer, 0);
                             LoadIndirect(instruction, pointerRegister, offset);
-                        });
+                        }
                         return;
                     }
             }
@@ -227,11 +225,10 @@ namespace Inu.Cate.I8086
                                 destinationPointerRegister, destinationOffset);
                             return;
                         }
-                        WordOperation.UsingAnyRegister(instruction, PointerRegisters, pointerRegister =>
-                        {
-                            pointerRegister.LoadFromMemory(instruction, destinationPointer, 0);
-                            StoreIndirect(instruction, pointerRegister, destinationOffset);
-                        });
+                        using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegisters);
+                        var pointerRegister = reservation.WordRegister;
+                        pointerRegister.LoadFromMemory(instruction, destinationPointer, 0);
+                        StoreIndirect(instruction, pointerRegister, destinationOffset);
                         return;
                     }
             }
@@ -245,43 +242,40 @@ namespace Inu.Cate.I8086
         {
             if (Equals(this, sourceRegister)) return;
             instruction.WriteLine("\tmov " + this + "," + sourceRegister);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
-            if (operand is ConstantOperand constantOperand) {
-                instruction.WriteLine("\t" + operation + this + "," + constantOperand.MemoryAddress());
-                return;
-            }
-            if (operand is VariableOperand variableOperand) {
-                var sourceVariable = variableOperand.Variable;
-                var sourceOffset = variableOperand.Offset;
-                if (sourceVariable.Register is WordRegister sourceRegister) {
-                    Debug.Assert(sourceOffset == 0);
-                    instruction.WriteLine("\t" + operation + this + "," + sourceRegister);
+            switch (operand) {
+                case ConstantOperand constantOperand:
+                    instruction.WriteLine("\t" + operation + this + "," + constantOperand.MemoryAddress());
                     return;
-                }
-                instruction.WriteLine("\t" + operation + this + ",[" + variableOperand.MemoryAddress() + "]");
+                case VariableOperand variableOperand: {
+                        var sourceVariable = variableOperand.Variable;
+                        var sourceOffset = variableOperand.Offset;
+                        if (sourceVariable.Register is WordRegister sourceRegister) {
+                            Debug.Assert(sourceOffset == 0);
+                            instruction.WriteLine("\t" + operation + this + "," + sourceRegister);
+                            return;
+                        }
+                        instruction.WriteLine("\t" + operation + this + ",[" + variableOperand.MemoryAddress() + "]");
+                        return;
+                    }
+            }
+            if (!(operand is IndirectOperand indirectOperand)) throw new NotImplementedException();
+            var pointer = indirectOperand.Variable;
+            var offset = indirectOperand.Offset;
+            if (pointer.Register is WordRegister pointerRegister) {
+                var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
+                instruction.WriteLine("\t" + operation + this + ",[" + AsPointer(pointerRegister) + addition + "]");
                 return;
             }
-            if (operand is IndirectOperand indirectOperand) {
-                var pointer = indirectOperand.Variable;
-                var offset = indirectOperand.Offset;
-                if (pointer.Register is WordRegister pointerRegister) {
-                    var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
-                    instruction.WriteLine("\t" + operation + this + ",[" + AsPointer(pointerRegister) + addition + "]");
-                    return;
-                }
-                WordOperation.UsingAnyRegister(instruction, PointerRegisters, temporaryRegister =>
-                {
-                    temporaryRegister.Load(instruction, operand);
-                    instruction.WriteLine("\t" + operation + this + "," + temporaryRegister);
-                });
-                return;
-            }
-            throw new NotImplementedException();
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegisters);
+            var temporaryRegister = reservation.WordRegister;
+            temporaryRegister.Load(instruction, operand);
+            instruction.WriteLine("\t" + operation + this + "," + temporaryRegister);
         }
 
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)

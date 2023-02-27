@@ -9,19 +9,18 @@ namespace Inu.Cate.Mc6809
 
         public override void BuildAssembly()
         {
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '-' => "neg",
                 '~' => "com",
                 _ => throw new NotImplementedException()
             };
 
-            WordOperation.UsingRegister(this, WordRegister.D, () =>
-            {
+            using (WordOperation.ReserveRegister(this, WordRegister.D)) {
                 WordRegister.D.Load(this, SourceOperand);
                 WordRegister.D.Operate(this, operation, 1);
                 WordRegister.D.Store(this, DestinationOperand);
-            });
+            }
         }
     }
 }

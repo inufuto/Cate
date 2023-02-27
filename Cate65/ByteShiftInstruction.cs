@@ -21,11 +21,10 @@ namespace Inu.Cate.Mos6502
         protected override void ShiftConstant(int count)
         {
             if (OperatorId == Keyword.ShiftRight && ((IntegerType)LeftOperand.Type).Signed) {
-                ByteOperation.UsingRegister(this, ByteRegister.Y, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.Y)) {
                     ByteRegister.Y.LoadConstant(this, count);
                     CallExternal("cate.ShiftRightSignedA");
-                });
+                }
                 return;
             }
             base.ShiftConstant(count);
@@ -33,7 +32,7 @@ namespace Inu.Cate.Mos6502
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            string functionName = OperatorId switch
+            var functionName = OperatorId switch
             {
                 Keyword.ShiftLeft => "cate.ShiftLeftA",
                 Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
@@ -41,11 +40,10 @@ namespace Inu.Cate.Mos6502
                     : "cate.ShiftRightA",
                 _ => throw new NotImplementedException()
             };
-            ByteOperation.UsingRegister(this, ByteRegister.Y, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.Y)) {
                 ByteRegister.Y.Load(this, RightOperand);
                 CallExternal(functionName);
-            });
+            }
         }
 
         private void CallExternal(string functionName)
@@ -55,9 +53,9 @@ namespace Inu.Cate.Mos6502
                 ByteRegister.A.Load(this, LeftOperand);
                 Compiler.CallExternal(this, functionName);
                 RemoveRegisterAssignment(ByteRegister.A);
-                ChangedRegisters.Add(ByteRegister.A);
+                AddChanged(ByteRegister.A);
                 RemoveRegisterAssignment(ByteRegister.Y);
-                ChangedRegisters.Add(ByteRegister.Y);
+                AddChanged(ByteRegister.Y);
                 ByteRegister.A.Store(this, DestinationOperand);
             }
 
@@ -65,7 +63,9 @@ namespace Inu.Cate.Mos6502
                 Call();
                 return;
             }
-            ByteOperation.UsingRegister(this, ByteRegister.A, Call);
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                Call();
+            }
         }
 
         protected override void OperateByte(string operation, int count)
@@ -74,16 +74,14 @@ namespace Inu.Cate.Mos6502
                 base.OperateByte(operation, count);
                 return;
             }
-
-            ByteOperation.UsingRegister(this, ByteRegister.A, LeftOperand, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 if (count != 0) {
                     ByteRegister.A.Operate(this, operation, true, count);
                 }
                 RemoveRegisterAssignment(ByteRegister.A);
                 ByteRegister.A.Store(this, DestinationOperand);
-            });
+            }
         }
     }
 }

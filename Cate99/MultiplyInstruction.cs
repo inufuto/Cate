@@ -17,23 +17,23 @@ namespace Inu.Cate.Tms99
             {
                 if (((WordRegister)lowRegister).Index == 0) return false;
                 var highRegister = WordRegister.FromIndex(((WordRegister)lowRegister).Index - 1);
-                return !IsRegisterInUse(highRegister);
+                return !IsRegisterReserved(highRegister);
             }).ToList();
-            WordOperation.UsingAnyRegister(this, candidates, DestinationOperand, LeftOperand, lowRegister =>
+            using var low = WordOperation.ReserveAnyRegister(this, candidates, DestinationOperand, LeftOperand);
             {
+                var lowRegister = low.WordRegister;
                 var highRegister = WordRegister.FromIndex(((WordRegister)lowRegister).Index - 1);
-                WordOperation.UsingRegister(this, highRegister, () =>
-                {
-                    WordOperation.UsingAnyRegister(this, rightRegister =>
-                    {
+                using (WordOperation.ReserveRegister(this, highRegister)) {
+                    using (var right = WordOperation.ReserveAnyRegister(this)) {
+                        var rightRegister = right.WordRegister;
                         highRegister.Load(this, LeftOperand);
                         rightRegister.LoadConstant(this, RightValue);
                         WriteLine("\tmpy\t" + rightRegister.Name + "," + highRegister);
                         lowRegister.Store(this, DestinationOperand);
-                        ChangedRegisters.Add(lowRegister);
-                    });
-                });
-            });
+                        AddChanged(lowRegister);
+                    }
+                }
+            }
         }
 
         private void ClearDestination()

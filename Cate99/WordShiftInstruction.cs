@@ -17,14 +17,13 @@ namespace Inu.Cate.Tms99
                 Keyword.ShiftRight => "srl",
                 _ => throw new NotImplementedException()
             };
-            WordOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, temporaryRegister =>
-            {
-                temporaryRegister.Load(this, LeftOperand);
-                if (count > 0) {
-                    WriteLine("\t" + operation + "\t" + temporaryRegister.Name + "," + count);
-                }
-                temporaryRegister.Store(this, DestinationOperand);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+            var temporaryRegister = reservation.WordRegister;
+            temporaryRegister.Load(this, LeftOperand);
+            if (count > 0) {
+                WriteLine("\t" + operation + "\t" + temporaryRegister.Name + "," + count);
+            }
+            temporaryRegister.Store(this, DestinationOperand);
         }
 
         protected override void ShiftVariable(Operand counterOperand)
@@ -59,7 +58,7 @@ namespace Inu.Cate.Tms99
                     r0.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
                     RemoveRegisterAssignment(r0);
-                    ChangedRegisters.Add(r0);
+                    AddChanged(r0);
                     r0.Store(this, DestinationOperand);
                 }
                 FromRight(r1);
@@ -68,37 +67,43 @@ namespace Inu.Cate.Tms99
                     CallShift();
                 }
                 else {
-                    WordOperation.UsingRegister(this, r0, CallShift);
+                    using (WordOperation.ReserveRegister(this, r0)) {
+                        CallShift();
+                    }
                 }
             }
 
             if (Equals(DestinationOperand.Register, r0)) {
-                WordOperation.UsingRegister(this, r1, Operate);
+                using (WordOperation.ReserveRegister(this, r1)) {
+                    Operate();
+                }
                 return;
             }
             if (Equals(DestinationOperand.Register, r1)) {
                 if (Equals(LeftOperand.Register, r1)) {
-                    WordOperation.UsingRegister(this, r0, () =>
-                    {
+                    using (WordOperation.ReserveRegister(this, r0)) {
                         var candidates = WordRegister.Registers.Where(r => r != null && !Equals(r, r0) && !Equals(r, r1)).ToList();
-                        WordOperation.UsingAnyRegister(this, candidates, temporaryRegister =>
-                        {
+                        using (var reservation = WordOperation.ReserveAnyRegister(this, candidates)) {
+                            var temporaryRegister = reservation.WordRegister;
                             FromRight(temporaryRegister);
                             r0.CopyFrom(this, r1);
                             r1.CopyFrom(this, temporaryRegister);
                             Compiler.CallExternal(this, functionName);
                             r0.Store(this, DestinationOperand);
-                        });
-                    });
+                        }
+                    }
                     return;
                 }
-                WordOperation.UsingRegister(this, r0, Operate);
+                using (WordOperation.ReserveRegister(this, r0)) {
+                    Operate();
+                }
                 return;
             }
-            WordOperation.UsingRegister(this, r1, () =>
-            {
-                WordOperation.UsingRegister(this, r0, Operate);
-            });
+            using (WordOperation.ReserveRegister(this, r1)) {
+                using (WordOperation.ReserveRegister(this, r0)) {
+                    Operate();
+                }
+            }
         }
 
         public override bool IsCalling() => true;

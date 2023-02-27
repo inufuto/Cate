@@ -49,23 +49,19 @@ namespace Inu.Cate.Mos6502
         public override void StoreConstantIndirect(Instruction instruction, WordRegister pointerRegister, int offset,
             int value)
         {
-            UsingAnyRegister(instruction, register =>
-            {
-                register.LoadConstant(instruction,value);
-                //instruction.WriteLine("\tld" + register + "\t#" + value);
-                //instruction.SetRegisterConstant(register, value);
-                register.StoreIndirect(instruction, pointerRegister, offset);
-            });
+            using var reservation = ReserveAnyRegister(instruction);
+            var register = reservation.ByteRegister;
+            register.LoadConstant(instruction, value);
+            register.StoreIndirect(instruction, pointerRegister, offset);
         }
 
         public override void ClearByte(Instruction instruction, string label)
         {
-            UsingAnyRegister(instruction, register =>
-            {
-                register.LoadConstant(instruction, 0);
-                instruction.RemoveRegisterAssignment(register);
-                register.StoreToMemory(instruction, label);
-            });
+            using var reservation = ReserveAnyRegister(instruction);
+            var register = reservation.ByteRegister;
+            register.LoadConstant(instruction, 0);
+            instruction.RemoveRegisterAssignment(register);
+            register.StoreToMemory(instruction, label);
         }
 
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister register)

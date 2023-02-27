@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-
-namespace Inu.Cate.MuCom87
+﻿namespace Inu.Cate.MuCom87
 {
     internal class MultiplyInstruction : Cate.MultiplyInstruction
     {
@@ -18,12 +13,11 @@ namespace Inu.Cate.MuCom87
                     destinationRegister.LoadConstant(this, 0);
                     return;
                 }
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.LoadConstant(this, 0);
                     ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                     ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                });
+                }
                 return;
             }
             if (RightValue == 1) {
@@ -31,26 +25,24 @@ namespace Inu.Cate.MuCom87
                     destinationRegister.Load(this, LeftOperand);
                     return;
                 }
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
                     ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                     ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
                     ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                });
+                }
                 return;
             }
 
             void Call()
             {
                 WordRegister.Hl.Load(this, LeftOperand);
-                ChangedRegisters.Add(WordRegister.Hl);
+                AddChanged(WordRegister.Hl);
                 RemoveRegisterAssignment(WordRegister.Hl);
-                ByteOperation.UsingRegister(this, ByteRegister.C, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.C)) {
                     ByteRegister.C.LoadConstant(this, RightValue);
                     Compiler.CallExternal(this, "cate.MultiplyHlC");
-                });
+                }
                 WordRegister.Hl.Store(this, DestinationOperand);
             }
 
@@ -58,7 +50,9 @@ namespace Inu.Cate.MuCom87
                 Call();
                 return;
             }
-            WordOperation.UsingRegister(this, WordRegister.Hl, Call);
+            using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                Call();
+            }
         }
     }
 }

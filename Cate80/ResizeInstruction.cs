@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Inu.Cate.Z80
 {
@@ -23,18 +22,16 @@ namespace Inu.Cate.Z80
                 var pairRegister = destinationRegister.PairRegister;
                 if (pairRegister != null && Equals(pairRegister.Low, destinationRegister)) {
                     Debug.Assert(pairRegister.High != null);
-                    if (!IsRegisterInUse(pairRegister.High)) {
+                    if (!IsRegisterReserved(pairRegister.High)) {
                         pairRegister.Load(this, SourceOperand);
                         return;
                     }
                 }
             }
-            WordRegister.UsingAny(this, WordRegister.PairRegisters, temporaryRegister =>
-            {
-                Debug.Assert(temporaryRegister.Low != null);
-                temporaryRegister.Load(this, SourceOperand);
-                temporaryRegister.Low.Store(this, DestinationOperand);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters);
+            Debug.Assert(reservation.WordRegister.Low != null);
+            reservation.WordRegister.Load(this, SourceOperand);
+            reservation.WordRegister.Low.Store(this, DestinationOperand);
         }
 
 
@@ -47,7 +44,7 @@ namespace Inu.Cate.Z80
                 WriteLine("\tadd\ta,a");
                 WriteLine("\tsbc\ta,a");
                 WriteLine("\tld\t" + wordRegister.High.Name + ",a");
-                ChangedRegisters.Add(ByteRegister.A);
+                AddChanged(ByteRegister.A);
                 RemoveRegisterAssignment(ByteRegister.A);
             }
 
@@ -59,22 +56,19 @@ namespace Inu.Cate.Z80
                         return;
                     }
                 }
-                WordRegister.UsingAny(this, WordRegister.PairRegisters, temporaryRegister =>
-                {
-                    ToWord(temporaryRegister);
-                    temporaryRegister.Store(this, DestinationOperand);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters);
+                ToWord(reservation.WordRegister);
+                reservation.WordRegister.Store(this, DestinationOperand);
             }
 
             if (Equals(SourceOperand.Register, ByteRegister.A)) {
                 ExpandA();
                 return;
             }
-            ByteRegister.UsingAccumulator(this, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, SourceOperand);
                 ExpandA();
-            });
+            }
         }
 
         //protected override void Expand()

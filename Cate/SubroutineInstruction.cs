@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace Inu.Cate
         {
             public readonly Function.Parameter Parameter;
             public readonly Operand Operand;
-            public Register? Register;
+            public RegisterReservation? RegisterReservation;
             public bool Done { get; private set; }
 
             public ParameterAssignment(Function.Parameter parameter, Operand operand)
@@ -22,49 +23,62 @@ namespace Inu.Cate
 
             public override string ToString()
             {
-                return "{" + Parameter.Register + "," + Operand + "," + Register + "," + Done + "}";
+                return "{" + Parameter.Register + "," + Operand + "," + RegisterReservation + "," + Done + "}";
             }
 
             public void SetDone(SubroutineInstruction instruction, Register? register)
             {
-                Register = register;
-                Done = true;
-                instruction.RemoveSourceRegister(Operand);
-                if (register != null) {
-                    instruction.BeginRegister(register);
+                //instruction.CancelOperandRegister(Operand);
+                if (register != null) { // && !Equals(register, Parameter.Register)
+                    RegisterReservation ??= instruction.ReserveRegister(register);
                 }
+                Done = true;
             }
 
             public void Exchange(SubroutineInstruction instruction, ParameterAssignment other)
             {
                 Debug.Assert(other.Parameter.Register != null);
-                if (Parameter.Register is ByteRegister byteRegister) {
-                    byteRegister.Exchange(instruction, (ByteRegister)other.Parameter.Register);
+                switch (Parameter.Register) {
+                    case ByteRegister byteRegister:
+                        byteRegister.Exchange(instruction, (ByteRegister)other.Parameter.Register);
+                        break;
+                    case WordRegister wordRegister:
+                        wordRegister.CopyFrom(instruction, (WordRegister)other.Parameter.Register);
+                        break;
                 }
-                if (Parameter.Register is WordRegister wordRegister) {
-                    wordRegister.CopyFrom(instruction, (WordRegister)other.Parameter.Register);
-                }
-                SetDone(instruction, other.Operand.Register);
-                other.SetDone(instruction, Operand.Register);
+                Done = true;
+                other.Done = true;
+                //SetDone(instruction, other.Operand.Register);
+                //other.SetDone(instruction, Operand.Register);
             }
 
-            public void Close(Instruction instruction)
+            public RegisterReservation? Close(Instruction instruction)
             {
                 Debug.Assert(Done);
-                if (Register == null)
-                    return;
-                if (!Equals(Register, Parameter.Register)) {
+                if (RegisterReservation == null)
+                    return null;
+                RegisterReservation? newReservation = null;
+                if (!Equals(RegisterReservation.Register, Parameter.Register)) {
                     Debug.Assert(Parameter.Register != null);
-                    if (Parameter.Register is ByteRegister byteRegister) {
-                        byteRegister.CopyFrom(instruction, (ByteRegister)Register);
-                    }
-                    if (Parameter.Register is WordRegister wordRegister) {
-                        wordRegister.CopyFrom(instruction, (WordRegister)Register);
+#if DEBUG
+                    instruction.WriteLine("\t; " + Parameter.Register + " <- " + RegisterReservation.Register);
+#endif
+                    switch (Parameter.Register) {
+                        case ByteRegister byteRegister:
+                            newReservation = instruction.ByteOperation.ReserveRegister(instruction, byteRegister);
+                            byteRegister.CopyFrom(instruction, RegisterReservation.ByteRegister);
+                            break;
+                        case WordRegister wordRegister:
+                            newReservation = instruction.WordOperation.ReserveRegister(instruction, wordRegister);
+                            wordRegister.CopyFrom(instruction, RegisterReservation.WordRegister);
+                            break;
+                        default:
+                            throw new NotImplementedException();
                     }
                 }
-                instruction.EndRegister(Register);
-                Register = null;
+                RegisterReservation = null;
                 Done = false;
+                return newReservation;
             }
         }
 
@@ -121,33 +135,10 @@ namespace Inu.Cate
             return s.ToString();
         }
 
-        public override bool IsRegisterInUse(Register register)
-        {
-            if (base.IsRegisterInUse(register)) return true;
-            foreach (var assignment in ParameterAssignments) {
-                if (assignment.Done) {
-                    if (assignment.Parameter.Register != null && assignment.Parameter.Register.Matches(register)) {
-                        return true;
-                    }
-                }
-                else if (assignment.Register != null) {
-                    if (assignment.Register.Matches(register)) {
-                        return true;
-                    }
-                }
-                else {
-                    if (assignment.Operand.Matches(register)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
         public override void BuildAssembly()
         {
             Register? savedRegister = null;
-            if (DestinationOperand is IndirectOperand destinationIndirectOperand && destinationIndirectOperand.Variable.Register != null) {
+            if (DestinationOperand is IndirectOperand { Variable: { Register: { } } } destinationIndirectOperand) {
                 var destinationRegister = destinationIndirectOperand.Variable.Register;
                 if (ParameterAssignments.Any(p => p.Parameter.Register != null && p.Parameter.Register.Conflicts(destinationRegister))) {
                     savedRegister = destinationRegister;
@@ -155,14 +146,16 @@ namespace Inu.Cate
                 }
             }
 
-            FillParameters();
-            ResultFlags = 0;
-            Call();
+            {
+                var _ = FillParameters();
+                ResultFlags = 0;
+                Call();
+            }
             RemoveStaticVariableAssignments();
 
             var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
             if (returnRegister != null) {
-                ChangedRegisters.Add(returnRegister);
+                AddChanged(returnRegister);
             }
             if (DestinationOperand == null)
                 return;
@@ -171,18 +164,18 @@ namespace Inu.Cate
             {
                 if (savedRegister != null) {
                     savedRegister.Restore(this);
-                    var removedRegisters = ChangedRegisters.Where(r =>
+                    var removedRegisters = ChangedRegisters().Where(r =>
                         Equals(savedRegister, r) || (r is ByteRegister changedByteRegister &&
                                                      Equals(changedByteRegister.PairRegister, savedRegister))).ToList();
                     foreach (var removedRegister in removedRegisters) {
-                        ChangedRegisters.Remove(removedRegister);
+                        RemoveChanged(removedRegister);
                     }
                 }
 
                 RemoveRegisterAssignment(rr);
-                var resultSaved = !IsRegisterInUse(rr);
+                var resultSaved = !IsRegisterReserved(rr);
                 if (resultSaved) {
-                    BeginRegister(rr);
+                    ReserveRegister(rr);
                 }
                 RemoveRegisterAssignment(rr);
                 switch (rr) {
@@ -193,30 +186,26 @@ namespace Inu.Cate
                         wordRegister.Store(this, DestinationOperand);
                         break;
                 }
-                if (resultSaved) {
-                    EndRegister(rr);
-                }
+                //if (resultSaved) {
+                //    CancelRegister(rr);
+                //}
             }
 
             Debug.Assert(returnRegister != null);
             if (savedRegister != null && returnRegister.Conflicts(savedRegister)) {
                 switch (returnRegister) {
                     case ByteRegister byteRegister: {
-                            var candidates = ByteOperation.Registers.Where(r => !IsRegisterInUse(r) && !r.Conflicts(savedRegister)).ToList();
-                            ByteOperation.UsingAnyRegister(this, candidates, register =>
-                            {
-                                register.CopyFrom(this, byteRegister);
-                                StoreResult(register);
-                            });
+                            var candidates = ByteOperation.Registers.Where(r => !IsRegisterReserved(r) && !r.Conflicts(savedRegister)).ToList();
+                            using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
+                            reservation.ByteRegister.CopyFrom(this, byteRegister);
+                            StoreResult(reservation.ByteRegister);
                             break;
                         }
                     case WordRegister wordRegister: {
-                            var candidates = WordOperation.Registers.Where(r => !IsRegisterInUse(r) && !r.Conflicts(savedRegister)).ToList();
-                            WordOperation.UsingAnyRegister(this, candidates, register =>
-                            {
-                                register.CopyFrom(this, wordRegister);
-                                StoreResult(register);
-                            });
+                            var candidates = WordOperation.Registers.Where(r => !IsRegisterReserved(r) && !r.Conflicts(savedRegister)).ToList();
+                            using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
+                            reservation.WordRegister.CopyFrom(this, wordRegister);
+                            StoreResult(reservation.WordRegister);
                             break;
                         }
                 }
@@ -226,13 +215,13 @@ namespace Inu.Cate
         }
 
 
-        public override void AddSourceRegisters()
+        public override void ReserveOperandRegisters()
         {
             foreach (var sourceOperand in SourceOperands) {
-                AddSourceRegister(sourceOperand);
+                ReserveOperandRegister(sourceOperand);
             }
             if (DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register != null) {
-                AddSourceRegister(DestinationOperand);
+                ReserveOperandRegister(DestinationOperand);
             }
         }
 
@@ -256,26 +245,19 @@ namespace Inu.Cate
 
         protected abstract void Call();
 
-        protected void FillParameters()
+        protected List<RegisterReservation> FillParameters()
         {
             StoreParameters();
-            //foreach (var assignment in ParameterAssignments.Where(assignment => !Equals(assignment.Parameter.Register, assignment.Operand.Register))) {
-            //    if (assignment.Parameter.Register == null) continue;
-            //    if (!(assignment.Operand is VariableOperand variableOperand) ||
-            //        !Equals(GetVariableRegister(variableOperand.Variable, variableOperand.Offset), assignment.Parameter.Register)) {
-            //        RemoveRegisterAssignment(assignment.Parameter.Register);
-            //    }
-            //}
 
             var firstRegister = Compiler.ParameterRegister(0, IntegerType.ByteType);
             var changed = true;
             while (changed) {
                 changed = false;
+
+                // same register
                 for (var i = ParameterAssignments.Count - 1; i >= 0; i--) {
                     var assignment = ParameterAssignments[i];
-                    if (assignment.Done)
-                        continue;
-
+                    if (assignment.Done) continue;
                     // the source register and the parameter register match
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
@@ -284,11 +266,13 @@ namespace Inu.Cate
                     var register = variableOperand.Variable.Register
                                    ?? GetVariableRegister(variableOperand.Variable, variableOperand.Offset);
                     if (!Equals(register, parameter.Register)) continue;
+                    assignment.RegisterReservation = ReserveRegister(register, operand);
+                    Load(parameter.Register, operand);
                     assignment.SetDone(this, register);
                     changed = true;
                 }
-                if (changed)
-                    continue;
+                if (changed) continue;
+
                 for (var i = ParameterAssignments.Count - 1; i >= 0; i--) {
                     var assignment = ParameterAssignments[i];
                     if (assignment.Done) continue;
@@ -296,15 +280,16 @@ namespace Inu.Cate
                     // load straight
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
-                    Debug.Assert(parameter.Register != null);
-                    if (IsRegisterInUse(parameter.Register) || IsSourceVariable(parameter.Register)) continue;
-                    assignment.Register = parameter.Register;
-                    Load(parameter.Register, operand);
-                    assignment.SetDone(this, parameter.Register);
+                    var register = parameter.Register;
+                    Debug.Assert(register != null);
+                    if (IsRegisterReserved(register) || IsSourceVariable(register)) continue;
+                    assignment.RegisterReservation = ReserveRegister(register, operand);
+                    Load(register, operand);
+                    assignment.SetDone(this, register);
                     changed = true;
                 }
-                if (changed)
-                    continue;
+                if (changed) continue;
+
                 for (var i = ParameterAssignments.Count - 1; i >= 0; i--) {
                     var assignment = ParameterAssignments[i];
                     if (assignment.Done) continue;
@@ -314,74 +299,74 @@ namespace Inu.Cate
                     {
                         Register? register;
                         if (parameter.Type.ByteCount == 1) {
-                            register = ByteOperation.Registers.Find(r => !IsRegisterInUse(r));
+                            register = ByteOperation.Registers.Find(r => !IsRegisterReserved(r));
                         }
                         else {
-                            register = WordOperation.Registers.Find(r => !IsRegisterInUse(r));
+                            register = WordOperation.Registers.Find(r => !IsRegisterReserved(r));
                         }
                         if (register == null || Equals(register, firstRegister)) continue;
                         if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
-                        assignment.Register = register;
+                        assignment.RegisterReservation = ReserveRegister(register, operand);
                         Load(register, operand);
                         assignment.SetDone(this, register);
                         changed = true;
                     }
                 }
-                if (changed)
-                    continue;
+                if (changed) continue;
                 for (var i = ParameterAssignments.Count - 1; i >= 0; i--) {
                     var assignment = ParameterAssignments[i];
-                    if (assignment.Done)
-                        continue;
+                    if (assignment.Done) continue;
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
                     var other = ParameterAssignments.Find(a =>
                     {
                         if (a.Done) return false;
                         Register? variableRegister = null;
-                        if (a.Operand is VariableOperand variableOperand) {
-                            var variable = variableOperand.Variable;
-                            variableRegister = GetVariableRegister(variable, variableOperand.Offset);
-                        }
+                        if (!(a.Operand is VariableOperand variableOperand))
+                            return Equals(variableRegister, parameter.Register);
+                        var variable = variableOperand.Variable;
+                        variableRegister = GetVariableRegister(variable, variableOperand.Offset);
                         return Equals(variableRegister, parameter.Register);
                     });
                     if (other != null && Equals(other.Parameter.Register, operand.Register)) {
                         assignment.Exchange(this, other);
                     }
                 }
-                if (!changed && firstRegister != null) {
-                    firstRegister = null;
-                    changed = true;
-                }
+                if (changed || firstRegister == null) continue;
+                firstRegister = null;
+                changed = true;
             }
 
             List<ParameterAssignment> Twisted()
             {
                 return ParameterAssignments.Where(a =>
                 {
-                    if (!a.Done) return false;
-                    if (a.Operand is VariableOperand variableOperand && Equals(GetVariableRegister(variableOperand), a.Register)) return false;
-                    return !Equals(a.Parameter.Register, a.Register);
+                    if (a.Done) return false;
+                    if (a is { RegisterReservation: { }, Operand: VariableOperand variableOperand } && Equals(GetVariableRegister(variableOperand), a.RegisterReservation.Register)) return false;
+                    return a.RegisterReservation != null && !Equals(a.Parameter.Register, a.RegisterReservation.Register);
                 }).ToList();
             }
             var twisted = Twisted();
+            var parameterReservations = new List<RegisterReservation>();
             while (twisted.Count > 1) {
-                var parameterAssignments = twisted.Where(parameterAssignment => !twisted.Any(a => a != parameterAssignment && Equals(a.Register, parameterAssignment.Parameter.Register))).ToList();
+                var parameterAssignments = twisted.Where(parameterAssignment => !twisted.Any(a => a.RegisterReservation != null && a != parameterAssignment && Equals(a.RegisterReservation.Register, parameterAssignment.Parameter.Register))).ToList();
                 if (!parameterAssignments.Any()) break;
                 foreach (var parameterAssignment in parameterAssignments) {
-                    parameterAssignment.Close(this);
+                    var reservation = parameterAssignment.Close(this);
+                    if (reservation != null) parameterReservations.Add(reservation);
                 }
                 twisted = Twisted();
             }
             foreach (var assignment in ParameterAssignments.Where(assignment => assignment.Done)) {
-                assignment.Close(this);
+                var reservation = assignment.Close(this);
+                if (reservation != null) parameterReservations.Add(reservation);
             }
+            return parameterReservations;
         }
 
         private bool IsSourceVariable(Register register)
         {
-            foreach (var parameterAssignment in ParameterAssignments) {
-                if (parameterAssignment.Done || Equals(parameterAssignment.Parameter.Register, register)) continue;
+            foreach (var parameterAssignment in ParameterAssignments.Where(parameterAssignment => !parameterAssignment.Done && !Equals(parameterAssignment.Parameter.Register, register))) {
                 switch (parameterAssignment.Operand) {
                     case VariableOperand variableOperand: {
 
@@ -401,6 +386,9 @@ namespace Inu.Cate
 
         private void Load(Register register, Operand operand)
         {
+#if DEBUG
+            WriteLine("\t; " + register + " <- {" + operand + "}");
+#endif
             switch (register) {
                 case ByteRegister byteRegister:
                     byteRegister.Load(this, operand);
@@ -409,10 +397,20 @@ namespace Inu.Cate
                     wordRegister.Load(this, operand);
                     break;
             }
-
+            //CancelOperandRegister(operand);
             if (!Equals(operand.Register, register)) {
-                ChangedRegisters.Add(register);
+                AddChanged(register);
             }
+        }
+
+        private RegisterReservation ReserveRegister(Register register, Operand operand)
+        {
+            return register switch
+            {
+                ByteRegister byteRegister => ByteOperation.ReserveRegister(this, byteRegister, operand),
+                WordRegister wordRegister => WordOperation.ReserveRegister(this, wordRegister, operand),
+                _ => throw new NotImplementedException()
+            };
         }
 
 
@@ -443,11 +441,9 @@ namespace Inu.Cate
                     }
                     else {
                         var candidates = Candidates(operand);
-                        ByteOperation.UsingAnyRegister(this, candidates, null, operand, register =>
-                        {
-                            register.Load(this, operand);
-                            register.StoreToMemory(this, label);
-                        });
+                        using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, null, operand);
+                        reservation.ByteRegister.Load(this, operand);
+                        reservation.ByteRegister.StoreToMemory(this, label);
                     }
                 }
                 else {
@@ -459,97 +455,95 @@ namespace Inu.Cate
 
         protected virtual void StoreWord(Operand operand, string label)
         {
-            WordOperation.UsingAnyRegister(this, register =>
-            {
-                register.Load(this, operand);
-                register.StoreToMemory(this, label);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(this);
+            reservation.WordRegister.Load(this, operand);
+            reservation.WordRegister.StoreToMemory(this, label);
         }
 
 
         protected void StoreParametersViaPointer()
         {
-            WordOperation.UsingAnyRegister(this, WordOperation.PointerRegisters(0), pointerRegister =>
-            {
-                var index = 0;
-                var count = ParameterAssignments.Count(a => a.Parameter.Register == null);
-                foreach (var assignment in ParameterAssignments.Where(assignment => assignment.Parameter.Register == null)) {
-                    Debug.Assert(!assignment.Done);
-                    var parameter = assignment.Parameter;
-                    var last = index >= count - 1;
+            using var pointerReservation = WordOperation.ReserveAnyRegister(this, WordOperation.PointerRegisters(0));
+            var pointerRegister = pointerReservation.WordRegister;
+            var index = 0;
+            var count = ParameterAssignments.Count(a => a.Parameter.Register == null);
+            foreach (var assignment in ParameterAssignments.Where(assignment => assignment.Parameter.Register == null)) {
+                Debug.Assert(!assignment.Done);
+                var parameter = assignment.Parameter;
+                var last = index >= count - 1;
 
-                    void StoreByte(ByteRegister register)
-                    {
-                        register.StoreIndirect(this, pointerRegister, 0);
-                        if (!last) {
-                            pointerRegister.Add(this, 1);
-                        }
-                    }
-
-                    void StoreWordViaRegister(WordRegister register)
-                    {
-                        Debug.Assert(register.Low != null);
-                        Debug.Assert(register.High != null);
-                        register.Low.StoreIndirect(this, pointerRegister, 0);
+                void StoreByte(ByteRegister register)
+                {
+                    register.StoreIndirect(this, pointerRegister, 0);
+                    if (!last) {
                         pointerRegister.Add(this, 1);
-                        register.High.StoreIndirect(this, pointerRegister, 0);
-                        if (!last) {
-                            pointerRegister.Add(this, 1);
-                        }
                     }
+                }
 
-                    var operand = assignment.Operand;
-                    if (index == 0) {
-                        pointerRegister.LoadConstant(this, TargetFunction.ParameterLabel(parameter));
+                void StoreWordViaRegister(WordRegister register)
+                {
+                    Debug.Assert(register.Low != null);
+                    Debug.Assert(register.High != null);
+                    register.Low.StoreIndirect(this, pointerRegister, 0);
+                    pointerRegister.Add(this, 1);
+                    register.High.StoreIndirect(this, pointerRegister, 0);
+                    if (!last) {
+                        pointerRegister.Add(this, 1);
                     }
+                }
 
-                    if (parameter.Type.ByteCount == 1) {
-                        switch (operand) {
-                            case IntegerOperand integerOperand:
-                                ByteOperation.StoreConstantIndirect(this, pointerRegister, 0,
-                                    integerOperand.IntegerValue);
-                                if (!last) {
-                                    pointerRegister.Add(this, 1);
+                var operand = assignment.Operand;
+                if (index == 0) {
+                    pointerRegister.LoadConstant(this, TargetFunction.ParameterLabel(parameter));
+                }
+
+                if (parameter.Type.ByteCount == 1) {
+                    switch (operand) {
+                        case IntegerOperand integerOperand:
+                            ByteOperation.StoreConstantIndirect(this, pointerRegister, 0,
+                                integerOperand.IntegerValue);
+                            if (!last) {
+                                pointerRegister.Add(this, 1);
+                            }
+                            break;
+                        case VariableOperand { Variable: { Register: ByteRegister register } } variableOperand: {
+                                Debug.Assert(variableOperand.Offset == 0);
+                                using (ByteOperation.ReserveRegister(this, register, variableOperand)) {
+                                    StoreByte(register);
                                 }
                                 break;
-                            case VariableOperand variableOperand when variableOperand.Variable.Register is ByteRegister register: {
-                                    Debug.Assert(variableOperand.Offset == 0);
-                                    StoreByte(register);
-                                    break;
-                                }
-                            case VariableOperand _:
-                                ByteOperation.UsingAnyRegister(this, ByteOperation.Accumulators, register =>
-                                {
-                                    register.Load(this, operand);
-                                    StoreByte(register);
-                                });
-                                break;
-                            default:
-                                ByteOperation.UsingAnyRegister(this, register =>
-                                {
-                                    register.Load(this, operand);
-                                    StoreByte(register);
-                                });
-                                break;
-                        }
+                            }
+                        case VariableOperand _:
+                            using (var reservation = ByteOperation.ReserveAnyRegister(this, ByteOperation.Accumulators)) {
+                                reservation.ByteRegister.Load(this, operand);
+                                StoreByte(reservation.ByteRegister);
+                            }
+                            break;
+                        default:
+                            using (var reservation = ByteOperation.ReserveAnyRegister(this)) {
+                                reservation.ByteRegister.Load(this, operand);
+                                StoreByte(reservation.ByteRegister);
+                            }
+                            break;
+                    }
+                }
+                else {
+                    if (operand.Register is WordRegister wordRegister && wordRegister.IsPair()) {
+                        wordRegister.Load(this, operand);
+                        StoreWordViaRegister(wordRegister);
                     }
                     else {
-                        if (operand.Register is WordRegister wordRegister && wordRegister.IsPair()) {
-                            wordRegister.Load(this, operand);
-                            StoreWordViaRegister(wordRegister);
-                        }
-                        else {
-                            WordOperation.UsingAnyRegister(this, WordOperation.PairRegisters, register =>
-                            {
-                                register.Load(this, operand);
-                                StoreWordViaRegister(register);
-                            });
-                        }
+                        using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters);
+                        reservation.WordRegister.Load(this, operand);
+                        StoreWordViaRegister(reservation.WordRegister);
                     }
-                    assignment.SetDone(this, null);
-                    ++index;
                 }
-            });
+                //CancelOperandRegister(operand);
+                assignment.SetDone(this, null);
+                ++index;
+            }
+
+            ;
         }
     }
 }

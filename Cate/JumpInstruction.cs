@@ -16,7 +16,7 @@
 
         public override bool IsUnconditionalJump() => true;
 
-        public override void AddSourceRegisters() { }
+        public override void ReserveOperandRegisters() { }
         //public override void RemoveDestinationRegister() { }
     }
 }

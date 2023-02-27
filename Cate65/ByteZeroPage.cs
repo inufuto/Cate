@@ -12,7 +12,8 @@ namespace Inu.Cate.Mos6502
 
         public static List<Cate.ByteRegister> Registers
         {
-            get {
+            get
+            {
                 var registers = new List<Cate.ByteRegister>();
                 for (var i = 0; i < Count; i++) {
                     registers.Add(new ByteZeroPage(MinId + i));
@@ -54,77 +55,75 @@ namespace Inu.Cate.Mos6502
 
         public override void LoadConstant(Instruction instruction, string value)
         {
-            ByteOperation.UsingAnyRegister(instruction, ByteRegister.Registers, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers)) {
+                var register = reservation.ByteRegister;
                 register.LoadConstant(instruction, value);
                 register.StoreToMemory(instruction, Name);
-            });
-            instruction.ChangedRegisters.Add(this);
+            }
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
         {
-            ByteOperation.UsingAnyRegister(instruction, ByteRegister.Registers, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers)) {
+                var register = reservation.ByteRegister;
                 register.LoadFromMemory(instruction, variable, offset);
                 register.StoreToMemory(instruction, Name);
-                instruction.ChangedRegisters.Add(this);
-            });
-            instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
+            }
+            instruction.AddChanged(this);
             instruction.SetVariableRegister(variable, offset, this);
         }
 
         public override void StoreToMemory(Instruction instruction, Variable variable, int offset)
         {
-            ByteOperation.UsingAnyRegister(instruction, ByteRegister.Registers, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers)) {
+                var register = reservation.ByteRegister;
                 register.LoadFromMemory(instruction, Name);
                 register.StoreToMemory(instruction, variable, offset);
-            });
+            }
             instruction.SetVariableRegister(variable, offset, this);
         }
 
         public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
         {
             var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.A };
-            ByteOperation.UsingAnyRegister(instruction, candidates, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates)) {
+                var register = reservation.ByteRegister;
                 register.LoadIndirect(instruction, pointerRegister, offset);
                 register.StoreToMemory(instruction, Name);
-            });
-            instruction.ChangedRegisters.Add(this);
+            }
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
         {
             var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.A };
-            ByteOperation.UsingAnyRegister(instruction, candidates, register =>
-             {
-                 register.LoadFromMemory(instruction, Name);
-                 register.StoreIndirect(instruction, pointerRegister, offset);
-             });
+            using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);
+            var register = reservation.ByteRegister;
+            register.LoadFromMemory(instruction, Name);
+            register.StoreIndirect(instruction, pointerRegister, offset);
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
-            ByteOperation.UsingAnyRegister(instruction, ByteRegister.Registers, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers)) {
+                var register = reservation.ByteRegister;
                 register.LoadFromMemory(instruction, label);
                 register.StoreToMemory(instruction, Name);
-            });
-            instruction.ChangedRegisters.Add(this);
+            }
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
         {
-            ByteOperation.UsingAnyRegister(instruction, ByteRegister.Registers, register =>
-            {
-                register.LoadFromMemory(instruction, Name);
-                register.StoreToMemory(instruction, label);
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
+            var register = reservation.ByteRegister;
+            register.LoadFromMemory(instruction, Name);
+            register.StoreToMemory(instruction, label);
         }
 
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister register)
@@ -133,13 +132,12 @@ namespace Inu.Cate.Mos6502
                 byteRegister.StoreToMemory(instruction, Name);
             }
             else {
-                ByteOperation.UsingAnyRegister(instruction, ByteRegister.Registers, temporaryRegister =>
-                {
-                    temporaryRegister.CopyFrom(instruction, register);
-                    temporaryRegister.StoreToMemory(instruction, Name);
-                });
+                using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
+                var temporaryRegister = reservation.ByteRegister;
+                temporaryRegister.CopyFrom(instruction, register);
+                temporaryRegister.StoreToMemory(instruction, Name);
             }
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -150,54 +148,50 @@ namespace Inu.Cate.Mos6502
             }
             if (!change)
                 return;
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
-            ByteOperation.UsingRegister(instruction, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                 ByteRegister.A.LoadFromMemory(instruction, Name);
                 ByteRegister.A.Operate(instruction, operation, change, operand);
                 ByteRegister.A.StoreToMemory(instruction, Name);
-            });
+            }
             if (!change)
                 return;
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, string operand)
         {
-            ByteOperation.UsingRegister(instruction, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                 ByteRegister.A.LoadFromMemory(instruction, Name);
                 ByteRegister.A.Operate(instruction, operation, change, operand);
                 ByteRegister.A.StoreToMemory(instruction, Name);
-            });
+            }
             if (!change)
                 return;
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Save(Instruction instruction)
         {
-            Cate.Compiler.Instance.ByteOperation.UsingRegister(instruction, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                 ByteRegister.A.CopyFrom(instruction, this);
                 ByteRegister.A.Save(instruction);
-            });
+            }
         }
 
         public override void Restore(Instruction instruction)
         {
-            Cate.Compiler.Instance.ByteOperation.UsingRegister(instruction, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                 ByteRegister.A.Restore(instruction);
                 CopyFrom(instruction, ByteRegister.A);
-            });
+            }
         }
 
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)

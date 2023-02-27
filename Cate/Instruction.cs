@@ -67,15 +67,17 @@ namespace Inu.Cate
         }
 
         public readonly int Address;
-        public readonly IList<string> Codes = new List<string>();
-        private readonly Dictionary<Register, int> sourceRegisters = new Dictionary<Register, int>();
-        private readonly ISet<Register> sourceRegisters2 = new HashSet<Register>();
-        private readonly ISet<Register> temporaryRegisters = new HashSet<Register>();
-        public readonly ISet<Register> ChangedRegisters = new HashSet<Register>();
-        public readonly ISet<Variable> SavingVariables = new HashSet<Variable>();
-        public readonly Function Function;
-        private readonly List<string> codesToJump = new List<string>();
         public readonly ISet<Instruction> PreviousInstructions = new HashSet<Instruction>();
+        public readonly Function Function;
+        public readonly IList<string> Codes = new List<string>();
+        private readonly List<string> codesToJump = new List<string>();
+        private readonly IList<RegisterReservation> registerReservations = new List<RegisterReservation>();
+        private readonly IList<RegisterReservation> operandRegisterReservations = new List<RegisterReservation>();
+        //private readonly Dictionary<Register, int> sourceRegisters = new Dictionary<Register, int>();
+        //private readonly ISet<Register> sourceRegisters2 = new HashSet<Register>();
+        //private readonly ISet<Register> temporaryRegisters = new HashSet<Register>();
+        private readonly ISet<Register> changedRegisters = new HashSet<Register>();
+        public readonly ISet<Variable> SavingVariables = new HashSet<Variable>();
         public readonly IDictionary<Register, RegisterAssignment> RegisterAssignments = new Dictionary<Register, RegisterAssignment>();
         public Flag ResultFlags;
         public readonly Dictionary<WordRegister, int> RegisterOffsets = new Dictionary<WordRegister, int>();
@@ -112,7 +114,7 @@ namespace Inu.Cate
             get
             {
                 var temporaryRegisterIds = new HashSet<Register>();
-                var changedRegisters = ResultRegister != null ? ChangedRegisters.Where(r => !Equals(r, ResultRegister)) : ChangedRegisters;
+                var changedRegisters = ResultRegister != null ? this.changedRegisters.Where(r => !Equals(r, ResultRegister)) : this.changedRegisters;
                 foreach (var changedRegister in changedRegisters) {
                     var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister);
                     foreach (var savingRegister in savingRegisters) {
@@ -124,17 +126,6 @@ namespace Inu.Cate
         }
 
         protected virtual Register? ResultRegister => ResultOperand?.Register;
-
-        //public IEnumerable<Register> UsingRegisterIds
-        //{
-        //    get {
-        //        ISet<Register> registers = new HashSet<Register>(destinationRegisterIds);
-        //        foreach (var key in temporaryRegisterUsages.Keys) {
-        //            registers.Add(key);
-        //        }
-        //        return registers;
-        //    }
-        //}
 
         public virtual Operand? ResultOperand => null;
 
@@ -196,6 +187,7 @@ namespace Inu.Cate
             if (IsRegisterInVariableRange(register, variable)) {
                 if (register != null) {
                     RemoveRegisterAssignment(register);
+                    RemoveVariableRegister(variable, offset);
                 }
                 return;
             }
@@ -357,13 +349,6 @@ namespace Inu.Cate
 
         public virtual bool CanAllocateRegister(Variable variable, Register register) => true;
 
-        public virtual bool IsRegisterInUse(Register register)
-        {
-            //if (temporaryRegisters.Contains(register))
-            //    return true;
-            var registers = temporaryRegisters.Where(r => r.Matches(register)).ToList();
-            return registers.Count > 0 || sourceRegisters.Any(pair => pair.Value > 0 && pair.Key.Matches(register));
-        }
 
         public Register? PreviousRegisterId(Variable variable, int offset)
         {
@@ -378,18 +363,6 @@ namespace Inu.Cate
             return registerId;
         }
 
-        public void BeginRegister(Register register)
-        {
-            Debug.Assert(!temporaryRegisters.Contains(register));
-            temporaryRegisters.Add(register);
-        }
-
-        public void EndRegister(Register register)
-        {
-            var removed = temporaryRegisters.Remove(register);
-            Debug.Assert(removed);
-        }
-
         public abstract void BuildAssembly();
 
         public void WriteLine(string code)
@@ -397,54 +370,129 @@ namespace Inu.Cate
             Codes.Add(code);
         }
 
-        public abstract void AddSourceRegisters();
+        public abstract void ReserveOperandRegisters();
 
-        protected void AddSourceRegister(Operand operand)
+        protected void ReserveOperandRegister(Operand operand)
         {
-            void Add(Variable variable)
-            {
-                var register = variable.Register;
-                if (register == null) return;
-                if (sourceRegisters.ContainsKey(register)) {
-                    ++sourceRegisters[register];
-                }
-                else {
-                    sourceRegisters[register] = 1;
-                }
-                sourceRegisters2.Add(register);
-            }
-
-            switch (operand) {
-                case VariableOperand variableOperand:
-                    Add(variableOperand.Variable);
-                    break;
-                case IndirectOperand indirectOperand:
-                    Add(indirectOperand.Variable);
-                    break;
-            }
-        }
-
-        protected static Register? RegisterOfOperand(Operand operand)
-        {
-            var registerId = operand switch
+            var variableRegister = operand switch
             {
                 VariableOperand variableOperand => variableOperand.Variable.Register,
                 IndirectOperand indirectOperand => indirectOperand.Variable.Register,
                 _ => null
             };
-            return registerId;
+            if (variableRegister == null) return;
+            var registerReservation = ReserveRegister(variableRegister, operand);
+            operandRegisterReservations.Add(registerReservation);
         }
 
-        protected bool RemoveSourceRegister(Operand operand)
+        public RegisterReservation ReserveRegister(Register register)
         {
-            var register = RegisterOfOperand(operand);
-            if (register == null) return false;
-            if (!sourceRegisters.ContainsKey(register)) return false;
-            if (--sourceRegisters[register] <= 0) {
-                sourceRegisters.Remove(register);
-            }
-            return true;
+            return ReserveRegister(register, null);
         }
+
+        private RegisterReservation ReserveRegister(Register register, Operand? operand)
+        {
+            var reservation = new RegisterReservation(register, operand, this);
+            registerReservations.Add(reservation);
+            return reservation;
+        }
+
+        public virtual bool IsRegisterReserved(Register register)
+        {
+            return IsRegisterReserved(register, null);
+        }
+
+        public virtual bool IsRegisterReserved(Register register, Operand? operand)
+        {
+            bool IsReserved(Register register1)
+            {
+                return registerReservations.Any(reservation =>
+                {
+                    if (operand is IndirectOperand indirectOperand) {
+                        return reservation.Operand switch
+                        {
+                            IndirectOperand reservationOperand when indirectOperand.Variable.Equals(reservationOperand
+                                .Variable) => false,
+                            _ => !operand.Equals(reservation.Operand) && reservation.Register.Equals(register1)
+                        };
+                    }
+                    return reservation.Register.Equals(register1);
+                });
+            }
+
+            if (IsReserved(register)) return true;
+
+            return register switch
+            {
+                ByteRegister byteRegister => registerReservations.Any(reservation =>
+                {
+                    if (reservation.Register is WordRegister wordRegister) {
+                        return wordRegister.Contains(byteRegister);
+                    }
+
+                    return false;
+                }),
+                WordRegister wordRegister => registerReservations.Any(reservation =>
+                {
+                    if (reservation.Register is ByteRegister byteRegister) {
+                        return wordRegister.Contains(byteRegister);
+                    }
+
+                    return false;
+                }),
+                _ => false
+            };
+        }
+
+
+        internal bool CancelOperandRegister(Operand operand)
+        {
+            for (var i = registerReservations.Count - 1; i >= 0; --i) {
+                var registerReservation = registerReservations[i];
+                var o = registerReservation.Operand;
+                if (o == null || !o.Equals(operand)) continue;
+                registerReservations.RemoveAt(i);
+                operandRegisterReservations.Remove(registerReservation);
+                return true;
+            }
+
+            Debug.Assert(operand switch
+            {
+                VariableOperand variableOperand => variableOperand.Variable.Register == null,
+                IndirectOperand indirectOperand => indirectOperand.Variable.Register == null,
+                _ => true
+            });
+            return false;
+            //bool Remove(Variable variable)
+            //{
+            //    var register = variable.Register;
+            //    return register != null && CancelRegister(register);
+            //}
+
+            //var removed = operand switch
+            //{
+            //    VariableOperand variableOperand => Remove(variableOperand.Variable),
+            //    IndirectOperand indirectOperand => Remove(indirectOperand.Variable),
+            //    _ => false
+            //};
+            //if (removed) {
+            //    Debug.Assert(sourceOperandRegisterReservations.ContainsKey(operand));
+            //    sourceOperandRegisterReservations.Remove(operand);
+            //}
+            //return removed;
+        }
+
+        internal bool CancelRegister(Register register)
+        {
+            Debug.Assert(IsRegisterReserved(register, null));
+            for (var i = registerReservations.Count - 1; i >= 0; --i) {
+                if (!registerReservations[i].Register.Equals(register)) continue;
+                registerReservations.RemoveAt(i);
+                return true;
+            }
+            return false;
+        }
+
 
         public void WriteAssembly(StreamWriter writer, int tabCount)
         {
@@ -483,10 +531,10 @@ namespace Inu.Cate
             RegisterAssignments.Remove(variable.Register);
         }
 
-        public bool IsSourceOperand(Variable variable)
-        {
-            return variable.Register != null && sourceRegisters2.Contains(variable.Register);
-        }
+        //public bool IsSourceOperand(Variable variable)
+        //{
+        //    return RegisterReservations.Any(reservation => reservation.Previous == null && reservation.Register.Conflicts(variable.Register));
+        //}
 
         public static void Repeat(Action action, int count)
         {
@@ -541,10 +589,44 @@ namespace Inu.Cate
         public bool IsRegisterOffsetEmpty()
         {
             foreach (var (key, offset) in RegisterOffsets) {
-                if (!ChangedRegisters.Contains(key)) continue;
+                if (!changedRegisters.Contains(key)) continue;
                 if (offset != 0) return false;
             }
             return true;
+        }
+
+        public void AddChanged(Register register)
+        {
+            if (register is WordRegister wordRegister) {
+                if (wordRegister.IsPair()) {
+                    Debug.Assert(wordRegister is { Low: { }, High: { } });
+                    AddChanged(wordRegister.Low);
+                    changedRegisters.Add(wordRegister.High);
+                    return;
+                }
+            }
+            changedRegisters.Add(register);
+        }
+
+        public ISet<Register> ChangedRegisters() => changedRegisters;
+
+        public void RemoveChanged(Register register)
+        {
+            if (!(register is WordRegister wordRegister) || !wordRegister.IsPair()) {
+                changedRegisters.Remove(register);
+                return;
+            }
+            Debug.Assert(wordRegister is { Low: { }, High: { } });
+            changedRegisters.Remove(wordRegister.Low);
+            changedRegisters.Remove(wordRegister.High);
+        }
+
+        public bool IsChanged(Register register)
+        {
+            if (!(register is WordRegister wordRegister) || !wordRegister.IsPair())
+                return changedRegisters.Contains(register);
+            Debug.Assert(wordRegister is { Low: { }, High: { } });
+            return changedRegisters.Contains(wordRegister.Low) || changedRegisters.Contains(wordRegister.High);
         }
     }
 }

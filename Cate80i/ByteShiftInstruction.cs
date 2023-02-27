@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Inu.Cate.I8080
 {
@@ -30,28 +28,24 @@ namespace Inu.Cate.I8080
                     : "cate.ShiftRightA",
                 _ => throw new NotImplementedException()
             };
-            ByteOperation.UsingRegister(this, ByteRegister.B, RightOperand, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
                 ByteRegister.B.Load(this, RightOperand);
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
                     ByteRegister.A.Store(this, DestinationOperand);
-                });
-            });
+                }
+            }
         }
 
         protected override void ShiftConstant(int count)
         {
             if (count == 0) {
-                if (!DestinationOperand.SameStorage(LeftOperand)) {
-                    ByteOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, register =>
-                    {
-                        register.Load(this, LeftOperand);
-                        register.Store(this, DestinationOperand);
-                    });
-                }
+                if (DestinationOperand.SameStorage(LeftOperand)) return;
+                using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+                var register = reservation.ByteRegister;
+                register.Load(this, LeftOperand);
+                register.Store(this, DestinationOperand);
                 return;
             }
 
@@ -64,7 +58,7 @@ namespace Inu.Cate.I8080
             void OperateA()
             {
                 Repeat(() => { WriteLine("\tora\ta | " + operation); }, count);
-                ChangedRegisters.Add(ByteRegister.A);
+                AddChanged(ByteRegister.A);
                 RemoveRegisterAssignment(ByteRegister.A);
             }
 
@@ -73,12 +67,11 @@ namespace Inu.Cate.I8080
                 OperateA();
                 return;
             }
-            ByteOperation.UsingRegister(this, ByteRegister.A,LeftOperand, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 OperateA();
                 ByteRegister.A.Store(this, DestinationOperand);
-            });
+            }
         }
 
         protected override string Operation()

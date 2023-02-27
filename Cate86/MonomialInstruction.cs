@@ -24,22 +24,21 @@ namespace Inu.Cate.I8086
                 return;
             }
             if (DestinationOperand.Type.ByteCount == 1) {
-                ByteOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, temporaryRegister =>
-                {
-                    temporaryRegister.Load(this, SourceOperand);
-                    WriteLine("\t" + operation + temporaryRegister);
-                    temporaryRegister.Store(this, DestinationOperand);
-                    ChangedRegisters.Add(temporaryRegister);
-                });
-                return;
-            }
-            WordOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, temporaryRegister =>
-            {
+                using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
+                var temporaryRegister = reservation.ByteRegister;
                 temporaryRegister.Load(this, SourceOperand);
                 WriteLine("\t" + operation + temporaryRegister);
                 temporaryRegister.Store(this, DestinationOperand);
-                ChangedRegisters.Add(temporaryRegister);
-            });
+                AddChanged(temporaryRegister);
+                return;
+            }
+            using (var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand)) {
+                var temporaryRegister = reservation.WordRegister;
+                temporaryRegister.Load(this, SourceOperand);
+                WriteLine("\t" + operation + temporaryRegister);
+                temporaryRegister.Store(this, DestinationOperand);
+                AddChanged(temporaryRegister);
+            }
         }
     }
 }

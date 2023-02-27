@@ -34,12 +34,11 @@ namespace Inu.Cate.Mos6502
 
         public override void Add(Instruction instruction, int offset)
         {
-            Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, WordZeroPage.Registers, zeroPage =>
-            {
-                zeroPage.CopyFrom(instruction, this);
-                zeroPage.Add(instruction, offset);
-                CopyFrom(instruction, zeroPage);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordZeroPage.Registers);
+            var zeroPage = reservation.WordRegister;
+            zeroPage.CopyFrom(instruction, this);
+            zeroPage.Add(instruction, offset);
+            CopyFrom(instruction, zeroPage);
         }
 
         public override bool IsOffsetInRange(int offset) => false;
@@ -96,11 +95,10 @@ namespace Inu.Cate.Mos6502
 
         public override void CopyFrom(Instruction instruction, WordRegister sourceRegister)
         {
-            if (sourceRegister.IsPair()) {
-                Debug.Assert(sourceRegister.Low != null && sourceRegister.High != null);
-                low.CopyFrom(instruction, sourceRegister.Low);
-                high.CopyFrom(instruction, sourceRegister.High);
-            }
+            if (!sourceRegister.IsPair()) return;
+            Debug.Assert(sourceRegister is { Low: { }, High: { } });
+            low.CopyFrom(instruction, sourceRegister.Low);
+            high.CopyFrom(instruction, sourceRegister.High);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
@@ -111,24 +109,22 @@ namespace Inu.Cate.Mos6502
 
         public override void Save(Instruction instruction)
         {
-            Cate.Compiler.Instance.ByteOperation.UsingRegister(instruction, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                 ByteRegister.A.CopyFrom(instruction, low);
                 instruction.WriteLine("\tpha");
                 ByteRegister.A.CopyFrom(instruction, high);
                 instruction.WriteLine("\tpha");
-            });
+            }
         }
 
         public override void Restore(Instruction instruction)
         {
-            Cate.Compiler.Instance.ByteOperation.UsingRegister(instruction, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                 instruction.WriteLine("\tpla");
                 high.CopyFrom(instruction, ByteRegister.A);
                 instruction.WriteLine("\tpla");
                 low.CopyFrom(instruction, ByteRegister.A);
-            });
+            }
         }
     }
 }

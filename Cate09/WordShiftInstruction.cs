@@ -42,12 +42,11 @@ namespace Inu.Cate.Mc6809
 
             void ViaD()
             {
-                WordOperation.UsingRegister(this, WordRegister.D, DestinationOperand, () =>
-                {
+                using (WordOperation.ReserveRegister(this, WordRegister.D, DestinationOperand)) {
                     WordRegister.D.Load(this, LeftOperand);
                     ShiftPairRegister();
                     WordRegister.D.Store(this, DestinationOperand);
-                });
+                }
             }
 
             if (LeftOperand.SameStorage(DestinationOperand)) {
@@ -87,7 +86,7 @@ namespace Inu.Cate.Mc6809
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            string functionName = OperatorId switch
+            var functionName = OperatorId switch
             {
                 Keyword.ShiftLeft => "cate.ShiftLeftWord",
                 Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
@@ -95,8 +94,7 @@ namespace Inu.Cate.Mc6809
                     : "cate.ShiftRightSignedWord",
                 _ => throw new NotImplementedException()
             };
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 WordRegister.X.Load(this, LeftOperand);
                 WriteLine("\tstx\t" + DirectPage.Word);
                 ByteRegister.B.Load(this, counterOperand);
@@ -104,7 +102,7 @@ namespace Inu.Cate.Mc6809
                 Compiler.CallExternal(this, functionName);
                 WriteLine("\tldx\t" + DirectPage.Word);
                 WordRegister.X.Store(this, DestinationOperand);
-            });
+            }
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Inu.Cate.I8080
                 {
                     WordRegister.Hl.Load(this, LeftOperand);
                     WriteLine("\tdad\t" + rightRegister);
-                    ChangedRegisters.Add(WordRegister.Hl);
+                    AddChanged(WordRegister.Hl);
                     RemoveRegisterAssignment(WordRegister.Hl);
                     WordRegister.Hl.Store(this, DestinationOperand);
                 }
@@ -40,19 +40,19 @@ namespace Inu.Cate.I8080
                 }
 
                 var candidates = new List<Cate.WordRegister>() { WordRegister.Bc, WordRegister.De };
-                WordOperation.UsingAnyRegister(this, candidates, rightRegister =>
+                using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
                 {
+                    var rightRegister = reservation.WordRegister;
                     rightRegister.Load(this, RightOperand);
                     if (Equals(DestinationOperand.Register, WordRegister.Hl)) {
                         OperateHl(rightRegister);
                     }
                     else {
-                        WordOperation.UsingRegister(this, WordRegister.Hl, () =>
-                        {
+                        using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
                             OperateHl(rightRegister);
-                        });
+                        }
                     }
-                });
+                }
                 return;
             }
 
@@ -69,15 +69,14 @@ namespace Inu.Cate.I8080
                 default:
                     throw new NotImplementedException();
             }
-            Cate.Compiler.Instance.ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
                 ByteRegister.A.Operate(this, lowOperation, true, Compiler.LowByteOperand(RightOperand));
                 ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                 ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
                 ByteRegister.A.Operate(this, highOperation, true, Compiler.HighByteOperand(RightOperand));
                 ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-            });
+            }
         }
 
         protected override int Threshold() => 8;
@@ -99,12 +98,11 @@ namespace Inu.Cate.I8080
                 IncrementOrDecrement(this, operation, destinationRegister, count);
                 return;
             }
-            WordOperation.UsingAnyRegister(this, WordRegister.Registers, DestinationOperand, LeftOperand, register =>
-            {
-                register.Load(this, LeftOperand);
-                IncrementOrDecrement(this, operation, register, count);
-                register.Store(this, DestinationOperand);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, DestinationOperand, LeftOperand);
+            var register = reservation.WordRegister;
+            register.Load(this, LeftOperand);
+            IncrementOrDecrement(this, operation, register, count);
+            register.Store(this, DestinationOperand);
         }
 
         private static void IncrementOrDecrement(Instruction instruction, string operation, Cate.WordRegister leftRegister, int count)
@@ -115,7 +113,7 @@ namespace Inu.Cate.I8080
                 instruction.WriteLine("\t" + operation + "\t" + leftRegister.High.Name);
             }
             instruction.RemoveRegisterAssignment(leftRegister);
-            instruction.ChangedRegisters.Add(leftRegister);
+            instruction.AddChanged(leftRegister);
         }
     }
 }

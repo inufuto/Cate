@@ -46,11 +46,11 @@ namespace Inu.Cate
 
         public override Operand? ResultOperand => DestinationOperand;
 
-        public override void AddSourceRegisters()
+        public override void ReserveOperandRegisters()
         {
-            AddSourceRegister(LeftOperand);
+            ReserveOperandRegister(LeftOperand);
             if (DestinationOperand is IndirectOperand indirectOperand) {
-                AddSourceRegister(indirectOperand);
+                ReserveOperandRegister(indirectOperand);
             }
         }
 

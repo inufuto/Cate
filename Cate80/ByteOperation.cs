@@ -12,7 +12,6 @@ namespace Inu.Cate.Z80
         protected override void OperateMemory(Instruction instruction, string operation, bool change, Variable variable,
             int offset, int count)
         {
-
             var address = variable.MemoryAddress(offset);
 
             void OperateA()
@@ -26,25 +25,24 @@ namespace Inu.Cate.Z80
                 OperateA();
                 goto end;
             }
-
-            if (!instruction.IsRegisterInUse(WordRegister.Hl)) {
-                instruction.BeginRegister(WordRegister.Hl);
-                WordRegister.Hl.LoadFromMemory(instruction, address);
-                for (var i = 0; i < count; ++i) {
-                    instruction.WriteLine("\t" + operation + "(hl)");
+            if (!instruction.IsRegisterReserved(WordRegister.Hl)) {
+                using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                    WordRegister.Hl.LoadFromMemory(instruction, address);
+                    for (var i = 0; i < count; ++i) {
+                        instruction.WriteLine("\t" + operation + "(hl)");
+                    }
                 }
-                instruction.EndRegister(WordRegister.Hl);
                 if (change) {
                     instruction.RemoveVariableRegister(variable, offset);
                 }
                 goto end;
             }
-            ByteRegister.UsingAccumulator(instruction, () =>
-            {
+
+            using (ReserveRegister(instruction, ByteRegister.A)) {
                 ByteRegister.A.LoadFromMemory(instruction, address);
                 OperateA();
-            });
-            end:
+            }
+        end:
             ;
         }
 
@@ -65,12 +63,11 @@ namespace Inu.Cate.Z80
                     }
                     return;
                 }
-                ByteRegister.UsingAccumulator(instruction, () =>
-                {
+                using (ReserveRegister(instruction, ByteRegister.A)) {
                     ByteRegister.A.LoadFromMemory(instruction, operand);
                     ByteRegister.A.Operate(instruction, operation, change, count);
                     ByteRegister.A.StoreToMemory(instruction, operand);
-                });
+                }
                 return;
             }
             pointerRegister.TemporaryOffset(instruction, offset, () =>
@@ -80,22 +77,12 @@ namespace Inu.Cate.Z80
         }
 
 
-        protected override void SaveAndRestore(Instruction instruction, Cate.ByteRegister register, Action action)
-        {
-            UsingAnyRegister(instruction, Registers.Where(r => !Equals(r, register)).ToList(), temporaryRegister =>
-            {
-                temporaryRegister.CopyFrom(instruction, register);
-                action();
-                register.CopyFrom(instruction, temporaryRegister);
-            });
-        }
-
         public override void ClearByte(Instruction instruction, string label)
         {
             instruction.RemoveRegisterAssignment(ByteRegister.A);
             instruction.WriteLine("\txor\ta");
             instruction.WriteLine("\tld\t(" + label + "),a");
-            instruction.ChangedRegisters.Add(ByteRegister.A);
+            instruction.AddChanged(ByteRegister.A);
         }
 
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
@@ -110,11 +97,10 @@ namespace Inu.Cate.Z80
                     instruction.WriteLine("\tld\t(" + pointerRegister + ")," + value);
                     return;
                 }
-                ByteRegister.UsingAccumulator(instruction, () =>
-                {
+                using (ReserveRegister(instruction, ByteRegister.A)) {
                     ByteRegister.A.LoadConstant(instruction, value);
                     instruction.WriteLine("\tld\t(" + pointerRegister + "),a");
-                });
+                }
                 return;
             }
             if (pointerRegister.IsAddable()) {
@@ -125,13 +111,10 @@ namespace Inu.Cate.Z80
                 return;
             }
             var candidates = WordRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList();
-            WordRegister.UsingAny(instruction, candidates, temporaryRegister =>
-            {
-                temporaryRegister.CopyFrom(instruction, pointerRegister);
-                StoreConstantIndirect(instruction, temporaryRegister, offset, value);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+            StoreConstantIndirect(instruction, reservation.WordRegister, offset, value);
         }
-
 
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister rightRegister)
         {

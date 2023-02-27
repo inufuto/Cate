@@ -30,42 +30,44 @@ namespace Inu.Cate.Mc6800
                         return;
                     }
                 }
-                ByteRegister.UsingPair(this, () =>
-                {
+
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
-                    ByteRegister.B.Load(this, Compiler.LowByteOperand(LeftOperand));
-                    Shift(() =>
-                    {
-                        WriteLine("\taslb");
-                        WriteLine("\trola");
-                    });
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
+                        ByteRegister.B.Load(this, Compiler.LowByteOperand(LeftOperand));
+                        Shift(() =>
+                        {
+                            WriteLine("\taslb");
+                            WriteLine("\trola");
+                        });
+                        ByteRegister.B.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                    }
                     ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                    ByteRegister.B.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                });
+                }
                 return;
             }
             WriteLine("\tclr\t" + ZeroPage.WordLow);
             WriteLine("\tclr\t" + ZeroPage.WordHigh);
             WordRegister.X.Load(this, LeftOperand);
             WriteLine("\tstx\t" + ZeroPage.Word2);
-            ByteOperation.UsingAnyRegister(this, register =>
+            
+            using var reservation = ByteOperation.ReserveAnyRegister(this);
+            var register = reservation.ByteRegister;
+            Operate(() =>
             {
-                Operate(() =>
-                {
-                    register.LoadFromMemory(this, ZeroPage.Word.Low.Name);
-                    register.Operate(this, "add", true, ZeroPage.Word2.Low.Name);
-                    register.StoreToMemory(this, ZeroPage.Word.Low.Name);
-                    register.LoadFromMemory(this, ZeroPage.Word.High.Name);
-                    register.Operate(this, "adc", true, ZeroPage.Word2.High.Name);
-                    register.StoreToMemory(this, ZeroPage.Word.High.Name);
-                }, () =>
-                {
-                    WriteLine("\tasl\t" + ZeroPage.Word2Low);
-                    WriteLine("\trol\t" + ZeroPage.Word2High);
-                });
-                WordRegister.X.LoadFromMemory(this, ZeroPage.Word.Name);
-                WordRegister.X.Store(this, DestinationOperand);
+                register.LoadFromMemory(this, ZeroPage.Word.Low.Name);
+                register.Operate(this, "add", true, ZeroPage.Word2.Low.Name);
+                register.StoreToMemory(this, ZeroPage.Word.Low.Name);
+                register.LoadFromMemory(this, ZeroPage.Word.High.Name);
+                register.Operate(this, "adc", true, ZeroPage.Word2.High.Name);
+                register.StoreToMemory(this, ZeroPage.Word.High.Name);
+            }, () =>
+            {
+                WriteLine("\tasl\t" + ZeroPage.Word2Low);
+                WriteLine("\trol\t" + ZeroPage.Word2High);
             });
+            WordRegister.X.LoadFromMemory(this, ZeroPage.Word.Name);
+            WordRegister.X.Store(this, DestinationOperand);
         }
     }
 }

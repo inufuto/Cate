@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace Inu.Cate.I8086
 {
@@ -29,11 +28,10 @@ namespace Inu.Cate.I8086
             int count)
         {
             if (!pointerRegister.IsPointer(offset)) {
-                Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, WordRegister.PointerRegisters, temporaryRegister =>
-                {
-                    temporaryRegister.CopyFrom(instruction, pointerRegister);
-                    OperateIndirect(instruction, operation, change, temporaryRegister, offset, count);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.PointerRegisters);
+                var temporaryRegister = reservation.WordRegister;
+                temporaryRegister.CopyFrom(instruction, pointerRegister);
+                OperateIndirect(instruction, operation, change, temporaryRegister, offset, count);
                 return;
             }
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
@@ -45,11 +43,10 @@ namespace Inu.Cate.I8086
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
         {
             if (!pointerRegister.IsPointer(offset)) {
-                Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, WordRegister.PointerRegisters, temporaryRegister =>
-                {
-                    temporaryRegister.CopyFrom(instruction, pointerRegister);
-                    StoreConstantIndirect(instruction, temporaryRegister, offset, value);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.PointerRegisters);
+                var temporaryRegister = reservation.WordRegister;
+                temporaryRegister.CopyFrom(instruction, pointerRegister);
+                StoreConstantIndirect(instruction, temporaryRegister, offset, value);
                 return;
             }
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);

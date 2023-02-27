@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Inu.Cate
 {
@@ -7,6 +8,7 @@ namespace Inu.Cate
         protected WordRegister(int id, string name) : base(id, 2, name) { }
         public virtual ByteRegister? Low => null;
         public virtual ByteRegister? High => null;
+
         public virtual bool IsPair() => Low != null && High != null;
 
         public virtual bool Contains(ByteRegister byteRegister)
@@ -33,7 +35,7 @@ namespace Inu.Cate
         public virtual void LoadConstant(Instruction instruction, int value)
         {
             if (instruction.IsConstantAssigned(this, value)) {
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 return;
             }
             LoadConstant(instruction, value.ToString());
@@ -56,26 +58,24 @@ namespace Inu.Cate
 
         public virtual void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
-            if (instruction.IsRegisterInUse(this)) {
-                var changed = instruction.ChangedRegisters.Contains(this);
+            if (instruction.IsRegisterReserved(this)) {
+                var changed = instruction.IsChanged(this);
                 Add(instruction, offset);
                 action();
-                if (!changed) {
-                    Add(instruction, -offset);
-                    instruction.ChangedRegisters.Remove(this);
-                }
+                if (changed) return;
+                Add(instruction, -offset);
+                instruction.RemoveChanged(this);
             }
             else {
-                var changed = instruction.ChangedRegisters.Contains(this);
-                instruction.BeginRegister(this);
+                var changed = instruction.IsChanged(this);
+                using var reservation = instruction.ReserveRegister(this);
                 Add(instruction, offset);
                 instruction.RemoveRegisterAssignment(this);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 action();
                 Add(instruction, -offset);
-                instruction.EndRegister(this);
                 if (!changed) {
-                    instruction.ChangedRegisters.Remove(this);
+                    instruction.RemoveChanged(this);
                 }
             }
         }

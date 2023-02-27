@@ -2,7 +2,7 @@
 
 namespace Inu.Cate.Mos6502
 {
-    class WordLoadInstruction : LoadInstruction
+    internal class WordLoadInstruction : LoadInstruction
     {
         public WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand)
         { }
@@ -13,14 +13,12 @@ namespace Inu.Cate.Mos6502
                 return;
 
             var candidates = new List<Cate.ByteRegister>() { ByteRegister.A, ByteRegister.X };
-            ByteOperation.UsingAnyRegister(this, candidates,
-                register =>
-            {
-                register.Load(this, Compiler.LowByteOperand(SourceOperand));
-                register.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                register.Load(this, Compiler.HighByteOperand(SourceOperand));
-                register.Store(this, Compiler.HighByteOperand(DestinationOperand));
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
+            var register = reservation.ByteRegister;
+            register.Load(this, Compiler.LowByteOperand(SourceOperand));
+            register.Store(this, Compiler.LowByteOperand(DestinationOperand));
+            register.Load(this, Compiler.HighByteOperand(SourceOperand));
+            register.Store(this, Compiler.HighByteOperand(DestinationOperand));
         }
     }
 }

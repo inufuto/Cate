@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Inu.Cate.Mc6800
 {
@@ -15,7 +14,7 @@ namespace Inu.Cate.Mc6800
             if (IncrementOrDecrement())
                 return;
 
-            string functionName = OperatorId switch
+            var functionName = OperatorId switch
             {
                 '+' => "Cate.AddX",
                 '-' => "Cate.SubX",
@@ -34,33 +33,34 @@ namespace Inu.Cate.Mc6800
                         WordRegister.X.Store(this, DestinationOperand);
                     }
 
-                    if (!IsRegisterInUse(ByteRegister.A)) {
-                        ByteRegister.Using(this, ByteRegister.A, () =>
-                        {
+                    if (!IsRegisterReserved(ByteRegister.A)) {
+                        using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                             AddByte(ByteRegister.A);
                             RemoveRegisterAssignment(ByteRegister.A);
-                        });
+                        }
                         return;
                     }
-                    if (!IsRegisterInUse(ByteRegister.B)) {
-                        ByteRegister.Using(this, ByteRegister.B, () =>
-                        {
+                    if (!IsRegisterReserved(ByteRegister.B)) {
+                        using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
                             AddByte(ByteRegister.B);
                             RemoveRegisterAssignment(ByteRegister.B);
-                        });
+                        }
                         return;
                     }
-                    ByteOperation.UsingAnyRegister(this, AddByte);
+
+                    using var reservation = ByteOperation.ReserveAnyRegister(this);
+                    AddByte(reservation.ByteRegister);
                     return;
                 }
             }
             functionName += "AB";
             WordRegister.X.Load(this, LeftOperand);
-            ByteRegister.UsingPair(this, () =>
-            {
-                Mc6800.Compiler.LoadPairRegister(this, RightOperand);
-                Compiler.CallExternal(this, functionName);
-            });
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
+                    Mc6800.Compiler.LoadPairRegister(this, RightOperand);
+                    Compiler.CallExternal(this, functionName);
+                }
+            }
             WordRegister.X.Store(this, DestinationOperand);
         }
 

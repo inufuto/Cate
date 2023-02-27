@@ -9,11 +9,10 @@ namespace Inu.Cate.MuCom87.MuPD7800
 
         protected override void OperateViaAccumulator(string operation, Action action)
         {
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, RightOperand);
                 WriteLine("\tstaw\t" + MuCom87.Compiler.TemporaryByte);
-            });
+            }
             OperateWorkingRegister(operation, action, MuCom87.Compiler.TemporaryByte);
         }
 

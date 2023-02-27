@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace Inu.Cate.I8080
 {
@@ -30,15 +28,13 @@ namespace Inu.Cate.I8080
             }
 
             if (Signed && OperatorId != Keyword.Equal && OperatorId != Keyword.NotEqual) {
-                ByteOperation.UsingRegister(this, ByteRegister.E, RightOperand, () =>
-                {
-                    ByteOperation.UsingRegister(this, ByteRegister.A, LeftOperand, () =>
-                    {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.E, RightOperand)) {
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
                         ByteRegister.A.Load(this, LeftOperand);
                         ByteRegister.E.Load(this, RightOperand);
                         Compiler.CallExternal(this, "cate.CompareAESigned");
-                    });
-                });
+                    }
+                }
                 Jump(false);
                 return;
             }
@@ -51,11 +47,10 @@ namespace Inu.Cate.I8080
                     goto jump;
                 }
             }
-            BeginRegister(ByteRegister.A);
-            ByteRegister.A.Load(this, LeftOperand);
-            ByteRegister.A.Operate(this, operation, false, RightOperand);
-            EndRegister(ByteRegister.A);
-
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                ByteRegister.A.Load(this, LeftOperand);
+                ByteRegister.A.Operate(this, operation, false, RightOperand);
+            }
         jump:
             Jump(false);
         }
@@ -70,25 +65,22 @@ namespace Inu.Cate.I8080
                     return;
                 }
             }
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 WriteLine("\tora\ta");
-            });
+            }
         }
 
         protected override void CompareWord()
         {
             if (Signed && OperatorId != Keyword.Equal && OperatorId != Keyword.NotEqual) {
-                WordOperation.UsingRegister(this, WordRegister.De, RightOperand, () =>
-                {
-                    WordOperation.UsingRegister(this, WordRegister.Hl, LeftOperand, () =>
-                    {
+                using (WordOperation.ReserveRegister(this, WordRegister.De, RightOperand)) {
+                    using (WordOperation.ReserveRegister(this, WordRegister.Hl, LeftOperand)) {
                         WordRegister.De.Load(this, RightOperand);
                         WordRegister.Hl.Load(this, LeftOperand);
                         Compiler.CallExternal(this, "cate.CompareHlDeSigned");
-                    });
-                });
+                    }
+                }
                 Jump(false);
                 return;
             }
@@ -101,43 +93,40 @@ namespace Inu.Cate.I8080
                         return;
                     }
                 }
-                WordOperation.UsingAnyRegister(this, WordRegister.Registers, temporaryRegister =>
-                {
+                using (var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers)) {
+                    var temporaryRegister = reservation.WordRegister;
                     temporaryRegister.Load(this, LeftOperand);
                     CompareWordZero(temporaryRegister);
-                });
+                }
                 Jump(false);
                 return;
             }
 
-            WordOperation.UsingRegister(this, WordRegister.De, () =>
-            {
+            using (WordOperation.ReserveRegister(this, WordRegister.De)) {
                 WordRegister.De.Load(this, RightOperand);
                 if (Equals(LeftOperand.Register, WordRegister.Hl)) {
                     Compiler.CallExternal(this, "cate.CompareHlDe");
                 }
                 else {
-                    WordOperation.UsingRegister(this, WordRegister.Hl, () =>
-                    {
+                    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
                         WordRegister.Hl.Load(this, LeftOperand);
                         Compiler.CallExternal(this, "cate.CompareHlDe");
-                    });
+                    }
                 }
-            });
+            }
             Jump(false);
         }
 
         private void CompareWordZero(Cate.WordRegister leftRegister)
         {
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 Debug.Assert(leftRegister.Low != null);
                 Debug.Assert(leftRegister.High != null);
                 ByteRegister.A.CopyFrom(this, leftRegister.Low);
                 WriteLine("\tora\t" + leftRegister.High.Name);
-                ChangedRegisters.Add(ByteRegister.A);
+                AddChanged(ByteRegister.A);
                 RemoveRegisterAssignment(ByteRegister.A);
-            });
+            }
         }
 
         private void Jump(bool operandZero)

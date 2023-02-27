@@ -54,7 +54,7 @@ namespace Inu.Cate.MuCom87
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tmvi\t" + Name + "," + value);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -62,7 +62,7 @@ namespace Inu.Cate.MuCom87
         {
             if (value == 0 && Equals(this, A)) {
                 instruction.WriteLine("\txra\ta,a");
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
                 return;
             }
@@ -80,7 +80,7 @@ namespace Inu.Cate.MuCom87
         {
             instruction.WriteLine("\tmov\t" + Name + "," + label);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void StoreToMemory(Instruction instruction, Variable variable, int offset)
@@ -98,12 +98,11 @@ namespace Inu.Cate.MuCom87
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             if (pointerRegister.Contains(this)) {
-                WordOperation.UsingAnyRegister(instruction, delegate (Cate.WordRegister r)
-                {
-                    r.CopyFrom(instruction, pointerRegister);
-                    instruction.ChangedRegisters.Add(r);
-                    LoadIndirect(instruction, r, offset);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(instruction);
+                var r = reservation.WordRegister;
+                r.CopyFrom(instruction, pointerRegister);
+                instruction.AddChanged(r);
+                LoadIndirect(instruction, r, offset);
                 return;
             }
             switch (pointerRegister) {
@@ -122,11 +121,10 @@ namespace Inu.Cate.MuCom87
 
         public virtual void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister)
         {
-            ByteOperation.UsingRegister(instruction, A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.LoadIndirect(instruction, pointerRegister);
                 CopyFrom(instruction, A);
-            });
+            }
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
@@ -136,29 +134,23 @@ namespace Inu.Cate.MuCom87
                     StoreIndirect(instruction, wordRegister);
                     return;
                 case WordRegister wordRegister:
-                    void AddAndStore(Cate.WordRegister r)
-                    {
-                        r.Add(instruction, offset);
-                        StoreIndirect(instruction, r, 0);
-                    }
-
-                    if (instruction.TemporaryRegisters.Contains(pointerRegister)) {
-                        AddAndStore(pointerRegister);
+                    var changed = instruction.IsChanged(pointerRegister);
+                    if (Math.Abs(offset) > 2) {
+                        pointerRegister.Save(instruction);
+                        pointerRegister.Add(instruction, offset);
+                        StoreIndirect(instruction, pointerRegister, 0);
+                        pointerRegister.Restore(instruction);
                     }
                     else {
-                        var candidates = WordRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList();
-                        WordOperation.UsingAnyRegister(instruction, candidates, register =>
-                        {
-                            register.CopyFrom(instruction, pointerRegister);
-                            instruction.ChangedRegisters.Add(register);
-                            instruction.RemoveRegisterAssignment(register);
-                            AddAndStore(register);
-                        });
+                        pointerRegister.Add(instruction, offset);
+                        StoreIndirect(instruction, pointerRegister, 0);
+                        pointerRegister.Add(instruction, -offset);
                     }
-                    //wordRegister.TemporaryOffset(instruction, offset, () =>
-                    //{
-                    //    StoreIndirect(instruction, wordRegister);
-                    //});
+                    if (changed)
+                        instruction.AddChanged(pointerRegister);
+                    else
+                        instruction.RemoveChanged(pointerRegister);
+                    //instruction.RemoveRegisterAssignment(pointerRegister);
                     return;
             }
             throw new NotImplementedException();
@@ -166,11 +158,10 @@ namespace Inu.Cate.MuCom87
 
         public virtual void StoreIndirect(Instruction instruction, Cate.WordRegister wordRegister)
         {
-            ByteOperation.UsingRegister(instruction, A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, this);
                 A.StoreIndirect(instruction, wordRegister);
-            });
+            }
         }
 
 
@@ -178,17 +169,16 @@ namespace Inu.Cate.MuCom87
         {
             if (Equals(sourceRegister, A)) {
                 instruction.WriteLine("\tmov\t" + Name + ",a");
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
                 return;
             }
-            ByteOperation.UsingRegister(instruction, A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, sourceRegister);
                 instruction.WriteLine("\tmov\t" + Name + ",a");
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
-            });
+            }
         }
 
 
@@ -197,31 +187,29 @@ namespace Inu.Cate.MuCom87
             for (var i = 0; i < count; ++i) {
                 instruction.WriteLine("\t" + operation + Name);
             }
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
-            ByteOperation.UsingRegister(instruction, A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, this);
                 A.Operate(instruction, operation, change, operand);
                 if (change) {
                     CopyFrom(instruction, A);
                 }
-            });
+            }
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, string operand)
         {
-            ByteOperation.UsingRegister(instruction, A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, this);
                 A.Operate(instruction, operation, change, operand);
                 if (change) {
                     CopyFrom(instruction, A);
                 }
-            });
+            }
         }
 
         public override void Save(Instruction instruction)

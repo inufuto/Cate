@@ -12,46 +12,43 @@ namespace Inu.Cate.I8086
         public override void BuildAssembly()
         {
             if (RightValue == 0) {
-                WordOperation.UsingAnyRegister(this, WordRegister.Registers, DestinationOperand, null, register =>
-                 {
-                     register.LoadConstant(this, 0);
-                     register.Store(this, DestinationOperand);
-                 });
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, DestinationOperand, null);
+                var register = reservation.WordRegister;
+                register.LoadConstant(this, 0);
+                register.Store(this, DestinationOperand);
                 return;
             }
             if (LeftOperand.Type.ByteCount == 1) {
-                ByteOperation.UsingRegister(this, ByteRegister.Ah, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.Ah)) {
                     ByteRegister.Al.Load(this, LeftOperand);
                     WriteLine("\tmov ah," + RightValue);
                     WriteLine("\tmul ah");
-                    ChangedRegisters.Add(ByteRegister.Ah);
+                    AddChanged(ByteRegister.Ah);
                     if (DestinationOperand.Type.ByteCount == 1) {
                         ByteRegister.Al.Store(this, DestinationOperand);
-                        ChangedRegisters.Add(ByteRegister.Al);
+                        AddChanged(ByteRegister.Al);
                     }
                     else {
                         WordRegister.Ax.Store(this, DestinationOperand);
-                        ChangedRegisters.Add(WordRegister.Ax);
+                        AddChanged(WordRegister.Ax);
                     }
-                });
+                }
                 return;
             }
-            WordOperation.UsingRegister(this, WordRegister.Dx, () =>
-            {
+            using (WordOperation.ReserveRegister(this, WordRegister.Dx)) {
                 WordRegister.Ax.Load(this, LeftOperand);
                 WriteLine("\tmov dx," + RightValue);
                 WriteLine("\tmul dx");
-                ChangedRegisters.Add(WordRegister.Dx);
+                AddChanged(WordRegister.Dx);
                 if (DestinationOperand.Type.ByteCount == 1) {
                     ByteRegister.Al.Store(this, DestinationOperand);
-                    ChangedRegisters.Add(ByteRegister.Al);
+                    AddChanged(ByteRegister.Al);
                 }
                 else {
                     WordRegister.Ax.Store(this, DestinationOperand);
-                    ChangedRegisters.Add(WordRegister.Ax);
+                    AddChanged(WordRegister.Ax);
                 }
-            });
+            }
         }
     }
 }

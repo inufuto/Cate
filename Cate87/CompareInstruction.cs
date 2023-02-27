@@ -147,15 +147,13 @@ namespace Inu.Cate.MuCom87
 
         private void CallExternalByte(string functionName, string skip)
         {
-            ByteOperation.UsingRegister(this, ByteRegister.C, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.C)) {
                 ByteRegister.C.Load(this, RightOperand);
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
-                });
-            });
+                }
+            }
             if (skip.Equals("skz")) {
                 ((Compiler)Compiler).SkipIfZero(this);
             }
@@ -192,16 +190,14 @@ namespace Inu.Cate.MuCom87
         }
         private void CallExternalWord(string functionName, string skip)
         {
-            WordOperation.UsingRegister(this, WordRegister.Hl, () =>
-            {
-                WordOperation.UsingRegister(this, WordRegister.Bc, () =>
-                {
+            using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                using (WordOperation.ReserveRegister(this, WordRegister.Bc)) {
                     WordRegister.Bc.Load(this, RightOperand);
                     WordRegister.Hl.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
-                });
-                ChangedRegisters.Add(WordRegister.Hl);
-            });
+                }
+                AddChanged(WordRegister.Hl);
+            }
             if (skip.Equals("skz")) {
                 ((Compiler)Compiler).SkipIfZero(this);
             }

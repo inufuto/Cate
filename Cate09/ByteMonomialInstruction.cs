@@ -9,7 +9,7 @@ namespace Inu.Cate.Mc6809
 
         public override void BuildAssembly()
         {
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '-' => "neg",
                 '~' => "com",
@@ -20,13 +20,11 @@ namespace Inu.Cate.Mc6809
                 ByteOperation.Operate(this, operation, true, DestinationOperand);
                 return;
             }
-
-            ByteOperation.UsingAnyRegister(this, DestinationOperand, null, register =>
-            {
-                register.Load(this, SourceOperand);
-                register.Operate(this, operation, true, 1);
-                register.Store(this, DestinationOperand);
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, null);
+            var register = reservation.ByteRegister;
+            register.Load(this, SourceOperand);
+            register.Operate(this, operation, true, 1);
+            register.Store(this, DestinationOperand);
         }
     }
 }

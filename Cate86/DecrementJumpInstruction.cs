@@ -9,7 +9,7 @@
         {
             if (Equals(Operand.Register, WordRegister.Cx)) {
                 WriteLine("\tloop " + Anchor.Label);
-                ChangedRegisters.Add(WordRegister.Cx);
+                AddChanged(WordRegister.Cx);
                 RemoveRegisterAssignment(WordRegister.Cx);
                 return;
             }

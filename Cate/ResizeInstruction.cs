@@ -26,11 +26,11 @@ namespace Inu.Cate
         {
             return DestinationOperand + " = (" + DestinationType + ")" + SourceOperand;
         }
-        public override void AddSourceRegisters()
+        public override void ReserveOperandRegisters()
         {
-            AddSourceRegister(SourceOperand);
+            ReserveOperandRegister(SourceOperand);
             if (DestinationOperand is IndirectOperand indirectOperand) {
-                AddSourceRegister(indirectOperand);
+                ReserveOperandRegister(indirectOperand);
             }
         }
 
@@ -66,19 +66,18 @@ namespace Inu.Cate
                     sourceRegister.Low.Store(this, DestinationOperand);
                     return;
                 }
-                WordOperation.UsingAnyRegister(this, WordOperation.PairRegisters, temporaryRegister =>
-                {
-                    temporaryRegister.CopyFrom(this, sourceRegister);
-                    Debug.Assert(temporaryRegister.Low != null);
-                    temporaryRegister.Low.Store(this, DestinationOperand);
-                });
+
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters);
+                reservation.WordRegister.CopyFrom(this, sourceRegister);
+                Debug.Assert(reservation.WordRegister.Low != null);
+                reservation.WordRegister.Low.Store(this, DestinationOperand);
                 return;
             }
             if (DestinationOperand.Register is ByteRegister destinationRegister) {
                 var pairRegister = destinationRegister.PairRegister;
                 if (pairRegister != null && Equals(pairRegister.Low, destinationRegister)) {
                     Debug.Assert(pairRegister.High != null);
-                    if (!IsRegisterInUse(pairRegister.High)) {
+                    if (!IsRegisterReserved(pairRegister.High)) {
                         pairRegister.Load(this, SourceOperand);
                         return;
                     }
@@ -86,12 +85,12 @@ namespace Inu.Cate
                 destinationRegister.Load(this, Compiler.Instance.LowByteOperand(SourceOperand));
                 return;
             }
-            ByteOperation.UsingAnyRegister(this, DestinationOperand, null, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, null)) {
+                var register = reservation.ByteRegister;
                 var lowByteOperand = Compiler.Instance.LowByteOperand(SourceOperand);
                 register.Load(this, lowByteOperand);
                 register.Store(this, DestinationOperand);
-            });
+            }
         }
 
         protected abstract void ExpandSigned();
@@ -113,8 +112,10 @@ namespace Inu.Cate
             }
             if (DestinationOperand.Register is WordRegister destinationRegister) {
                 if (destinationRegister.IsPair()) {
-                    Debug.Assert(destinationRegister.Low != null && destinationRegister.High != null);
+                    Debug.Assert(destinationRegister is { Low: { }, High: { } });
+                    //WriteLine("\t; low");
                     destinationRegister.Low.Load(this, SourceOperand);
+                    //WriteLine("\t; high");
                     destinationRegister.High.LoadConstant(this, 0);
                     return;
                 }
@@ -124,26 +125,23 @@ namespace Inu.Cate
             }
             var pairRegisters = WordOperation.PairRegisters;
             if (DestinationOperand.Register == null) {
-                pairRegisters = pairRegisters.Where(r => !IsRegisterInUse(r)).ToList();
+                pairRegisters = pairRegisters.Where(r => !IsRegisterReserved(r)).ToList();
             }
             if (pairRegisters.Any()) {
-                WordOperation.UsingAnyRegister(this, pairRegisters, DestinationOperand, null, wordRegister =>
-                {
-                    Debug.Assert(wordRegister.Low != null && wordRegister.High != null);
-                    wordRegister.Low.Load(this, SourceOperand);
-                    wordRegister.High.LoadConstant(this, 0);
-                    wordRegister.Store(this, DestinationOperand);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(this, pairRegisters, DestinationOperand, null);
+                Debug.Assert(reservation.WordRegister.Low != null && reservation.WordRegister.High != null);
+                reservation.WordRegister.Low.Load(this, SourceOperand);
+                reservation.WordRegister.High.LoadConstant(this, 0);
+                reservation.WordRegister.Store(this, DestinationOperand);
                 return;
             }
-
-            ByteOperation.UsingAnyRegister(this, null, SourceOperand, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, null, SourceOperand)) {
+                var register = reservation.ByteRegister;
                 register.Load(this, SourceOperand);
                 register.Store(this, Compiler.LowByteOperand(DestinationOperand));
                 var highByteOperand = Compiler.HighByteOperand(DestinationOperand);
                 ClearHighByte(register, highByteOperand);
-            });
+            }
         }
 
         protected virtual void ClearHighByte(ByteRegister register, Operand operand)

@@ -47,11 +47,10 @@ namespace Inu.Cate.Mc6809
                     OperateLeftRegister(leftRegister);
                     return;
                 }
-                WordOperation.UsingAnyRegister(this, WordOperation.PairRegisters, DestinationOperand, LeftOperand, temporaryRegister =>
-                {
-                    temporaryRegister.CopyFrom(this, leftRegister);
-                    OperateLeftRegister(temporaryRegister);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters, DestinationOperand, LeftOperand);
+                var temporaryRegister = reservation.WordRegister;
+                temporaryRegister.CopyFrom(this, leftRegister);
+                OperateLeftRegister(temporaryRegister);
                 return;
             }
 
@@ -73,16 +72,15 @@ namespace Inu.Cate.Mc6809
                     OperateDestinationRegister(destinationRegister);
                     return;
                 }
-                WordOperation.UsingAnyRegister(this, WordOperation.PairRegisters, DestinationOperand, LeftOperand, temporaryRegister =>
-                {
-                    OperateDestinationRegister(temporaryRegister);
-                    destinationRegister.CopyFrom(this, destinationRegister);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters, DestinationOperand, LeftOperand);
+                var temporaryRegister = reservation.WordRegister;
+                OperateDestinationRegister(temporaryRegister);
+                destinationRegister.CopyFrom(this, destinationRegister);
                 return;
             }
 
-            ByteOperation.UsingAnyRegister(this, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this)) {
+                var register = reservation.ByteRegister;
                 register.Load(this, Compiler.LowByteOperand(LeftOperand));
                 register.Operate(this, operation, true, rightLow);
                 register.Store(this, Compiler.LowByteOperand(DestinationOperand));
@@ -90,7 +88,7 @@ namespace Inu.Cate.Mc6809
                 register.Load(this, Compiler.HighByteOperand(LeftOperand));
                 register.Operate(this, operation, true, rightHigh);
                 register.Store(this, Compiler.HighByteOperand(DestinationOperand));
-            });
+            }
         }
     }
 }

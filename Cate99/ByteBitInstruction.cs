@@ -9,6 +9,9 @@ namespace Inu.Cate.Tms99
 
         public override void BuildAssembly()
         {
+            if (IsOperatorExchangeable() && DestinationOperand.Register != null && Equals(DestinationOperand.Register, RightOperand.Register)) {
+                ExchangeOperands();
+            }
             switch (OperatorId) {
                 case '|' when RightOperand is IntegerOperand integerOperand:
                     Tms99.ByteOperation.OperateConstant(this, "ori", DestinationOperand, LeftOperand, ByteRegister.ByteConst(integerOperand.IntegerValue));
@@ -20,11 +23,11 @@ namespace Inu.Cate.Tms99
                     Tms99.ByteOperation.OperateConstant(this, "andi", DestinationOperand, LeftOperand, ByteRegister.ByteConst(integerOperand.IntegerValue));
                     return;
                 case '&':
-                    ByteOperation.UsingAnyRegisterToChange(this, DestinationOperand, LeftOperand, destinationRegister =>
-                    {
+                    using (var destination = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand)) {
+                        var destinationRegister = destination.ByteRegister;
                         var candidates = ByteOperation.Registers.Where(r => !Equals(r, destinationRegister)).ToList();
-                        ByteOperation.UsingAnyRegister(this, candidates, null, RightOperand, sourceRegister =>
-                        {
+                        using (var source = ByteOperation.ReserveAnyRegister(this, candidates, null, RightOperand)) {
+                            var sourceRegister = source.ByteRegister;
                             if (destinationRegister.Conflicts(LeftOperand)) {
                                 destinationRegister.Load(this, LeftOperand);
                                 sourceRegister.Load(this, RightOperand);
@@ -35,11 +38,11 @@ namespace Inu.Cate.Tms99
                             }
 
                             WriteLine("\tinv\t" + sourceRegister.Name);
-                            ChangedRegisters.Add(sourceRegister);
+                            AddChanged(sourceRegister);
                             WriteLine("\tszcb\t" + sourceRegister.Name + "," + destinationRegister.Name);
                             destinationRegister.Store(this, DestinationOperand);
-                        });
-                    });
+                        }
+                    }
                     break;
                 case '^': {
                         void OperateRegister(ByteRegister register)
@@ -51,12 +54,10 @@ namespace Inu.Cate.Tms99
                             }
                             else {
                                 var candidates = ByteOperation.Registers.Where(r => !Equals(r, register)).ToList();
-                                ByteOperation.UsingAnyRegister(this, candidates,
-                                    rightRegister =>
-                                {
-                                    rightRegister.Load(this, RightOperand);
-                                    WriteLine("\txor\t" + rightRegister.Name + "," + register.Name);
-                                });
+                                using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
+                                var rightRegister = reservation.ByteRegister;
+                                rightRegister.Load(this, RightOperand);
+                                WriteLine("\txor\t" + rightRegister.Name + "," + register.Name);
                             }
                             register.Store(this, DestinationOperand);
                         }
@@ -67,10 +68,9 @@ namespace Inu.Cate.Tms99
                             OperateRegister(leftRegister);
                         }
                         else {
-                            ByteOperation.UsingAnyRegister(this, temporaryRegister =>
-                            {
-                                OperateRegister((ByteRegister)temporaryRegister);
-                            });
+                            using var reservation = ByteOperation.ReserveAnyRegister(this);
+                            var temporaryRegister = reservation.ByteRegister;
+                            OperateRegister((ByteRegister)temporaryRegister);
                         }
 
                         break;

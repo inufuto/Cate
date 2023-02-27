@@ -10,13 +10,12 @@ namespace Inu.Cate.Tms99
     {
         public override void Exchange(Instruction instruction, Cate.ByteRegister register)
         {
-            var candidates = ByteRegister.Registers.Where(r => !Equals(r, this) && !Equals(r, register)).ToList();
-            ByteOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
-            {
-                temporaryRegister.CopyFrom(instruction, this);
-                CopyFrom(instruction, register);
-                register.CopyFrom(instruction, temporaryRegister);
-            });
+            var candidates = Registers.Where(r => !Equals(r, this) && !Equals(r, register)).ToList();
+            using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);
+            var temporaryRegister = reservation.ByteRegister;
+            temporaryRegister.CopyFrom(instruction, this);
+            CopyFrom(instruction, register);
+            register.CopyFrom(instruction, temporaryRegister);
         }
 
         private const int MinId = 100;
@@ -78,7 +77,7 @@ namespace Inu.Cate.Tms99
         public override void LoadConstant(Instruction instruction, string value)
         {
             WordRegister.LoadConstant(instruction, ByteConst(value));
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -89,7 +88,7 @@ namespace Inu.Cate.Tms99
         {
             if (value == 0) {
                 Clear(instruction);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
                 return;
             }
@@ -130,12 +129,10 @@ namespace Inu.Cate.Tms99
                 }
                 else {
                     var candidates = WordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList();
-                    WordOperation.UsingAnyRegister(instruction, candidates,
-                        temporaryRegister =>
-                    {
-                        temporaryRegister.CopyFrom(instruction, pointerRegister);
-                        ForRegister(temporaryRegister);
-                    });
+                    using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                    var temporaryRegister = reservation.WordRegister;
+                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                    ForRegister(temporaryRegister);
                 }
             }
             instruction.RemoveRegisterAssignment(this);
@@ -155,12 +152,10 @@ namespace Inu.Cate.Tms99
                     ForRegister(pointerRegister);
                 }
                 else {
-                    WordOperation.UsingAnyRegister(instruction, WordOperation.PointerRegisters(offset),
-                        temporaryRegister =>
-                    {
-                        temporaryRegister.CopyFrom(instruction, pointerRegister);
-                        ForRegister(temporaryRegister);
-                    });
+                    using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.PointerRegisters(offset));
+                    var temporaryRegister = reservation.WordRegister;
+                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                    ForRegister(temporaryRegister);
                 }
             }
         }
@@ -169,7 +164,7 @@ namespace Inu.Cate.Tms99
         {
             Clear(instruction);
             instruction.WriteLine("\tmovb\t@" + label + "," + Name);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -182,7 +177,7 @@ namespace Inu.Cate.Tms99
         {
             instruction.WriteLine("\tmov\t" + sourceRegister.Name + "," + Name);
             instruction.RemoveRegisterAssignment(WordRegister);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, int count)
@@ -192,7 +187,7 @@ namespace Inu.Cate.Tms99
             }
             if (change) {
                 instruction.RemoveRegisterAssignment(this);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
             }
             instruction.ResultFlags |= Instruction.Flag.Z;
         }

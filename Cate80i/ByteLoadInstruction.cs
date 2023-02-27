@@ -20,11 +20,10 @@
                             return;
                         }
                     }
-                    WordOperation.UsingRegister(this, WordRegister.Hl, () =>
-                    {
+                    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
                         WordRegister.Hl.LoadFromMemory(this, pointer, 0);
                         ByteOperation.StoreConstantIndirect(this, WordRegister.Hl, offset, sourceIntegerOperand.IntegerValue);
-                    });
+                    }
                     return;
                 }
             }

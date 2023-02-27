@@ -39,7 +39,7 @@ namespace Inu.Cate.I8080
 
         protected override void StoreParameters()
         {
-            if (IsRegisterInUse(WordRegister.Hl)) {
+            if (IsRegisterReserved(WordRegister.Hl)) {
                 StoreParametersDirect();
             }
             else {

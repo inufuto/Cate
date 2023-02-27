@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Inu.Cate.Z80
 {
-    class CompareInstruction : Cate.CompareInstruction
+    internal class CompareInstruction : Cate.CompareInstruction
     {
         private static int subLabelIndex = 0;
 
@@ -38,12 +38,13 @@ namespace Inu.Cate.Z80
                     goto jump;
                 }
             }
-            BeginRegister(ByteRegister.A);
-            ByteRegister.A.Load(this, LeftOperand);
-            ByteRegister.A.Operate(this, operation, false, RightOperand);
-            EndRegister(ByteRegister.A);
 
-            jump:
+            using (var reservation = ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
+                ByteRegister.A.Load(this, LeftOperand);
+                ByteRegister.A.Operate(this, operation, false, RightOperand);
+            }
+
+        jump:
             Jump(operandZero);
         }
 
@@ -57,11 +58,10 @@ namespace Inu.Cate.Z80
                     return;
                 }
             }
-            ByteRegister.UsingAccumulator(this, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 WriteLine("\tor\ta");
-            });
+            }
         }
 
         protected override void CompareWord()
@@ -73,19 +73,18 @@ namespace Inu.Cate.Z80
                         goto jump;
                     }
                 }
-                WordRegister.UsingAny(this, WordRegister.PairRegisters, temporaryRegister =>
-                {
-                    temporaryRegister.Load(this, LeftOperand);
-                    CompareWordZero(temporaryRegister);
-                });
+                using (var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters)) {
+                    reservation.WordRegister.Load(this, LeftOperand);
+                    CompareWordZero(reservation.WordRegister);
+                }
                 goto jump;
             }
 
-            void Subtract(Cate.WordRegister rightRegister)
+            void Subtract(Register rightRegister)
             {
                 WriteLine("\tor\ta");
                 WriteLine("\tsbc\thl," + rightRegister.Name);
-                ChangedRegisters.Add(WordRegister.Hl);
+                AddChanged(WordRegister.Hl);
                 RemoveRegisterAssignment(WordRegister.Hl);
             }
 
@@ -99,17 +98,15 @@ namespace Inu.Cate.Z80
                     }
                 }
                 var candidates = new List<Cate.WordRegister>() { WordRegister.De, WordRegister.Bc }.ToList();
-                WordRegister.UsingAny(this, candidates, temporaryRegister =>
-                {
-                    temporaryRegister.Load(this, RightOperand);
-                    Subtract(temporaryRegister);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
+                reservation.WordRegister.Load(this, RightOperand);
+                Subtract(reservation.WordRegister);
             }
 
             if (Equals(LeftOperand.Register, WordRegister.Hl)) {
-                BeginRegister(WordRegister.Hl);
-                SubtractHl();
-                EndRegister(WordRegister.Hl);
+                using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                    SubtractHl();
+                }
                 goto jump;
             }
             if (Equals(RightOperand.Register, WordRegister.Hl)) {
@@ -118,44 +115,43 @@ namespace Inu.Cate.Z80
                     WriteLine("\tex\tde,hl");
                     Subtract(WordRegister.De);
                     WriteLine("\tex\tde,hl");
-                    ChangedRegisters.Add(WordRegister.De);
+                    AddChanged(WordRegister.De);
                     RemoveRegisterAssignment(WordRegister.De);
                 }
 
                 if (Equals(LeftOperand.Register, WordRegister.De)) {
-                    BeginRegister(WordRegister.De);
-                    CompareDeHl();
-                    EndRegister(WordRegister.De);
+                    using (
+                        WordOperation.ReserveRegister(this, WordRegister.De)) {
+                        CompareDeHl();
+                    }
                     goto jump;
                 }
-                WordOperation.UsingRegister(this, WordRegister.De, () =>
-                {
+
+                using (WordOperation.ReserveRegister(this, WordRegister.De)) {
                     WordRegister.De.Load(this, LeftOperand);
                     CompareDeHl();
-                });
+                }
                 goto jump;
             }
-            WordOperation.UsingRegister(this, WordRegister.Hl, () =>
-            {
+            using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
                 WordRegister.Hl.Load(this, LeftOperand);
                 SubtractHl();
-            });
+            }
 
-            jump:
+        jump:
             Jump(false);
         }
 
         private void CompareWordZero(Cate.WordRegister leftRegister)
         {
-            ByteRegister.UsingAccumulator(this, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 Debug.Assert(leftRegister.Low != null);
                 Debug.Assert(leftRegister.High != null);
                 ByteRegister.A.CopyFrom(this, leftRegister.Low);
                 WriteLine("\tor\t" + leftRegister.High.Name);
-                ChangedRegisters.Add(ByteRegister.A);
+                AddChanged(ByteRegister.A);
                 RemoveRegisterAssignment(ByteRegister.A);
-            });
+            }
         }
 
         private void Jump(bool operandZero)

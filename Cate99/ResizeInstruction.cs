@@ -16,21 +16,20 @@
 
         private void Operate(bool signed)
         {
-            ByteOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, byteRegister =>
-            {
-                byteRegister.Load(this, SourceOperand);
-                RemoveRegisterAssignment(byteRegister);
-                var wordRegister = ((ByteRegister)byteRegister).Expand(this, signed);
-                ChangedRegisters.Add(wordRegister);
-                wordRegister.Store(this, DestinationOperand);
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
+            var byteRegister = reservation.ByteRegister;
+            byteRegister.Load(this, SourceOperand);
+            RemoveRegisterAssignment(byteRegister);
+            var wordRegister = ((ByteRegister)byteRegister).Expand(this, signed);
+            AddChanged(wordRegister);
+            wordRegister.Store(this, DestinationOperand);
         }
 
         private void Reduce(Cate.WordRegister wordRegister)
         {
             wordRegister.Load(this, SourceOperand);
             WriteLine("\tsla\t" + wordRegister + ",8");
-            ChangedRegisters.Add(wordRegister);
+            AddChanged(wordRegister);
             ((WordRegister)wordRegister).ByteRegister.Store(this, DestinationOperand);
             RemoveRegisterAssignment(wordRegister);
         }
@@ -41,7 +40,8 @@
                 Reduce(byteRegister.WordRegister);
                 return;
             }
-            WordOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, Reduce);
+            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
+            Reduce(reservation.WordRegister);
         }
 
         public override bool CanAllocateRegister(Variable variable, Register register)

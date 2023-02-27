@@ -13,16 +13,15 @@
                 return;
             }
 
-            ByteOperation.UsingAnyRegister(this, register =>
-            {
-                register.Load(this, Compiler.LowByteOperand(SourceOperand));
-                WriteLine("\tcom" + register);
-                register.Store(this, Compiler.LowByteOperand(DestinationOperand));
+            using var reservation = ByteOperation.ReserveAnyRegister(this);
+            var register = reservation.ByteRegister;
+            register.Load(this, Compiler.LowByteOperand(SourceOperand));
+            WriteLine("\tcom" + register);
+            register.Store(this, Compiler.LowByteOperand(DestinationOperand));
 
-                register.Load(this, Compiler.HighByteOperand(SourceOperand));
-                WriteLine("\tcom" + register);
-                register.Store(this, Compiler.HighByteOperand(DestinationOperand));
-            });
+            register.Load(this, Compiler.HighByteOperand(SourceOperand));
+            WriteLine("\tcom" + register);
+            register.Store(this, Compiler.HighByteOperand(DestinationOperand));
         }
     }
 }

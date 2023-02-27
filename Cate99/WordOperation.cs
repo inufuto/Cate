@@ -27,8 +27,10 @@ namespace Inu.Cate.Tms99
             }
 
             Debug.Assert(instance != null);
-            var candidates = WordRegister.Registers.Where(r=>!Equals(r, rightOperand.Register)).ToList();
-            instance.UsingAnyRegister(instruction, candidates, destinationOperand, leftOperand, OperateRegister);
+            var candidates = WordRegister.Registers.Where(r => !Equals(r, rightOperand.Register)).ToList();
+
+            using var reservation = instance.ReserveAnyRegister(instruction, candidates, destinationOperand, leftOperand);
+            OperateRegister(reservation.WordRegister);
         }
 
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)
@@ -42,7 +44,7 @@ namespace Inu.Cate.Tms99
             {
                 register.Load(instruction, leftOperand);
                 instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
-                instruction.ChangedRegisters.Add(register);
+                instruction.AddChanged(register);
                 instruction.RemoveRegisterAssignment(register);
                 register.Store(instruction, destinationOperand);
             }
@@ -55,7 +57,8 @@ namespace Inu.Cate.Tms99
                 return;
             }
             Debug.Assert(instance != null);
-            instance.UsingAnyRegister(instruction, OperateRegisterConstant);
+            using var reservation = instance.ReserveAnyRegister(instruction);
+            OperateRegisterConstant(reservation.WordRegister);
         }
 
 
@@ -82,7 +85,8 @@ namespace Inu.Cate.Tms99
                 return;
             }
             Debug.Assert(instance != null);
-            instance.UsingAnyRegister(instruction, OperateRegister);
+            using var reservation = instance.ReserveAnyRegister(instruction);
+            OperateRegister(reservation.WordRegister);
         }
 
         public static void Operate(Instruction instruction, string operation, Operand leftOperand, Operand rightOperand)
@@ -99,7 +103,8 @@ namespace Inu.Cate.Tms99
                 OperateRegister(leftRegister);
                 return;
             }
-            instance.UsingAnyRegister(instruction, OperateRegister);
+            using var reservation = instance.ReserveAnyRegister(instruction);
+            OperateRegister(reservation.WordRegister);
         }
 
         public static void OperateConstant(Instruction instruction, string operation, Operand leftOperand, string value)
@@ -115,7 +120,8 @@ namespace Inu.Cate.Tms99
                 OperateRegister(leftRegister);
                 return;
             }
-            instance.UsingAnyRegister(instruction, OperateRegister);
+            using var reservation = instance.ReserveAnyRegister(instruction);
+            OperateRegister(reservation.WordRegister);
         }
         public static void OperateConstant(Instruction instruction, string operation, Operand leftOperand, int value)
         {
@@ -138,7 +144,8 @@ namespace Inu.Cate.Tms99
                 return;
             }
             Debug.Assert(instance != null);
-            instance.UsingAnyRegister(instruction, OperateRegister);
+            using var reservation = instance.ReserveAnyRegister(instruction);
+            OperateRegister(reservation.WordRegister);
         }
     }
 }

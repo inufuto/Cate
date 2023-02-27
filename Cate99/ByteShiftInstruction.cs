@@ -18,8 +18,7 @@ namespace Inu.Cate.Tms99
             };
             var r0 = ByteRegister.FromIndex(0);
             var r1 = ByteRegister.FromIndex(1);
-            ByteOperation.UsingRegister(this, r1, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, r1)) {
                 void CallShift()
                 {
                     r0.Load(this, LeftOperand);
@@ -27,7 +26,7 @@ namespace Inu.Cate.Tms99
                     Compiler.CallExternal(this, functionName);
                     WriteLine("\tandi\tr0,>ff00");
                     RemoveRegisterAssignment(r0);
-                    ChangedRegisters.Add(r0);
+                    AddChanged(r0);
                     r0.Store(this, DestinationOperand);
                 }
                 r1.Load(this, RightOperand);
@@ -35,9 +34,11 @@ namespace Inu.Cate.Tms99
                     CallShift();
                 }
                 else {
-                    ByteOperation.UsingRegister(this, r0, CallShift);
+                    using (ByteOperation.ReserveRegister(this, r0)) {
+                        CallShift();
+                    }
                 }
-            });
+            }
         }
 
         protected override string Operation()
@@ -53,18 +54,18 @@ namespace Inu.Cate.Tms99
         protected override void ShiftConstant(int count)
         {
             var operation = Operation();
-            ByteOperation.UsingAnyRegisterToChange(this, DestinationOperand, LeftOperand, register =>
-            {
-                register.Load(this, LeftOperand);
-                if (count > 0) {
-                    WriteLine("\t" + operation + "\t" + register.Name + "," + count);
-                    if (OperatorId == Keyword.ShiftRight) {
-                        WriteLine("\tandi\t" + register.Name + ",>ff00");
-                    }
+            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+            var register = reservation.ByteRegister;
+            register.Load(this, LeftOperand);
+            if (count > 0) {
+                WriteLine("\t" + operation + "\t" + register.Name + "," + count);
+                if (OperatorId == Keyword.ShiftRight) {
+                    WriteLine("\tandi\t" + register.Name + ",>ff00");
                 }
-                register.Store(this, DestinationOperand);
-                ChangedRegisters.Add(register);
-            });
+            }
+            register.Store(this, DestinationOperand);
+            AddChanged(register);
+            ;
         }
         public override bool IsCalling() => true;
     }

@@ -84,7 +84,8 @@ namespace Inu.Cate.Tms99
                 ForRegister(leftRegister);
             }
             else {
-                WordOperation.UsingAnyRegister(this, ForRegister);
+                using var reservation = WordOperation.ReserveAnyRegister(this);
+                ForRegister(reservation.WordRegister);
             }
             ResultFlags |= Flag.Z;
         }

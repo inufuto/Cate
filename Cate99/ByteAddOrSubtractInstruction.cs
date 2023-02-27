@@ -39,22 +39,20 @@ namespace Inu.Cate.Tms99
 
         protected override void Increment(int count)
         {
-            ByteOperation.UsingAnyRegisterToChange(this, DestinationOperand, LeftOperand, temporaryRegister =>
-            {
-                temporaryRegister.Load(this, LeftOperand);
-                temporaryRegister.Operate(this, "inc", true, count);
-                temporaryRegister.Store(this, DestinationOperand);
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+            var temporaryRegister = reservation.ByteRegister;
+            temporaryRegister.Load(this, LeftOperand);
+            temporaryRegister.Operate(this, "inc", true, count);
+            temporaryRegister.Store(this, DestinationOperand);
         }
 
         protected override void Decrement(int count)
         {
-            ByteOperation.UsingAnyRegisterToChange(this, DestinationOperand, LeftOperand, temporaryRegister =>
-            {
-                temporaryRegister.Load(this, LeftOperand);
-                temporaryRegister.Operate(this, "dec", true, count);
-                temporaryRegister.Store(this, DestinationOperand);
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+            var temporaryRegister = reservation.ByteRegister;
+            temporaryRegister.Load(this, LeftOperand);
+            temporaryRegister.Operate(this, "dec", true, count);
+            temporaryRegister.Store(this, DestinationOperand);
         }
     }
 }

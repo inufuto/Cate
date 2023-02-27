@@ -53,18 +53,17 @@ namespace Inu.Cate.Mos6502
                     }
                 }
             }
-
-            List<Cate.ByteRegister> candidates =
+            var candidates =
                 RightOperand is IndirectOperand || LeftOperand is IndirectOperand ?
                 new List<Cate.ByteRegister>() { ByteRegister.A } :
                 ByteRegister.Registers;
-            ByteOperation.UsingAnyRegister(this, candidates, null, LeftOperand, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, null, LeftOperand)) {
+                var register = reservation.ByteRegister;
                 var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
                 register.Load(this, LeftOperand);
                 register.Operate(this, operation, false, RightOperand);
-            });
-            jump:
+            }
+        jump:
             switch (OperatorId) {
                 case Keyword.Equal:
                     WriteJumpLine("\tbeq\t" + Anchor);
@@ -184,29 +183,26 @@ namespace Inu.Cate.Mos6502
 
             void CompareHighByte()
             {
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-               {
-                   ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
-                   ByteRegister.A.Operate(this, "cmp", false, Compiler.HighByteOperand(RightOperand));
-               });
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                    ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
+                    ByteRegister.A.Operate(this, "cmp", false, Compiler.HighByteOperand(RightOperand));
+                }
             }
 
             void CompareLowByte()
             {
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-               {
-                   ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
-                   ByteRegister.A.Operate(this, "cmp", false, Compiler.LowByteOperand(RightOperand));
-               });
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                    ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
+                    ByteRegister.A.Operate(this, "cmp", false, Compiler.LowByteOperand(RightOperand));
+                }
             }
 
             void CompareToZero()
             {
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-               {
-                   ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
-                   ByteRegister.A.Operate(this, "ora", false, Compiler.HighByteOperand(LeftOperand));
-               });
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                    ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
+                    ByteRegister.A.Operate(this, "ora", false, Compiler.HighByteOperand(LeftOperand));
+                }
             }
 
             void WriteInstructions(Action<bool> signedBranch, Action unsignedBranch, Action lowByteBranch)

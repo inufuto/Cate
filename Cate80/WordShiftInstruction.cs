@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Drawing;
 
 namespace Inu.Cate.Z80
 {
@@ -14,25 +13,23 @@ namespace Inu.Cate.Z80
         public override void BuildAssembly()
         {
             if (LeftOperand.Register != null && RightOperand is IntegerOperand { IntegerValue: 8 }) {
-                WordOperation.UsingAnyRegister(this, WordRegister.PairRegisters, DestinationOperand, LeftOperand,
-                    pairRegister =>
-                    {
-                        pairRegister.Load(this, LeftOperand);
-                        Debug.Assert(pairRegister.High != null);
-                        Debug.Assert(pairRegister.Low != null);
-                        switch (OperatorId) {
-                            case Keyword.ShiftLeft:
-                                pairRegister.High.CopyFrom(this, pairRegister.Low);
-                                pairRegister.Low.LoadConstant(this, 0);
-                                break;
-                            case Keyword.ShiftRight:
-                                pairRegister.Low.CopyFrom(this, pairRegister.High);
-                                pairRegister.High.LoadConstant(this, 0);
-                                break;
-                            default:
-                                throw new NotImplementedException();
-                        }
-                    });
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, DestinationOperand, LeftOperand);
+                var pairRegister = reservation.WordRegister;
+                pairRegister.Load(this, LeftOperand);
+                Debug.Assert(pairRegister.High != null);
+                Debug.Assert(pairRegister.Low != null);
+                switch (OperatorId) {
+                    case Keyword.ShiftLeft:
+                        pairRegister.High.CopyFrom(this, pairRegister.Low);
+                        pairRegister.Low.LoadConstant(this, 0);
+                        break;
+                    case Keyword.ShiftRight:
+                        pairRegister.Low.CopyFrom(this, pairRegister.High);
+                        pairRegister.High.LoadConstant(this, 0);
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
                 return;
             }
             base.BuildAssembly();
@@ -56,12 +53,11 @@ namespace Inu.Cate.Z80
                     return;
                 }
             }
-            WordRegister.UsingAny(this, WordRegister.PairRegisters, LeftOperand, temporaryRegister =>
-            {
-                temporaryRegister.Load(this, LeftOperand);
-                Shift(temporaryRegister, count);
-                temporaryRegister.Store(this, DestinationOperand);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, null, LeftOperand);
+            var temporaryRegister = reservation.WordRegister;
+            temporaryRegister.Load(this, LeftOperand);
+            Shift(temporaryRegister, count);
+            temporaryRegister.Store(this, DestinationOperand);
         }
 
         private void Shift(Cate.WordRegister register, int count)
@@ -92,13 +88,13 @@ namespace Inu.Cate.Z80
             for (var i = 0; i < count; ++i) {
                 action();
             }
-            ChangedRegisters.Add(register);
+            AddChanged(register);
             RemoveRegisterAssignment(register);
         }
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            string functionName = OperatorId switch
+            var functionName = OperatorId switch
             {
                 Keyword.ShiftLeft => "cate.ShiftLeftHl",
                 Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
@@ -106,18 +102,16 @@ namespace Inu.Cate.Z80
                     : "cate.ShiftRightHl",
                 _ => throw new NotImplementedException()
             };
-            WordOperation.UsingRegister(this, WordRegister.Hl, LeftOperand, () =>
-            {
+            using (WordOperation.ReserveRegister(this, WordRegister.Hl, LeftOperand)) {
                 WordRegister.Hl.Load(this, LeftOperand);
-                ByteRegister.Using(this, ByteRegister.B, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
                     ByteRegister.B.Load(this, counterOperand);
                     Compiler.CallExternal(this, functionName);
-                });
-                ChangedRegisters.Add(WordRegister.Hl);
+                }
+                AddChanged(WordRegister.Hl);
                 RemoveRegisterAssignment(WordRegister.Hl);
                 WordRegister.Hl.Store(this, DestinationOperand);
-            });
+            }
         }
     }
 }

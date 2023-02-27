@@ -24,12 +24,12 @@ namespace Inu.Cate.Mc6800
                 }
             }
 
-            ByteRegister.UsingAny(this, LeftOperand, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, null, LeftOperand)) {
+                var register = reservation.ByteRegister;
                 register.Load(this, LeftOperand);
                 register.Operate(this, "cmp", false, RightOperand);
-            });
-            jump:
+            }
+        jump:
             switch (OperatorId) {
                 case Keyword.Equal:
                     WriteJumpLine("\tbeq\t" + Anchor);
@@ -88,45 +88,45 @@ namespace Inu.Cate.Mc6800
                     WriteJumpLine("\tbne\t" + Anchor);
                     return;
             }
-            ByteOperation.UsingAnyRegister(this, register =>
+            using var reservation = ByteOperation.ReserveAnyRegister(this);
+            var register = reservation.ByteRegister;
+
+            void WriteInstructions(string signedBranch, string unsignedBranch, string lowByteBranch)
             {
-                void WriteInstructions(string signedBranch, string unsignedBranch, string lowByteBranch)
-                {
-                    register.Load(this, Compiler.HighByteOperand(LeftOperand));
-                    register.Operate(this, "cmp", false, Compiler.HighByteOperand(RightOperand));
-                    if (Signed) {
-                        WriteLine("\t" + signedBranch + "\t" + Anchor);
-                    }
-                    else {
-                        WriteLine("\t" + unsignedBranch + "\t" + Anchor);
-                    }
-                    WriteLine("\tbne\t" + Anchor + "_end");
-
-                    register.Load(this, Compiler.LowByteOperand(LeftOperand));
-                    register.Operate(this, "cmp", false, Compiler.LowByteOperand(RightOperand));
-                    WriteLine("\t" + lowByteBranch + "\t" + Anchor);
-                    WriteLine(Anchor + "_end:");
+                register.Load(this, Compiler.HighByteOperand(LeftOperand));
+                register.Operate(this, "cmp", false, Compiler.HighByteOperand(RightOperand));
+                if (Signed) {
+                    WriteLine("\t" + signedBranch + "\t" + Anchor);
                 }
-
-                switch (OperatorId) {
-                    case '<':
-                        WriteInstructions("blt", "bcs", "bcs");
-                        break;
-                    case '>':
-                        WriteInstructions("bgt", "bhi", "bhi");
-                        break;
-                    case Keyword.LessEqual:
-                        WriteInstructions("ble", "bcs", "bls");
-                        break;
-                    case Keyword.GreaterEqual:
-                        WriteInstructions("bge", "bhi", "bcc");
-                        break;
-                    default:
-                        throw new NotImplementedException();
+                else {
+                    WriteLine("\t" + unsignedBranch + "\t" + Anchor);
                 }
-                // Register value is not guaranteed due to branching
-                RemoveRegisterAssignment(register);
-            });
+                WriteLine("\tbne\t" + Anchor + "_end");
+
+                register.Load(this, Compiler.LowByteOperand(LeftOperand));
+                register.Operate(this, "cmp", false, Compiler.LowByteOperand(RightOperand));
+                WriteLine("\t" + lowByteBranch + "\t" + Anchor);
+                WriteLine(Anchor + "_end:");
+            }
+
+            switch (OperatorId) {
+                case '<':
+                    WriteInstructions("blt", "bcs", "bcs");
+                    break;
+                case '>':
+                    WriteInstructions("bgt", "bhi", "bhi");
+                    break;
+                case Keyword.LessEqual:
+                    WriteInstructions("ble", "bcs", "bls");
+                    break;
+                case Keyword.GreaterEqual:
+                    WriteInstructions("bge", "bhi", "bcc");
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            // Register value is not guaranteed due to branching
+            RemoveRegisterAssignment(register);
         }
     }
 }

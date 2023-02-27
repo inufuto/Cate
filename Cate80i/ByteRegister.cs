@@ -101,12 +101,12 @@ namespace Inu.Cate.I8080
         {
             if (Equals(this, A) && value == 0) {
                 if (instruction.IsConstantAssigned(this, value)) {
-                    instruction.ChangedRegisters.Add(this);
+                    instruction.AddChanged(this);
                     return;
                 }
                 instruction.WriteLine("\txra\ta");
                 instruction.SetRegisterConstant(this, value);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 return;
             }
             base.LoadConstant(instruction, value);
@@ -115,7 +115,7 @@ namespace Inu.Cate.I8080
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tmvi\t" + Name + "," + value);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -126,18 +126,17 @@ namespace Inu.Cate.I8080
                 LoadFromMemory(instruction, address);
                 return;
             }
-            if (instruction.IsRegisterInUse(A) && !instruction.IsRegisterInUse(WordRegister.Hl)) {
-                instruction.BeginRegister(WordRegister.Hl);
-                WordRegister.Hl.LoadConstant(instruction, address);
-                LoadIndirect(instruction, WordRegister.Hl, 0);
-                instruction.EndRegister(WordRegister.Hl);
+            if (instruction.IsRegisterReserved(A) && !instruction.IsRegisterReserved(WordRegister.Hl)) {
+                using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                    WordRegister.Hl.LoadConstant(instruction, address);
+                    LoadIndirect(instruction, WordRegister.Hl, 0);
+                }
                 return;
             }
-            ByteOperation.UsingRegister(instruction, A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.LoadFromMemory(instruction, address);
                 CopyFrom(instruction, A);
-            });
+            }
         }
 
         public override void StoreToMemory(Instruction instruction, Variable variable, int offset)
@@ -148,29 +147,27 @@ namespace Inu.Cate.I8080
                 instruction.SetVariableRegister(variable, offset, this);
                 return;
             }
-            if (!instruction.IsRegisterInUse(WordRegister.Hl) && !WordRegister.Hl.Contains(this)) {
-                instruction.BeginRegister(WordRegister.Hl);
-                WordRegister.Hl.LoadConstant(instruction, address);
-                StoreIndirect(instruction, WordRegister.Hl, 0);
-                instruction.EndRegister(WordRegister.Hl);
+            if (!instruction.IsRegisterReserved(WordRegister.Hl) && !WordRegister.Hl.Contains(this)) {
+                using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                    WordRegister.Hl.LoadConstant(instruction, address);
+                    StoreIndirect(instruction, WordRegister.Hl, 0);
+                }
                 return;
             }
-            ByteOperation.UsingRegister(instruction, A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, this);
                 A.StoreToMemory(instruction, address);
-            });
+            }
         }
 
-        protected override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
+        public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
             if (Conflicts(WordRegister.Hl)) {
                 var candidates = Registers.Where(r => !r.Conflicts(WordRegister.Hl)).ToList();
-                ByteOperation.UsingAnyRegister(instruction, candidates, register =>
-                {
-                    ((ByteRegister)register).LoadIndirect(instruction, pointer, offset);
-                    CopyFrom(instruction, register);
-                });
+                using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);
+                var register = reservation.ByteRegister;
+                register.LoadIndirect(instruction, pointer, offset);
+                CopyFrom(instruction, register);
                 return;
             }
 
@@ -193,8 +190,7 @@ namespace Inu.Cate.I8080
                     wordRegister.TemporaryOffset(instruction, offset, () => { LoadIndirect(instruction, wordRegister, 0); });
                     return;
                 }
-                WordOperation.UsingRegister(instruction, WordRegister.Hl, delegate ()
-                {
+                using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
                     if (pointerRegister != null) {
                         WordRegister.Hl.CopyFrom(instruction, (Cate.WordRegister)pointerRegister);
                     }
@@ -202,7 +198,7 @@ namespace Inu.Cate.I8080
                         WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
                     }
                     ViaHl();
-                });
+                }
             }
         }
 
@@ -221,34 +217,32 @@ namespace Inu.Cate.I8080
             if (offset == 0) {
                 if (Equals(pointerRegister, WordRegister.Hl)) {
                     instruction.WriteLine("\tmov\t" + this + ",m");
-                    instruction.ChangedRegisters.Add(this);
+                    instruction.AddChanged(this);
                     instruction.RemoveRegisterAssignment(this);
                     return;
                 }
                 if (Equals(this, A)) {
                     instruction.WriteLine("\tldax\t" + pointerRegister);
-                    instruction.ChangedRegisters.Add(this);
+                    instruction.AddChanged(this);
                     instruction.RemoveRegisterAssignment(this);
                     return;
                 }
-                ByteOperation.UsingRegister(instruction, A, () =>
-                {
+                using (ByteOperation.ReserveRegister(instruction, A)) {
                     instruction.WriteLine("\tldax\t" + pointerRegister);
-                    instruction.ChangedRegisters.Add(A);
+                    instruction.AddChanged(A);
                     instruction.RemoveRegisterAssignment(A);
                     CopyFrom(instruction, A);
-                    instruction.ChangedRegisters.Add(this);
+                    instruction.AddChanged(this);
                     instruction.RemoveRegisterAssignment(this);
-                });
+                }
                 return;
             }
             if (pointerRegister.Matches(this)) {
                 var candidates = Registers.Where(r => !r.Matches(pointerRegister)).ToList();
-                ByteOperation.UsingAnyRegister(instruction, candidates, temporaryRegister =>
-                {
-                    temporaryRegister.LoadIndirect(instruction, pointerRegister, offset);
-                    CopyFrom(instruction, temporaryRegister);
-                });
+                using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);
+                var temporaryRegister = reservation.ByteRegister;
+                temporaryRegister.LoadIndirect(instruction, pointerRegister, offset);
+                CopyFrom(instruction, temporaryRegister);
                 return;
             }
             pointerRegister.TemporaryOffset(instruction, offset, () =>
@@ -269,11 +263,10 @@ namespace Inu.Cate.I8080
                     instruction.WriteLine("\tstax\t" + pointerRegister);
                     return;
                 }
-                ByteOperation.UsingRegister(instruction, A, () =>
-                {
+                using (ByteOperation.ReserveRegister(instruction, A)) {
                     A.CopyFrom(instruction, this);
                     instruction.WriteLine("\tstax\t" + pointerRegister);
-                });
+                }
                 return;
             }
             pointerRegister.TemporaryOffset(instruction, offset, () =>
@@ -299,8 +292,7 @@ namespace Inu.Cate.I8080
                 StoreIndirect(instruction, wordRegister, offset);
                 return;
             }
-            WordOperation.UsingRegister(instruction, WordRegister.Hl, () =>
-            {
+            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
                 if (pointerRegister != null) {
                     WordRegister.Hl.CopyFrom(instruction, (Cate.WordRegister)pointerRegister);
                 }
@@ -308,7 +300,7 @@ namespace Inu.Cate.I8080
                     WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
                 }
                 StoreIndirect(instruction, WordRegister.Hl, offset);
-            });
+            }
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
@@ -316,7 +308,7 @@ namespace Inu.Cate.I8080
             Debug.Assert(Equals(A));
             instruction.WriteLine("\tlda\t" + label);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
@@ -330,11 +322,10 @@ namespace Inu.Cate.I8080
                 StoreA();
             }
             else {
-                ByteOperation.UsingRegister(instruction, A, () =>
-                {
+                using (ByteOperation.ReserveRegister(instruction, A)) {
                     A.CopyFrom(instruction, this);
                     StoreA();
-                });
+                }
             }
         }
 
@@ -343,7 +334,7 @@ namespace Inu.Cate.I8080
             if (Equals(sourceRegister, this)) return;
 
             instruction.WriteLine("\tmov\t" + this + "," + sourceRegister);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -352,7 +343,7 @@ namespace Inu.Cate.I8080
             for (var i = 0; i < count; ++i) {
                 instruction.WriteLine("\t" + operation + "\t" + Name);
             }
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
@@ -380,11 +371,11 @@ namespace Inu.Cate.I8080
                                 instruction.WriteLine("\t" + operation.Split('|')[0] + "\t" + byteRegister);
                                 return;
                             }
-                            WordOperation.UsingRegister(instruction, WordRegister.Hl, () =>
-                            {
+
+                            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
                                 WordRegister.Hl.LoadConstant(instruction, variable.MemoryAddress(offset));
                                 instruction.WriteLine("\t" + operation.Split('|')[0] + "\tm");
-                            });
+                            }
                             return;
                         }
                     case IndirectOperand indirectOperand: {
@@ -405,31 +396,28 @@ namespace Inu.Cate.I8080
                                         OperateIndirect(instruction, operation, offset);
                                     }
                                     else {
-                                        WordOperation.UsingRegister(instruction, WordRegister.Hl, () =>
-                                        {
+                                        using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
                                             WordRegister.Hl.CopyFrom(instruction, pointerRegister);
                                             OperateIndirect(instruction, operation, offset);
-                                        });
+                                        }
                                     }
                                     return;
                                 }
                             }
-                            WordOperation.UsingRegister(instruction, WordRegister.Hl, () =>
-                            {
+                            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
                                 WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
                                 OperateIndirect(instruction, operation, offset);
-                            });
+                            }
                             return;
                         }
                 }
                 throw new NotImplementedException();
             }
-            ByteOperation.UsingRegister(instruction, A, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, this);
                 A.Operate(instruction, operation, change, operand);
                 CopyFrom(instruction, A);
-            });
+            }
         }
 
         private void OperateIndirect(Instruction instruction, string operation, int offset)
@@ -447,11 +435,10 @@ namespace Inu.Cate.I8080
 
         public override void Operate(Instruction instruction, string operation, bool change, string operand)
         {
-            WordOperation.UsingRegister(instruction, WordRegister.Hl, () =>
-            {
+            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
                 WordRegister.Hl.LoadConstant(instruction, operand);
                 instruction.WriteLine("\t" + operation.Split('|')[0] + "\tm");
-            });
+            }
         }
     }
 }

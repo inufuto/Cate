@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -23,14 +22,14 @@ namespace Inu.Cate.Tms99
 
         protected override void OperateMemory(Instruction instruction, string operation, bool change, Variable variable, int offset, int count)
         {
-            UsingAnyRegister(instruction, register =>
-            {
+            using (var reservation = ReserveAnyRegister(instruction)) {
+                var register = reservation.ByteRegister;
                 register.LoadFromMemory(instruction, variable, offset);
                 for (var i = 0; i < count; ++i) {
                     instruction.WriteLine("\t" + operation + "\t" + register.Name);
                 }
                 register.StoreToMemory(instruction, variable, offset);
-            });
+            }
             if (change) {
                 instruction.RemoveVariableRegister(variable, offset);
             }
@@ -40,25 +39,24 @@ namespace Inu.Cate.Tms99
         protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
             int count)
         {
-            UsingAnyRegister(instruction, register =>
-            {
+            using (var reservation = ReserveAnyRegister(instruction)) {
+                var register = reservation.ByteRegister;
                 register.LoadIndirect(instruction, pointerRegister, offset);
                 for (var i = 0; i < count; ++i) {
                     instruction.WriteLine("\t" + operation + "\t" + register.Name);
                 }
                 register.StoreIndirect(instruction, pointerRegister, offset);
-            });
+            }
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
         {
             var candidates = Registers.Where(r => !r.Conflicts(pointerRegister)).ToList();
-            UsingAnyRegister(instruction, candidates, temporaryRegister =>
-            {
-                temporaryRegister.LoadConstant(instruction, value);
-                temporaryRegister.StoreIndirect(instruction, pointerRegister, offset);
-            });
+            using var reservation = ReserveAnyRegister(instruction, candidates);
+            var temporaryRegister = reservation.ByteRegister;
+            temporaryRegister.LoadConstant(instruction, value);
+            temporaryRegister.StoreIndirect(instruction, pointerRegister, offset);
         }
 
         public override void ClearByte(Instruction instruction, string label)
@@ -78,43 +76,40 @@ namespace Inu.Cate.Tms99
             }
             Debug.Assert(instance != null);
             var candidates = ByteRegister.Registers.Where(r => !rightOperand.Conflicts(r)).ToList();
-            instance.UsingAnyRegisterToChange(instruction, candidates, destinationOperand, leftOperand, destinationRegister =>
-            {
-                destinationRegister.Load(instruction, leftOperand);
-                var right = Compiler.OperandToString(instruction, rightOperand);
-                if (right != null) {
-                    instruction.WriteLine("\t" + operation + "\t" + right + "," + destinationRegister.Name);
-                    instruction.ChangedRegisters.Add(destinationRegister);
-                    instruction.RemoveRegisterAssignment(destinationRegister);
-                    destinationRegister.Store(instruction, destinationOperand);
-                }
-                else {
-                    instruction.BeginRegister(destinationRegister);
-                    instance.UsingAnyRegister(instruction, rightRegister =>
-                    {
-                        rightRegister.Load(instruction, rightOperand);
-                        //destinationRegister.Load(instruction, leftOperand);
-                        instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," + destinationRegister.Name);
-                        instruction.ChangedRegisters.Add(destinationRegister);
-                        instruction.RemoveRegisterAssignment(destinationRegister);
-                        destinationRegister.Store(instruction, destinationOperand);
-                    });
-                    instruction.EndRegister(destinationRegister);
-                }
-            });
+            using var destination = instance.ReserveAnyRegister(instruction, candidates, destinationOperand, leftOperand);
+            var destinationRegister = destination.ByteRegister;
+            destinationRegister.Load(instruction, leftOperand);
+            var right = Compiler.OperandToString(instruction, rightOperand);
+            if (right != null) {
+                instruction.WriteLine("\t" + operation + "\t" + right + "," + destinationRegister.Name);
+                instruction.AddChanged(destinationRegister);
+                instruction.RemoveRegisterAssignment(destinationRegister);
+                destinationRegister.Store(instruction, destinationOperand);
+            }
+            else {
+                //instruction.BeginRegister(destinationRegister);
+                using var rightReservation = instance.ReserveAnyRegister(instruction);
+                var rightRegister = rightReservation.ByteRegister;
+                rightRegister.Load(instruction, rightOperand);
+                //destinationRegister.Load(instruction, leftOperand);
+                instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," + destinationRegister.Name);
+                instruction.AddChanged(destinationRegister);
+                instruction.RemoveRegisterAssignment(destinationRegister);
+                destinationRegister.Store(instruction, destinationOperand);
+                //instruction.EndRegister(destinationRegister);
+            }
         }
 
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, string value)
         {
             Debug.Assert(instance != null);
-            instance.UsingAnyRegisterToChange(instruction, destinationOperand, leftOperand, destinationRegister =>
-            {
-                destinationRegister.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + destinationRegister.Name + "," + value);
-                destinationRegister.Store(instruction, destinationOperand);
-                instruction.ChangedRegisters.Add(destinationRegister);
-                instruction.RemoveRegisterAssignment(destinationRegister);
-            });
+            using var reservation = instance.ReserveAnyRegister(instruction, destinationOperand, leftOperand);
+            var destinationRegister = reservation.ByteRegister;
+            destinationRegister.Load(instruction, leftOperand);
+            instruction.WriteLine("\t" + operation + "\t" + destinationRegister.Name + "," + value);
+            destinationRegister.Store(instruction, destinationOperand);
+            instruction.AddChanged(destinationRegister);
+            instruction.RemoveRegisterAssignment(destinationRegister);
         }
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)
         {
@@ -132,12 +127,11 @@ namespace Inu.Cate.Tms99
                     instruction.WriteLine("\t" + operation + "\t" + left + "," + right);
                     return;
                 }
-                instance.UsingAnyRegister(instruction, rightRegister =>
-                {
-                    rightRegister.Load(instruction, rightOperand);
-                    instruction.WriteLine("\t" + operation + "\t" + left + "," + rightRegister.Name);
-                    rightRegister.Store(instruction, rightOperand);
-                });
+                using var reservation = instance.ReserveAnyRegister(instruction);
+                var rightRegister = reservation.ByteRegister;
+                rightRegister.Load(instruction, rightOperand);
+                instruction.WriteLine("\t" + operation + "\t" + left + "," + rightRegister.Name);
+                rightRegister.Store(instruction, rightOperand);
                 return;
             }
 
@@ -150,35 +144,34 @@ namespace Inu.Cate.Tms99
                 }
                 else {
                     Debug.Assert(instance != null);
-                    instance.UsingAnyRegister(instruction, rightRegister =>
-                    {
-                        rightRegister.Load(instruction, rightOperand);
-                        instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + rightRegister.Name);
-                        rightRegister.Store(instruction, rightOperand);
-                    });
+                    using var reservation = instance.ReserveAnyRegister(instruction);
+                    var rightRegister = reservation.ByteRegister;
+                    rightRegister.Load(instruction, rightOperand);
+                    instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + rightRegister.Name);
+                    rightRegister.Store(instruction, rightOperand);
                 }
 
-                if (rightOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register == null) {
+                if (rightOperand is IndirectOperand { Variable: { Register: null } } indirectOperand) {
                     var offset = indirectOperand.Offset;
                     var candidates = WordRegister.Registers.Where(r => r.IsOffsetInRange(offset)).ToList();
-                    Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, candidates, pointerRegister =>
-                    {
-                        pointerRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
-                        if (offset == 0) {
-                            instruction.WriteLine("\t" + operation + "\t" + register.Name + ",*" + pointerRegister.Name);
-                        }
-                        else {
-                            instruction.WriteLine("\t" + operation + "\t" + register.Name + ",@" + offset + "(" + pointerRegister.Name + ")");
-                        }
-                    });
+                    using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                    var pointerRegister = reservation.WordRegister;
+                    pointerRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
+                    if (offset == 0) {
+                        instruction.WriteLine("\t" + operation + "\t" + register.Name + ",*" + pointerRegister.Name);
+                    }
+                    else {
+                        instruction.WriteLine("\t" + operation + "\t" + register.Name + ",@" + offset + "(" + pointerRegister.Name + ")");
+                    }
                 }
             }
-
             if (leftOperand.Register is ByteRegister leftRegister) {
                 OperateRegister(leftRegister);
                 return;
             }
-            instance.UsingAnyRegister(instruction, OperateRegister);
+            using (var reservation = instance.ReserveAnyRegister(instruction)) {
+                OperateRegister(reservation.ByteRegister);
+            }
         }
 
         public static void OperateConstant(Instruction instruction, string operation, Operand leftOperand, int value)
@@ -194,7 +187,8 @@ namespace Inu.Cate.Tms99
                 OperateRegister(leftRegister);
                 return;
             }
-            instance.UsingAnyRegister(instruction, OperateRegister);
+            using var reservation = instance.ReserveAnyRegister(instruction);
+            OperateRegister(reservation.ByteRegister);
         }
     }
 }

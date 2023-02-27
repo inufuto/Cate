@@ -27,7 +27,7 @@ namespace Inu.Cate.Z80
                 ExchangeOperands();
             }
 
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '|' => "or\t",
                 '^' => "xor\t",
@@ -36,13 +36,12 @@ namespace Inu.Cate.Z80
             };
             ResultFlags |= Instruction.Flag.Z;
 
-            ByteRegister.Using(this,ByteRegister.A, LeftOperand, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 ByteRegister.A.Operate(this, operation, true, RightOperand);
                 ByteRegister.A.Store(this, DestinationOperand);
-                ChangedRegisters.Add(ByteRegister.A);
-            });
+                AddChanged(ByteRegister.A);
+            }
         }
     }
 }

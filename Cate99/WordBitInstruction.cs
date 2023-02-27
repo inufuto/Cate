@@ -17,11 +17,11 @@ namespace Inu.Cate.Tms99
                     Tms99.WordOperation.Operate(this, "soc", DestinationOperand, LeftOperand, RightOperand);
                     return;
                 case '&':
-                    ByteOperation.UsingAnyRegisterToChange(this, DestinationOperand, LeftOperand, destinationRegister =>
-                    {
+                    using (var destination = ByteOperation.ReserveAnyRegisterToChange(this, DestinationOperand, LeftOperand)) {
+                        var destinationRegister = destination.ByteRegister;
                         var candidates = ByteOperation.Registers.Where(r => !Equals(r, destinationRegister)).ToList();
-                        ByteOperation.UsingAnyRegister(this, candidates, null, RightOperand, sourceRegister =>
-                        {
+                        using (var source = ByteOperation.ReserveAnyRegister(this, candidates, null, RightOperand)) {
+                            var sourceRegister = source.ByteRegister;
                             if (Equals(LeftOperand.Register, destinationRegister)) {
                                 destinationRegister.Load(this, LeftOperand);
                                 sourceRegister.Load(this, RightOperand);
@@ -32,11 +32,11 @@ namespace Inu.Cate.Tms99
                             }
 
                             WriteLine("\tinv\t" + sourceRegister.Name);
-                            ChangedRegisters.Add(sourceRegister);
+                            AddChanged(sourceRegister);
                             WriteLine("\tszc\t" + sourceRegister.Name + "," + destinationRegister.Name);
                             destinationRegister.Store(this, DestinationOperand);
-                        });
-                    });
+                        }
+                    }
                     break;
                 case '^': {
                         void OperateRegister(WordRegister register)
@@ -52,10 +52,8 @@ namespace Inu.Cate.Tms99
                             OperateRegister(leftRegister);
                         }
                         else {
-                            WordOperation.UsingAnyRegister(this, temporaryRegister =>
-                            {
-                                OperateRegister((WordRegister)temporaryRegister);
-                            });
+                            using var reservation = WordOperation.ReserveAnyRegister(this);
+                            OperateRegister((WordRegister)reservation.WordRegister);
                         }
 
                         break;

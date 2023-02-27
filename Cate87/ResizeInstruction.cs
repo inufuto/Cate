@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Inu.Cate.MuCom87
+﻿namespace Inu.Cate.MuCom87
 {
     internal class ResizeInstruction : Cate.ResizeInstruction
     {
@@ -8,19 +6,18 @@ namespace Inu.Cate.MuCom87
 
         protected override void ExpandSigned()
         {
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, SourceOperand);
                 ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                 WriteLine("\tshal");
                 var candidates = ByteOperation.RegistersOtherThan(ByteRegister.A);
-                ByteOperation.UsingAnyRegister(this, candidates, temporary =>
-                {
+                using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates)) {
+                    var temporary = reservation.ByteRegister;
                     temporary.CopyFrom(this, ByteRegister.A);
                     WriteLine("\tsbb\ta," + temporary.Name);
-                });
+                }
                 ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-            });
+            }
         }
     }
 }

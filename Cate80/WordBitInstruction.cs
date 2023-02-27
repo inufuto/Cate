@@ -25,7 +25,7 @@ namespace Inu.Cate.Z80
                 ExchangeOperands();
             }
 
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '|' => "or\t",
                 '^' => "xor\t",
@@ -33,32 +33,30 @@ namespace Inu.Cate.Z80
                 _ => throw new ArgumentException(OperatorId.ToString())
             };
 
-            WordRegister.UsingAny(this, WordRegister.PairRegisters, DestinationOperand, destinationRegister =>
-             {
-                 WordRegister.UsingAny(this, WordRegister.PairRegisters, LeftOperand, leftRegister =>
-                 {
-                     leftRegister.Load(this, LeftOperand);
-                     if (RightOperand is IntegerOperand integerOperand) {
-                         var value = integerOperand.IntegerValue;
-                         Operate(operation, destinationRegister, leftRegister, "low " + value, "high " + value);
-                         return;
-                     }
-                     WordRegister.UsingAny(this, WordRegister.PairRegisters, RightOperand, rightRegister =>
-                     {
-                         rightRegister.Load(this, RightOperand);
-                         Debug.Assert(rightRegister.Low != null && rightRegister.High != null);
-                         Operate(operation, destinationRegister, leftRegister, rightRegister.Low.Name, rightRegister.High.Name);
-                     });
-                 });
-                 destinationRegister.Store(this, DestinationOperand);
-             });
+            using var destinationReservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, DestinationOperand, null);
+            var destinationRegister = destinationReservation.WordRegister;
+            using (var leftReservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, null, LeftOperand)) {
+                var leftRegister = leftReservation.WordRegister;
+                leftRegister.Load(this, LeftOperand);
+                if (RightOperand is IntegerOperand integerOperand) {
+                    var value = integerOperand.IntegerValue;
+                    Operate(operation, destinationRegister, leftRegister, "low " + value, "high " + value);
+                    return;
+                }
+                using (var rightReservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, null, RightOperand)) {
+                    var rightRegister = rightReservation.WordRegister;
+                    rightRegister.Load(this, RightOperand);
+                    Debug.Assert(rightRegister.Low != null && rightRegister.High != null);
+                    Operate(operation, destinationRegister, leftRegister, rightRegister.Low.Name, rightRegister.High.Name);
+                }
+            }
+            destinationRegister.Store(this, DestinationOperand);
         }
 
         private void Operate(string operation, Cate.WordRegister destinationRegister, Cate.WordRegister leftRegister,
             string rightLow, string rightHigh)
         {
-            ByteRegister.UsingAccumulator(this, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 Debug.Assert(leftRegister.Low != null && leftRegister.High != null);
                 Debug.Assert(destinationRegister.Low != null && destinationRegister.High != null);
                 ByteRegister.A.CopyFrom(this, leftRegister.Low);
@@ -67,7 +65,7 @@ namespace Inu.Cate.Z80
                 ByteRegister.A.CopyFrom(this, leftRegister.High);
                 WriteLine("\t" + operation + rightHigh);
                 destinationRegister.High.CopyFrom(this, ByteRegister.A);
-            });
+            }
         }
     }
 }

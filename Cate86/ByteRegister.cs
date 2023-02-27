@@ -78,14 +78,14 @@ namespace Inu.Cate.I8086
                 base.LoadConstant(instruction, value);
             }
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tmov " + this + ",[" + label + "]");
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
@@ -110,7 +110,7 @@ namespace Inu.Cate.I8086
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
             instruction.WriteLine("\tmov " + this + ",[" + WordRegister.AsPointer(pointerRegister) + addition + "]");
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
@@ -124,7 +124,7 @@ namespace Inu.Cate.I8086
         {
             instruction.WriteLine("\tmov " + this + "," + sourceRegister);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, int count)
@@ -132,7 +132,7 @@ namespace Inu.Cate.I8086
             for (var i = 0; i < count; ++i) {
                 instruction.WriteLine("\t" + operation + this);
             }
-            //instruction.ChangedRegisters.Add(this);
+            //instruction.AddChanged(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
@@ -169,13 +169,11 @@ namespace Inu.Cate.I8086
                                 ForRegister(pointerRegister);
                                 return;
                             }
-                            WordOperation.UsingAnyRegister(instruction, WordRegister.PointerRegisters,
-                                temporaryRegister =>
-                            {
-                                temporaryRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
-                                instruction.SetVariableRegister(indirectOperand.Variable, 0, temporaryRegister);
-                                ForRegister(temporaryRegister);
-                            });
+                            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.PointerRegisters);
+                            var temporaryRegister = reservation.WordRegister;
+                            temporaryRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
+                            instruction.SetVariableRegister(indirectOperand.Variable, 0, temporaryRegister);
+                            ForRegister(temporaryRegister);
                             return;
                         }
                     }
@@ -187,7 +185,7 @@ namespace Inu.Cate.I8086
         {
             instruction.WriteLine("\t" + operation + this + "," + operand);
             if (change) {
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
             }
         }

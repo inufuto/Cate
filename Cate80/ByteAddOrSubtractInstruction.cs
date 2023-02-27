@@ -37,7 +37,7 @@ namespace Inu.Cate.Z80
             if (IncrementOrDecrement())
                 return;
 
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '+' => "add\ta,",
                 '-' => "sub\t",
@@ -47,25 +47,21 @@ namespace Inu.Cate.Z80
 
             if (Equals(RightOperand.Register, ByteRegister.A)) {
                 var candidates = ByteRegister.Registers.Where(r => !Equals(r, ByteRegister.A)).ToList();
-                ByteOperation.UsingAnyRegister(this, candidates, byteRegister =>
-                {
-                    byteRegister.CopyFrom(this, ByteRegister.A);
-                    ByteRegister.A.Load(this, LeftOperand);
-                    WriteLine("\t" + operation + byteRegister);
-                    ByteRegister.A.Store(this, DestinationOperand);
-                    ChangedRegisters.Add(ByteRegister.A);
-                });
+                using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
+                var byteRegister = reservation.ByteRegister;
+                byteRegister.CopyFrom(this, ByteRegister.A);
+                ByteRegister.A.Load(this, LeftOperand);
+                WriteLine("\t" + operation + byteRegister);
+                ByteRegister.A.Store(this, DestinationOperand);
+                AddChanged(ByteRegister.A);
                 return;
             }
-
-
-            ByteRegister.Using(this, ByteRegister.A, LeftOperand, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 ByteRegister.A.Operate(this, operation, true, RightOperand);
                 ByteRegister.A.Store(this, DestinationOperand);
-                ChangedRegisters.Add(ByteRegister.A);
-            });
+                AddChanged(ByteRegister.A);
+            }
         }
 
 

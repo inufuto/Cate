@@ -16,28 +16,28 @@ namespace Inu.Cate.Tms99
             StoreParametersDirect();
         }
 
-        public override bool IsRegisterInUse(Register register)
-        {
-            foreach (var parameterAssignment in ParameterAssignments) {
-                if (parameterAssignment.Done) {
-                    var parameterAssignmentRegister = parameterAssignment.Register;
-                    if (parameterAssignmentRegister != null) {
-                        if (parameterAssignmentRegister.Conflicts(register)) return true;
-                    }
-                    var parameterRegister = parameterAssignment.Parameter.Register;
-                    if (parameterRegister != null && parameterRegister.Conflicts(register)) return true;
-                }
-                else {
-                    var operand = parameterAssignment.Operand;
-                    if (operand.Register != null) {
-                        if (register.Conflicts(operand.Register)) return true;
-                    }
-                    if (!(operand is IndirectOperand indirectOperand) ||
-                        indirectOperand.Variable.Register == null) continue;
-                    if (register.Conflicts(indirectOperand.Variable.Register)) return true;
-                }
-            }
-            return base.IsRegisterInUse(register);
-        }
+        //public override bool IsRegisterInUse(Register register)
+        //{
+        //    foreach (var parameterAssignment in ParameterAssignments) {
+        //        if (parameterAssignment.Done) {
+        //            var parameterAssignmentRegister = parameterAssignment.Register;
+        //            if (parameterAssignmentRegister != null) {
+        //                if (parameterAssignmentRegister.Conflicts(register)) return true;
+        //            }
+        //            var parameterRegister = parameterAssignment.Parameter.Register;
+        //            if (parameterRegister != null && parameterRegister.Conflicts(register)) return true;
+        //        }
+        //        else {
+        //            var operand = parameterAssignment.Operand;
+        //            if (operand.Register != null) {
+        //                if (register.Conflicts(operand.Register)) return true;
+        //            }
+        //            if (!(operand is IndirectOperand indirectOperand) ||
+        //                indirectOperand.Variable.Register == null) continue;
+        //            if (register.Conflicts(indirectOperand.Variable.Register)) return true;
+        //        }
+        //    }
+        //    return base.IsRegisterInUse(register);
+        //}
     }
 }

@@ -24,11 +24,10 @@ namespace Inu.Cate.Mc6809
                 WriteLine("\tst" + leftRegister + "\t" + DirectPage.Word);
             }
             else {
-                WordOperation.UsingAnyRegister(this, WordRegister.Registers, register =>
-                {
-                    register.Load(this, LeftOperand);
-                    WriteLine("\tst" + register.Name + "\t" + DirectPage.Word);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers);
+                var register = reservation.WordRegister;
+                register.Load(this, LeftOperand);
+                WriteLine("\tst" + register.Name + "\t" + DirectPage.Word);
             }
 
             void ActToRegister()
@@ -63,24 +62,24 @@ namespace Inu.Cate.Mc6809
                 }
                 WordRegister.D.Store(this, DestinationOperand);
             }
-
             if (DestinationOperand.Register is WordRegister destinationRegister) {
                 if (Equals(destinationRegister, WordRegister.D)) {
                     ActToRegister();
                     goto end;
                 }
-                WordOperation.UsingRegister(this, WordRegister.D, () =>
-                {
+
+                using (WordOperation.ReserveRegister(this, WordRegister.D)) {
                     ActToRegister();
                     WriteLine("\ttfr\td, " + destinationRegister.Name);
-                });
+                }
                 goto end;
             }
-            WordOperation.UsingRegister(this, WordRegister.D, ActToRegister);
-
-            end:
+            using (WordOperation.ReserveRegister(this, WordRegister.D)) {
+                ActToRegister();
+            }
+        end:
             RemoveRegisterAssignment(WordRegister.D);
-            ChangedRegisters.Add(WordRegister.D);
+            AddChanged(WordRegister.D);
         }
 
         private void ClearDestination()
@@ -89,12 +88,10 @@ namespace Inu.Cate.Mc6809
                 WriteLine("\tld" + destinationRegister.Name + ",#0");
                 return;
             }
-
-            WordOperation.UsingAnyRegister(this, WordRegister.PointerOrder, register =>
-            {
-                register.LoadConstant(this, 0);
-                register.Store(this, DestinationOperand);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PointerOrder);
+            var register = reservation.WordRegister;
+            register.LoadConstant(this, 0);
+            register.Store(this, DestinationOperand);
         }
 
         private void Shift()
@@ -130,12 +127,9 @@ namespace Inu.Cate.Mc6809
                         ActToRegister();
                         return;
                     }
-
-                    WordOperation.UsingRegister(this, WordRegister.D, () =>
-                    {
-                        WriteLine("\ttfr\t" + register.Name + ",d");
-                        ActToRegister();
-                    });
+                    using var reservation = WordOperation.ReserveRegister(this, WordRegister.D);
+                    WriteLine("\ttfr\t" + register.Name + ",d");
+                    ActToRegister();
                     return;
                 }
 
@@ -150,11 +144,10 @@ namespace Inu.Cate.Mc6809
             }
             if (LeftOperand.Register is WordRegister leftRegister) {
                 if (!Equals(leftRegister, WordRegister.D)) {
-                    WordOperation.UsingRegister(this, WordRegister.D, () =>
-                    {
+                    using (WordOperation.ReserveRegister(this, WordRegister.D)) {
                         WriteLine("\ttfr\t" + leftRegister.Name + ",d");
                         ActToRegister();
-                    });
+                    }
                     return;
                 }
 

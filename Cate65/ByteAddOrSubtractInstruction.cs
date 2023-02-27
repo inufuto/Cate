@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace Inu.Cate.Mos6502
 {
-
     internal class ByteAddOrSubtractInstruction : AddOrSubtractInstruction
     {
         public ByteAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
@@ -63,16 +62,15 @@ namespace Inu.Cate.Mos6502
             }
 
             var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.Y };
-            ByteOperation.UsingAnyRegister(this, candidates, DestinationOperand, LeftOperand, register =>
-            {
-                register.Load(this, LeftOperand);
-                for (var i = 0; i < count; ++i) {
-                    WriteLine("\t" + registerOperation + register);
-                }
-                register.Store(this, DestinationOperand);
-                RemoveRegisterAssignment(register);
-                ChangedRegisters.Add(register);
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, DestinationOperand, LeftOperand);
+            var register = reservation.ByteRegister;
+            register.Load(this, LeftOperand);
+            for (var i = 0; i < count; ++i) {
+                WriteLine("\t" + registerOperation + register);
+            }
+            register.Store(this, DestinationOperand);
+            RemoveRegisterAssignment(register);
+            AddChanged(register);
         }
     }
 }

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Inu.Cate.I8086
 {
@@ -18,11 +16,11 @@ namespace Inu.Cate.I8086
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            ByteOperation.UsingRegister(this, ByteRegister.Cl, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.Cl)) {
                 ByteRegister.Cl.Load(this, counterOperand);
+                CancelOperandRegister(counterOperand);
                 Operate(null);
-            });
+            }
         }
 
         private void Operate(int? count)
@@ -46,24 +44,8 @@ namespace Inu.Cate.I8086
                 return;
             }
             if (DestinationOperand.Type.ByteCount == 1) {
-                ByteOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, temporaryRegister =>
-                  {
-                      temporaryRegister.Load(this, LeftOperand);
-                      if (count != null) {
-                          for (var i = 0; i < count; ++i) {
-                              WriteLine("\t" + operation + temporaryRegister + ",1");
-                          }
-                      }
-                      else {
-                          WriteLine("\t" + operation + temporaryRegister + ",cl");
-                      }
-                      temporaryRegister.Store(this, DestinationOperand);
-                      ChangedRegisters.Add(temporaryRegister);
-                  });
-                return;
-            }
-            WordOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, temporaryRegister =>
-            {
+                using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+                var temporaryRegister = reservation.ByteRegister;
                 temporaryRegister.Load(this, LeftOperand);
                 if (count != null) {
                     for (var i = 0; i < count; ++i) {
@@ -74,8 +56,24 @@ namespace Inu.Cate.I8086
                     WriteLine("\t" + operation + temporaryRegister + ",cl");
                 }
                 temporaryRegister.Store(this, DestinationOperand);
-                ChangedRegisters.Add(temporaryRegister);
-            });
+                AddChanged(temporaryRegister);
+                return;
+            }
+
+            using (var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand)) {
+                var temporaryRegister = reservation.WordRegister;
+                temporaryRegister.Load(this, LeftOperand);
+                if (count != null) {
+                    for (var i = 0; i < count; ++i) {
+                        WriteLine("\t" + operation + temporaryRegister + ",1");
+                    }
+                }
+                else {
+                    WriteLine("\t" + operation + temporaryRegister + ",cl");
+                }
+                temporaryRegister.Store(this, DestinationOperand);
+                AddChanged(temporaryRegister);
+            }
         }
     }
 }

@@ -90,11 +90,11 @@ namespace Inu.Cate.Mc6809
                 }
                 return;
             }
-            Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, WordRegister.IndexRegisters, pointerRegister =>
-            {
-                pointerRegister.LoadFromMemory(instruction, pointer, 0);
-                OperateIndirect(instruction, operation, pointerRegister, offset, count);
-            });
+
+            using var reservation = Cate.Compiler.Instance.WordOperation.ReserveAnyRegister(instruction, WordRegister.IndexRegisters);
+            var pointerRegister = reservation.WordRegister;
+            pointerRegister.LoadFromMemory(instruction, pointer, 0);
+            OperateIndirect(instruction, operation, pointerRegister, offset, count);
         }
     }
 }

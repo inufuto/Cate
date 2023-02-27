@@ -25,12 +25,12 @@ namespace Inu.Cate
             RightOperand.AddUsage(function.NextAddress, Variable.Usage.Read);
         }
 
-        public override void AddSourceRegisters()
+        public override void ReserveOperandRegisters()
         {
-            AddSourceRegister(LeftOperand);
-            AddSourceRegister(RightOperand);
+            ReserveOperandRegister(LeftOperand);
+            ReserveOperandRegister(RightOperand);
             if (DestinationOperand is IndirectOperand indirectOperand) {
-                AddSourceRegister(indirectOperand);
+                ReserveOperandRegister(indirectOperand);
             }
         }
 
@@ -74,7 +74,9 @@ namespace Inu.Cate
                 RemoveRegisterAssignment(register);
                 register.Store(this, DestinationOperand);
             }
-            ByteOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, ViaRegister);
+
+            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+            ViaRegister(reservation.ByteRegister);
         }
     }
 }

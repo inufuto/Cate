@@ -45,6 +45,11 @@ namespace Inu.Cate.Tms99
             return (WordRegister)register;
         }
 
+        public override bool Contains(Cate.ByteRegister byteRegister)
+        {
+            return byteRegister.Equals(ByteRegister);
+        }
+
         public override bool Conflicts(Register? register)
         {
             if (register is ByteRegister byteRegister) {
@@ -127,7 +132,7 @@ namespace Inu.Cate.Tms99
         public override void Add(Instruction instruction, int offset)
         {
             instruction.WriteLine("\tai\t" + Name + "," + offset);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -138,7 +143,7 @@ namespace Inu.Cate.Tms99
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tli\t" + Name + "," + value);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -146,7 +151,7 @@ namespace Inu.Cate.Tms99
         {
             if (value == 0) {
                 Clear(instruction);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
                 return;
             }
@@ -156,7 +161,7 @@ namespace Inu.Cate.Tms99
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tmov\t@" + label + "," + Name);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -201,11 +206,10 @@ namespace Inu.Cate.Tms99
                             LoadIndirect(instruction, pointerRegister, offset);
                             return;
                         }
-                        WordOperation.UsingAnyRegister(instruction, WordOperation.PointerRegisters(offset), temporaryRegister =>
-                        {
-                            temporaryRegister.LoadFromMemory(instruction, pointer, 0);
-                            LoadIndirect(instruction, temporaryRegister, offset);
-                        });
+                        using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.PointerRegisters(offset));
+                        var temporaryRegister = reservation.WordRegister;
+                        temporaryRegister.LoadFromMemory(instruction, pointer, 0);
+                        LoadIndirect(instruction, temporaryRegister, offset);
                         return;
                     }
             }
@@ -238,12 +242,10 @@ namespace Inu.Cate.Tms99
                                 destinationPointerRegister, offset);
                             return;
                         }
-                        WordOperation.UsingAnyRegister(instruction, WordOperation.PointerRegisters(offset),
-                            temporaryRegister =>
-                        {
-                            temporaryRegister.LoadFromMemory(instruction, pointer, 0);
-                            StoreIndirect(instruction, temporaryRegister, offset);
-                        });
+                        using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.PointerRegisters(offset));
+                        var temporaryRegister = reservation.WordRegister;
+                        temporaryRegister.LoadFromMemory(instruction, pointer, 0);
+                        StoreIndirect(instruction, temporaryRegister, offset);
                         return;
                     }
             }
@@ -254,25 +256,23 @@ namespace Inu.Cate.Tms99
         {
             if (offset == 0) {
                 instruction.WriteLine("\tmov\t*" + pointerRegister.Name + "," + Name);
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
             }
             else {
                 void ForRegister(Register wordRegister)
                 {
                     instruction.WriteLine("\tmov\t@" + offset + "(" + wordRegister.Name + ")," + Name);
-                    instruction.ChangedRegisters.Add(this);
+                    instruction.AddChanged(this);
                 }
 
                 if (pointerRegister.IsOffsetInRange(offset)) {
                     ForRegister(pointerRegister);
                 }
                 else {
-                    WordOperation.UsingAnyRegister(instruction, WordOperation.PointerRegisters(offset),
-                        temporaryRegister =>
-                    {
-                        temporaryRegister.CopyFrom(instruction, pointerRegister);
-                        ForRegister(temporaryRegister);
-                    });
+                    using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.PointerRegisters(offset));
+                    var temporaryRegister = reservation.WordRegister;
+                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                    ForRegister(temporaryRegister);
                 }
             }
             instruction.RemoveRegisterAssignment(this);
@@ -284,7 +284,7 @@ namespace Inu.Cate.Tms99
                 instruction.WriteLine("\tmov\t" + Name + ",*" + pointerRegister);
             }
             else {
-                void ForRegister(Cate.WordRegister wordRegister)
+                void ForRegister(Register wordRegister)
                 {
                     instruction.WriteLine("\tmov\t" + Name + ",@" + offset + "(" + wordRegister.Name + ")");
                 }
@@ -293,12 +293,10 @@ namespace Inu.Cate.Tms99
                     ForRegister(pointerRegister);
                 }
                 else {
-                    WordOperation.UsingAnyRegister(instruction, WordOperation.PointerRegisters(offset),
-                        temporaryRegister =>
-                        {
-                            temporaryRegister.CopyFrom(instruction, pointerRegister);
-                            ForRegister(temporaryRegister);
-                        });
+                    using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.PointerRegisters(offset));
+                    var temporaryRegister = reservation.WordRegister;
+                    temporaryRegister.CopyFrom(instruction, pointerRegister);
+                    ForRegister(temporaryRegister);
                 }
             }
         }
@@ -307,7 +305,7 @@ namespace Inu.Cate.Tms99
         {
             instruction.WriteLine("\tmov\t" + sourceRegister.Name + "," + Name);
             instruction.RemoveRegisterAssignment(this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)

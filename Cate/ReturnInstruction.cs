@@ -29,10 +29,10 @@ namespace Inu.Cate
             return Function.Instructions.Last() != this;
         }
 
-        public override void AddSourceRegisters()
+        public override void ReserveOperandRegisters()
         {
             if (SourceOperand != null) {
-                AddSourceRegister(SourceOperand);
+                ReserveOperandRegister(SourceOperand);
             }
         }
 
@@ -46,9 +46,11 @@ namespace Inu.Cate
             switch (register) {
                 case ByteRegister byteRegister:
                     byteRegister.Load(this, SourceOperand);
+                    RemoveChanged(byteRegister);
                     break;
                 case WordRegister wordRegister:
                     wordRegister.Load(this, SourceOperand);
+                    RemoveChanged(wordRegister);
                     break;
             }
         }

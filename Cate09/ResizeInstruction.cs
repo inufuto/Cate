@@ -7,12 +7,11 @@
 
         protected override void ExpandSigned()
         {
-            WordOperation.UsingRegister(this, WordRegister.D, () =>
-            {
+            using (WordOperation.ReserveRegister(this, WordRegister.D)) {
                 ByteRegister.B.Load(this, SourceOperand);
                 WriteLine("\tsex");
                 WordRegister.D.Store(this, DestinationOperand);
-            });
+            }
         }
 
         protected override void ClearHighByte(Cate.ByteRegister register, Operand operand)

@@ -28,18 +28,16 @@ namespace Inu.Cate.Mc6800
                     : "cate.ShiftRightA",
                 _ => throw new NotImplementedException()
             };
-            ByteOperation.UsingRegister(this, ByteRegister.B, RightOperand,  () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.B, RightOperand)) {
                 ByteRegister.B.Load(this, RightOperand);
-                ByteOperation.UsingRegister(this, ByteRegister.A,LeftOperand, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
                     ByteRegister.A.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
                     RemoveRegisterAssignment(ByteRegister.A);
-                    ChangedRegisters.Add(ByteRegister.A);
+                    AddChanged(ByteRegister.A);
                     ByteRegister.A.Store(this, DestinationOperand);
-                });
-            });
+                }
+            }
         }
     }
 }

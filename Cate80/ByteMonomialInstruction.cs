@@ -11,7 +11,7 @@ namespace Inu.Cate.Z80
 
         public override void BuildAssembly()
         {
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '-' => "neg",
                 '~' => "cpl",
@@ -23,13 +23,11 @@ namespace Inu.Cate.Z80
                 ByteRegister.A.Store(this, DestinationOperand);
                 return;
             }
-
-            ByteRegister.UsingAccumulator(this, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, SourceOperand);
                 WriteLine("\t" + operation);
                 ByteRegister.A.Store(this, DestinationOperand);
-            });
+            }
         }
     }
 }

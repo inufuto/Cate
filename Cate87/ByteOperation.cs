@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Inu.Cate.MuCom87
 {
@@ -27,14 +26,15 @@ namespace Inu.Cate.MuCom87
                 ByteRegister.A.StoreToMemory(instruction, variable, offset);
                 return;
             }
-            Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, WordRegister.Registers, wordRegister =>
-            {
+
+            using (var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers)) {
+                var wordRegister = reservation.WordRegister;
                 wordRegister.LoadFromMemory(instruction, address);
                 for (var i = 0; i < count; ++i) {
                     Debug.Assert(wordRegister.High != null);
                     instruction.WriteLine("\t" + operation + "x\t" + wordRegister.High.Name);
                 }
-            });
+            }
             if (change) {
                 instruction.RemoveVariableRegister(variable, offset);
             }
@@ -43,12 +43,11 @@ namespace Inu.Cate.MuCom87
         protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
             int count)
         {
-            UsingRegister(instruction, ByteRegister.A, () =>
-             {
-                 ByteRegister.A.LoadFromMemory(instruction, pointerRegister.Name);
-                 ByteRegister.A.Operate(instruction, operation, change, count);
-                 ByteRegister.A.StoreToMemory(instruction, pointerRegister.Name);
-             });
+            using (ReserveRegister(instruction, ByteRegister.A)) {
+                ByteRegister.A.LoadFromMemory(instruction, pointerRegister.Name);
+                ByteRegister.A.Operate(instruction, operation, change, count);
+                ByteRegister.A.StoreToMemory(instruction, pointerRegister.Name);
+            }
         }
 
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
@@ -73,7 +72,7 @@ namespace Inu.Cate.MuCom87
             instruction.RemoveRegisterAssignment(ByteRegister.A);
             instruction.WriteLine("\txra\ta,a");
             instruction.WriteLine("\tmov\t" + label + ",a");
-            instruction.ChangedRegisters.Add(ByteRegister.A);
+            instruction.AddChanged(ByteRegister.A);
         }
 
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister register)

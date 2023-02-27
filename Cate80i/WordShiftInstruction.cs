@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Inu.Cate.I8080
 {
@@ -14,26 +12,24 @@ namespace Inu.Cate.I8080
                 (OperatorId == Keyword.ShiftLeft && count == 8) ||
                 (OperatorId == Keyword.ShiftRight && count == -8)
             ) {
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
                     ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
                     ByteRegister.A.LoadConstant(this, 0);
                     ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                });
+                }
                 return;
             }
             if (
                 (OperatorId == Keyword.ShiftLeft && count == -8) ||
                 (OperatorId == Keyword.ShiftRight && count == 8)
             ) {
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
                     ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                     ByteRegister.A.LoadConstant(this, 0);
                     ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                });
+                }
                 return;
             }
             CallExternal(() => ByteRegister.B.LoadConstant(this, count));
@@ -54,18 +50,16 @@ namespace Inu.Cate.I8080
                     : "cate.ShiftRightHl",
                 _ => throw new NotImplementedException()
             };
-            WordOperation.UsingRegister(this, WordRegister.Hl, LeftOperand, () =>
-            {
+            using (WordOperation.ReserveRegister(this, WordRegister.Hl, LeftOperand)) {
                 WordRegister.Hl.Load(this, LeftOperand);
-                ByteOperation.UsingRegister(this, ByteRegister.B, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
                     loadB();
                     Compiler.CallExternal(this, functionName);
-                });
+                }
                 WordRegister.Hl.Store(this, DestinationOperand);
-                ChangedRegisters.Add(WordRegister.Hl);
-                ChangedRegisters.Add(ByteRegister.B);
-            });
+                AddChanged(WordRegister.Hl);
+                AddChanged(ByteRegister.B);
+            }
         }
     }
 }

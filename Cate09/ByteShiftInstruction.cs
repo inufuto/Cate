@@ -20,7 +20,7 @@ namespace Inu.Cate.Mc6809
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            string functionName = OperatorId switch
+            var functionName = OperatorId switch
             {
                 Keyword.ShiftLeft => "cate.ShiftLeftA",
                 Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
@@ -28,24 +28,25 @@ namespace Inu.Cate.Mc6809
                     : "cate.ShiftRightA",
                 _ => throw new NotImplementedException()
             };
-            ByteOperation.UsingRegister(this, ByteRegister.B, () =>
-           {
-               void CallShift()
-               {
-                   ByteRegister.A.Load(this, LeftOperand);
-                   Compiler.CallExternal(this, functionName);
-                   RemoveRegisterAssignment(ByteRegister.A);
-                   ChangedRegisters.Add(ByteRegister.A);
-                   ByteRegister.A.Store(this, DestinationOperand);
-               }
-               ByteRegister.B.Load(this, RightOperand);
-               if (Equals(DestinationOperand.Register, ByteRegister.A)) {
-                   CallShift();
-               }
-               else {
-                   ByteOperation.UsingRegister(this, ByteRegister.A, CallShift);
-               }
-           });
+            using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
+                void CallShift()
+                {
+                    ByteRegister.A.Load(this, LeftOperand);
+                    Compiler.CallExternal(this, functionName);
+                    RemoveRegisterAssignment(ByteRegister.A);
+                    AddChanged(ByteRegister.A);
+                    ByteRegister.A.Store(this, DestinationOperand);
+                }
+                ByteRegister.B.Load(this, RightOperand);
+                if (Equals(DestinationOperand.Register, ByteRegister.A)) {
+                    CallShift();
+                }
+                else {
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                        CallShift();
+                    }
+                }
+            }
         }
     }
 }

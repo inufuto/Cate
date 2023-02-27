@@ -16,15 +16,14 @@ namespace Inu.Cate.I8080
                 '&' => "ana|ani",
                 _ => throw new NotImplementedException()
             };
-            Cate.Compiler.Instance.ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
                 ByteRegister.A.Operate(this, operation, true, Compiler.LowByteOperand(RightOperand));
                 ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                 ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
                 ByteRegister.A.Operate(this, operation, true, Compiler.HighByteOperand(RightOperand));
                 ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-            });
+            }
         }
     }
 }

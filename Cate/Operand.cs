@@ -291,7 +291,7 @@ namespace Inu.Cate
         public void CopyFrom(Instruction instruction, ByteRegister register)
         {
             Register.CopyFrom(instruction, register);
-            instruction.ChangedRegisters.Add(this.Register);
+            instruction.AddChanged(Register);
             instruction.RemoveRegisterAssignment(this.Register);
         }
 

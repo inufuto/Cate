@@ -11,18 +11,19 @@
                 return;
 
             if (DestinationOperand is IndirectOperand && SourceOperand is IndirectOperand) {
-                ByteRegister.UsingPair(this, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, Compiler.HighByteOperand(SourceOperand));
-                    ByteRegister.B.Load(this, Compiler.LowByteOperand(SourceOperand));
-                    ByteRegister.A.Store(this,  Compiler.HighByteOperand(DestinationOperand));
-                    ByteRegister.B.Store(this,  Compiler.LowByteOperand(DestinationOperand));
-                });
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
+                        ByteRegister.B.Load(this, Compiler.LowByteOperand(SourceOperand));
+                        ByteRegister.B.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                    }
+                    ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
+                }
                 RemoveVariableRegister(DestinationOperand);
                 return;
             }
-            WordRegister.X.Load(this,  SourceOperand);
-            WordRegister.X.Store(this,  DestinationOperand);
+            WordRegister.X.Load(this, SourceOperand);
+            WordRegister.X.Store(this, DestinationOperand);
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Xml.Linq;
 
 namespace Inu.Cate.MuCom87.MuPd7805
 {
@@ -10,23 +9,21 @@ namespace Inu.Cate.MuCom87.MuPd7805
 
         protected override void OperateViaAccumulator(string operation, Action action)
         {
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
-                ByteOperation.UsingAnyRegister(this, ByteRegister.RegistersOtherThan(ByteRegister.A),
-                    temporaryRegister =>
-                {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                using (var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.RegistersOtherThan(ByteRegister.A))) {
+                    var temporaryRegister = reservation.ByteRegister;
                     ByteRegister.A.Load(this, RightOperand);
                     temporaryRegister.CopyFrom(this, ByteRegister.A);
                     ByteRegister.A.Load(this, LeftOperand);
                     WriteLine("\t" + operation.Split('|')[0] + "\ta," + temporaryRegister);
                     WriteLine("\tmvi\ta,1");
                     WriteLine("\tmvi\ta,0");
-                    ChangedRegisters.Add(ByteRegister.A);
+                    AddChanged(ByteRegister.A);
                     RemoveRegisterAssignment(ByteRegister.A);
                     WriteJumpLine("\tdcr\ta");
                     action();
-                });
-            });
+                }
+            }
         }
     }
 }

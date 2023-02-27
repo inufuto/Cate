@@ -11,23 +11,21 @@ namespace Inu.Cate.Mos6502
         {
             var candidates = new List<Cate.ByteRegister>() { ByteRegister.A, ByteRegister.X };
             if (RightValue == 0) {
-                ByteOperation.UsingAnyRegister(this, candidates, register =>
-                {
-                    register.LoadConstant(this, 0);
-                    register.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                    register.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                });
+                using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
+                var register = reservation.ByteRegister;
+                register.LoadConstant(this, 0);
+                register.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                register.Store(this, Compiler.HighByteOperand(DestinationOperand));
                 return;
             }
             if (BitCount == 1) {
                 if (!DestinationOperand.SameStorage(LeftOperand)) {
-                    ByteOperation.UsingAnyRegister(this, candidates, register =>
-                    {
-                        register.Load(this, Compiler.LowByteOperand(LeftOperand));
-                        register.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                        register.Load(this, Compiler.HighByteOperand(LeftOperand));
-                        register.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                    });
+                    using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
+                    var register = reservation.ByteRegister;
+                    register.Load(this, Compiler.LowByteOperand(LeftOperand));
+                    register.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                    register.Load(this, Compiler.HighByteOperand(LeftOperand));
+                    register.Store(this, Compiler.HighByteOperand(DestinationOperand));
                 }
                 Shift(() =>
                 {
@@ -36,42 +34,40 @@ namespace Inu.Cate.Mos6502
                 });
                 return;
             }
+            using (var wordReservation = WordOperation.ReserveAnyRegister(this)) {
+                var wordRegister = wordReservation.WordRegister;
+                using (var byteReservation = ByteOperation.ReserveAnyRegister(this, candidates, DestinationOperand, LeftOperand)) {
+                    var byteRegister = byteReservation.ByteRegister;
+                    byteRegister.Load(this, Compiler.LowByteOperand(LeftOperand));
+                    byteRegister.StoreToMemory(this, wordRegister.Name + "+0");
+                    byteRegister.Load(this, Compiler.HighByteOperand(LeftOperand));
+                    byteRegister.StoreToMemory(this, wordRegister.Name + "+1");
+                    AddChanged(wordRegister);
+                    RemoveRegisterAssignment(wordRegister);
 
-            WordOperation.UsingAnyRegister(this, word =>
-            {
-                ByteOperation.UsingAnyRegister(this, candidates, register =>
-                {
-                    register.Load(this, Compiler.LowByteOperand(LeftOperand));
-                    register.StoreToMemory(this, word.Name + "+0");
-                    register.Load(this, Compiler.HighByteOperand(LeftOperand));
-                    register.StoreToMemory(this, word.Name + "+1");
-                    ChangedRegisters.Add(word);
-                    RemoveRegisterAssignment(word);
-
-                    register.LoadConstant(this, 0);
-                    register.Store(this, Compiler.LowByteOperand(DestinationOperand));
-                    register.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                });
-            });
-            WordOperation.UsingAnyRegister(this, word =>
-            {
+                    byteRegister.LoadConstant(this, 0);
+                    byteRegister.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                    byteRegister.Store(this, Compiler.HighByteOperand(DestinationOperand));
+                }
+            }
+            using (var reserveAnyRegister = WordOperation.ReserveAnyRegister(this)) {
+                var wordRegister = reserveAnyRegister.WordRegister;
                 Operate(() =>
                 {
-                    ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                    {
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
                         ByteRegister.A.Load(this, Compiler.LowByteOperand(DestinationOperand));
-                        ByteRegister.A.Operate(this, "clc|adc", true, word + "+0");
+                        ByteRegister.A.Operate(this, "clc|adc", true, wordRegister + "+0");
                         ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                         ByteRegister.A.Load(this, Compiler.HighByteOperand(DestinationOperand));
-                        ByteRegister.A.Operate(this, "adc", true, word + "+1");
+                        ByteRegister.A.Operate(this, "adc", true, wordRegister + "+1");
                         ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                    });
+                    }
                 }, () =>
                 {
-                    WriteLine("\tasl\t" + word + "+0");
-                    WriteLine("\trol\t" + word + "+1");
+                    WriteLine("\tasl\t" + wordRegister + "+0");
+                    WriteLine("\trol\t" + wordRegister + "+1");
                 });
-            });
+            }
         }
     }
 }

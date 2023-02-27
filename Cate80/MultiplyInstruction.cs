@@ -12,48 +12,46 @@ namespace Inu.Cate.Z80
         public override void BuildAssembly()
         {
             if (RightValue == 0) {
-                WordRegister.UsingAny(this, WordRegister.Registers, DestinationOperand, register =>
-                {
-                    register.LoadConstant(this, 0);
-                    register.Store(this, DestinationOperand);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, DestinationOperand, LeftOperand);
+                reservation.WordRegister.LoadConstant(this, 0);
+                reservation.WordRegister.Store(this, DestinationOperand);
                 return;
             }
             if (BitCount == 1) {
-                WordRegister.UsingAny(this, WordRegister.AddableRegisters, DestinationOperand, register =>
-                {
-                    register.Load(this, LeftOperand);
-                    Shift(() => WriteLine("\tadd\t" + register.Name + "," + register.Name));
-                    ChangedRegisters.Add(register);
-                    RemoveRegisterAssignment(register);
-                    register.Store(this, DestinationOperand);
-                });
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.AddableRegisters, DestinationOperand, LeftOperand);
+                reservation.WordRegister.Load(this, LeftOperand);
+                Shift(() => WriteLine("\tadd\t" + reservation.WordRegister.Name + "," + reservation.WordRegister.Name));
+                AddChanged(reservation.WordRegister);
+                RemoveRegisterAssignment(reservation.WordRegister);
+                reservation.WordRegister.Store(this, DestinationOperand);
                 return;
             }
 
-            WordRegister.UsingAny(this, WordRegister.AddableRegisters, DestinationOperand, addedRegister =>
-            {
-                var candidates = WordRegister.Registers.Where(r => r != addedRegister && !r.IsAddable()).ToList();
-                WordRegister.UsingAny(this, candidates, addition =>
-                {
-                    addition.Load(this, LeftOperand);
-                    addedRegister.LoadConstant(this, 0.ToString());
-                    Operate(() =>
+            using var addedReservation = WordOperation.ReserveAnyRegister(this, WordRegister.AddableRegisters,
+                DestinationOperand, LeftOperand);
+            var candidates = WordRegister.Registers
+                .Where(r => !Equals(r, addedReservation.WordRegister) && !r.IsAddable()).ToList();
+            using (var additionReservation = WordOperation.ReserveAnyRegister(this, candidates)) {
+                additionReservation.WordRegister.Load(this, LeftOperand);
+                addedReservation.WordRegister.LoadConstant(this, 0.ToString());
+                Operate(
+                    () =>
                     {
-                        WriteLine("\tadd\t" + addedRegister.Name + "," + addition.Name);
+                        WriteLine("\tadd\t" + addedReservation.WordRegister.Name + "," +
+                                  additionReservation.WordRegister.Name);
                     }, () =>
                     {
-                        Debug.Assert(addition.Low != null && addition.High != null);
-                        WriteLine("\tsla\t" + addition.Low.Name);
-                        WriteLine("\trl\t" + addition.High.Name);
+                        Debug.Assert(additionReservation.WordRegister.Low != null &&
+                                     additionReservation.WordRegister.High != null);
+                        WriteLine("\tsla\t" + additionReservation.WordRegister.Low.Name);
+                        WriteLine("\trl\t" + additionReservation.WordRegister.High.Name);
                     });
-                    ChangedRegisters.Add(addedRegister);
-                    RemoveRegisterAssignment(addedRegister);
-                    ChangedRegisters.Add(addition);
-                    RemoveRegisterAssignment(addition);
-                });
-                addedRegister.Store(this, DestinationOperand);
-            });
+                AddChanged(addedReservation.WordRegister);
+                RemoveRegisterAssignment(addedReservation.WordRegister);
+                AddChanged(additionReservation.WordRegister);
+                RemoveRegisterAssignment(additionReservation.WordRegister);
+            }
+            addedReservation.WordRegister.Store(this, DestinationOperand);
         }
     }
 }

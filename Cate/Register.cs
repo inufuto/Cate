@@ -18,8 +18,8 @@ namespace Inu.Cate
 
         public override string ToString() => Name;
 
-        protected readonly WordOperation WordOperation = Compiler.Instance.WordOperation;
-        protected readonly ByteOperation ByteOperation = Compiler.Instance.ByteOperation;
+        protected static WordOperation WordOperation => Compiler.Instance.WordOperation;
+        protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
 
         public int CompareTo(Register? other)
         {

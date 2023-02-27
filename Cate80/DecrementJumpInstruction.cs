@@ -8,7 +8,7 @@
         {
             if (Equals(Operand.Register, ByteRegister.B)) {
                 WriteLine("\tdjnz\t" + Anchor.Label);
-                ChangedRegisters.Add(ByteRegister.B);
+                AddChanged(ByteRegister.B);
                 RemoveRegisterAssignment(ByteRegister.B);
                 return;
             }

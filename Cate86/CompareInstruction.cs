@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Inu.Cate.I8086
 {
@@ -13,76 +11,66 @@ namespace Inu.Cate.I8086
 
         protected override void CompareByte()
         {
-            if (LeftOperand.Register != null && RightOperand is IntegerOperand { IntegerValue: 0 })
-            {
+            if (LeftOperand.Register != null && RightOperand is IntegerOperand { IntegerValue: 0 }) {
                 WriteLine("\tor " + LeftOperand.Register + "," + LeftOperand.Register);
                 goto jump;
             }
 
-            if (LeftOperand is VariableOperand { Register: null } leftVariableOperand)
-            {
-                if (RightOperand is ConstantOperand constantOperand)
-                {
+            if (LeftOperand is VariableOperand { Register: null } leftVariableOperand) {
+                if (RightOperand is ConstantOperand constantOperand) {
                     WriteLine("\tcmp byte ptr [" + leftVariableOperand.MemoryAddress() + "]," +
                               constantOperand.MemoryAddress());
                     goto jump;
                 }
 
-                if (RightOperand is VariableOperand { Register: { } } rightVariableOperand)
-                {
+                if (RightOperand is VariableOperand { Register: { } } rightVariableOperand) {
                     WriteLine("\tcmp [" + leftVariableOperand.MemoryAddress() + "]," + rightVariableOperand.Register);
                     goto jump;
                 }
             }
 
-            ByteOperation.UsingAnyRegister(this, ByteRegister.Registers, null, LeftOperand, temporaryRegister =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.Registers, null, LeftOperand)) {
+                var temporaryRegister = reservation.ByteRegister;
                 temporaryRegister.Load(this, LeftOperand);
                 temporaryRegister.Operate(this, "cmp ", false, RightOperand);
-            });
-
-            jump:
+            }
+        jump:
             Jump();
         }
 
         protected override void CompareWord()
         {
-            if (LeftOperand.Register != null && RightOperand is IntegerOperand { IntegerValue: 0 })
-            {
+            if (LeftOperand.Register != null && RightOperand is IntegerOperand { IntegerValue: 0 }) {
                 WriteLine("\tor " + LeftOperand.Register + "," + LeftOperand.Register);
                 goto jump;
             }
 
-            if (LeftOperand is VariableOperand { Register: null } leftVariableOperand)
-            {
-                if (RightOperand is ConstantOperand constantOperand)
-                {
+            if (LeftOperand is VariableOperand { Register: null } leftVariableOperand) {
+                if (RightOperand is ConstantOperand constantOperand) {
                     WriteLine("\tcmp word ptr [" + leftVariableOperand.MemoryAddress() + "]," +
                               constantOperand.MemoryAddress());
                     goto jump;
                 }
 
-                if (RightOperand is VariableOperand { Register: { } } rightVariableOperand)
-                {
+                if (RightOperand is VariableOperand { Register: { } } rightVariableOperand) {
                     WriteLine("\tcmp [" + leftVariableOperand.MemoryAddress() + "]," + rightVariableOperand.Register);
                     goto jump;
                 }
             }
 
-            WordOperation.UsingAnyRegister(this, WordOperation.Registers, null, LeftOperand, temporaryRegister =>
-            {
+            using (var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, null, LeftOperand)) {
+                var temporaryRegister = reservation.WordRegister;
                 temporaryRegister.Load(this, LeftOperand);
                 temporaryRegister.Operate(this, "cmp ", false, RightOperand);
-            });
+            }
 
-            jump:
+        jump:
             Jump();
         }
 
         private void Jump()
         {
-            switch (OperatorId)
-            {
+            switch (OperatorId) {
                 case Keyword.Equal:
                     WriteJumpLine("\tje " + Anchor);
                     break;
@@ -90,45 +78,37 @@ namespace Inu.Cate.I8086
                     WriteJumpLine("\tjne " + Anchor);
                     break;
                 case '<':
-                    if (Signed)
-                    {
+                    if (Signed) {
                         WriteJumpLine("\tjl " + Anchor);
                     }
-                    else
-                    {
+                    else {
                         WriteJumpLine("\tjb " + Anchor);
                     }
 
                     break;
                 case '>':
-                    if (Signed)
-                    {
+                    if (Signed) {
                         WriteJumpLine("\tjg " + Anchor);
                     }
-                    else
-                    {
+                    else {
                         WriteJumpLine("\tja " + Anchor);
                     }
 
                     break;
                 case Keyword.LessEqual:
-                    if (Signed)
-                    {
+                    if (Signed) {
                         WriteJumpLine("\tjle " + Anchor);
                     }
-                    else
-                    {
+                    else {
                         WriteJumpLine("\tjbe " + Anchor);
                     }
 
                     break;
                 case Keyword.GreaterEqual:
-                    if (Signed)
-                    {
+                    if (Signed) {
                         WriteJumpLine("\tjge " + Anchor);
                     }
-                    else
-                    {
+                    else {
                         WriteJumpLine("\tjae " + Anchor);
                     }
 

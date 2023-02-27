@@ -15,7 +15,7 @@
                         WriteLine("\tmvi\tm," + low);
                         WriteLine("\tinx\th");
                         WriteLine("\tmvi\tm," + high);
-                        ChangedRegisters.Add(WordRegister.Hl);
+                        AddChanged(WordRegister.Hl);
                         RemoveRegisterAssignment(WordRegister.Hl);
                     }
 
@@ -31,8 +31,8 @@
                         }
                         return;
                     }
-                    WordOperation.UsingRegister(this, WordRegister.Hl, () =>
-                    {
+
+                    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
                         if (pointerRegister != null) {
                             WordRegister.Hl.CopyFrom(this, (Cate.WordRegister)pointerRegister);
                         }
@@ -44,7 +44,7 @@
                             return;
                         }
                         WordRegister.Hl.TemporaryOffset(this, offset, ViaHl);
-                    });
+                    }
                     return;
                 }
             }

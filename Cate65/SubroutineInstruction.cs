@@ -2,7 +2,7 @@
 
 namespace Inu.Cate.Mos6502
 {
-    class SubroutineInstruction : Cate.SubroutineInstruction
+    internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
         public SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand, List<Operand> sourceOperands) : base(function, targetFunction, destinationOperand, sourceOperands)
         { }
@@ -21,13 +21,12 @@ namespace Inu.Cate.Mos6502
 
         protected override void StoreWord(Operand operand, string label)
         {
-            ByteOperation.UsingAnyRegister(this, ByteRegister.Registers, register =>
-            {
-                register.Load(this, Compiler.LowByteOperand(operand));
-                register.StoreToMemory(this, label + "+0");
-                register.Load(this, Compiler.HighByteOperand(operand));
-                register.StoreToMemory(this, label + "+1");
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.Registers);
+            var register = reservation.ByteRegister;
+            register.Load(this, Compiler.LowByteOperand(operand));
+            register.StoreToMemory(this, label + "+0");
+            register.Load(this, Compiler.HighByteOperand(operand));
+            register.StoreToMemory(this, label + "+1");
         }
 
         protected override List<Cate.ByteRegister> Candidates(Operand operand)

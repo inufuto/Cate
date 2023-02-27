@@ -49,34 +49,34 @@ namespace Inu.Cate.Mc6800
                     instruction.Compiler.CallExternal(instruction, "Cate.AddX" + byteRegister.Name.ToUpper());
                     instruction.RemoveRegisterAssignment(X);
                 }
-                if (!instruction.IsRegisterInUse(ByteRegister.A)) {
-                    ByteRegister.Using(instruction, ByteRegister.A, () =>
-                    {
+                if (!instruction.IsRegisterReserved(ByteRegister.A)) {
+                    using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                         AddByte(ByteRegister.A);
                         instruction.RemoveRegisterAssignment(ByteRegister.A);
-                    });
+                    }
                     return;
                 }
-                if (!instruction.IsRegisterInUse(ByteRegister.B)) {
-                    ByteRegister.Using(instruction, ByteRegister.B, () =>
-                    {
+                if (!instruction.IsRegisterReserved(ByteRegister.B)) {
+                    using (ByteOperation.ReserveRegister(instruction, ByteRegister.B)) {
                         AddByte(ByteRegister.B);
                         instruction.RemoveRegisterAssignment(ByteRegister.B);
-                    });
+                    }
                     return;
                 }
-                ByteOperation.UsingAnyRegister(instruction, AddByte);
+                using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+                AddByte(reservation.ByteRegister);
                 return;
             }
-            ByteRegister.UsingPair(instruction, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                 ByteRegister.A.LoadConstant(instruction, "high " + offset);
-                ByteRegister.B.LoadConstant(instruction, "low " + offset);
-                instruction.Compiler.CallExternal(instruction, "Cate.AddXAB");
-                instruction.RemoveRegisterAssignment(X);
+                using (ByteOperation.ReserveRegister(instruction, ByteRegister.B)) {
+                    ByteRegister.B.LoadConstant(instruction, "low " + offset);
+                    instruction.Compiler.CallExternal(instruction, "Cate.AddXAB");
+                    instruction.RemoveRegisterAssignment(X);
+                    instruction.RemoveRegisterAssignment(ByteRegister.B);
+                }
                 instruction.RemoveRegisterAssignment(ByteRegister.A);
-                instruction.RemoveRegisterAssignment(ByteRegister.B);
-            });
+            }
         }
 
         public override bool IsOffsetInRange(int offset) => offset >= 0 && offset <= 0xff;
@@ -86,7 +86,7 @@ namespace Inu.Cate.Mc6800
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tldx\t#" + value);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(X);
         }
 
@@ -140,7 +140,7 @@ namespace Inu.Cate.Mc6800
             if (Equals(instruction.GetVariableRegister(variable, offset), this))
                 return;
             instruction.WriteLine("\tldx\t" + variable.MemoryAddress(offset));
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.SetVariableRegister(variable, offset, this);
         }
 
@@ -159,13 +159,13 @@ namespace Inu.Cate.Mc6800
                     instruction.WriteLine("\tstx\t" + ZeroPage.Word);
                     Debug.Assert(pointer.Register == null);
                     X.LoadFromMemory(instruction, pointer, 0);
-                    Cate.Compiler.Instance.ByteOperation.UsingAnyRegister(instruction, register =>
-                    {
+                    using (var reservation = ByteOperation.ReserveAnyRegister(instruction)) {
+                        var register = reservation.ByteRegister;
                         instruction.WriteLine("\tlda" + register + "\t" + ZeroPage.WordLow);
                         register.StoreIndirect(instruction, X, offset + 1);
                         instruction.WriteLine("\tlda" + register + "\t" + ZeroPage.WordHigh);
                         register.StoreIndirect(instruction, X, offset);
-                    });
+                    }
                     return;
             }
             throw new NotImplementedException();
@@ -228,7 +228,7 @@ namespace Inu.Cate.Mc6800
             instruction.ResultFlags |= Instruction.Flag.Z;
             if (!change)
                 return;
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -242,7 +242,7 @@ namespace Inu.Cate.Mc6800
             instruction.WriteLine("\t" + operation + Name + "\t" + label);
             if (!change)
                 return;
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -297,24 +297,23 @@ namespace Inu.Cate.Mc6800
         public override void Save(Instruction instruction)
         {
             StoreToMemory(instruction, ZeroPage.Word.Name);
-            Cate.Compiler.Instance.ByteOperation.UsingAnyRegister(instruction, register =>
-            {
-                register.LoadFromMemory(instruction, ZeroPage.Word.High.Name);
-                instruction.WriteLine("\tpsh" + register);
-                register.LoadFromMemory(instruction, ZeroPage.Word.Low.Name);
-                instruction.WriteLine("\tpsh" + register);
-            });
+            using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+            var register = reservation.ByteRegister;
+            register.LoadFromMemory(instruction, ZeroPage.Word.High.Name);
+            instruction.WriteLine("\tpsh" + register);
+            register.LoadFromMemory(instruction, ZeroPage.Word.Low.Name);
+            instruction.WriteLine("\tpsh" + register);
         }
 
         public override void Restore(Instruction instruction)
         {
-            Cate.Compiler.Instance.ByteOperation.UsingAnyRegister(instruction, register =>
-            {
+            using (var reservation = ByteOperation.ReserveAnyRegister(instruction)) {
+                var register = reservation.ByteRegister;
                 instruction.WriteLine("\tpul" + register);
                 register.LoadFromMemory(instruction, ZeroPage.Word.Low.Name);
                 instruction.WriteLine("\tpul" + register);
                 register.LoadFromMemory(instruction, ZeroPage.Word.High.Name);
-            });
+            }
             LoadFromMemory(instruction, ZeroPage.Word.Name);
         }
 

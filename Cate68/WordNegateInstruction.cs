@@ -7,17 +7,18 @@
 
         public override void BuildAssembly()
         {
-            ByteRegister.UsingPair(this, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, Compiler.HighByteOperand(SourceOperand));
-                ByteRegister.B.Load(this, Compiler.LowByteOperand(SourceOperand));
-                WriteLine("\tcomb");
-                WriteLine("\tcoma");
-                WriteLine("\taddb\t#1");
-                WriteLine("\tadca\t#0");
-                ByteRegister.A.Store(this,  Compiler.HighByteOperand(DestinationOperand));
-                ByteRegister.B.Store(this,  Compiler.LowByteOperand(DestinationOperand));
-            });
+                using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
+                    ByteRegister.B.Load(this, Compiler.LowByteOperand(SourceOperand));
+                    WriteLine("\tcomb");
+                    WriteLine("\tcoma");
+                    WriteLine("\taddb\t#1");
+                    WriteLine("\tadca\t#0");
+                    ByteRegister.B.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                }
+                ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
+            }
         }
     }
 }

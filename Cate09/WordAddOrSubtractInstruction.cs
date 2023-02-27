@@ -21,7 +21,7 @@ namespace Inu.Cate.Mc6809
             if (AddConstant())
                 return;
 
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '+' => "add",
                 '-' => "sub",
@@ -39,7 +39,9 @@ namespace Inu.Cate.Mc6809
                 AddD();
                 return;
             }
-            WordOperation.UsingRegister(this, WordRegister.D, AddD);
+            using (WordOperation.ReserveRegister(this, WordRegister.D)) {
+                AddD();
+            }
         }
 
         private bool AddConstant()
@@ -53,20 +55,18 @@ namespace Inu.Cate.Mc6809
             if (OperatorId == '-') {
                 value = -value;
             }
-
-            WordOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, register =>
-            {
-                register.Load(this, LeftOperand);
-                if (register == WordRegister.D) {
-                    WriteLine("\taddd\t#" + value);
-                }
-                else {
-                    WriteLine("\tlea" + register + "\t" + value + "," + register);
-                }
-                ChangedRegisters.Add(register);
-                RemoveRegisterAssignment(register);
-                register.Store(this, DestinationOperand);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+            var register = reservation.WordRegister;
+            register.Load(this, LeftOperand);
+            if (register == WordRegister.D) {
+                WriteLine("\taddd\t#" + value);
+            }
+            else {
+                WriteLine("\tlea" + register + "\t" + value + "," + register);
+            }
+            AddChanged(register);
+            RemoveRegisterAssignment(register);
+            register.Store(this, DestinationOperand);
             return true;
         }
 

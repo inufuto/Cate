@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 namespace Inu.Cate.Mc6809
 {
@@ -21,20 +19,19 @@ namespace Inu.Cate.Mc6809
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
             int offset, int value)
         {
-            if (pointerRegister != WordRegister.D) {
-                UsingAnyRegister(instruction, register =>
-                {
-                    instruction.RemoveRegisterAssignment(register);
-                    register.LoadConstant(instruction, value);
-                    register.StoreIndirect(instruction, pointerRegister, offset);
-                });
+            if (!Equals(pointerRegister, WordRegister.D)) {
+                using var reservation = ReserveAnyRegister(instruction);
+                var register = reservation.ByteRegister;
+                instruction.RemoveRegisterAssignment(register);
+                register.LoadConstant(instruction, value);
+                register.StoreIndirect(instruction, pointerRegister, offset);
                 return;
             }
-            Cate.Compiler.Instance.WordOperation.UsingAnyRegister(instruction, WordRegister.IndexRegisters, temporaryRegister =>
-            {
+            using (var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.IndexRegisters)) {
+                var temporaryRegister = reservation.WordRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 StoreConstantIndirect(instruction, temporaryRegister, offset, value);
-            });
+            }
         }
 
         public override List<Cate.ByteRegister> Registers => ByteRegister.Registers;

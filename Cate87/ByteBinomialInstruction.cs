@@ -12,7 +12,7 @@ namespace Inu.Cate.MuCom87
                 ExchangeOperands();
             }
 
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '|' => "ora|ori",
                 '^' => "xra|xri",

@@ -42,22 +42,21 @@ namespace Inu.Cate.I8086
                 }
             }
             if (DestinationOperand.Type.ByteCount == 1) {
-                ByteOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, temporaryRegister =>
-                {
-                    temporaryRegister.Load(this, LeftOperand);
-                    temporaryRegister.Operate(this, operation, true, RightOperand);
-                    temporaryRegister.Store(this, DestinationOperand);
-                    ChangedRegisters.Add(temporaryRegister);
-                });
-                return;
-            }
-            WordOperation.UsingAnyRegister(this, DestinationOperand, LeftOperand, temporaryRegister =>
-            {
+                using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+                var temporaryRegister = reservation.ByteRegister;
                 temporaryRegister.Load(this, LeftOperand);
                 temporaryRegister.Operate(this, operation, true, RightOperand);
                 temporaryRegister.Store(this, DestinationOperand);
-                ChangedRegisters.Add(temporaryRegister);
-            });
+                AddChanged(temporaryRegister);
+                return;
+            }
+            using (var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand)) {
+                var temporaryRegister = reservation.WordRegister;
+                temporaryRegister.Load(this, LeftOperand);
+                temporaryRegister.Operate(this, operation, true, RightOperand);
+                temporaryRegister.Store(this, DestinationOperand);
+                AddChanged(temporaryRegister);
+            }
         }
     }
 }

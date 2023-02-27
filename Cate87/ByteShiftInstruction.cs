@@ -9,23 +9,21 @@ namespace Inu.Cate.MuCom87
         protected override void ShiftConstant(int count)
         {
             if (OperatorId == Keyword.ShiftRight && ((IntegerType)LeftOperand.Type).Signed) {
-                ByteOperation.UsingRegister(this, ByteRegister.B, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
                     ByteRegister.B.LoadConstant(this, count);
                     CallExternal("cate.ShiftRightSignedA");
-                });
+                }
                 return;
             }
 
             var operation = Operation();
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 for (var i = 0; i < count; ++i) {
                     WriteLine("\t" + operation);
                 }
                 ByteRegister.A.Store(this, DestinationOperand);
-            });
+            }
         }
 
         protected override void ShiftVariable(Operand counterOperand)
@@ -38,30 +36,28 @@ namespace Inu.Cate.MuCom87
                     : "cate.ShiftRightA",
                 _ => throw new NotImplementedException()
             };
-            ByteOperation.UsingRegister(this, ByteRegister.B, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.B, RightOperand)) {
                 ByteRegister.B.Load(this, RightOperand);
                 CallExternal(functionName);
-            });
+            }
         }
 
-        public override bool IsRegisterInUse(Register register)
-        {
-            return !Equals(DestinationOperand.Register, register) && base.IsRegisterInUse(register);
-        }
+        //public override bool IsRegisterInUse(Register register)
+        //{
+        //    return !Equals(DestinationOperand.Register, register) && base.IsRegisterInUse(register);
+        //}
 
         private void CallExternal(string functionName)
         {
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 Compiler.CallExternal(this, functionName);
                 RemoveRegisterAssignment(ByteRegister.A);
-                ChangedRegisters.Add(ByteRegister.A);
+                AddChanged(ByteRegister.A);
                 RemoveRegisterAssignment(ByteRegister.B);
-                ChangedRegisters.Add(ByteRegister.B);
+                AddChanged(ByteRegister.B);
                 ByteRegister.A.Store(this, DestinationOperand);
-            });
+            }
         }
     }
 }

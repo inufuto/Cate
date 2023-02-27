@@ -34,29 +34,29 @@ namespace Inu.Cate.Tms99
                     WriteLine("\tcb\t" + left + "," + right);
                     goto jump;
                 }
-                ByteOperation.UsingAnyRegister(this, rightRegister =>
-                {
+                using (var reservation = ByteOperation.ReserveAnyRegister(this)) {
+                    var rightRegister = reservation.ByteRegister;
                     rightRegister.Load(this, RightOperand);
                     WriteLine("\tcb\t" + left + "," + rightRegister.Name);
-                });
+                }
                 goto jump;
             }
-            ByteOperation.UsingAnyRegister(this, leftRegister =>
-            {
+
+            using (var leftReservation = ByteOperation.ReserveAnyRegister(this)) {
+                var leftRegister = leftReservation.ByteRegister;
                 leftRegister.Load(this, LeftOperand);
                 if (right != null) {
                     WriteLine("\tcb\t" + leftRegister.Name + "," + right);
                 }
                 else {
-                    ByteOperation.UsingAnyRegister(this, rightRegister =>
-                    {
-                        rightRegister.Load(this, RightOperand);
-                        this.WriteLine("\tcb\t" + leftRegister.Name + "," + rightRegister.Name);
-                    });
+                    using var reserveAnyRegister = ByteOperation.ReserveAnyRegister(this);
+                    var rightRegister = reserveAnyRegister.ByteRegister;
+                    rightRegister.Load(this, RightOperand);
+                    this.WriteLine("\tcb\t" + leftRegister.Name + "," + rightRegister.Name);
                 }
-            });
+            }
 
-            jump:
+        jump:
             Jump();
         }
 

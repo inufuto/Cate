@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace Inu.Cate.I8080
 {
@@ -49,26 +47,22 @@ namespace Inu.Cate.I8080
 
             if (Equals(RightOperand.Register, ByteRegister.A)) {
                 var candidates = ByteRegister.Registers.Where(r => !Equals(r, ByteRegister.A)).ToList();
-                ByteOperation.UsingAnyRegister(this, candidates, byteRegister =>
-                {
-                    byteRegister.CopyFrom(this, ByteRegister.A);
-                    ByteRegister.A.Load(this, LeftOperand);
-                    WriteLine("\t" + operation.Split('|')[0] + "\t" + byteRegister);
-                    ByteRegister.A.Store(this, DestinationOperand);
-                    ChangedRegisters.Add(ByteRegister.A);
-                    ByteRegister.A.CopyFrom(this, byteRegister);
-                });
+                using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
+                var byteRegister = reservation.ByteRegister;
+                byteRegister.CopyFrom(this, ByteRegister.A);
+                ByteRegister.A.Load(this, LeftOperand);
+                WriteLine("\t" + operation.Split('|')[0] + "\t" + byteRegister);
+                ByteRegister.A.Store(this, DestinationOperand);
+                AddChanged(ByteRegister.A);
+                ByteRegister.A.CopyFrom(this, byteRegister);
                 return;
             }
-
-
-            ByteOperation.UsingRegister(this, ByteRegister.A, LeftOperand, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
                 ByteRegister.A.Load(this, LeftOperand);
                 ByteRegister.A.Operate(this, operation, true, RightOperand);
                 ByteRegister.A.Store(this, DestinationOperand);
-                ChangedRegisters.Add(ByteRegister.A);
-            });
+                AddChanged(ByteRegister.A);
+            }
         }
 
         protected override int Threshold()

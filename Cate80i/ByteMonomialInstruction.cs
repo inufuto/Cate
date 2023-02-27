@@ -19,13 +19,11 @@
                 ByteRegister.A.Store(this, DestinationOperand);
                 return;
             }
-
-            ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, SourceOperand);
                 Operate();
                 ByteRegister.A.Store(this, DestinationOperand);
-            });
+            }
         }
     }
 }

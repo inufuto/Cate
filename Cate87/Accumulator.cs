@@ -12,7 +12,7 @@ namespace Inu.Cate.MuCom87
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister wordRegister)
         {
             instruction.WriteLine("\tldax\t" + ((WordRegister)wordRegister).HighName);
-            instruction.ChangedRegisters.Add(A);
+            instruction.AddChanged(A);
             instruction.RemoveRegisterAssignment(A);
         }
 
@@ -26,14 +26,14 @@ namespace Inu.Cate.MuCom87
             switch (sourceRegister) {
                 case ByteRegister byteRegister:
                     instruction.WriteLine("\tmov\ta," + byteRegister.Name);
-                    instruction.ChangedRegisters.Add(this);
+                    instruction.AddChanged(this);
                     instruction.RemoveRegisterAssignment(this);
                     return;
-                //case ByteWorkingRegister workingRegister:
-                //    instruction.WriteLine("\tldaw\t" + workingRegister.Name);
-                //    instruction.ChangedRegisters.Add(this);
-                //    instruction.RemoveRegisterAssignment(this);
-                //    return;
+                    //case ByteWorkingRegister workingRegister:
+                    //    instruction.WriteLine("\tldaw\t" + workingRegister.Name);
+                    //    instruction.AddChanged(this);
+                    //    instruction.RemoveRegisterAssignment(this);
+                    //    return;
             }
             throw new NotImplementedException();
         }
@@ -54,9 +54,9 @@ namespace Inu.Cate.MuCom87
                             case ByteRegister byteRegister:
                                 instruction.WriteLine("\t" + operation.Split('|')[0] + "\ta," + byteRegister.Name);
                                 break;
-                            //case ByteWorkingRegister workingRegister:
-                            //    instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
-                            //    break;
+                                //case ByteWorkingRegister workingRegister:
+                                //    instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
+                                //    break;
                         }
                         return;
                     }
@@ -74,12 +74,12 @@ namespace Inu.Cate.MuCom87
                             //    instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
                             //    return;
                             default:
-                                WordOperation.UsingAnyRegister(instruction, WordRegister.Registers, pointerRegister =>
-                                {
+                                using (var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers)) {
+                                    var pointerRegister = reservation.WordRegister;
                                     pointerRegister.LoadConstant(instruction, variable.MemoryAddress(offset));
                                     Debug.Assert(pointerRegister.High != null);
                                     instruction.WriteLine("\t" + operation.Split('|')[0] + "x\t" + pointerRegister.High.Name);
-                                });
+                                }
                                 return;
                         }
                     }
@@ -93,11 +93,12 @@ namespace Inu.Cate.MuCom87
                                 return;
                             }
                         }
-                        WordOperation.UsingAnyRegister(instruction, WordRegister.Registers, pointerRegister =>
+                        using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
                         {
+                            var pointerRegister = reservation.WordRegister;
                             pointerRegister.LoadFromMemory(instruction, pointer, 0);
                             OperateIndirect(instruction, operation, pointerRegister, offset);
-                        });
+                        }
                         return;
                     }
             }

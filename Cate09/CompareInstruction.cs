@@ -23,12 +23,13 @@ namespace Inu.Cate.Mc6809
                     goto jump;
                 }
             }
-            ByteOperation.UsingAnyRegister(this, null, LeftOperand, register =>
-            {
+
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, null, LeftOperand)) {
+                var register = reservation.ByteRegister;
                 register.Load(this, LeftOperand);
                 register.Operate(this, "cmp", false, RightOperand);
-            });
-            jump:
+            }
+        jump:
             Jump();
         }
 
@@ -47,13 +48,12 @@ namespace Inu.Cate.Mc6809
                     }
                 }
             }
-
-            WordOperation.UsingAnyRegister(this, null, LeftOperand, register =>
-            {
+            using (var reservation = WordOperation.ReserveAnyRegister(this, null, LeftOperand)) {
+                var register = reservation.WordRegister;
                 register.Load(this, LeftOperand);
                 register.Operate(this, "cmp", false, RightOperand);
-            });
-            jump:
+            }
+        jump:
             Jump();
         }
 

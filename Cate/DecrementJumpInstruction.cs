@@ -18,7 +18,10 @@
 
         public override bool IsJump() => true;
 
-        public override void AddSourceRegisters() { }
+        public override void ReserveOperandRegisters()
+        {
+            ReserveOperandRegister(Operand);
+        }
 
         //public override void RemoveDestinationRegister()
         //{

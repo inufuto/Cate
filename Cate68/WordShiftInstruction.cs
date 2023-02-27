@@ -10,8 +10,7 @@ namespace Inu.Cate.Mc6800
 
         protected override void ShiftConstant(int count)
         {
-            if (count > 2)
-            {
+            if (count > 2) {
                 ShiftVariable(RightOperand);
                 return;
             }
@@ -54,27 +53,28 @@ namespace Inu.Cate.Mc6800
                 }
                 return;
             }
-            ByteRegister.UsingPair(this, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
-                ByteRegister.B.Load(this, Compiler.LowByteOperand(LeftOperand));
-                for (var i = 0; i < count; ++i) {
-                    byteAction(operation =>
-                    {
-                        WriteLine("\t" + operation + "b");
-                    }, operation =>
-                    {
-                        WriteLine("\t" + operation + "a");
-                    });
+                using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
+                    ByteRegister.B.Load(this, Compiler.LowByteOperand(LeftOperand));
+                    for (var i = 0; i < count; ++i) {
+                        byteAction(operation =>
+                        {
+                            WriteLine("\t" + operation + "b");
+                        }, operation =>
+                        {
+                            WriteLine("\t" + operation + "a");
+                        });
+                    }
+                    ByteRegister.B.Store(this, Compiler.HighByteOperand(LeftOperand));
                 }
                 ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-                ByteRegister.B.Store(this, Compiler.HighByteOperand(LeftOperand));
-            });
+            }
         }
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            string functionName = OperatorId switch
+            var functionName = OperatorId switch
             {
                 Keyword.ShiftLeft => "cate.ShiftLeftWord",
                 Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
@@ -82,14 +82,13 @@ namespace Inu.Cate.Mc6800
                     : "cate.ShiftRightSignedWord",
                 _ => throw new NotImplementedException()
             };
-            ByteRegister.Using(this, ByteRegister.B, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
                 WordRegister.X.Load(this, LeftOperand);
                 ByteRegister.B.Load(this, counterOperand);
                 RemoveRegisterAssignment(ByteRegister.B);
                 Compiler.CallExternal(this, functionName);
                 WordRegister.X.Store(this, DestinationOperand);
-            });
+            }
         }
     }
 }

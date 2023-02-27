@@ -32,15 +32,14 @@ namespace Inu.Cate.Mos6502
                 default:
                     throw new NotImplementedException();
             }
-            Cate.Compiler.Instance.ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
                 ByteRegister.A.Operate(this, lowOperation, true, Compiler.LowByteOperand(RightOperand));
                 ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
                 ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
                 ByteRegister.A.Operate(this, highOperation, true, Compiler.HighByteOperand(RightOperand));
                 ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
-            });
+            }
         }
     }
 }

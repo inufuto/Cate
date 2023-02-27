@@ -10,19 +10,17 @@ namespace Inu.Cate.Mos6502
         public override void BuildAssembly()
         {
             if (DestinationOperand.Type.ByteCount == 1) {
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, SourceOperand);
                     ByteRegister.A.Operate(this, "eor", true, "#$ff");
                     if (OperatorId == '-') {
                         ByteRegister.A.Operate(this, "clc|adc", true, "#1");
                     }
                     ByteRegister.A.Store(this, DestinationOperand);
-                });
+                }
             }
             else {
-                ByteOperation.UsingRegister(this, ByteRegister.A, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     switch (OperatorId) {
                         case '~':
                             ByteRegister.A.Load(this, Compiler.LowByteOperand(SourceOperand));
@@ -45,7 +43,7 @@ namespace Inu.Cate.Mos6502
                         default:
                             throw new NotImplementedException();
                     }
-                });
+                }
             }
         }
     }

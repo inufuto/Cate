@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Inu.Cate.I8086
+﻿namespace Inu.Cate.I8086
 {
     internal class ResizeInstruction : Cate.ResizeInstruction
     {
@@ -15,12 +13,11 @@ namespace Inu.Cate.I8086
                 WordRegister.Ax.Store(this, DestinationOperand);
                 return;
             }
-            ByteOperation.UsingRegister(this, ByteRegister.Al, () =>
-            {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.Al)) {
                 ByteRegister.Al.Load(this, SourceOperand);
                 WriteLine("\tcbw");
                 WordRegister.Ax.Store(this, DestinationOperand);
-            });
+            }
         }
 
         protected override void Expand()
@@ -33,13 +30,12 @@ namespace Inu.Cate.I8086
                 return;
             }
             if (SourceOperand.Register == null || Equals(SourceOperand.Register, ByteRegister.Al)) {
-                ByteOperation.UsingRegister(this, ByteRegister.Al, () =>
-                {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.Al)) {
                     ByteRegister.Al.Load(this, SourceOperand);
                     //WriteLine("\tcbw");
                     WriteLine("\txor ah,ah");
                     WordRegister.Ax.Store(this, DestinationOperand);
-                });
+                }
                 return;
             }
             base.Expand();

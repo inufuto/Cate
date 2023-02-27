@@ -294,7 +294,7 @@ namespace Inu.Cate.Z80
 
         public static bool IsHlFree(Instruction instruction, VariableOperand excludedVariableOperand)
         {
-            return !instruction.IsRegisterInUse(WordRegister.Hl); //&&
+            return !instruction.IsRegisterReserved(WordRegister.Hl); //&&
             //!instruction.IsRegisterInVariableRange(WordRegister.Hl.Id, excludedVariableOperand.Variable);
         }
 

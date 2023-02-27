@@ -12,7 +12,8 @@ namespace Inu.Cate.Mos6502
 
         public static List<Cate.WordRegister> Registers
         {
-            get {
+            get
+            {
                 var registers = new List<Cate.WordRegister>();
                 for (var i = 0; i < Count; i++) {
                     registers.Add(new WordZeroPage(MinId + i));
@@ -40,9 +41,9 @@ namespace Inu.Cate.Mos6502
             return id >= MinId && id < MinId + Count;
         }
 
-        private static void UsingA(Instruction instruction, Action action)
+        private static RegisterReservation ReserveA(Instruction instruction)
         {
-            Cate.Compiler.Instance.ByteOperation.UsingRegister(instruction, ByteRegister.A, action);
+            return ByteOperation.ReserveRegister(instruction, ByteRegister.A);
         }
 
 
@@ -53,15 +54,13 @@ namespace Inu.Cate.Mos6502
 
         public override Cate.ByteRegister? Low => ByteZeroPage.FromOffset(Offset);
         public override Cate.ByteRegister? High => ByteZeroPage.FromOffset(Offset + 1);
-        public string Label=>IdToLabel(Id);
+        public string Label => IdToLabel(Id);
 
         public static Register First = new WordZeroPage(MinId);
 
         public override void Add(Instruction instruction, int offset)
         {
-
-            UsingA(instruction, () =>
-            {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                 Debug.Assert(Low != null && High != null);
                 ByteRegister.A.CopyFrom(instruction, Low);
                 ByteRegister.A.Operate(instruction, "clc|adc", true, "#low " + offset);
@@ -69,9 +68,7 @@ namespace Inu.Cate.Mos6502
                 ByteRegister.A.CopyFrom(instruction, High);
                 ByteRegister.A.Operate(instruction, "adc", true, "#high " + offset);
                 High.CopyFrom(instruction, ByteRegister.A);
-            });
-            //instruction.ChangedRegisters.Add(this);
-            //instruction.RemoveVariableRegister(this);
+            }
         }
 
         public override bool IsOffsetInRange(int offset)
@@ -84,7 +81,7 @@ namespace Inu.Cate.Mos6502
             Debug.Assert(Low != null && High != null);
             Low.LoadConstant(instruction, "low " + value);
             High.LoadConstant(instruction, "high " + value);
-            //instruction.ChangedRegisters.Add(this);
+            //instruction.AddChanged(this);
             //instruction.RemoveVariableRegister(this);
         }
 
@@ -95,7 +92,7 @@ namespace Inu.Cate.Mos6502
             Debug.Assert(Low != null && High != null);
             Low.Load(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
             High.Load(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
-            //instruction.ChangedRegisters.Add(this);
+            //instruction.AddChanged(this);
             instruction.SetVariableRegister(operand, this);
         }
 
@@ -105,7 +102,7 @@ namespace Inu.Cate.Mos6502
             Debug.Assert(Low != null && High != null);
             Low.LoadFromMemory(instruction, variable.MemoryAddress(offset));
             High.LoadFromMemory(instruction, variable.MemoryAddress(offset + 1));
-            //instruction.ChangedRegisters.Add(this);
+            //instruction.AddChanged(this);
             instruction.SetVariableRegister(variable, offset, this);
         }
 
@@ -114,7 +111,7 @@ namespace Inu.Cate.Mos6502
             Debug.Assert(Low != null && High != null);
             Low.LoadFromMemory(instruction, label + "+0");
             High.LoadFromMemory(instruction, label + "+1");
-            //instruction.ChangedRegisters.Add(this);
+            //instruction.AddChanged(this);
             //instruction.RemoveVariableRegister(this);
         }
 
@@ -138,7 +135,7 @@ namespace Inu.Cate.Mos6502
             Debug.Assert(Low != null && High != null);
             Low.LoadIndirect(instruction, pointerRegister, offset);
             High.LoadIndirect(instruction, pointerRegister, offset + 1);
-            //instruction.ChangedRegisters.Add(this);
+            //instruction.AddChanged(this);
             //instruction.RemoveVariableRegister(this);
         }
 
@@ -157,7 +154,7 @@ namespace Inu.Cate.Mos6502
             Debug.Assert(zeroPage.Low != null && zeroPage.High != null);
             Low.CopyFrom(instruction, zeroPage.Low);
             High.CopyFrom(instruction, zeroPage.High);
-            //instruction.ChangedRegisters.Add(this);
+            //instruction.AddChanged(this);
             //instruction.RemoveVariableRegister(this);
         }
 

@@ -59,10 +59,10 @@ namespace Inu.Cate
             );
         }
 
-        public override void AddSourceRegisters()
+        public override void ReserveOperandRegisters()
         {
-            AddSourceRegister(LeftOperand);
-            AddSourceRegister(RightOperand);
+            ReserveOperandRegister(LeftOperand);
+            ReserveOperandRegister(RightOperand);
         }
 
         //public override void RemoveDestinationRegister() { }

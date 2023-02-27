@@ -37,12 +37,11 @@
 
         public void Operate(Instruction instruction, string operation, bool change, string operand)
         {
-            Cate.Compiler.Instance.ByteOperation.UsingAnyRegister(instruction, register =>
-            {
-                register.LoadFromMemory(instruction, Name);
-                register.Operate(instruction, operation, change, operand);
-                register.StoreToMemory(instruction, Name);
-            });
+            using var reservation = Cate.Compiler.Instance.ByteOperation.ReserveAnyRegister(instruction);
+            var register = reservation.ByteRegister;
+            register.LoadFromMemory(instruction, Name);
+            register.Operate(instruction, operation, change, operand);
+            register.StoreToMemory(instruction, Name);
         }
 
         public void Operate(Instruction instruction, string operation)
@@ -64,12 +63,9 @@
 
         public void From(Instruction instruction, Operand operand)
         {
-            if (operand is IntegerOperand integerOperand) {
-                var value = integerOperand.IntegerValue;
-                if (value == 0) {
-                    Clear(instruction);
-                    return;
-                }
+            if (operand is IntegerOperand { IntegerValue: 0 }) {
+                Clear(instruction);
+                return;
             }
             WordRegister.X.Load(instruction, operand);
             WordRegister.X.StoreToMemory(instruction, Name);
@@ -88,11 +84,6 @@
         }
 
 
-        //public void OperateConst(Instruction instruction, string lowOperation, string highOperation, int value)
-        //{
-        //    Low.Operate(instruction, lowOperation, true, "#low " + value);
-        //    High.Operate(instruction, highOperation, true, "#high " + value);
-        //}
 
         public void Operate(Instruction instruction, string lowOperation, string highOperation, ZeroPageWord operand)
         {
@@ -100,11 +91,6 @@
             High.Operate(instruction, highOperation, true, operand.High.Name);
         }
 
-        //public void OperateConst(Instruction instruction, string lowOperation, string highOperation, PointerOperand operand)
-        //{
-        //    Low.Operate(instruction, lowOperation, true, operand.MemoryAddress() + "+1");
-        //    High.Operate(instruction, highOperation, true, operand.MemoryAddress() + "+0");
-        //}
 
         public void Operate(Instruction instruction, string lowOperation, string highOperation)
         {

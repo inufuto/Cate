@@ -17,11 +17,11 @@ namespace Inu.Cate
             SourceOperand.AddUsage(function.NextAddress, Variable.Usage.Read);
         }
 
-        public override void AddSourceRegisters()
+        public override void ReserveOperandRegisters()
         {
-            AddSourceRegister(SourceOperand);
+            ReserveOperandRegister(SourceOperand);
             if (DestinationOperand is IndirectOperand indirectOperand) {
-                AddSourceRegister(indirectOperand);
+                ReserveOperandRegister(indirectOperand);
             }
         }
 
@@ -61,21 +61,16 @@ namespace Inu.Cate
                 }
                 var pointerRegisters = WordOperation.PointerRegisters(offset);
                 if (pointerRegisters.Any()) {
-                    WordOperation.UsingAnyRegister(this, pointerRegisters, DestinationOperand, SourceOperand,
-                        temporaryRegister =>
-                        {
-                            temporaryRegister.LoadFromMemory(this, pointer, 0);
-                            ByteOperation.StoreConstantIndirect(this, temporaryRegister, offset, integerOperand.IntegerValue);
-                        });
+                    using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, DestinationOperand, SourceOperand);
+                    reservation.WordRegister.LoadFromMemory(this, pointer, 0);
+                    ByteOperation.StoreConstantIndirect(this, reservation.WordRegister, offset, integerOperand.IntegerValue);
                     return;
                 }
             }
-
-            ByteOperation.UsingAnyRegister(this, Candidates(), DestinationOperand, SourceOperand, register =>
-            {
-                register.Load(this, SourceOperand);
-                register.Store(this, DestinationOperand);
-            });
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, Candidates(), DestinationOperand, SourceOperand)) {
+                reservation.ByteRegister.Load(this, SourceOperand);
+                reservation.ByteRegister.Store(this, DestinationOperand);
+            }
         }
 
         protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers;
@@ -93,12 +88,9 @@ namespace Inu.Cate
             ) {
                 return;
             }
-
-            WordOperation.UsingAnyRegister(this, DestinationOperand, SourceOperand, register =>
-            {
-                register.Load(this, SourceOperand);
-                register.Store(this, DestinationOperand);
-            });
+            using var reservation= WordOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
+            reservation.WordRegister.Load(this, SourceOperand);
+            reservation.WordRegister.Store(this, DestinationOperand);
         }
     }
 }

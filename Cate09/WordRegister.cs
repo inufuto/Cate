@@ -55,7 +55,7 @@ namespace Inu.Cate.Mc6809
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tld" + this + "\t#" + value);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -63,7 +63,7 @@ namespace Inu.Cate.Mc6809
         {
             instruction.WriteLine("\tld" + this + "\t" + variable.MemoryAddress(offset));
             instruction.SetVariableRegister(variable, offset, this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
         }
 
         public void StoreToMemory(Instruction instruction, Variable variable, int offset)
@@ -77,7 +77,7 @@ namespace Inu.Cate.Mc6809
         public override void LoadFromMemory(Instruction instruction, string label)
         {
             instruction.WriteLine("\tld" + this + "\t" + label);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -90,15 +90,14 @@ namespace Inu.Cate.Mc6809
         {
             if (pointer.Register == null && offset == 0) {
                 instruction.WriteLine("\tld" + this + "\t[" + pointer.MemoryAddress(0) + "]");
-                instruction.ChangedRegisters.Add(this);
+                instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
                 return;
             }
-            WordOperation.UsingAnyRegister(instruction, Pointers, pointerRegister =>
-            {
-                pointerRegister.LoadFromMemory(instruction, pointer, 0);
-                LoadIndirect(instruction, pointerRegister, offset);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, Pointers);
+            var pointerRegister = reservation.WordRegister;
+            pointerRegister.LoadFromMemory(instruction, pointer, 0);
+            LoadIndirect(instruction, pointerRegister, offset);
         }
 
         private void StoreIndirect(Instruction instruction, Variable pointer, int offset)
@@ -107,18 +106,17 @@ namespace Inu.Cate.Mc6809
                 instruction.WriteLine("\tst" + this + "\t[" + pointer.MemoryAddress(0) + "]");
                 return;
             }
-            WordOperation.UsingAnyRegister(instruction, Pointers, pointerRegister =>
-            {
-                pointerRegister.LoadFromMemory(instruction, pointer, 0);
-                StoreIndirect(instruction, pointerRegister, offset);
-            });
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, Pointers);
+            var pointerRegister = reservation.WordRegister;
+            pointerRegister.LoadFromMemory(instruction, pointer, 0);
+            StoreIndirect(instruction, pointerRegister, offset);
         }
 
 
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             instruction.WriteLine("\tld" + this + "\t" + OffsetOperand(pointerRegister, offset));
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -204,7 +202,7 @@ namespace Inu.Cate.Mc6809
         {
             if (Equals(sourceRegister, this)) return;
             instruction.WriteLine("\ttfr\t" + sourceRegister + "," + this);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -277,7 +275,7 @@ namespace Inu.Cate.Mc6809
         public override void Add(Instruction instruction, int offset)
         {
             instruction.WriteLine("\taddd\t#" + offset);
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
@@ -312,7 +310,7 @@ namespace Inu.Cate.Mc6809
         public override void Add(Instruction instruction, int offset)
         {
             instruction.WriteLine("\tlea" + Name + "\t" + OffsetOperand(this, offset));
-            instruction.ChangedRegisters.Add(this);
+            instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 

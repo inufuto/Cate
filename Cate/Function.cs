@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -127,7 +126,7 @@ namespace Inu.Cate
 
             ISet<Register> savedRegisters = new HashSet<Register>();
             foreach (var instruction in Instructions.Where(i => !i.IsEmpty())) {
-                foreach (var changedRegister in instruction.ChangedRegisters) {
+                foreach (var changedRegister in instruction.ChangedRegisters()) {
                     var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister).Where(r => !savedRegisters.Contains(r));
                     foreach (var savingRegister in savingRegisters) {
                         var saved = false;
@@ -160,7 +159,7 @@ namespace Inu.Cate
             bool SavingChanged(Instruction instruction1, Instruction instruction2)
             {
                 return instruction1.IsJump() || instruction2.IsJump() || instruction1.IsResultChanged() || instruction2.IsResultChanged() ||
-                       instruction1.SavingVariables.Any(instruction2.IsSourceOperand) ||
+                       //instruction1.SavingVariables.Any(instruction2.IsSourceOperand) ||
                        !instruction1.SavingVariables.SetEquals(instruction2.SavingVariables) || Anchors.Any(a => a.Address == instruction2.Address);
             }
 
@@ -292,11 +291,12 @@ namespace Inu.Cate
             AllocateLocalVariables(sortedVariables);
 
             foreach (var instruction in Instructions) {
-                instruction.AddSourceRegisters();
-                instruction.BuildResultVariables();
-                if (instruction.ToString().Contains("pBullet[6] = 70")) {
+                if (instruction.ToString().Contains("Score = Score")) {
                     var aaa = 111;
                 }
+                instruction.ReserveOperandRegisters();
+                instruction.BuildResultVariables();
+                //System.Console.WriteLine(instruction);
                 instruction.BuildAssembly();
             }
 
