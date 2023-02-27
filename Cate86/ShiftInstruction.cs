@@ -16,9 +16,9 @@ namespace Inu.Cate.I8086
 
         protected override void ShiftVariable(Operand counterOperand)
         {
-            using (ByteOperation.ReserveRegister(this, ByteRegister.Cl)) {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.Cl, counterOperand)) {
                 ByteRegister.Cl.Load(this, counterOperand);
-                CancelOperandRegister(counterOperand);
+                //CancelOperandRegister(counterOperand);
                 Operate(null);
             }
         }
