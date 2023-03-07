@@ -304,7 +304,8 @@ namespace Inu.Cate.I8080
             if (offset == 0) {
                 if (Equals(pointerRegister, Hl)) {
                     if (Equals(this, Hl)) {
-                        using var reservation = WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
+                        using var reservation =
+                            WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
                         var wordRegister = reservation.WordRegister;
                         wordRegister.LoadIndirect(instruction, pointerRegister, offset);
                         CopyFrom(instruction, wordRegister);
@@ -330,11 +331,16 @@ namespace Inu.Cate.I8080
                 return;
             }
 
-            //instruction.BeginRegister(pointerRegister);
+            //if (Math.Abs(offset) <= 5) {
             pointerRegister.Add(instruction, offset);
             LoadIndirect(instruction, pointerRegister, 0);
-            instruction.AddChanged(Hl);
-            //instruction.EndRegister(pointerRegister);
+            pointerRegister.Add(instruction, -offset);
+            //}
+            //using (WordOperation.ReserveRegister(instruction, pointerRegister)) {
+            //    pointerRegister.Add(instruction, offset);
+            //    LoadIndirect(instruction, pointerRegister, 0);
+            //    //pointerRegister.Add(instruction, -offset);
+            //}
         }
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)

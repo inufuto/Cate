@@ -291,9 +291,11 @@ namespace Inu.Cate
             AllocateLocalVariables(sortedVariables);
 
             foreach (var instruction in Instructions) {
-                if (instruction.ToString().Contains("Score = Score")) {
+#if DEBUG
+                if (instruction.ToString().Contains("ShowSprite_(pMonster,pMonster[6])")) {
                     var aaa = 111;
                 }
+#endif
                 instruction.ReserveOperandRegisters();
                 instruction.BuildResultVariables();
                 //System.Console.WriteLine(instruction);

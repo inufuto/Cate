@@ -374,12 +374,19 @@ namespace Inu.Cate
 
         protected void ReserveOperandRegister(Operand operand)
         {
-            var variableRegister = operand switch
-            {
-                VariableOperand variableOperand => variableOperand.Variable.Register,
-                IndirectOperand indirectOperand => indirectOperand.Variable.Register,
-                _ => null
-            };
+            Register? variableRegister = null;
+            switch (operand) {
+                case VariableOperand variableOperand:
+                    variableRegister = variableOperand.Variable.Register;
+                    break;
+                case IndirectOperand indirectOperand: {
+                        var register = indirectOperand.Variable.Register;
+                        if (register != null && !IsRegisterReserved(register)) {
+                            variableRegister = register;
+                        }
+                        break;
+                    }
+            }
             if (variableRegister == null) return;
             var registerReservation = ReserveRegister(variableRegister, operand);
             operandRegisterReservations.Add(registerReservation);
@@ -456,30 +463,13 @@ namespace Inu.Cate
                 return true;
             }
 
-            Debug.Assert(operand switch
-            {
-                VariableOperand variableOperand => variableOperand.Variable.Register == null,
-                IndirectOperand indirectOperand => indirectOperand.Variable.Register == null,
-                _ => true
-            });
+            //Debug.Assert(operand switch
+            //{
+            //    VariableOperand variableOperand => variableOperand.Variable.Register == null,
+            //    IndirectOperand indirectOperand => indirectOperand.Variable.Register == null,
+            //    _ => true
+            //});
             return false;
-            //bool Remove(Variable variable)
-            //{
-            //    var register = variable.Register;
-            //    return register != null && CancelRegister(register);
-            //}
-
-            //var removed = operand switch
-            //{
-            //    VariableOperand variableOperand => Remove(variableOperand.Variable),
-            //    IndirectOperand indirectOperand => Remove(indirectOperand.Variable),
-            //    _ => false
-            //};
-            //if (removed) {
-            //    Debug.Assert(sourceOperandRegisterReservations.ContainsKey(operand));
-            //    sourceOperandRegisterReservations.Remove(operand);
-            //}
-            //return removed;
         }
 
         internal bool CancelRegister(Register register)
