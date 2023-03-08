@@ -81,15 +81,15 @@ namespace Inu.Cate
             //if (Equals(operand.Register, register)) {
             instruction.CancelOperandRegister(operand);
             //}
-            return ReserveRegister(instruction, register);
+            return instruction.ReserveRegister(register, operand);
         }
 
-        public WordRegister TemporaryRegister(Instruction instruction, List<WordRegister> candidates)
-        {
-            var register = candidates.First(r => !instruction.IsRegisterReserved(r));
-            Debug.Assert(register != null);
-            return register;
-        }
+        //public WordRegister TemporaryRegister(Instruction instruction, List<WordRegister> candidates)
+        //{
+        //    var register = candidates.First(r => !instruction.IsRegisterReserved(r));
+        //    Debug.Assert(register != null);
+        //    return register;
+        //}
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates,
             AssignableOperand? destinationOperand, Operand? sourceOperand)

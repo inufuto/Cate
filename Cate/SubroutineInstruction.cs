@@ -137,14 +137,14 @@ namespace Inu.Cate
 
         public override void BuildAssembly()
         {
-            Register? savedRegister = null;
-            if (DestinationOperand is IndirectOperand { Variable: { Register: { } } } destinationIndirectOperand) {
-                var destinationRegister = destinationIndirectOperand.Variable.Register;
-                if (ParameterAssignments.Any(p => p.Parameter.Register != null && p.Parameter.Register.Conflicts(destinationRegister))) {
-                    savedRegister = destinationRegister;
-                    savedRegister.Save(this);
-                }
-            }
+            //Register? savedRegister = null;
+            //if (DestinationOperand is IndirectOperand { Variable: { Register: { } } } destinationIndirectOperand) {
+            //    var destinationRegister = destinationIndirectOperand.Variable.Register;
+            //    if (ParameterAssignments.Any(p => p.Parameter.Register != null && p.Parameter.Register.Conflicts(destinationRegister))) {
+            //        savedRegister = destinationRegister;
+            //        savedRegister.Save(this);
+            //    }
+            //}
 
             {
                 var _ = FillParameters();
@@ -162,15 +162,15 @@ namespace Inu.Cate
 
             void StoreResult(Register rr)
             {
-                if (savedRegister != null) {
-                    savedRegister.Restore(this);
-                    var removedRegisters = ChangedRegisters().Where(r =>
-                        Equals(savedRegister, r) || (r is ByteRegister changedByteRegister &&
-                                                     Equals(changedByteRegister.PairRegister, savedRegister))).ToList();
-                    foreach (var removedRegister in removedRegisters) {
-                        RemoveChanged(removedRegister);
-                    }
-                }
+                //if (savedRegister != null) {
+                //    savedRegister.Restore(this);   WriteLine(";;;;");
+                //    var removedRegisters = ChangedRegisters().Where(r =>
+                //        Equals(savedRegister, r) || (r is ByteRegister changedByteRegister &&
+                //                                     Equals(changedByteRegister.PairRegister, savedRegister))).ToList();
+                //    foreach (var removedRegister in removedRegisters) {
+                //        RemoveChanged(removedRegister);
+                //    }
+                //}
 
                 RemoveRegisterAssignment(rr);
                 var resultSaved = !IsRegisterReserved(rr);
@@ -192,37 +192,39 @@ namespace Inu.Cate
             }
 
             Debug.Assert(returnRegister != null);
-            if (savedRegister != null && returnRegister.Conflicts(savedRegister)) {
-                switch (returnRegister) {
-                    case ByteRegister byteRegister: {
-                            var candidates = ByteOperation.Registers.Where(r => !IsRegisterReserved(r) && !r.Conflicts(savedRegister)).ToList();
-                            using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
-                            reservation.ByteRegister.CopyFrom(this, byteRegister);
-                            StoreResult(reservation.ByteRegister);
-                            break;
-                        }
-                    case WordRegister wordRegister: {
-                            var candidates = WordOperation.Registers.Where(r => !IsRegisterReserved(r) && !r.Conflicts(savedRegister)).ToList();
-                            using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
-                            reservation.WordRegister.CopyFrom(this, wordRegister);
-                            StoreResult(reservation.WordRegister);
-                            break;
-                        }
-                }
-                return;
-            }
+            //if (savedRegister != null && returnRegister.Conflicts(savedRegister)) {
+            //    switch (returnRegister) {
+            //        case ByteRegister byteRegister: {
+            //                var candidates = ByteOperation.Registers.Where(r => !IsRegisterReserved(r) && !r.Conflicts(savedRegister)).ToList();
+            //                using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
+            //                reservation.ByteRegister.CopyFrom(this, byteRegister);
+            //                StoreResult(reservation.ByteRegister);
+            //                break;
+            //            }
+            //        case WordRegister wordRegister: {
+            //                var candidates = WordOperation.Registers.Where(r => !IsRegisterReserved(r) && !r.Conflicts(savedRegister)).ToList();
+            //                using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
+            //                reservation.WordRegister.CopyFrom(this, wordRegister);
+            //                StoreResult(reservation.WordRegister);
+            //                break;
+            //            }
+            //    }
+            //    return;
+            //}
             StoreResult(returnRegister);
         }
 
 
         public override void ReserveOperandRegisters()
         {
+            if (DestinationOperand is IndirectOperand indirectOperand) {
+                ReserveOperandRegister(indirectOperand);
+            }
             foreach (var sourceOperand in SourceOperands) {
                 ReserveOperandRegister(sourceOperand);
             }
-            if (DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register != null) {
-                ReserveOperandRegister(DestinationOperand);
-            }
+            //if (DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register != null) {
+            //}
         }
 
         //public override void RemoveDestinationRegister()

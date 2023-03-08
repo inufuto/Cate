@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("ShowSprite_(pMonster,pMonster[6])")) {
+                if (instruction.ToString().Contains("pChars = pPrevDirection[3]")) {
                     var aaa = 111;
                 }
 #endif

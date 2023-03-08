@@ -208,7 +208,7 @@ namespace Inu.Cate.I8080
                         var pointer = sourceIndirectOperand.Variable;
                         var offset = sourceIndirectOperand.Offset;
                         var pointerRegister = instruction.GetVariableRegister(pointer, 0);
-                        if (pointerRegister is WordRegister pointerWordRegister) {
+                        if (pointerRegister is WordRegister pointerWordRegister && !Equals(pointerWordRegister, this)) {
                             LoadIndirect(instruction, pointerWordRegister, offset);
                             return;
                         }

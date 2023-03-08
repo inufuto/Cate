@@ -374,22 +374,15 @@ namespace Inu.Cate
 
         protected void ReserveOperandRegister(Operand operand)
         {
-            Register? variableRegister = null;
-            switch (operand) {
-                case VariableOperand variableOperand:
-                    variableRegister = variableOperand.Variable.Register;
-                    break;
-                case IndirectOperand indirectOperand: {
-                        var register = indirectOperand.Variable.Register;
-                        if (register != null && !IsRegisterReserved(register)) {
-                            variableRegister = register;
-                        }
-                        break;
-                    }
-            }
+            var variableRegister = operand switch
+            {
+                VariableOperand variableOperand => variableOperand.Variable.Register,
+                IndirectOperand indirectOperand => indirectOperand.Variable.Register,
+                _ => null
+            };
             if (variableRegister == null) return;
-            var registerReservation = ReserveRegister(variableRegister, operand);
-            operandRegisterReservations.Add(registerReservation);
+            var reservation = ReserveRegister(variableRegister, operand);
+            operandRegisterReservations.Add(reservation);
         }
 
         public RegisterReservation ReserveRegister(Register register)
@@ -397,7 +390,7 @@ namespace Inu.Cate
             return ReserveRegister(register, null);
         }
 
-        private RegisterReservation ReserveRegister(Register register, Operand? operand)
+        public RegisterReservation ReserveRegister(Register register, Operand? operand)
         {
             var reservation = new RegisterReservation(register, operand, this);
             registerReservations.Add(reservation);
@@ -409,21 +402,20 @@ namespace Inu.Cate
             return IsRegisterReserved(register, null);
         }
 
-        public virtual bool IsRegisterReserved(Register register, Operand? operand)
+        public virtual bool IsRegisterReserved(Register register, Operand? excludedOperand)
         {
             bool IsReserved(Register register1)
             {
                 return registerReservations.Any(reservation =>
                 {
-                    if (operand is IndirectOperand indirectOperand) {
-                        return reservation.Operand switch
-                        {
-                            IndirectOperand reservationOperand when indirectOperand.Variable.Equals(reservationOperand
-                                .Variable) => false,
-                            _ => !operand.Equals(reservation.Operand) && reservation.Register.Equals(register1)
-                        };
+                    if (!Equals(reservation.Register, register)) return false;
+                    switch (excludedOperand) {
+                        case VariableOperand variableOperand when Equals(variableOperand.Variable, reservation.Variable):
+                        case IndirectOperand indirectOperand when Equals(indirectOperand.Variable, reservation.Variable):
+                            return false;
+                        default:
+                            return true;
                     }
-                    return reservation.Register.Equals(register1);
                 });
             }
 
@@ -455,14 +447,19 @@ namespace Inu.Cate
         internal bool CancelOperandRegister(Operand operand)
         {
             for (var i = registerReservations.Count - 1; i >= 0; --i) {
-                var registerReservation = registerReservations[i];
-                var o = registerReservation.Operand;
-                if (o == null || !o.Equals(operand)) continue;
+                var reservation = registerReservations[i];
+                if (reservation.Variable == null) continue;
+                var operandVariable = operand switch
+                {
+                    VariableOperand variableOperand => variableOperand.Variable,
+                    IndirectOperand indirectOperand => indirectOperand.Variable,
+                    _ => null
+                };
+                if (operandVariable == null || !Equals(operandVariable.Register, reservation.Register)) continue;
                 registerReservations.RemoveAt(i);
-                operandRegisterReservations.Remove(registerReservation);
+                operandRegisterReservations.Remove(reservation);
                 return true;
             }
-
             //Debug.Assert(operand switch
             //{
             //    VariableOperand variableOperand => variableOperand.Variable.Register == null,

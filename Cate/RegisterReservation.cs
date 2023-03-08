@@ -11,7 +11,7 @@ namespace Inu.Cate
         }
 
         public readonly Register Register;
-        public readonly Operand? Operand;
+        public readonly Variable? Variable;
         private readonly Instruction instruction;
         private readonly Saving? saving;
 
@@ -19,7 +19,12 @@ namespace Inu.Cate
         {
             Register = register;
             this.instruction = instruction;
-            Operand = operand;
+            Variable = operand switch
+            {
+                VariableOperand variableOperand => variableOperand.Variable,
+                IndirectOperand indirectOperand => indirectOperand.Variable,
+                _ => Variable
+            };
             if (!instruction.IsRegisterReserved(register, operand)) return;
             saving = Register switch
             {
@@ -46,7 +51,7 @@ namespace Inu.Cate
 
         public override string ToString()
         {
-            return Register.Name;
+            return Register.Name + "," + Variable;
         }
     }
 }
