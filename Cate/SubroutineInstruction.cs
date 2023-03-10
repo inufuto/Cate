@@ -163,7 +163,7 @@ namespace Inu.Cate
             void StoreResult(Register rr)
             {
                 //if (savedRegister != null) {
-                //    savedRegister.Restore(this);   WriteLine(";;;;");
+                //    savedRegister.Restore(this);
                 //    var removedRegisters = ChangedRegisters().Where(r =>
                 //        Equals(savedRegister, r) || (r is ByteRegister changedByteRegister &&
                 //                                     Equals(changedByteRegister.PairRegister, savedRegister))).ToList();

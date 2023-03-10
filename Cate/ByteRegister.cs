@@ -113,7 +113,7 @@ namespace Inu.Cate
                             instruction.RemoveRegisterAssignment(this);
                         }
                         instruction.SetVariableRegister(variableOperand, this);
-                        //instruction.CancelOperandRegister(variableOperand);
+                        instruction.CancelOperandRegister(variableOperand);
                         return;
                     }
                 case IndirectOperand sourceIndirectOperand: {
@@ -124,7 +124,7 @@ namespace Inu.Cate
                             if (pointerRegister.IsPointer(0)) {
                                 LoadIndirect(instruction, pointerRegister, offset);
                                 instruction.AddChanged(this);
-                                //instruction.CancelOperandRegister(sourceIndirectOperand);
+                                instruction.CancelOperandRegister(sourceIndirectOperand);
                                 return;
                             }
                             var candidates = WordOperation.Registers.Where(r => r.IsPointer(offset)).ToList();
@@ -133,13 +133,13 @@ namespace Inu.Cate
                                 reservation.WordRegister.CopyFrom(instruction, pointerRegister);
                                 LoadIndirect(instruction, reservation.WordRegister, offset);
                                 instruction.AddChanged(this);
-                                //instruction.CancelOperandRegister(sourceIndirectOperand);
+                                instruction.CancelOperandRegister(sourceIndirectOperand);
                                 return;
                             }
                         }
                         LoadIndirect(instruction, pointer, offset);
                         instruction.AddChanged(this);
-                        //instruction.CancelOperandRegister(sourceIndirectOperand);
+                        instruction.CancelOperandRegister(sourceIndirectOperand);
                         return;
                     }
                 case ByteRegisterOperand byteRegisterOperand:

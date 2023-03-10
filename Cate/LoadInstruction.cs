@@ -73,7 +73,7 @@ namespace Inu.Cate
             }
         }
 
-        protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers;
+        protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers.Where(r=>!IsRegisterReserved(r,DestinationOperand)).ToList();
     }
 
     public class WordLoadInstruction : LoadInstruction
