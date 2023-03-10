@@ -73,7 +73,7 @@ namespace Inu.Cate
             }
         }
 
-        protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers.Where(r=>!IsRegisterReserved(r,DestinationOperand)).ToList();
+        protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers.Where(r => !IsRegisterReserved(r, SourceOperand)).ToList();
     }
 
     public class WordLoadInstruction : LoadInstruction
@@ -88,7 +88,12 @@ namespace Inu.Cate
             ) {
                 return;
             }
-            using var reservation= WordOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
+
+            if (DestinationOperand.Register is WordRegister wordRegister) {
+                wordRegister.Load(this, SourceOperand);
+                return;
+            }
+            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
             reservation.WordRegister.Load(this, SourceOperand);
             reservation.WordRegister.Store(this, DestinationOperand);
         }

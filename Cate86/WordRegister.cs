@@ -147,51 +147,51 @@ namespace Inu.Cate.I8086
         }
 
 
-        public override void Load(Instruction instruction, Operand sourceOperand)
-        {
-            switch (sourceOperand) {
-                case IntegerOperand sourceIntegerOperand:
-                    var value = sourceIntegerOperand.IntegerValue;
-                    LoadConstant(instruction, value);
-                    return;
-                case PointerOperand sourcePointerOperand:
-                    instruction.WriteLine("\tmov " + this + "," + sourcePointerOperand.MemoryAddress());
-                    instruction.RemoveRegisterAssignment(this);
-                    instruction.AddChanged(this);
-                    return;
-                case VariableOperand sourceVariableOperand: {
-                        var sourceVariable = sourceVariableOperand.Variable;
-                        var sourceOffset = sourceVariableOperand.Offset;
-                        if (sourceVariable.Register is WordRegister sourceRegister) {
-                            Debug.Assert(sourceOffset == 0);
-                            if (!Equals(sourceRegister, this)) {
-                                CopyFrom(instruction, sourceRegister);
-                            }
-                            return;
-                        }
-                        LoadFromMemory(instruction, sourceVariable, sourceOffset);
-                        return;
-                    }
-                case IndirectOperand sourceIndirectOperand: {
-                        var pointer = sourceIndirectOperand.Variable;
-                        var offset = sourceIndirectOperand.Offset;
-                        {
-                            if (pointer.Register is WordRegister pointerRegister) {
-                                LoadIndirect(instruction, pointerRegister, offset);
-                                return;
-                            }
-                        }
-                        using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegisters);
-                        {
-                            var pointerRegister = reservation.WordRegister;
-                            pointerRegister.LoadFromMemory(instruction, pointer, 0);
-                            LoadIndirect(instruction, pointerRegister, offset);
-                        }
-                        return;
-                    }
-            }
-            throw new NotImplementedException();
-        }
+        //public override void Load(Instruction instruction, Operand sourceOperand)
+        //{
+        //    switch (sourceOperand) {
+        //        case IntegerOperand sourceIntegerOperand:
+        //            var value = sourceIntegerOperand.IntegerValue;
+        //            LoadConstant(instruction, value);
+        //            return;
+        //        case PointerOperand sourcePointerOperand:
+        //            instruction.WriteLine("\tmov " + this + "," + sourcePointerOperand.MemoryAddress());
+        //            instruction.RemoveRegisterAssignment(this);
+        //            instruction.AddChanged(this);
+        //            return;
+        //        case VariableOperand sourceVariableOperand: {
+        //                var sourceVariable = sourceVariableOperand.Variable;
+        //                var sourceOffset = sourceVariableOperand.Offset;
+        //                if (sourceVariable.Register is WordRegister sourceRegister) {
+        //                    Debug.Assert(sourceOffset == 0);
+        //                    if (!Equals(sourceRegister, this)) {
+        //                        CopyFrom(instruction, sourceRegister);
+        //                    }
+        //                    return;
+        //                }
+        //                LoadFromMemory(instruction, sourceVariable, sourceOffset);
+        //                return;
+        //            }
+        //        case IndirectOperand sourceIndirectOperand: {
+        //                var pointer = sourceIndirectOperand.Variable;
+        //                var offset = sourceIndirectOperand.Offset;
+        //                {
+        //                    if (pointer.Register is WordRegister pointerRegister) {
+        //                        LoadIndirect(instruction, pointerRegister, offset);
+        //                        return;
+        //                    }
+        //                }
+        //                using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegisters);
+        //                {
+        //                    var pointerRegister = reservation.WordRegister;
+        //                    pointerRegister.LoadFromMemory(instruction, pointer, 0);
+        //                    LoadIndirect(instruction, pointerRegister, offset);
+        //                }
+        //                return;
+        //            }
+        //    }
+        //    throw new NotImplementedException();
+        //}
 
         private void Store(Instruction instruction, Variable variable, int offset)
         {

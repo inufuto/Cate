@@ -97,41 +97,41 @@ namespace Inu.Cate.Mc6800
         }
 
 
-        public override void Load(Instruction instruction, Operand sourceOperand)
-        {
-            Debug.Assert(Equals(this, X));
+        //public override void Load(Instruction instruction, Operand sourceOperand)
+        //{
+        //    Debug.Assert(Equals(this, X));
 
-            switch (sourceOperand) {
-                case IntegerOperand integerOperand:
-                    var value = integerOperand.IntegerValue;
-                    if (instruction.IsConstantAssigned(this, value)) return;
-                    LoadConstant(instruction, value.ToString());
-                    instruction.SetRegisterConstant(this, value);
-                    return;
-                case PointerOperand pointerOperand:
-                    instruction.WriteLine("\tldx\t#" + pointerOperand.MemoryAddress());
-                    instruction.RemoveRegisterAssignment(X);
-                    return;
-                case VariableOperand variableOperand: {
-                        var register = instruction.GetVariableRegister(variableOperand);
-                        if (Equals(register, X))
-                            return;
-                        var variable = variableOperand.Variable;
-                        var offset = variableOperand.Offset;
-                        LoadFromMemory(instruction, variable, offset);
-                        return;
-                    }
-                case IndirectOperand indirectOperand: {
-                        var pointer = indirectOperand.Variable;
-                        var offset = indirectOperand.Offset;
-                        Debug.Assert(pointer.Register == null);
-                        X.LoadFromMemory(instruction, pointer, 0);
-                        X.LoadIndirect(instruction, WordRegister.X, offset);
-                        return;
-                    }
-            }
-            throw new NotImplementedException();
-        }
+        //    switch (sourceOperand) {
+        //        case IntegerOperand integerOperand:
+        //            var value = integerOperand.IntegerValue;
+        //            if (instruction.IsConstantAssigned(this, value)) return;
+        //            LoadConstant(instruction, value.ToString());
+        //            instruction.SetRegisterConstant(this, value);
+        //            return;
+        //        case PointerOperand pointerOperand:
+        //            instruction.WriteLine("\tldx\t#" + pointerOperand.MemoryAddress());
+        //            instruction.RemoveRegisterAssignment(X);
+        //            return;
+        //        case VariableOperand variableOperand: {
+        //                var register = instruction.GetVariableRegister(variableOperand);
+        //                if (Equals(register, X))
+        //                    return;
+        //                var variable = variableOperand.Variable;
+        //                var offset = variableOperand.Offset;
+        //                LoadFromMemory(instruction, variable, offset);
+        //                return;
+        //            }
+        //        case IndirectOperand indirectOperand: {
+        //                var pointer = indirectOperand.Variable;
+        //                var offset = indirectOperand.Offset;
+        //                Debug.Assert(pointer.Register == null);
+        //                X.LoadFromMemory(instruction, pointer, 0);
+        //                X.LoadIndirect(instruction, WordRegister.X, offset);
+        //                return;
+        //            }
+        //    }
+        //    throw new NotImplementedException();
+        //}
 
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)

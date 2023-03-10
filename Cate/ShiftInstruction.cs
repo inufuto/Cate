@@ -34,7 +34,7 @@ namespace Inu.Cate
 
         protected override void ShiftConstant(int count)
         {
-            string operation = Operation();
+            var operation = Operation();
             OperateByte(operation, count);
         }
 

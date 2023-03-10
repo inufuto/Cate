@@ -228,27 +228,27 @@ namespace Inu.Cate.Z80
             }
         }
 
-        public override void Load(Instruction instruction, Operand sourceOperand)
-        {
-            switch (sourceOperand) {
-                case IndirectOperand sourceIndirectOperand: {
-                        var pointer = sourceIndirectOperand.Variable;
-                        var offset = sourceIndirectOperand.Offset;
-                        var register = instruction.GetVariableRegister(pointer, 0);
-                        {
-                            if (register is WordRegister pointerRegister) {
-                                LoadIndirect(instruction, pointerRegister, offset);
-                                return;
-                            }
-                        }
-                        using var reservation = WordOperation.ReserveAnyRegister(instruction, Z80.WordRegister.Pointers(offset));
-                        reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
-                        LoadIndirect(instruction, reservation.WordRegister, offset);
-                        return;
-                    }
-            }
-            base.Load(instruction, sourceOperand);
-        }
+        //public override void Load(Instruction instruction, Operand sourceOperand)
+        //{
+        //    switch (sourceOperand) {
+        //        case IndirectOperand sourceIndirectOperand: {
+        //                var pointer = sourceIndirectOperand.Variable;
+        //                var offset = sourceIndirectOperand.Offset;
+        //                var register = instruction.GetVariableRegister(pointer, 0);
+        //                {
+        //                    if (register is WordRegister pointerRegister) {
+        //                        LoadIndirect(instruction, pointerRegister, offset);
+        //                        return;
+        //                    }
+        //                }
+        //                using var reservation = WordOperation.ReserveAnyRegister(instruction, Z80.WordRegister.Pointers(offset));
+        //                reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
+        //                LoadIndirect(instruction, reservation.WordRegister, offset);
+        //                return;
+        //            }
+        //    }
+        //    base.Load(instruction, sourceOperand);
+        //}
 
         public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {

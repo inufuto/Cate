@@ -129,25 +129,46 @@ namespace Inu.Cate
 
         public virtual Operand? ResultOperand => null;
 
-        public Register? GetVariableRegister(Variable variable, int offset)
+        public Register? GetVariableRegister(Variable variable, int offset, Func<Register, bool>? func)
         {
+            bool IsMatch(Register r) => func == null || func(r);
+
+            var registers = new List<Register>();
+
             if (offset == 0 && variable.Register != null) {
-                return variable.Register;
+                registers.Add(variable.Register);
             }
-            foreach (var (registerId, assignment) in RegisterAssignments) {
+
+            foreach (var (register, assignment) in RegisterAssignments) {
                 if (
                     assignment is RegisterVariableAssignment variableAssignment &&
                     variableAssignment.Variable.SameStorage(variable) &&
-                    variableAssignment.Offset == offset
+                    variableAssignment.Offset == offset &&
+                    IsMatch(register)
                 )
-                    return registerId;
+                    registers.Add(register);
             }
-            return null;
+            if (registers.Count == 0) return null;
+            if (func != null) {
+                var register = registers.FirstOrDefault(func);
+                if (register != null) return register;
+            }
+            return registers[0];
+        }
+
+        public Register? GetVariableRegister(Variable variable, int offset)
+        {
+            return GetVariableRegister(variable, offset, null);
+        }
+
+        public Register? GetVariableRegister(VariableOperand operand, Func<Register, bool>? func)
+        {
+            return GetVariableRegister(operand.Variable, operand.Offset, func);
         }
 
         public Register? GetVariableRegister(VariableOperand operand)
         {
-            return GetVariableRegister(operand.Variable, operand.Offset);
+            return GetVariableRegister(operand, null);
         }
 
         public bool VariableRegisterMatches(Variable variable, int offset, Register register)
@@ -444,7 +465,7 @@ namespace Inu.Cate
         }
 
 
-        internal bool CancelOperandRegister(Operand operand)
+        public bool CancelOperandRegister(Operand operand)
         {
             for (var i = registerReservations.Count - 1; i >= 0; --i) {
                 var reservation = registerReservations[i];

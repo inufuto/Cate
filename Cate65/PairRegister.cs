@@ -63,11 +63,11 @@ namespace Inu.Cate.Mos6502
             high.StoreToMemory(instruction, label + "+1");
         }
 
-        public override void Load(Instruction instruction, Operand operand)
-        {
-            low.Load(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
-            high.Load(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
-        }
+        //public override void Load(Instruction instruction, Operand operand)
+        //{
+        //    low.Load(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
+        //    high.Load(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
+        //}
 
         public override void Store(Instruction instruction, AssignableOperand operand)
         {

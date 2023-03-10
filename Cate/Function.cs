@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("dy = *pElements")) {
+                if (instruction.ToString().Contains("@22 = (sword)pTeam[23]")) {
                     var aaa = 111;
                 }
 #endif

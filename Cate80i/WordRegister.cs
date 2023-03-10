@@ -173,64 +173,67 @@ namespace Inu.Cate.I8080
             }
         }
 
-        public override void Load(Instruction instruction, Operand sourceOperand)
-        {
-            switch (sourceOperand) {
-                case IntegerOperand sourceIntegerOperand:
-                    var value = sourceIntegerOperand.IntegerValue;
-                    if (instruction.IsConstantAssigned(this, value)) return;
-                    LoadConstant(instruction, value.ToString());
-                    instruction.SetRegisterConstant(this, value);
-                    return;
-                case PointerOperand sourcePointerOperand:
-                    if (instruction.IsConstantAssigned(this, sourcePointerOperand)) return;
-                    instruction.WriteLine("\tlxi\t" + this + "," + sourcePointerOperand.MemoryAddress());
-                    instruction.SetRegisterConstant(this, sourcePointerOperand);
-                    instruction.AddChanged(this);
-                    return;
-                case VariableOperand sourceVariableOperand: {
-                        var sourceVariable = sourceVariableOperand.Variable;
-                        var sourceOffset = sourceVariableOperand.Offset;
-                        var variableRegister = instruction.GetVariableRegister(sourceVariableOperand);
-                        if (variableRegister is WordRegister sourceRegister) {
-                            Debug.Assert(sourceOffset == 0);
-                            if (!Equals(sourceRegister, this)) {
-                                CopyFrom(instruction, sourceRegister);
-                            }
+        //public override void Load(Instruction instruction, Operand sourceOperand)
+        //{
+        //    switch (sourceOperand) {
+        //        case IntegerOperand sourceIntegerOperand:
+        //            var value = sourceIntegerOperand.IntegerValue;
+        //            if (instruction.IsConstantAssigned(this, value)) return;
+        //            LoadConstant(instruction, value.ToString());
+        //            instruction.SetRegisterConstant(this, value);
+        //            return;
+        //        case PointerOperand sourcePointerOperand:
+        //            if (instruction.IsConstantAssigned(this, sourcePointerOperand)) return;
+        //            instruction.WriteLine("\tlxi\t" + this + "," + sourcePointerOperand.MemoryAddress());
+        //            instruction.SetRegisterConstant(this, sourcePointerOperand);
+        //            instruction.AddChanged(this);
+        //            return;
+        //        case VariableOperand sourceVariableOperand: {
+        //                var sourceVariable = sourceVariableOperand.Variable;
+        //                var sourceOffset = sourceVariableOperand.Offset;
+        //                var variableRegister = instruction.GetVariableRegister(sourceVariableOperand);
+        //                if (variableRegister is WordRegister sourceRegister) {
+        //                    Debug.Assert(sourceOffset == 0);
+        //                    if (!Equals(sourceRegister, this)) {
+        //                        CopyFrom(instruction, sourceRegister);
+        //                        instruction.CancelOperandRegister(sourceVariableOperand);
+        //                    }
+        //                    return;
+        //                }
+        //                LoadFromMemory(instruction, sourceVariable, sourceOffset);
+        //                instruction.CancelOperandRegister(sourceVariableOperand);
+        //                return;
+        //            }
+        //        case IndirectOperand sourceIndirectOperand: {
+        //                var pointer = sourceIndirectOperand.Variable;
+        //                var offset = sourceIndirectOperand.Offset;
+        //                var pointerRegister = instruction.GetVariableRegister(pointer, 0);
+        //                if (pointerRegister is WordRegister pointerWordRegister && !Equals(pointerWordRegister, this)) {
+        //                    LoadIndirect(instruction, pointerWordRegister, offset);
+        //                    instruction.CancelOperandRegister(sourceIndirectOperand);
+        //                    return;
+        //                }
 
-                            return;
-                        }
+        //                if (Equals(this, Hl)) {
+        //                    using var reservation = WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
+        //                    var temporaryRegister = reservation.WordRegister;
+        //                    Hl.LoadFromMemory(instruction, pointer, 0);
+        //                    temporaryRegister.LoadIndirect(instruction, Hl, offset);
+        //                    Hl.CopyFrom(instruction, temporaryRegister);
+        //                    instruction.CancelOperandRegister(sourceIndirectOperand);
+        //                    return;
+        //                }
+        //                using (WordOperation.ReserveRegister(instruction, Hl)) {
+        //                    Hl.LoadFromMemory(instruction, pointer, 0);
+        //                    LoadIndirect(instruction, Hl, offset);
+        //                    instruction.CancelOperandRegister(sourceIndirectOperand);
+        //                }
+        //                return;
+        //            }
+        //    }
 
-                        LoadFromMemory(instruction, sourceVariable, sourceOffset);
-                        return;
-                    }
-                case IndirectOperand sourceIndirectOperand: {
-                        var pointer = sourceIndirectOperand.Variable;
-                        var offset = sourceIndirectOperand.Offset;
-                        var pointerRegister = instruction.GetVariableRegister(pointer, 0);
-                        if (pointerRegister is WordRegister pointerWordRegister && !Equals(pointerWordRegister, this)) {
-                            LoadIndirect(instruction, pointerWordRegister, offset);
-                            return;
-                        }
-
-                        if (Equals(this, Hl)) {
-                            using var reservation = WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
-                            var temporaryRegister = reservation.WordRegister;
-                            Hl.LoadFromMemory(instruction, pointer, 0);
-                            temporaryRegister.LoadIndirect(instruction, Hl, offset);
-                            Hl.CopyFrom(instruction, temporaryRegister);
-                            return;
-                        }
-                        using (WordOperation.ReserveRegister(instruction, Hl)) {
-                            Hl.LoadFromMemory(instruction, pointer, 0);
-                            LoadIndirect(instruction, Hl, offset);
-                        }
-                        return;
-                    }
-            }
-
-            throw new NotImplementedException();
-        }
+        //    throw new NotImplementedException();
+        //}
 
         public override void Store(Instruction instruction, AssignableOperand destinationOperand)
         {
@@ -342,6 +345,20 @@ namespace Inu.Cate.I8080
             //    //pointerRegister.Add(instruction, -offset);
             //}
         }
+
+        public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
+        {
+            if (Equals(this, Hl)) {
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
+                var temporaryRegister = reservation.WordRegister;
+                Hl.LoadFromMemory(instruction, pointer, 0);
+                temporaryRegister.LoadIndirect(instruction, Hl, offset);
+                Hl.CopyFrom(instruction, temporaryRegister);
+                return;
+            }
+            base.LoadIndirect(instruction, pointer, offset);
+        }
+
 
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {

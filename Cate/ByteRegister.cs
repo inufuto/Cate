@@ -66,7 +66,7 @@ namespace Inu.Cate
 
         protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
-            var register = instruction.GetVariableRegister(pointer, 0);
+            var register = instruction.GetVariableRegister(pointer, 0,r=>r is WordRegister wr && wr.IsPointer(offset));
             if (register is WordRegister wordRegister && (Equals(wordRegister, pointer.Register) || wordRegister.IsPointer(offset))) {
                 StoreIndirect(instruction, wordRegister, offset);
                 return;
@@ -82,7 +82,7 @@ namespace Inu.Cate
         }
 
 
-        public virtual void Load(Instruction instruction, Operand sourceOperand)
+        public void Load(Instruction instruction, Operand sourceOperand)
         {
             switch (sourceOperand) {
                 case IntegerOperand integerOperand:

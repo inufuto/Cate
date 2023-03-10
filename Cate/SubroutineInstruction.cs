@@ -265,8 +265,7 @@ namespace Inu.Cate
                     var operand = assignment.Operand;
                     Debug.Assert(parameter.Register != null);
                     if (!(operand is VariableOperand variableOperand)) continue;
-                    var register = variableOperand.Variable.Register
-                                   ?? GetVariableRegister(variableOperand.Variable, variableOperand.Offset);
+                    var register = GetVariableRegister(variableOperand.Variable, variableOperand.Offset, r=>r.Equals(parameter.Register));
                     if (!Equals(register, parameter.Register)) continue;
                     assignment.RegisterReservation = ReserveRegister(register, operand);
                     Load(parameter.Register, operand);
@@ -308,7 +307,7 @@ namespace Inu.Cate
                         }
                         if (register == null || Equals(register, firstRegister)) continue;
                         if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
-                        assignment.RegisterReservation = ReserveRegister(register, operand);
+                        assignment.RegisterReservation = ReserveRegister(register);
                         Load(register, operand);
                         assignment.SetDone(this, register);
                         changed = true;
@@ -405,15 +404,15 @@ namespace Inu.Cate
             }
         }
 
-        private RegisterReservation ReserveRegister(Register register, Operand operand)
-        {
-            return register switch
-            {
-                ByteRegister byteRegister => ByteOperation.ReserveRegister(this, byteRegister, operand),
-                WordRegister wordRegister => WordOperation.ReserveRegister(this, wordRegister, operand),
-                _ => throw new NotImplementedException()
-            };
-        }
+        //private RegisterReservation ReserveRegister(Register register, Operand operand)
+        //{
+        //    return register switch
+        //    {
+        //        ByteRegister byteRegister => ByteOperation.ReserveRegister(this, byteRegister, operand),
+        //        WordRegister wordRegister => WordOperation.ReserveRegister(this, wordRegister, operand),
+        //        _ => throw new NotImplementedException()
+        //    };
+        //}
 
 
         protected abstract void StoreParameters();

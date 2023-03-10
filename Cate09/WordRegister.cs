@@ -86,7 +86,7 @@ namespace Inu.Cate.Mc6809
             instruction.WriteLine("\tst" + this + "\t" + label);
         }
 
-        private void LoadIndirect(Instruction instruction, Variable pointer, int offset)
+        public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
             if (pointer.Register == null && offset == 0) {
                 instruction.WriteLine("\tld" + this + "\t[" + pointer.MemoryAddress(0) + "]");
@@ -126,41 +126,41 @@ namespace Inu.Cate.Mc6809
         }
 
 
-        public override void Load(Instruction instruction, Operand sourceOperand)
-        {
-            switch (sourceOperand) {
-                case IntegerOperand sourceIntegerOperand:
-                    LoadConstant(instruction, sourceIntegerOperand.IntegerValue);
-                    return;
-                case PointerOperand sourcePointerOperand:
-                    LoadConstant(instruction, sourcePointerOperand.MemoryAddress());
-                    return;
-                case VariableOperand sourceVariableOperand: {
-                        var sourceVariable = sourceVariableOperand.Variable;
-                        var sourceOffset = sourceVariableOperand.Offset;
-                        if (sourceVariable.Register is WordRegister sourceRegister) {
-                            Debug.Assert(sourceOffset == 0);
-                            if (!Equals(sourceRegister, this)) {
-                                CopyFrom(instruction, sourceRegister);
-                            }
-                            return;
-                        }
-                        LoadFromMemory(instruction, sourceVariable, sourceOffset);
-                        return;
-                    }
-                case IndirectOperand sourceIndirectOperand: {
-                        var pointer = sourceIndirectOperand.Variable;
-                        var offset = sourceIndirectOperand.Offset;
-                        if (pointer.Register is WordRegister pointerRegister) {
-                            LoadIndirect(instruction, pointerRegister, offset);
-                            return;
-                        }
-                        LoadIndirect(instruction, pointer, offset);
-                        return;
-                    }
-            }
-            throw new NotImplementedException();
-        }
+        //public override void Load(Instruction instruction, Operand sourceOperand)
+        //{
+        //    switch (sourceOperand) {
+        //        case IntegerOperand sourceIntegerOperand:
+        //            LoadConstant(instruction, sourceIntegerOperand.IntegerValue);
+        //            return;
+        //        case PointerOperand sourcePointerOperand:
+        //            LoadConstant(instruction, sourcePointerOperand.MemoryAddress());
+        //            return;
+        //        case VariableOperand sourceVariableOperand: {
+        //                var sourceVariable = sourceVariableOperand.Variable;
+        //                var sourceOffset = sourceVariableOperand.Offset;
+        //                if (sourceVariable.Register is WordRegister sourceRegister) {
+        //                    Debug.Assert(sourceOffset == 0);
+        //                    if (!Equals(sourceRegister, this)) {
+        //                        CopyFrom(instruction, sourceRegister);
+        //                    }
+        //                    return;
+        //                }
+        //                LoadFromMemory(instruction, sourceVariable, sourceOffset);
+        //                return;
+        //            }
+        //        case IndirectOperand sourceIndirectOperand: {
+        //                var pointer = sourceIndirectOperand.Variable;
+        //                var offset = sourceIndirectOperand.Offset;
+        //                if (pointer.Register is WordRegister pointerRegister) {
+        //                    LoadIndirect(instruction, pointerRegister, offset);
+        //                    return;
+        //                }
+        //                LoadIndirect(instruction, pointer, offset);
+        //                return;
+        //            }
+        //    }
+        //    throw new NotImplementedException();
+        //}
 
 
 

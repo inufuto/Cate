@@ -247,50 +247,51 @@ namespace Inu.Cate.Z80
         }
 
 
-        public override void Load(Instruction instruction, Operand sourceOperand)
-        {
-            switch (sourceOperand) {
-                case IntegerOperand sourceIntegerOperand:
-                    var value = sourceIntegerOperand.IntegerValue;
-                    if (instruction.IsConstantAssigned(this, value)) return;
-                    LoadConstant(instruction, value.ToString());
-                    instruction.SetRegisterConstant(this, value);
-                    return;
-                case PointerOperand sourcePointerOperand:
-                    if (instruction.IsConstantAssigned(this, sourcePointerOperand)) return;
-                    instruction.WriteLine("\tld\t" + this + "," + sourcePointerOperand.MemoryAddress());
-                    instruction.SetRegisterConstant(this, sourcePointerOperand);
-                    instruction.AddChanged(this);
-                    return;
-                case VariableOperand sourceVariableOperand: {
-                        var sourceVariable = sourceVariableOperand.Variable;
-                        var sourceOffset = sourceVariableOperand.Offset;
-                        var variableRegister = instruction.GetVariableRegister(sourceVariableOperand);
-                        if (variableRegister is WordRegister sourceRegister) {
-                            Debug.Assert(sourceOffset == 0);
-                            if (!Equals(sourceRegister, this)) {
-                                CopyFrom(instruction, sourceRegister);
-                            }
-                            return;
-                        }
-                        LoadFromMemory(instruction, sourceVariable, sourceOffset);
-                        return;
-                    }
-                case IndirectOperand sourceIndirectOperand: {
-                        var pointer = sourceIndirectOperand.Variable;
-                        var offset = sourceIndirectOperand.Offset;
-                        if (pointer.Register is WordRegister pointerRegister) {
-                            LoadIndirect(instruction, pointerRegister, offset);
-                            return;
-                        }
-                        using var reservation = WordOperation.ReserveAnyRegister(instruction, Z80.WordRegister.PointerOrder(offset));
-                        reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
-                        LoadIndirect(instruction, reservation.WordRegister, offset);
-                        return;
-                    }
-            }
-            throw new NotImplementedException();
-        }
+        //public override void Load(Instruction instruction, Operand sourceOperand)
+        //{
+        //    switch (sourceOperand) {
+        //        case IntegerOperand sourceIntegerOperand:
+        //            var value = sourceIntegerOperand.IntegerValue;
+        //            if (instruction.IsConstantAssigned(this, value)) return;
+        //            LoadConstant(instruction, value.ToString());
+        //            instruction.SetRegisterConstant(this, value);
+        //            instruction.AddChanged(this);
+        //            return;
+        //        case PointerOperand sourcePointerOperand:
+        //            if (instruction.IsConstantAssigned(this, sourcePointerOperand)) return;
+        //            instruction.WriteLine("\tld\t" + this + "," + sourcePointerOperand.MemoryAddress());
+        //            instruction.SetRegisterConstant(this, sourcePointerOperand);
+        //            instruction.AddChanged(this);
+        //            return;
+        //        case VariableOperand sourceVariableOperand: {
+        //                var sourceVariable = sourceVariableOperand.Variable;
+        //                var sourceOffset = sourceVariableOperand.Offset;
+        //                var variableRegister = instruction.GetVariableRegister(sourceVariableOperand);
+        //                if (variableRegister is WordRegister sourceRegister) {
+        //                    Debug.Assert(sourceOffset == 0);
+        //                    if (!Equals(sourceRegister, this)) {
+        //                        CopyFrom(instruction, sourceRegister);
+        //                    }
+        //                    return;
+        //                }
+        //                LoadFromMemory(instruction, sourceVariable, sourceOffset);
+        //                return;
+        //            }
+        //        case IndirectOperand sourceIndirectOperand: {
+        //                var pointer = sourceIndirectOperand.Variable;
+        //                var offset = sourceIndirectOperand.Offset;
+        //                if (pointer.Register is WordRegister pointerRegister) {
+        //                    LoadIndirect(instruction, pointerRegister, offset);
+        //                    return;
+        //                }
+        //                using var reservation = WordOperation.ReserveAnyRegister(instruction, Z80.WordRegister.PointerOrder(offset));
+        //                reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
+        //                LoadIndirect(instruction, reservation.WordRegister, offset);
+        //                return;
+        //            }
+        //    }
+        //    throw new NotImplementedException();
+        //}
 
         public override void Store(Instruction instruction, AssignableOperand destinationOperand)
         {

@@ -87,14 +87,14 @@ namespace Inu.Cate.Mos6502
 
         public override bool IsPointer(int offset) => true;
 
-        public override void Load(Instruction instruction, Operand operand)
-        {
-            Debug.Assert(Low != null && High != null);
-            Low.Load(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
-            High.Load(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
-            //instruction.AddChanged(this);
-            instruction.SetVariableRegister(operand, this);
-        }
+        //public override void Load(Instruction instruction, Operand operand)
+        //{
+        //    Debug.Assert(Low != null && High != null);
+        //    Low.Load(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
+        //    High.Load(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
+        //    //instruction.AddChanged(this);
+        //    instruction.SetVariableRegister(operand, this);
+        //}
 
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
