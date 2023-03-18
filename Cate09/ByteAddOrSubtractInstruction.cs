@@ -15,7 +15,7 @@ namespace Inu.Cate.Mc6809
             if (IncrementOrDecrement())
                 return;
 
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '+' => "add",
                 '-' => "sub",

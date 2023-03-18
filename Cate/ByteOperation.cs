@@ -170,6 +170,7 @@ namespace Inu.Cate
                 if (destinationOperand?.Register is ByteRegister byteRegister && candidates.Contains(byteRegister)) {
                     if (Equals(sourceOperand?.Register, byteRegister)) {
                         instruction.CancelOperandRegister(sourceOperand);
+                        instruction.CancelOperandRegister(sourceOperand);
                     }
                     return instruction.ReserveRegister(byteRegister);
                 }
@@ -272,10 +273,11 @@ namespace Inu.Cate
 
         public void OperateByteBinomial(BinomialInstruction instruction, string operation, bool change)
         {
-            using var reservation = instruction.ByteOperation.ReserveAnyRegister(instruction, Accumulators,
+            using var reservation = instruction.ByteOperation.ReserveAnyRegister(instruction, Accumulators.Where(r=>!r.Conflicts(instruction.RightOperand.Register)).ToList(),
                 instruction.DestinationOperand, instruction.LeftOperand);
             if (instruction.RightOperand.Register is ByteRegister rightRegister && Equals(rightRegister, reservation.ByteRegister)) {
                 var temporaryByte = ToTemporaryByte(instruction, rightRegister);
+                instruction.CancelOperandRegister(instruction.RightOperand);
                 reservation.ByteRegister.Load(instruction, instruction.LeftOperand);
                 reservation.ByteRegister.Operate(instruction, operation, change, temporaryByte);
             }
