@@ -66,7 +66,7 @@ namespace Inu.Cate
 
         protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
-            var register = instruction.GetVariableRegister(pointer, 0,r=>r is WordRegister wr && wr.IsPointer(offset));
+            var register = instruction.GetVariableRegister(pointer, 0, r => r is WordRegister wr && wr.IsPointer(offset));
             if (register is WordRegister wordRegister && (Equals(wordRegister, pointer.Register) || wordRegister.IsPointer(offset))) {
                 StoreIndirect(instruction, wordRegister, offset);
                 return;
@@ -207,9 +207,10 @@ namespace Inu.Cate
         public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
         public abstract void Operate(Instruction instruction, string operation, bool change, string operand);
 
-        public virtual void Exchange(Instruction subroutineInstruction, ByteRegister register)
+        public virtual void Exchange(Instruction instruction, ByteRegister register)
         {
-            throw new NotImplementedException();
+            Debug.Assert(!Equals(this, register));
+            instruction.WriteLine("\txchg\t" + Name + "," + register.Name);
         }
 
         public bool Conflicts(Operand operand) =>
