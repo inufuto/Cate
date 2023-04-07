@@ -481,12 +481,25 @@ namespace Inu.Cate
                 operandRegisterReservations.Remove(reservation);
                 return true;
             }
-            //Debug.Assert(operand switch
-            //{
-            //    VariableOperand variableOperand => variableOperand.Variable.Register == null,
-            //    IndirectOperand indirectOperand => indirectOperand.Variable.Register == null,
-            //    _ => true
-            //});
+            return false;
+        }
+
+        public bool CancelOperandRegister(Operand operand, Register register)
+        {
+            for (var i = registerReservations.Count - 1; i >= 0; --i) {
+                var reservation = registerReservations[i];
+                if (reservation.Variable == null) continue;
+                var operandVariable = operand switch
+                {
+                    VariableOperand variableOperand => variableOperand.Variable,
+                    IndirectOperand indirectOperand => indirectOperand.Variable,
+                    _ => null
+                };
+                if (operandVariable == null || !Equals(register, reservation.Register)) continue;
+                registerReservations.RemoveAt(i);
+                operandRegisterReservations.Remove(reservation);
+                return true;
+            }
             return false;
         }
 
@@ -539,10 +552,7 @@ namespace Inu.Cate
             RegisterAssignments.Remove(variable.Register);
         }
 
-        //public bool IsSourceOperand(Variable variable)
-        //{
-        //    return RegisterReservations.Any(reservation => reservation.Previous == null && reservation.Register.Conflicts(variable.Register));
-        //}
+        public abstract bool IsSourceOperand(Variable variable);
 
         public static void Repeat(Action action, int count)
         {

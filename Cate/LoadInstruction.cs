@@ -25,6 +25,11 @@ namespace Inu.Cate
             }
         }
 
+        public override bool IsSourceOperand(Variable variable)
+        {
+            return SourceOperand.IsVariable(variable);
+        }
+
         //public override void RemoveDestinationRegister()
         //{
         //    RemoveChangedRegisters(DestinationOperand);

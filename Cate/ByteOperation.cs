@@ -158,7 +158,7 @@ namespace Inu.Cate
         public RegisterReservation ReserveRegister(Instruction instruction, ByteRegister register, Operand operand)
         {
             //if (Equals(operand.Register, register)) {
-            instruction.CancelOperandRegister(operand);
+            instruction.CancelOperandRegister(operand, register);
             //}
             return instruction.ReserveRegister(register);
         }

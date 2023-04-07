@@ -54,6 +54,11 @@ namespace Inu.Cate
             }
         }
 
+        public override bool IsSourceOperand(Variable variable)
+        {
+            return LeftOperand.IsVariable(variable);
+        }
+
         //public override void RemoveDestinationRegister()
         //{
         //    RemoveChangedRegisters(DestinationOperand);
@@ -63,7 +68,8 @@ namespace Inu.Cate
 
         public int BitCount
         {
-            get {
+            get
+            {
                 var count = 0;
                 var mask = 1;
                 while (mask < 0x10000) {

@@ -88,6 +88,11 @@ namespace Inu.Cate
 
         protected readonly List<ParameterAssignment> ParameterAssignments = new List<ParameterAssignment>();
 
+        public override bool IsSourceOperand(Variable variable)
+        {
+            return SourceOperands.Any(sourceOperand => sourceOperand.IsVariable(variable));
+        }
+
         public override bool IsResultChanged()
         {
             if (ResultOperand == null) {
@@ -265,7 +270,7 @@ namespace Inu.Cate
                     var operand = assignment.Operand;
                     Debug.Assert(parameter.Register != null);
                     if (!(operand is VariableOperand variableOperand)) continue;
-                    var register = GetVariableRegister(variableOperand.Variable, variableOperand.Offset, r=>r.Equals(parameter.Register));
+                    var register = GetVariableRegister(variableOperand.Variable, variableOperand.Offset, r => r.Equals(parameter.Register));
                     if (!Equals(register, parameter.Register)) continue;
                     assignment.RegisterReservation = ReserveRegister(register, operand);
                     Load(parameter.Register, operand);

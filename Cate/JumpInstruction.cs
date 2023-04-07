@@ -17,6 +17,8 @@
         public override bool IsUnconditionalJump() => true;
 
         public override void ReserveOperandRegisters() { }
+
+        public override bool IsSourceOperand(Variable variable) => false;
         //public override void RemoveDestinationRegister() { }
     }
 }

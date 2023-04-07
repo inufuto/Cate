@@ -17,6 +17,8 @@ namespace Inu.Cate
         {
             return Equals(operand);
         }
+
+        public abstract bool IsVariable(Variable variable);
     }
 
     public abstract class ConstantOperand : Operand
@@ -29,6 +31,7 @@ namespace Inu.Cate
         }
 
         public override void AddUsage(int address, Variable.Usage usage) { }
+        public override bool IsVariable(Variable variable) => false;
     }
 
     public class IntegerOperand : ConstantOperand
@@ -151,6 +154,11 @@ namespace Inu.Cate
                    Offset == variableOperand.Offset;
         }
 
+        public override bool IsVariable(Variable variable)
+        {
+            return Equals(Variable, variable);
+        }
+
         public readonly int Offset;
 
         public VariableOperand(Variable variable, Type type, int offset)
@@ -245,6 +253,11 @@ namespace Inu.Cate
                    Offset == indirectOperand.Offset;
         }
 
+        public override bool IsVariable(Variable variable)
+        {
+            return Equals(Variable, variable);
+        }
+
         public override AssignableOperand ToMember(Type type, int offset)
         {
             return new IndirectOperand(Variable, type, Offset + offset);
@@ -287,6 +300,7 @@ namespace Inu.Cate
         }
 
         public override void AddUsage(int address, Variable.Usage usage) { }
+        public override bool IsVariable(Variable variable) => false;
 
         public void CopyFrom(Instruction instruction, ByteRegister register)
         {

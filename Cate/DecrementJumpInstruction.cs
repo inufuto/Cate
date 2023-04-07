@@ -23,6 +23,11 @@
             ReserveOperandRegister(Operand);
         }
 
+        public override bool IsSourceOperand(Variable variable)
+        {
+            return Operand.IsVariable(variable);
+        }
+
         //public override void RemoveDestinationRegister()
         //{
         //    RemoveChangedRegisters(Operand);

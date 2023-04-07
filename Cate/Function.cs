@@ -159,7 +159,7 @@ namespace Inu.Cate
             bool SavingChanged(Instruction instruction1, Instruction instruction2)
             {
                 return instruction1.IsJump() || instruction2.IsJump() || instruction1.IsResultChanged() || instruction2.IsResultChanged() ||
-                       //instruction1.SavingVariables.Any(instruction2.IsSourceOperand) ||
+                       instruction1.SavingVariables.Any(instruction2.IsSourceOperand) ||
                        !instruction1.SavingVariables.SetEquals(instruction2.SavingVariables) || Anchors.Any(a => a.Address == instruction2.Address);
             }
 
@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("offset = @3 + offset")) {
+                if (instruction.ToString().Contains("Put_(vram,0)")) {
                     var aaa = 111;
                 }
 #endif

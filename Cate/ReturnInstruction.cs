@@ -36,6 +36,11 @@ namespace Inu.Cate
             }
         }
 
+        public override bool IsSourceOperand(Variable variable)
+        {
+            return SourceOperand != null && SourceOperand.IsVariable(variable);
+        }
+
         //public override void RemoveDestinationRegister() { }
 
         protected void LoadResult()
