@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("Put_(vram,0)")) {
+                if (instruction.ToString().Contains("pBullet[4] = Sign_(y,FighterY)")) {
                     var aaa = 111;
                 }
 #endif

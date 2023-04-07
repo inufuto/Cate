@@ -210,7 +210,10 @@ namespace Inu.Cate
         public virtual void Exchange(Instruction instruction, ByteRegister register)
         {
             Debug.Assert(!Equals(this, register));
-            instruction.WriteLine("\txchg\t" + Name + "," + register.Name);
+            using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteOperation.Registers.Where(r => !Equals(r, this) && !Equals(r, register)).ToList());
+            reservation.ByteRegister.CopyFrom(instruction, register);
+            register.CopyFrom(instruction, this);
+            CopyFrom(instruction, reservation.ByteRegister);
         }
 
         public bool Conflicts(Operand operand) =>

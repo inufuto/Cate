@@ -1,4 +1,6 @@
-﻿using System;
+﻿
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -191,5 +193,11 @@ namespace Inu.Cate.I8086
         }
 
         public override Cate.WordRegister? PairRegister => I8086.PairRegister.FromName(Name.ToCharArray()[0] + "x");
+
+        public override void Exchange(Instruction instruction, Cate.ByteRegister register)
+        {
+            Debug.Assert(!Equals(this, register));
+            instruction.WriteLine("\txchg\t" + Name + "," + register.Name);
+        }
     }
 }

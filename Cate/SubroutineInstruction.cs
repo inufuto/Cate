@@ -40,7 +40,8 @@ namespace Inu.Cate
                 Debug.Assert(other.Parameter.Register != null);
                 switch (Parameter.Register) {
                     case ByteRegister byteRegister:
-                        byteRegister.Exchange(instruction, (ByteRegister)other.Parameter.Register);
+                        var otherByteRegister = (ByteRegister)other.Parameter.Register;
+                        byteRegister.Exchange(instruction, otherByteRegister);
                         break;
                     case WordRegister wordRegister:
                         wordRegister.CopyFrom(instruction, (WordRegister)other.Parameter.Register);
@@ -335,6 +336,8 @@ namespace Inu.Cate
                         return Equals(variableRegister, parameter.Register);
                     });
                     if (other != null && !Equals(other.Parameter.Register, operand.Register)) {
+                        Debug.Assert(other.Parameter.Register != null);
+                        Load(other.Parameter.Register, operand);
                         assignment.Exchange(this, other);
                     }
                 }
