@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("pBullet[4] = Sign_(y,FighterY)")) {
+                if (instruction.ToString().Contains("@4 = HitMover_(thisX,thisY,1,x,y,size)")) {
                     var aaa = 111;
                 }
 #endif

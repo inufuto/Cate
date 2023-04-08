@@ -306,10 +306,10 @@ namespace Inu.Cate
                     {
                         Register? register;
                         if (parameter.Type.ByteCount == 1) {
-                            register = ByteOperation.Registers.Find(r => !IsRegisterReserved(r));
+                            register = ByteOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
                         }
                         else {
-                            register = WordOperation.Registers.Find(r => !IsRegisterReserved(r));
+                            register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
                         }
                         if (register == null || Equals(register, firstRegister)) continue;
                         if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
