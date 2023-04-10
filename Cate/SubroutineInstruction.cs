@@ -62,7 +62,7 @@ namespace Inu.Cate
                 if (!Equals(RegisterReservation.Register, Parameter.Register)) {
                     Debug.Assert(Parameter.Register != null);
 #if DEBUG
-                    instruction.WriteLine("\t; " + Parameter.Register + " <- " + RegisterReservation.Register);
+                    instruction.WriteLine("\t;[Close] " + Parameter.Register + " <- " + RegisterReservation.Register);
 #endif
                     switch (Parameter.Register) {
                         case ByteRegister byteRegister:
@@ -153,9 +153,12 @@ namespace Inu.Cate
             //}
 
             {
-                var _ = FillParameters();
+                var reservations = FillParameters();
                 ResultFlags = 0;
                 Call();
+                foreach (var reservation in reservations) {
+                    reservation.Dispose();
+                }
             }
             RemoveStaticVariableAssignments();
 
