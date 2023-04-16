@@ -81,9 +81,7 @@ namespace Inu.Cate
                         var register = variable.Register;
                         if (register is ByteRegister byteRegister) {
                             Debug.Assert(operation.Replace("\t", "").Replace(" ", "").Length == 3);
-                            //var register = RegisterFromId(Register);
                             byteRegister.Operate(instruction, operation, change, count);
-                            instruction.RemoveChanged(byteRegister);
                             instruction.ResultFlags |= Instruction.Flag.Z;
                             return;
                         }
