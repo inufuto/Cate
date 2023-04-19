@@ -119,13 +119,14 @@ namespace Inu.Cate
         {
             var wordOperation = Compiler.Instance.WordOperation;
             var candidates = wordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList();
+            //if (candidates.Count == 0) {
+            //    candidates = wordOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
+            //}
             if (candidates.Count == 0) {
-                candidates = wordOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
+                LoadFromMemory(instruction, pointer, 0);
+                LoadIndirect(instruction, this, offset);
+                return;
             }
-            if (candidates.Count == 0) {
-                candidates = wordOperation.Registers;
-            }
-
             using var reservation = wordOperation.ReserveAnyRegister(instruction, candidates);
             reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
             LoadIndirect(instruction, reservation.WordRegister, offset);
