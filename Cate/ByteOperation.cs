@@ -59,7 +59,7 @@ namespace Inu.Cate
         protected virtual void OperateIndirect(Instruction instruction, string operation, bool change, Variable pointer,
             int offset, int count)
         {
-            var reservation = Compiler.Instance.WordOperation.ReserveAnyRegister(instruction, Compiler.Instance.WordOperation.PointerRegisters(offset));
+            using var reservation = Compiler.Instance.WordOperation.ReserveAnyRegister(instruction, Compiler.Instance.WordOperation.PointerRegisters(offset));
             reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
             OperateIndirect(instruction, operation, change, reservation.WordRegister, offset, count);
         }
