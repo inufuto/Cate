@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("pBytes = pStage[1]")) {
+                if (instruction.ToString().Contains("pDirection = pMonster[4]")) {
                     var aaa = 111;
                 }
 #endif

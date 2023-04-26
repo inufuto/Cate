@@ -195,6 +195,14 @@ namespace Inu.Cate.Mc6800
                 offset = 0;
             }
         }
+
+        public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
+        {
+            LoadFromMemory(instruction, pointer, 0);
+            LoadIndirect(instruction, this, offset);
+        }
+
+
         public override void StoreIndirect(Instruction instruction, Cate.WordRegister destinationPointerRegister, int destinationOffset)
         {
             // TODO
