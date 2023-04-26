@@ -337,7 +337,9 @@ namespace Inu.Cate.I8080
             //if (Math.Abs(offset) <= 5) {
             pointerRegister.Add(instruction, offset);
             LoadIndirect(instruction, pointerRegister, 0);
-            pointerRegister.Add(instruction, -offset);
+            if (!Equals(pointerRegister, this)) {
+                pointerRegister.Add(instruction, -offset);
+            }
             //}
             //using (WordOperation.ReserveRegister(instruction, pointerRegister)) {
             //    pointerRegister.Add(instruction, offset);
