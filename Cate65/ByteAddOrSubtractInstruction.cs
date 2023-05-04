@@ -10,13 +10,13 @@ namespace Inu.Cate.Mos6502
 
         public override void BuildAssembly()
         {
-            if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
+            if (Equals(RightOperand.Register, ByteRegister.A) && !Equals(LeftOperand.Register, ByteRegister.A) && IsOperatorExchangeable()) {
                 ExchangeOperands();
             }
             if (CanIncrementOrDecrement() && IncrementOrDecrement())
                 return;
 
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '+' => "clc|adc",
                 '-' => "sec|sbc",
