@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("offset = @2 + @4")) {
+                if (instruction.ToString().Contains("b = @3")) {
                     var aaa = 111;
                 }
 #endif
