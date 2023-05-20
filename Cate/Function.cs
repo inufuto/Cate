@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("b = @3")) {
+                if (instruction.ToString().Contains("*pBackground = left")) {
                     var aaa = 111;
                 }
 #endif

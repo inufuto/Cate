@@ -15,7 +15,7 @@
                     return;
                 }
             }
-            if (DestinationOperand is IndirectOperand destinationIndirectOperand && destinationIndirectOperand.Variable.Register is WordRegister wordRegister && wordRegister.IsPointer(destinationIndirectOperand.Offset)) {
+            if (DestinationOperand is IndirectOperand { Variable: { Register: WordRegister wordRegister } } destinationIndirectOperand && wordRegister.IsPointer(destinationIndirectOperand.Offset)) {
                 if (SourceOperand is IntegerOperand integerOperand) {
                     var offset = destinationIndirectOperand.Offset;
                     var addition = offset >= 0 ? "+" + offset : "-" + (-offset);

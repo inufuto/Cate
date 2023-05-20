@@ -151,7 +151,8 @@ namespace Inu.Cate
             if (registers.Count == 0) return null;
             if (func != null) {
                 var register = registers.FirstOrDefault(func);
-                if (register != null) return register;
+                //if (register != null) 
+                return register;
             }
             return registers[0];
         }
