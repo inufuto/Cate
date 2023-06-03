@@ -64,7 +64,8 @@ namespace Inu.Cate
                 case VariableOperand sourceVariableOperand: {
                         var sourceVariable = sourceVariableOperand.Variable;
                         var sourceOffset = sourceVariableOperand.Offset;
-                        var variableRegister = instruction.GetVariableRegister(sourceVariableOperand, r => r.Equals(this));
+                        var variableRegister = instruction.GetVariableRegister(sourceVariableOperand, r => r.Equals(this)) ??
+                                               instruction.GetVariableRegister(sourceVariableOperand);
                         if (variableRegister is WordRegister sourceRegister) {
                             Debug.Assert(sourceOffset == 0);
                             if (!Equals(sourceRegister, this)) {

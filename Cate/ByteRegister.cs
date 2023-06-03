@@ -66,7 +66,8 @@ namespace Inu.Cate
 
         protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
-            var register = instruction.GetVariableRegister(pointer, 0, r => r is WordRegister wr && wr.IsPointer(offset));
+            var register = instruction.GetVariableRegister(pointer, 0, r => r is WordRegister wr && wr.IsPointer(offset)) ??
+                           instruction.GetVariableRegister(pointer, 0, r => r is WordRegister wr && wr.IsPointer(0));
             if (register is WordRegister wordRegister && (Equals(wordRegister, pointer.Register) || wordRegister.IsPointer(offset))) {
                 StoreIndirect(instruction, wordRegister, offset);
                 return;
