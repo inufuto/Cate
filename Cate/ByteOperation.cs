@@ -229,6 +229,11 @@ namespace Inu.Cate
             return ReserveAnyRegister(instruction, Registers);
         }
 
+        public RegisterReservation ReserveAnyRegister(Instruction instruction, Operand sourceOperand)
+        {
+            return ReserveAnyRegister(instruction, null, sourceOperand);
+        }
+
         public RegisterReservation ReserveAnyRegisterToChange(Instruction instruction, List<ByteRegister> candidates,
             AssignableOperand destinationOperand, Operand sourceOperand)
         {
@@ -254,20 +259,6 @@ namespace Inu.Cate
 
 
         public abstract void ClearByte(Instruction instruction, string label);
-
-        //public void UsingAnyRegister(Instruction instruction, List<ByteRegister> candidates, Operand operand,
-        //    Action<ByteRegister> action)
-        //{
-        //    if (operand is VariableOperand variableOperand) {
-        //        if (variableOperand.Register is ByteRegister register) {
-        //            if (candidates.Contains(register)) {
-        //                action(register);
-        //                return;
-        //            }
-        //        }
-        //    }
-        //    UsingAnyRegister(instruction, candidates, action);
-        //}
 
         public void OperateByteBinomial(BinomialInstruction instruction, string operation, bool change)
         {
@@ -303,5 +294,6 @@ namespace Inu.Cate
         {
             return Registers.Where(r => !Equals(r, register)).ToList();
         }
+
     }
 }

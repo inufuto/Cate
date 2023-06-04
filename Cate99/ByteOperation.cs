@@ -102,14 +102,23 @@ namespace Inu.Cate.Tms99
 
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, string value)
         {
+            void ViaRegister(Cate.ByteRegister r)
+            {
+                r.Load(instruction, leftOperand);
+                instruction.WriteLine("\t" + operation + "\t" + r.Name + "," + value);
+                instruction.AddChanged(r);
+                instruction.RemoveRegisterAssignment(r);
+            }
+
+            if (destinationOperand.Register is ByteRegister byteRegister) {
+                ViaRegister(byteRegister);
+                return;
+            }
+
             Debug.Assert(instance != null);
-            using var reservation = instance.ReserveAnyRegister(instruction, destinationOperand, leftOperand);
-            var destinationRegister = reservation.ByteRegister;
-            destinationRegister.Load(instruction, leftOperand);
-            instruction.WriteLine("\t" + operation + "\t" + destinationRegister.Name + "," + value);
-            destinationRegister.Store(instruction, destinationOperand);
-            instruction.AddChanged(destinationRegister);
-            instruction.RemoveRegisterAssignment(destinationRegister);
+            using var reservation = instance.ReserveAnyRegister(instruction, leftOperand);
+            ViaRegister(reservation.ByteRegister);
+            reservation.ByteRegister.Store(instruction, destinationOperand);
         }
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)
         {

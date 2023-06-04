@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("@3 = CellMapPtr_(@4,@5)")) {
+                if (instruction.ToString().Contains("__4 = pFixedRock[1] >> 1")) {
                     var aaa = 111;
                 }
 #endif

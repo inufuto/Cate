@@ -48,7 +48,7 @@ namespace Inu.Cate.Tms99
                             ForDestinationRegister(byteRegister);
                         }
                         else {
-                            using var destination = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+                            using var destination = ByteOperation.ReserveAnyRegister(this, LeftOperand);
                             var destinationRegister = destination.ByteRegister;
                             ForDestinationRegister(destinationRegister);
                         }

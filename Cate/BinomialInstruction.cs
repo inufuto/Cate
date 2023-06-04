@@ -77,11 +77,15 @@ namespace Inu.Cate
                     register.Operate(this, operation, true, count);
                 }
                 RemoveRegisterAssignment(register);
-                register.Store(this, DestinationOperand);
             }
 
-            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
+            if (DestinationOperand.Register is ByteRegister byteRegister) {
+                ViaRegister(byteRegister);
+                return;
+            }
+            using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
             ViaRegister(reservation.ByteRegister);
+            reservation.ByteRegister.Store(this, DestinationOperand);
         }
     }
 }

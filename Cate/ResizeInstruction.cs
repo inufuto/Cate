@@ -90,7 +90,7 @@ namespace Inu.Cate
                 destinationRegister.Load(this, Compiler.Instance.LowByteOperand(SourceOperand));
                 return;
             }
-            using (var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, null)) {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this)) {
                 var register = reservation.ByteRegister;
                 var lowByteOperand = Compiler.Instance.LowByteOperand(SourceOperand);
                 register.Load(this, lowByteOperand);
@@ -124,9 +124,6 @@ namespace Inu.Cate
                     destinationRegister.High.LoadConstant(this, 0);
                     return;
                 }
-                //if (SourceOperand.Register is ByteRegister sourceRegister) {
-                //    ExpandRegister(destinationRegister, sourceRegister);
-                //}
             }
             var pairRegisters = WordOperation.PairRegisters;
             if (DestinationOperand.Register == null) {
@@ -140,7 +137,7 @@ namespace Inu.Cate
                 reservation.WordRegister.Store(this, DestinationOperand);
                 return;
             }
-            using (var reservation = ByteOperation.ReserveAnyRegister(this, null, SourceOperand)) {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, SourceOperand)) {
                 var register = reservation.ByteRegister;
                 register.Load(this, SourceOperand);
                 register.Store(this, Compiler.LowByteOperand(DestinationOperand));

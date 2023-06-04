@@ -54,18 +54,29 @@ namespace Inu.Cate.Tms99
         protected override void ShiftConstant(int count)
         {
             var operation = Operation();
-            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
-            var register = reservation.ByteRegister;
-            register.Load(this, LeftOperand);
-            if (count > 0) {
-                WriteLine("\t" + operation + "\t" + register.Name + "," + count);
-                if (OperatorId == Keyword.ShiftRight) {
-                    WriteLine("\tandi\t" + register.Name + ",>ff00");
+
+            void ViaRegister(Cate.ByteRegister r)
+            {
+                string s;
+                r.Load(this, LeftOperand);
+                if (count > 0) {
+                    WriteLine("\t" + operation + "\t" + r.Name + "," + count);
+                    if (OperatorId == Keyword.ShiftRight) {
+                        WriteLine("\tandi\t" + r.Name + ",>ff00");
+                    }
                 }
+                AddChanged(r);
             }
+
+            if (DestinationOperand.Register is ByteRegister byteRegister) {
+                ViaRegister(byteRegister);
+                return;
+            }
+
+            using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
+            var register = reservation.ByteRegister;
+            ViaRegister(register);
             register.Store(this, DestinationOperand);
-            AddChanged(register);
-            ;
         }
         public override bool IsCalling() => true;
     }

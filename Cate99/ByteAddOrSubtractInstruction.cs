@@ -39,20 +39,38 @@ namespace Inu.Cate.Tms99
 
         protected override void Increment(int count)
         {
-            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
-            var temporaryRegister = reservation.ByteRegister;
-            temporaryRegister.Load(this, LeftOperand);
-            temporaryRegister.Operate(this, "inc", true, count);
-            temporaryRegister.Store(this, DestinationOperand);
+            void ViaRegister(Cate.ByteRegister r)
+            {
+                r.Load(this, LeftOperand);
+                r.Operate(this, "inc", true, count);
+            }
+
+            if (DestinationOperand.Register is ByteRegister byteRegister) {
+                ViaRegister(byteRegister);
+                return;
+            }
+
+            using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
+            ViaRegister(reservation.ByteRegister);
+            reservation.ByteRegister.Store(this, DestinationOperand);
         }
 
         protected override void Decrement(int count)
         {
-            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
-            var temporaryRegister = reservation.ByteRegister;
-            temporaryRegister.Load(this, LeftOperand);
-            temporaryRegister.Operate(this, "dec", true, count);
-            temporaryRegister.Store(this, DestinationOperand);
+            void ViaRegister(Cate.ByteRegister r)
+            {
+                r.Load(this, LeftOperand);
+                r.Operate(this, "dec", true, count);
+            }
+
+            if (DestinationOperand.Register is ByteRegister byteRegister) {
+                ViaRegister(byteRegister);
+                return;
+            }
+
+            using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
+            ViaRegister(reservation.ByteRegister);
+            reservation.ByteRegister.Store(this, DestinationOperand);
         }
     }
 }

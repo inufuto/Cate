@@ -16,13 +16,22 @@
 
         private void Operate(bool signed)
         {
-            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
-            var byteRegister = reservation.ByteRegister;
-            byteRegister.Load(this, SourceOperand);
-            RemoveRegisterAssignment(byteRegister);
-            var wordRegister = ((ByteRegister)byteRegister).Expand(this, signed);
-            AddChanged(wordRegister);
-            wordRegister.Store(this, DestinationOperand);
+            void ViaRegister(Cate.ByteRegister r)
+            {
+                r.Load(this, SourceOperand);
+                RemoveRegisterAssignment(r);
+                var w = ((ByteRegister)r).Expand(this, signed);
+                AddChanged(w);
+                w.Store(this, DestinationOperand);
+            }
+
+            if (DestinationOperand.Register is WordRegister wordRegister) {
+                ViaRegister(wordRegister.ByteRegister);
+                return;
+            }
+
+            using var reservation = ByteOperation.ReserveAnyRegister(this, SourceOperand);
+            ViaRegister(reservation.ByteRegister);
         }
 
         private void Reduce(Cate.WordRegister wordRegister)
