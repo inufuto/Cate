@@ -338,7 +338,7 @@ namespace Inu.Cate
                         variableRegister = GetVariableRegister(variable, variableOperand.Offset);
                         return Equals(variableRegister, parameter.Register);
                     });
-                    if (other != null && !Equals(other.Parameter.Register, operand.Register)) {
+                    if (other != null && Equals(other.Parameter.Register, operand.Register)) {
                         Debug.Assert(other.Parameter.Register != null);
                         Load(other.Parameter.Register, operand);
                         assignment.Exchange(this, other);
