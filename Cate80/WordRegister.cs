@@ -180,31 +180,9 @@ namespace Inu.Cate.Z80
             return register;
         }
 
-        //public static void Using(Instruction instruction, WordRegister register, Action action)
-        //{
-        //    void InvokeAction()
-        //    {
-        //        instruction.ReserveRegister(register);
-        //        action();
-        //        instruction.CancelRegister(register);
-        //    }
-        //    if (instruction.IsRegisterReserved(register)) {
-        //        var candidates = Registers.Where(r => !Equals(r, register)).ToList();
-        //        UsingAny(instruction, candidates, otherRegister =>
-        //        {
-        //            otherRegister.CopyFrom(instruction, register);
-        //            InvokeAction();
-        //            register.CopyFrom(instruction, otherRegister);
-        //        });
-        //        return;
-        //    }
-        //    InvokeAction();
-        //}
-
         public override bool IsOffsetInRange(int offset)
         {
-            if (Equals(this, Hl))
-                return offset == 0;
+            if (offset == 0) return true;
             if (IsIndex())
                 return offset >= -128 && offset <= 127;
             throw new NotImplementedException();
@@ -212,8 +190,7 @@ namespace Inu.Cate.Z80
 
         public override bool IsPointer(int offset)
         {
-            if (Equals(this, Hl))
-                return offset == 0;
+            if (offset == 0) return true;
             if (IsIndex())
                 return offset >= -128 && offset <= 127;
             return false;
