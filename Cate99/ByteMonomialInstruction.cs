@@ -15,10 +15,20 @@ namespace Inu.Cate.Tms99
                 _ => throw new NotImplementedException()
             };
 
+            void ForRegister(Cate.ByteRegister byteRegister)
+            {
+                string s;
+                byteRegister.Load(this, SourceOperand);
+                WriteLine("\t" + operation + "\t" + byteRegister.Name);
+            }
+
+            if (DestinationOperand.Register is ByteRegister byteRegister) {
+                ForRegister(byteRegister);
+                return;
+            }
             using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
             var register = reservation.ByteRegister;
-            register.Load(this, SourceOperand);
-            WriteLine("\t" + operation + "\t" + register.Name);
+            ForRegister(register);
             register.Store(this, DestinationOperand);
         }
     }
