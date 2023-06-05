@@ -132,33 +132,22 @@ namespace Inu.Cate
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<ByteRegister> candidates, Operand sourceOperand)
         {
-            return ReserveAnyRegister(instruction, candidates, null, sourceOperand);
+            if (!(sourceOperand is VariableOperand variableOperand)) return ReserveAnyRegister(instruction, candidates);
+            var register = instruction.GetVariableRegister(variableOperand);
+            if (!(register is ByteRegister byteRegister) || !candidates.Contains(byteRegister))
+                return ReserveAnyRegister(instruction, candidates);
+            //instruction.CancelOperandRegister(sourceOperand);
+            return ReserveRegister(instruction, byteRegister, sourceOperand);
         }
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<ByteRegister> candidates,
-            AssignableOperand? destinationOperand, Operand? sourceOperand)
+            AssignableOperand? destinationOperand, Operand sourceOperand)
         {
-            //{
-            //    if (destinationOperand?.Register is ByteRegister byteRegister && candidates.Contains(byteRegister)) {
-            //        if (Equals(sourceOperand?.Register, byteRegister)) {
-            //            instruction.CancelOperandRegister(sourceOperand);
-            //            instruction.CancelOperandRegister(sourceOperand);
-            //        }
-            //        return instruction.ReserveRegister(byteRegister);
-            //    }
-            //}
-            if (!(sourceOperand is VariableOperand variableOperand)) return ReserveAnyRegister(instruction, candidates);
-            {
-                var register = instruction.GetVariableRegister(variableOperand);
-                if (!(register is ByteRegister byteRegister) || !candidates.Contains(byteRegister))
-                    return ReserveAnyRegister(instruction, candidates);
-                //instruction.CancelOperandRegister(sourceOperand);
-                return ReserveRegister(instruction, byteRegister, sourceOperand);
-            }
+            return ReserveAnyRegister(instruction, candidates, sourceOperand);
         }
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, AssignableOperand? destinationOperand,
-            Operand? sourceOperand)
+            Operand sourceOperand)
         {
             return ReserveAnyRegister(instruction, Registers, destinationOperand, sourceOperand);
         }
@@ -209,24 +198,18 @@ namespace Inu.Cate
         public RegisterReservation ReserveAnyRegisterToChange(Instruction instruction, List<ByteRegister> candidates,
             AssignableOperand destinationOperand, Operand sourceOperand)
         {
-            instruction.CancelOperandRegister(sourceOperand);
-            //if (destinationOperand.Register is ByteRegister destinationRegister) {
-            //    //instruction.CancelOperandRegister(sourceOperand);
-            //    if (candidates.Contains(destinationRegister)) {
-            //        return instruction.ReserveRegister(destinationRegister);
-            //    }
-            //}
-
-            if (!(sourceOperand.Register is ByteRegister sourceRegister) ||
-                !instruction.IsRegisterReserved(sourceOperand.Register) ||
-                !candidates.Contains(sourceRegister)) return ReserveAnyRegister(instruction, candidates);
-            return instruction.ReserveRegister(sourceRegister);
+            //instruction.CancelOperandRegister(sourceOperand);
+            //if (!(sourceOperand.Register is ByteRegister sourceRegister) ||
+            //    !instruction.IsRegisterReserved(sourceOperand.Register) ||
+            //    !candidates.Contains(sourceRegister)) return ReserveAnyRegister(instruction, candidates);
+            //return instruction.ReserveRegister(sourceRegister);
+            return ReserveAnyRegister(instruction, candidates, sourceOperand);
         }
 
         public RegisterReservation ReserveAnyRegisterToChange(Instruction instruction, AssignableOperand destinationOperand,
             Operand sourceOperand)
         {
-            return ReserveAnyRegisterToChange(instruction, Registers, destinationOperand, sourceOperand);
+            return ReserveAnyRegister(instruction, Registers, sourceOperand);
         }
 
 
@@ -250,7 +233,7 @@ namespace Inu.Cate
                 instruction.RemoveRegisterAssignment(r);
             }
 
-            if (instruction.DestinationOperand.Register is ByteRegister byteRegister) {
+            if (instruction.DestinationOperand.Register is ByteRegister byteRegister && Accumulators.Contains(byteRegister) && !Equals(instruction.RightOperand.Register, byteRegister)) {
                 ViaRegister(byteRegister);
                 return;
             }
