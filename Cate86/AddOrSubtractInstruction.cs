@@ -42,21 +42,39 @@ namespace Inu.Cate.I8086
                 }
             }
             if (DestinationOperand.Type.ByteCount == 1) {
+                void ViaRegister(Cate.ByteRegister r)
+                {
+                    r.Load(this, LeftOperand);
+                    r.Operate(this, operation, true, RightOperand);
+                    AddChanged(r);
+                }
+
+                if (DestinationOperand.Register is ByteRegister byteRegister && !Equals(RightOperand.Register, byteRegister)) {
+                    ViaRegister(byteRegister);
+                    return;
+                }
                 var candidates = ByteRegister.Registers.Where(r => !r.Conflicts(RightOperand)).ToList();
-                using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, DestinationOperand, LeftOperand);
-                var temporaryRegister = reservation.ByteRegister;
-                temporaryRegister.Load(this, LeftOperand);
-                temporaryRegister.Operate(this, operation, true, RightOperand);
-                temporaryRegister.Store(this, DestinationOperand);
-                AddChanged(temporaryRegister);
+                using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand);
+                ViaRegister(reservation.ByteRegister);
+                reservation.ByteRegister.Store(this, DestinationOperand);
                 return;
             }
-            using (var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand)) {
-                var temporaryRegister = reservation.WordRegister;
-                temporaryRegister.Load(this, LeftOperand);
-                temporaryRegister.Operate(this, operation, true, RightOperand);
-                temporaryRegister.Store(this, DestinationOperand);
-                AddChanged(temporaryRegister);
+
+            {
+                void ViaRegister(Cate.WordRegister r)
+                {
+                    r.Load(this, LeftOperand);
+                    r.Operate(this, operation, true, RightOperand);
+                    AddChanged(r);
+                }
+
+                if (DestinationOperand.Register is WordRegister wordRegister && !Equals(RightOperand.Register, wordRegister)) {
+                    ViaRegister(wordRegister);
+                    return;
+                }
+                using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+                ViaRegister(reservation.WordRegister);
+                reservation.WordRegister.Store(this, DestinationOperand);
             }
         }
 
@@ -95,6 +113,7 @@ namespace Inu.Cate.I8086
                         break;
                     case VariableOperand variableOperand:
                         operand = "word ptr [" + variableOperand.MemoryAddress() + "]";
+                        RemoveVariableRegister(variableOperand);
                         break;
                     case IndirectOperand { Register: { } } indirectOperand: {
                             var offset = indirectOperand.Offset;
@@ -110,14 +129,26 @@ namespace Inu.Cate.I8086
                     return;
                 }
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
-            var temporaryRegister = reservation.WordRegister;
-            temporaryRegister.Load(this, LeftOperand);
-            for (var i = 0; i < count; ++i) {
-                WriteLine("\t" + operation + temporaryRegister);
+            {
+                void ViaRegister(Cate.WordRegister r)
+                {
+                    r.Load(this, LeftOperand);
+                    for (var i = 0; i < count; ++i) {
+                        WriteLine("\t" + operation + r);
+                    }
+
+                    AddChanged(r);
+                    RemoveRegisterAssignment(r);
+                }
+
+                if (DestinationOperand.Register is WordRegister wordRegister && !Equals(RightOperand.Register, wordRegister)) {
+                    ViaRegister(wordRegister);
+                    return;
+                }
+                using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+                ViaRegister(reservation.WordRegister);
+                reservation.WordRegister.Store(this, DestinationOperand);
             }
-            RemoveRegisterAssignment(temporaryRegister);
-            temporaryRegister.Store(this, DestinationOperand);
         }
     }
 }

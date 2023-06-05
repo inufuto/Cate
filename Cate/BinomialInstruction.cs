@@ -79,7 +79,7 @@ namespace Inu.Cate
                 RemoveRegisterAssignment(register);
             }
 
-            if (DestinationOperand.Register is ByteRegister byteRegister) {
+            if (DestinationOperand.Register is ByteRegister byteRegister && !Equals(RightOperand.Register, byteRegister)) {
                 ViaRegister(byteRegister);
                 return;
             }

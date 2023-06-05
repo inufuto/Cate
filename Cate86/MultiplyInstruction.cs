@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Inu.Cate.I8086
+﻿namespace Inu.Cate.I8086
 {
     internal class MultiplyInstruction : Cate.MultiplyInstruction
     {
@@ -12,7 +8,12 @@ namespace Inu.Cate.I8086
         public override void BuildAssembly()
         {
             if (RightValue == 0) {
-                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, DestinationOperand, null);
+                if (DestinationOperand.Register is WordRegister wordRegister) {
+                    wordRegister.LoadConstant(this, 0);
+                    return;
+                }
+
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers);
                 var register = reservation.WordRegister;
                 register.LoadConstant(this, 0);
                 register.Store(this, DestinationOperand);

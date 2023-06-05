@@ -29,7 +29,7 @@ namespace Inu.Cate.I8086
                 }
             }
 
-            using (var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.Registers, null, LeftOperand)) {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.Registers, LeftOperand)) {
                 var temporaryRegister = reservation.ByteRegister;
                 temporaryRegister.Load(this, LeftOperand);
                 temporaryRegister.Operate(this, "cmp ", false, RightOperand);
@@ -58,7 +58,7 @@ namespace Inu.Cate.I8086
                 }
             }
 
-            using (var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, null, LeftOperand)) {
+            using (var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, LeftOperand)) {
                 var temporaryRegister = reservation.WordRegister;
                 temporaryRegister.Load(this, LeftOperand);
                 temporaryRegister.Operate(this, "cmp ", false, RightOperand);

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Inu.Cate
@@ -83,24 +84,23 @@ namespace Inu.Cate
             return instruction.ReserveRegister(register, operand);
         }
 
-        //public WordRegister TemporaryRegister(Instruction instruction, List<WordRegister> candidates)
-        //{
-        //    var register = candidates.First(r => !instruction.IsRegisterReserved(r));
-        //    Debug.Assert(register != null);
-        //    return register;
-        //}
+        public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates, Operand sourceOperand)
+        {
+            return ReserveAnyRegister(instruction, candidates,null, sourceOperand);
+        }
+
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates,
             AssignableOperand? destinationOperand, Operand? sourceOperand)
         {
-            {
-                if (destinationOperand?.Register is WordRegister wordRegister && candidates.Contains(wordRegister)) {
-                    if (Equals(sourceOperand?.Register, wordRegister)) {
-                        instruction.CancelOperandRegister(sourceOperand);
-                    }
-                    return instruction.ReserveRegister(wordRegister);
-                }
-            }
+            //{
+            //    if (destinationOperand?.Register is WordRegister wordRegister && candidates.Contains(wordRegister)) {
+            //        if (Equals(sourceOperand?.Register, wordRegister)) {
+            //            instruction.CancelOperandRegister(sourceOperand);
+            //        }
+            //        return instruction.ReserveRegister(wordRegister);
+            //    }
+            //}
             if (!(sourceOperand is VariableOperand variableOperand)) return ReserveAnyRegister(instruction, candidates);
             {
                 var register = instruction.GetVariableRegister(variableOperand);
@@ -109,6 +109,11 @@ namespace Inu.Cate
                 //instruction.CancelOperandRegister(sourceOperand);
                 return ReserveRegister(instruction, wordRegister, sourceOperand);
             }
+        }
+
+        public RegisterReservation ReserveAnyRegister(Instruction instruction, Operand sourceOperand)
+        {
+            return ReserveAnyRegister(instruction, Registers, null, sourceOperand);
         }
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, AssignableOperand? destinationOperand,
@@ -150,5 +155,6 @@ namespace Inu.Cate
         {
             return new Saving(register, instruction, this);
         }
+
     }
 }

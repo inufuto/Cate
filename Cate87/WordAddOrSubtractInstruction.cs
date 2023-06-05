@@ -61,12 +61,12 @@ namespace Inu.Cate.MuCom87
 
         private void IncrementOrDecrement(string operation, int count)
         {
-            if (DestinationOperand.Register is WordRegister destinationRegister) {
-                destinationRegister.Load(this, LeftOperand);
-                IncrementOrDecrement(this, operation, destinationRegister, count);
+            if (DestinationOperand.Register is WordRegister wordRegister && !Equals(RightOperand.Register, wordRegister)) {
+                wordRegister.Load(this, LeftOperand);
+                IncrementOrDecrement(this, operation, wordRegister, count);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, DestinationOperand, LeftOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
             var register = reservation.WordRegister;
             register.Load(this, LeftOperand);
             IncrementOrDecrement(this, operation, register, count);

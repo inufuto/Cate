@@ -66,13 +66,18 @@ namespace Inu.Cate
                 }
                 var pointerRegisters = WordOperation.PointerRegisters(offset);
                 if (pointerRegisters.Any()) {
-                    using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, DestinationOperand, SourceOperand);
+                    using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
                     reservation.WordRegister.LoadFromMemory(this, pointer, 0);
                     ByteOperation.StoreConstantIndirect(this, reservation.WordRegister, offset, integerOperand.IntegerValue);
                     return;
                 }
             }
-            using (var reservation = ByteOperation.ReserveAnyRegister(this, Candidates(), DestinationOperand, SourceOperand)) {
+
+            if (DestinationOperand.Register is ByteRegister byteRegister) {
+                byteRegister.Load(this, SourceOperand);
+                return;
+            }
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, Candidates(), SourceOperand)) {
                 reservation.ByteRegister.Load(this, SourceOperand);
                 reservation.ByteRegister.Store(this, DestinationOperand);
             }
@@ -98,7 +103,7 @@ namespace Inu.Cate
                 wordRegister.Load(this, SourceOperand);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, SourceOperand);
             reservation.WordRegister.Load(this, SourceOperand);
             reservation.WordRegister.Store(this, DestinationOperand);
         }

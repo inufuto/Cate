@@ -453,7 +453,7 @@ namespace Inu.Cate
                     }
                     else {
                         var candidates = Candidates(operand);
-                        using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, null, operand);
+                        using var reservation = ByteOperation.ReserveAnyRegister(this, candidates,  operand);
                         reservation.ByteRegister.Load(this, operand);
                         reservation.ByteRegister.StoreToMemory(this, label);
                     }

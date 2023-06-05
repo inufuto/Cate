@@ -130,11 +130,12 @@ namespace Inu.Cate
                 pairRegisters = pairRegisters.Where(r => !IsRegisterReserved(r)).ToList();
             }
             if (pairRegisters.Any()) {
-                using var reservation = WordOperation.ReserveAnyRegister(this, pairRegisters, DestinationOperand, null);
-                Debug.Assert(reservation.WordRegister.Low != null && reservation.WordRegister.High != null);
-                reservation.WordRegister.Low.Load(this, SourceOperand);
-                reservation.WordRegister.High.LoadConstant(this, 0);
-                reservation.WordRegister.Store(this, DestinationOperand);
+                using var reservation = WordOperation.ReserveAnyRegister(this, pairRegisters);
+                var wordRegister = reservation.WordRegister;
+                Debug.Assert(wordRegister is { Low: { }, High: { } });
+                wordRegister.Low.Load(this, SourceOperand);
+                wordRegister.High.LoadConstant(this, 0);
+                wordRegister.Store(this, DestinationOperand);
                 return;
             }
             using (var reservation = ByteOperation.ReserveAnyRegister(this, SourceOperand)) {
