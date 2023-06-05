@@ -149,7 +149,7 @@ namespace Inu.Cate
         public RegisterReservation ReserveAnyRegister(Instruction instruction, AssignableOperand? destinationOperand,
             Operand sourceOperand)
         {
-            return ReserveAnyRegister(instruction, Registers, destinationOperand, sourceOperand);
+            return ReserveAnyRegister(instruction, Registers, sourceOperand);
         }
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<ByteRegister> candidates)
@@ -187,7 +187,7 @@ namespace Inu.Cate
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, Operand sourceOperand)
         {
-            return ReserveAnyRegister(instruction, Registers, null, sourceOperand);
+            return ReserveAnyRegister(instruction, Registers, sourceOperand);
         }
         //public RegisterReservation ReserveAnyRegister(Instruction instruction, AssignableOperand destinationOperand,
         //    Operand sourceOperand)

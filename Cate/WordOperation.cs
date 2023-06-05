@@ -86,21 +86,6 @@ namespace Inu.Cate
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates, Operand sourceOperand)
         {
-            return ReserveAnyRegister(instruction, candidates,null, sourceOperand);
-        }
-
-
-        public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates,
-            AssignableOperand? destinationOperand, Operand? sourceOperand)
-        {
-            //{
-            //    if (destinationOperand?.Register is WordRegister wordRegister && candidates.Contains(wordRegister)) {
-            //        if (Equals(sourceOperand?.Register, wordRegister)) {
-            //            instruction.CancelOperandRegister(sourceOperand);
-            //        }
-            //        return instruction.ReserveRegister(wordRegister);
-            //    }
-            //}
             if (!(sourceOperand is VariableOperand variableOperand)) return ReserveAnyRegister(instruction, candidates);
             {
                 var register = instruction.GetVariableRegister(variableOperand);
@@ -111,15 +96,22 @@ namespace Inu.Cate
             }
         }
 
+
+        public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates,
+            AssignableOperand? destinationOperand, Operand sourceOperand)
+        {
+            return ReserveAnyRegister(instruction, candidates, sourceOperand);
+        }
+
         public RegisterReservation ReserveAnyRegister(Instruction instruction, Operand sourceOperand)
         {
-            return ReserveAnyRegister(instruction, Registers, null, sourceOperand);
+            return ReserveAnyRegister(instruction, Registers, sourceOperand);
         }
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, AssignableOperand? destinationOperand,
-            Operand? sourceOperand)
+            Operand sourceOperand)
         {
-            return ReserveAnyRegister(instruction, Registers, destinationOperand, sourceOperand);
+            return ReserveAnyRegister(instruction, Registers, sourceOperand);
         }
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates)
