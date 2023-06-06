@@ -36,7 +36,7 @@ namespace Inu.Cate.Mos6502
             }
             using (var wordReservation = WordOperation.ReserveAnyRegister(this)) {
                 var wordRegister = wordReservation.WordRegister;
-                using (var byteReservation = ByteOperation.ReserveAnyRegister(this, candidates, DestinationOperand, LeftOperand)) {
+                using (var byteReservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
                     var byteRegister = byteReservation.ByteRegister;
                     byteRegister.Load(this, Compiler.LowByteOperand(LeftOperand));
                     byteRegister.StoreToMemory(this, wordRegister.Name + "+0");

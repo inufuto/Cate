@@ -43,21 +43,32 @@ namespace Inu.Cate.Mos6502
                 }
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordZeroPage.Registers, DestinationOperand, LeftOperand);
-            var zeroPage = reservation.WordRegister;
-            zeroPage.Load(this, LeftOperand);
-            for (var i = 0; i < count; ++i) {
-                byteAction(operation =>
+            {
+                void ViaRegister(WordRegister r)
                 {
-                    Debug.Assert(zeroPage.Low != null);
-                    zeroPage.Low.Operate(this, operation, true, 1);
-                }, operation =>
-                {
-                    Debug.Assert(zeroPage.High != null);
-                    zeroPage.High.Operate(this, operation, true, 1);
-                });
+                    r.Load(this, LeftOperand);
+                    for (var i = 0; i < count; ++i) {
+                        byteAction(operation =>
+                        {
+                            Debug.Assert(r.Low != null);
+                            r.Low.Operate(this, operation, true, 1);
+                        }, operation =>
+                        {
+                            Debug.Assert(r.High != null);
+                            r.High.Operate(this, operation, true, 1);
+                        });
+                    }
+                }
+
+                if (DestinationOperand.Register is WordRegister wordRegister && !RightOperand.Conflicts(wordRegister)) {
+                    ViaRegister(wordRegister);
+                    return;
+                }
+
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordZeroPage.Registers, LeftOperand);
+                ViaRegister(reservation.WordRegister);
+                reservation.WordRegister.Store(this, DestinationOperand);
             }
-            zeroPage.Store(this, DestinationOperand);
         }
 
         protected override void ShiftVariable(Operand counterOperand)
@@ -75,18 +86,29 @@ namespace Inu.Cate.Mos6502
                     : "cate.ShiftRightWord",
                 _ => throw new NotImplementedException()
             };
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordZeroPage.Registers, DestinationOperand, LeftOperand);
-            var zeroPage = reservation.WordRegister;
-            zeroPage.Load(this, LeftOperand);
-            using (ByteOperation.ReserveRegister(this, ByteRegister.X)) {
-                var wordZeroPage = (WordZeroPage)zeroPage;
-                ByteRegister.X.LoadConstant(this, wordZeroPage.Label);
-                using (ByteOperation.ReserveRegister(this, ByteRegister.Y)) {
-                    loadY();
-                    Compiler.CallExternal(this, functionName);
+            {
+                void ViaRegister(WordRegister r)
+                {
+                    r.Load(this, LeftOperand);
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.X)) {
+                        var wordZeroPage = (WordZeroPage)r;
+                        ByteRegister.X.LoadConstant(this, wordZeroPage.Label);
+                        using (ByteOperation.ReserveRegister(this, ByteRegister.Y)) {
+                            loadY();
+                            Compiler.CallExternal(this, functionName);
+                        }
+                    }
                 }
+
+                if (DestinationOperand.Register is WordRegister wordRegister && !RightOperand.Conflicts(wordRegister)) {
+                    ViaRegister(wordRegister);
+                    return;
+                }
+                using var reservation =
+                    WordOperation.ReserveAnyRegister(this, WordZeroPage.Registers, LeftOperand);
+                ViaRegister(reservation.WordRegister);
+                reservation.WordRegister.Store(this, DestinationOperand);
             }
-            zeroPage.Store(this, DestinationOperand);
         }
     }
 }

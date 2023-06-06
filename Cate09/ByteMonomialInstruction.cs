@@ -20,10 +20,21 @@ namespace Inu.Cate.Mc6809
                 ByteOperation.Operate(this, operation, true, DestinationOperand);
                 return;
             }
-            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, null);
+
+            void ViaRegister(Cate.ByteRegister r)
+            {
+                r.Load(this, SourceOperand);
+                r.Operate(this, operation, true, 1);
+            }
+
+            if (DestinationOperand.Register is ByteRegister byteRegister) {
+                ViaRegister(byteRegister);
+                return;
+            }
+
+            using var reservation = ByteOperation.ReserveAnyRegister(this, SourceOperand);
             var register = reservation.ByteRegister;
-            register.Load(this, SourceOperand);
-            register.Operate(this, operation, true, 1);
+            ViaRegister(register);
             register.Store(this, DestinationOperand);
         }
     }

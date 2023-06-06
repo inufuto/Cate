@@ -53,11 +53,12 @@ namespace Inu.Cate.Mos6502
                     }
                 }
             }
+            { }
             var candidates =
                 RightOperand is IndirectOperand || LeftOperand is IndirectOperand ?
                 new List<Cate.ByteRegister>() { ByteRegister.A } :
                 ByteRegister.Registers;
-            using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, null, LeftOperand)) {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
                 var register = reservation.ByteRegister;
                 var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
                 register.Load(this, LeftOperand);

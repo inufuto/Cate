@@ -61,16 +61,25 @@ namespace Inu.Cate.Mos6502
                 return;
             }
 
-            var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.Y };
-            using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, DestinationOperand, LeftOperand);
-            var register = reservation.ByteRegister;
-            register.Load(this, LeftOperand);
-            for (var i = 0; i < count; ++i) {
-                WriteLine("\t" + registerOperation + register);
+            void ViaRegister(Cate.ByteRegister r)
+            {
+                r.Load(this, LeftOperand);
+                for (var i = 0; i < count; ++i) {
+                    WriteLine("\t" + registerOperation + r);
+                }
+
+                RemoveRegisterAssignment(r);
+                AddChanged(r);
             }
-            register.Store(this, DestinationOperand);
-            RemoveRegisterAssignment(register);
-            AddChanged(register);
+
+            if (DestinationOperand.Register is ByteRegister byteRegister && !RightOperand.Conflicts(byteRegister)) {
+                ViaRegister(byteRegister);
+                return;
+            }
+            var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.Y };
+            using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand);
+            ViaRegister(reservation.ByteRegister);
+            reservation.ByteRegister.Store(this, DestinationOperand);
         }
     }
 }

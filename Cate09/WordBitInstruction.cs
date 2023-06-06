@@ -47,7 +47,12 @@ namespace Inu.Cate.Mc6809
                     OperateLeftRegister(leftRegister);
                     return;
                 }
-                using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters, DestinationOperand, LeftOperand);
+
+                if (DestinationOperand.Register is WordRegister wordRegister && !RightOperand.Conflicts(wordRegister)) {
+                    OperateLeftRegister(leftRegister);
+                    return;
+                }
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters, LeftOperand);
                 var temporaryRegister = reservation.WordRegister;
                 temporaryRegister.CopyFrom(this, leftRegister);
                 OperateLeftRegister(temporaryRegister);
@@ -72,7 +77,7 @@ namespace Inu.Cate.Mc6809
                     OperateDestinationRegister(destinationRegister);
                     return;
                 }
-                using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters, DestinationOperand, LeftOperand);
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters, LeftOperand);
                 var temporaryRegister = reservation.WordRegister;
                 OperateDestinationRegister(temporaryRegister);
                 destinationRegister.CopyFrom(this, destinationRegister);

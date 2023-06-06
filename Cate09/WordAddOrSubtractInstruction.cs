@@ -55,19 +55,31 @@ namespace Inu.Cate.Mc6809
             if (OperatorId == '-') {
                 value = -value;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
-            var register = reservation.WordRegister;
-            register.Load(this, LeftOperand);
-            if (register == WordRegister.D) {
-                WriteLine("\taddd\t#" + value);
+            {
+                void ViaRegister(Cate.WordRegister r)
+                {
+                    r.Load(this, LeftOperand);
+                    if (Equals(r, WordRegister.D)) {
+                        WriteLine("\taddd\t#" + value);
+                    }
+                    else {
+                        WriteLine("\tlea" + r + "\t" + value + "," + r);
+                    }
+
+                    AddChanged(r);
+                    RemoveRegisterAssignment(r);
+                }
+
+                if (DestinationOperand.Register is WordRegister wordRegister && RightOperand.Conflicts(wordRegister)) {
+                    ViaRegister(wordRegister);
+                    return true;
+                }
+                using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+                var register = reservation.WordRegister;
+                ViaRegister(register);
+                register.Store(this, DestinationOperand);
+                return true;
             }
-            else {
-                WriteLine("\tlea" + register + "\t" + value + "," + register);
-            }
-            AddChanged(register);
-            RemoveRegisterAssignment(register);
-            register.Store(this, DestinationOperand);
-            return true;
         }
 
 
