@@ -32,25 +32,35 @@ namespace Inu.Cate.Z80
                 '&' => "and\t",
                 _ => throw new ArgumentException(OperatorId.ToString())
             };
+            {
+                void ViaRegister(Cate.WordRegister r)
+                {
+                    using var leftReservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, LeftOperand);
+                    var leftRegister = leftReservation.WordRegister;
+                    leftRegister.Load(this, LeftOperand);
+                    if (RightOperand is IntegerOperand integerOperand) {
+                        var value = integerOperand.IntegerValue;
+                        Operate(operation, r, leftRegister, "low " + value, "high " + value);
+                        return;
+                    }
 
-            using var destinationReservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, DestinationOperand, null);
-            var destinationRegister = destinationReservation.WordRegister;
-            using (var leftReservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, null, LeftOperand)) {
-                var leftRegister = leftReservation.WordRegister;
-                leftRegister.Load(this, LeftOperand);
-                if (RightOperand is IntegerOperand integerOperand) {
-                    var value = integerOperand.IntegerValue;
-                    Operate(operation, destinationRegister, leftRegister, "low " + value, "high " + value);
-                    return;
-                }
-                using (var rightReservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, null, RightOperand)) {
+                    using var rightReservation =
+                        WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, RightOperand);
                     var rightRegister = rightReservation.WordRegister;
                     rightRegister.Load(this, RightOperand);
-                    Debug.Assert(rightRegister.Low != null && rightRegister.High != null);
-                    Operate(operation, destinationRegister, leftRegister, rightRegister.Low.Name, rightRegister.High.Name);
+                    Debug.Assert(rightRegister is { Low: { }, High: { } });
+                    Operate(operation, r, leftRegister, rightRegister.Low.Name, rightRegister.High.Name);
                 }
+
+                if (DestinationOperand.Register is WordRegister wordRegister && wordRegister != RightOperand.Register) {
+                    ViaRegister(wordRegister);
+                    return;
+                }
+                using var destinationReservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters);
+                var destinationRegister = destinationReservation.WordRegister;
+                ViaRegister(destinationRegister);
+                destinationRegister.Store(this, DestinationOperand);
             }
-            destinationRegister.Store(this, DestinationOperand);
         }
 
         private void Operate(string operation, Cate.WordRegister destinationRegister, Cate.WordRegister leftRegister,

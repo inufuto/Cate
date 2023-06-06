@@ -13,23 +13,32 @@ namespace Inu.Cate.Z80
         public override void BuildAssembly()
         {
             if (LeftOperand.Register != null && RightOperand is IntegerOperand { IntegerValue: 8 }) {
-                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, DestinationOperand, LeftOperand);
-                var pairRegister = reservation.WordRegister;
-                pairRegister.Load(this, LeftOperand);
-                Debug.Assert(pairRegister.High != null);
-                Debug.Assert(pairRegister.Low != null);
-                switch (OperatorId) {
-                    case Keyword.ShiftLeft:
-                        pairRegister.High.CopyFrom(this, pairRegister.Low);
-                        pairRegister.Low.LoadConstant(this, 0);
-                        break;
-                    case Keyword.ShiftRight:
-                        pairRegister.Low.CopyFrom(this, pairRegister.High);
-                        pairRegister.High.LoadConstant(this, 0);
-                        break;
-                    default:
-                        throw new NotImplementedException();
+                void ViaRegister(Cate.WordRegister r)
+                {
+                    r.Load(this, LeftOperand);
+                    Debug.Assert(r.High != null);
+                    Debug.Assert(r.Low != null);
+                    switch (OperatorId) {
+                        case Keyword.ShiftLeft:
+                            r.High.CopyFrom(this, r.Low);
+                            r.Low.LoadConstant(this, 0);
+                            break;
+                        case Keyword.ShiftRight:
+                            r.Low.CopyFrom(this, r.High);
+                            r.High.LoadConstant(this, 0);
+                            break;
+                        default:
+                            throw new NotImplementedException();
+                    }
                 }
+
+                if (DestinationOperand.Register is WordRegister wordRegister && !Equals(wordRegister, RightOperand.Register)) {
+                    ViaRegister(wordRegister);
+                    return;
+                }
+                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, LeftOperand);
+                ViaRegister(reservation.WordRegister);
+                reservation.WordRegister.Store(this, DestinationOperand);
                 return;
             }
             base.BuildAssembly();
@@ -53,7 +62,7 @@ namespace Inu.Cate.Z80
                     return;
                 }
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, null, LeftOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters, LeftOperand);
             var temporaryRegister = reservation.WordRegister;
             temporaryRegister.Load(this, LeftOperand);
             Shift(temporaryRegister, count);

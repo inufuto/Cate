@@ -20,11 +20,23 @@ namespace Inu.Cate.Mc6800
                 ByteOperation.Operate(this, operation, true, DestinationOperand);
                 return;
             }
-            using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
-            var register = reservation.ByteRegister;
-            register.Load(this, SourceOperand);
-            WriteLine("\t" + operation + register);
-            register.Store(this, DestinationOperand);
+
+            {
+                void ViaRegister(Cate.ByteRegister r)
+                {
+                    r.Load(this, SourceOperand);
+                    WriteLine("\t" + operation + r);
+                }
+
+                if (DestinationOperand.Register is ByteRegister byteRegister) {
+                    ViaRegister(byteRegister);
+                    return;
+                }
+                using var reservation = ByteOperation.ReserveAnyRegister(this, SourceOperand);
+                var register = reservation.ByteRegister;
+                ViaRegister(register);
+                register.Store(this, DestinationOperand);
+            }
         }
     }
 }

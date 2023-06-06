@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("@6 = cell & 16")) {
+                if (instruction.ToString().Contains("pElements = @12 + DirectionElements_")) {
                     var aaa = 111;
                 }
 #endif

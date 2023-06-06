@@ -140,18 +140,6 @@ namespace Inu.Cate
             return ReserveRegister(instruction, byteRegister, sourceOperand);
         }
 
-        public RegisterReservation ReserveAnyRegister(Instruction instruction, List<ByteRegister> candidates,
-            AssignableOperand? destinationOperand, Operand sourceOperand)
-        {
-            return ReserveAnyRegister(instruction, candidates, sourceOperand);
-        }
-
-        public RegisterReservation ReserveAnyRegister(Instruction instruction, AssignableOperand? destinationOperand,
-            Operand sourceOperand)
-        {
-            return ReserveAnyRegister(instruction, Registers, sourceOperand);
-        }
-
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<ByteRegister> candidates)
         {
             if (Compiler.Instance.IsAssignedRegisterPrior()) {
@@ -194,23 +182,6 @@ namespace Inu.Cate
         //{
         //    return ReserveAnyRegister(instruction, null, sourceOperand);
         //}
-
-        public RegisterReservation ReserveAnyRegisterToChange(Instruction instruction, List<ByteRegister> candidates,
-            AssignableOperand destinationOperand, Operand sourceOperand)
-        {
-            //instruction.CancelOperandRegister(sourceOperand);
-            //if (!(sourceOperand.Register is ByteRegister sourceRegister) ||
-            //    !instruction.IsRegisterReserved(sourceOperand.Register) ||
-            //    !candidates.Contains(sourceRegister)) return ReserveAnyRegister(instruction, candidates);
-            //return instruction.ReserveRegister(sourceRegister);
-            return ReserveAnyRegister(instruction, candidates, sourceOperand);
-        }
-
-        public RegisterReservation ReserveAnyRegisterToChange(Instruction instruction, AssignableOperand destinationOperand,
-            Operand sourceOperand)
-        {
-            return ReserveAnyRegister(instruction, Registers, sourceOperand);
-        }
 
 
         public abstract void ClearByte(Instruction instruction, string label);

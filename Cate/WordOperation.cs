@@ -97,19 +97,7 @@ namespace Inu.Cate
         }
 
 
-        public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates,
-            AssignableOperand? destinationOperand, Operand sourceOperand)
-        {
-            return ReserveAnyRegister(instruction, candidates, sourceOperand);
-        }
-
         public RegisterReservation ReserveAnyRegister(Instruction instruction, Operand sourceOperand)
-        {
-            return ReserveAnyRegister(instruction, Registers, sourceOperand);
-        }
-
-        public RegisterReservation ReserveAnyRegister(Instruction instruction, AssignableOperand? destinationOperand,
-            Operand sourceOperand)
         {
             return ReserveAnyRegister(instruction, Registers, sourceOperand);
         }

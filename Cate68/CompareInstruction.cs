@@ -24,7 +24,7 @@ namespace Inu.Cate.Mc6800
                 }
             }
 
-            using (var reservation = ByteOperation.ReserveAnyRegister(this, null, LeftOperand)) {
+            using (var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand)) {
                 var register = reservation.ByteRegister;
                 register.Load(this, LeftOperand);
                 register.Operate(this, "cmp", false, RightOperand);

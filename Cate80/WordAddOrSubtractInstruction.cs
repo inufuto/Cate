@@ -69,59 +69,64 @@ namespace Inu.Cate.Z80
                 default:
                     throw new NotImplementedException();
             }
-            if (DestinationOperand.Register is WordRegister register && !Equals(LeftOperand.Register, WordRegister.Hl)) {
-                if (candidates.Contains(register)) {
-                    action(register);
-                    return;
-                }
+            if (DestinationOperand.Register is WordRegister destinationRegister && candidates.Contains(destinationRegister)) {
+                action(destinationRegister);
+                return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, candidates, DestinationOperand, LeftOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, candidates, LeftOperand);
             action(reservation.WordRegister);
         }
 
         private void AddConstant(int value)
         {
-            void ViaRegister(Cate.WordRegister register)
+            void ViaRegister(Cate.WordRegister r)
             {
-                register.Load(this, LeftOperand);
-                register.Add(this, value);
-                register.Store(this, DestinationOperand);
+                r.Load(this, LeftOperand);
+                r.Add(this, value);
+                r.Store(this, DestinationOperand);
             }
-            {
-                if (DestinationOperand.Register is WordRegister register) {
-                    if (register.IsAddable()) {
-                        ViaRegister(register);
-                        return;
-                    }
+
+            if (DestinationOperand.Register is WordRegister register) {
+                if (register.IsAddable()) {
+                    ViaRegister(register);
+                    return;
                 }
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.AddableRegisters, DestinationOperand, LeftOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.AddableRegisters, LeftOperand);
             ViaRegister(reservation.WordRegister);
         }
 
         private void AddRegister(Cate.WordRegister register)
         {
-            using var reservation = WordOperation.ReserveAnyRegister(this, RightCandidates, DestinationOperand, RightOperand);
-            reservation.WordRegister.Load(this, RightOperand);
-            register.Load(this, LeftOperand);
-            WriteLine("\tadd\t" + register + "," + reservation.WordRegister);
-            RemoveRegisterAssignment(register);
-            AddChanged(register);
+            void ViaRegister(Cate.WordRegister r)
+            {
+                r.Load(this, RightOperand);
+                register.Load(this, LeftOperand);
+                WriteLine("\tadd\t" + register + "," + r);
+                RemoveRegisterAssignment(register);
+                AddChanged(register);
+            }
+            using var reservation = WordOperation.ReserveAnyRegister(this, RightCandidates, RightOperand);
+            ViaRegister(reservation.WordRegister);
             register.Store(this, DestinationOperand);
         }
 
 
         private void SubtractRegister(Cate.WordRegister register)
         {
+            void ViaRegister(Cate.WordRegister r)
+            {
+                r.Load(this, RightOperand);
+                //CancelOperandRegister(RightOperand);
+                register.Load(this, LeftOperand);
+                WriteLine("\tor\ta");
+                WriteLine("\tsbc\t" + register + "," + r);
+                RemoveRegisterAssignment(register);
+                RemoveRegisterAssignment(register);
+            }
             Debug.Assert(Equals(register, WordRegister.Hl));
-            using var reservation = WordOperation.ReserveAnyRegister(this, RightCandidates, DestinationOperand, RightOperand);
-            reservation.WordRegister.Load(this, RightOperand);
-            //CancelOperandRegister(RightOperand);
-            register.Load(this, LeftOperand);
-            WriteLine("\tor\ta");
-            WriteLine("\tsbc\t" + register + "," + reservation.WordRegister);
-            RemoveRegisterAssignment(register);
-            RemoveRegisterAssignment(register);
+            using var reservation = WordOperation.ReserveAnyRegister(this, RightCandidates, RightOperand);
+            ViaRegister(reservation.WordRegister);
             register.Store(this, DestinationOperand);
         }
 
@@ -142,7 +147,7 @@ namespace Inu.Cate.Z80
                 IncrementOrDecrement(this, operation, destinationRegister, count);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.AddableRegisters, DestinationOperand, LeftOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.AddableRegisters, LeftOperand);
             reservation.WordRegister.Load(this, LeftOperand);
             IncrementOrDecrement(this, operation, reservation.WordRegister, count);
             reservation.WordRegister.Store(this, DestinationOperand);
