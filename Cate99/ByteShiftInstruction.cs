@@ -57,7 +57,6 @@ namespace Inu.Cate.Tms99
 
             void ViaRegister(Cate.ByteRegister r)
             {
-                string s;
                 r.Load(this, LeftOperand);
                 if (count > 0) {
                     WriteLine("\t" + operation + "\t" + r.Name + "," + count);

@@ -16,28 +16,39 @@ namespace Inu.Cate.Tms99
                 case '|':
                     Tms99.WordOperation.Operate(this, "soc", DestinationOperand, LeftOperand, RightOperand);
                     return;
-                case '&':
-                    using (var destination = ByteOperation.ReserveAnyRegisterToChange(this, DestinationOperand, LeftOperand)) {
-                        var destinationRegister = destination.ByteRegister;
-                        var candidates = ByteOperation.Registers.Where(r => !Equals(r, destinationRegister)).ToList();
-                        using (var source = ByteOperation.ReserveAnyRegister(this, candidates, null, RightOperand)) {
-                            var sourceRegister = source.ByteRegister;
-                            if (Equals(LeftOperand.Register, destinationRegister)) {
-                                destinationRegister.Load(this, LeftOperand);
+                case '&': {
+                        void ViaRegister(Cate.WordRegister dr)
+                        {
+                            var candidates = WordOperation.Registers.Where(r => Equals(r, dr)).ToList();
+                            using var source = WordOperation.ReserveAnyRegister(this, candidates, RightOperand);
+                            var sourceRegister = source.WordRegister;
+                            if (Equals(LeftOperand.Register, dr)) {
+                                dr.Load(this, LeftOperand);
                                 sourceRegister.Load(this, RightOperand);
                             }
                             else {
-                                destinationRegister.Load(this, RightOperand);
+                                dr.Load(this, RightOperand);
                                 sourceRegister.Load(this, LeftOperand);
                             }
 
                             WriteLine("\tinv\t" + sourceRegister.Name);
                             AddChanged(sourceRegister);
-                            WriteLine("\tszc\t" + sourceRegister.Name + "," + destinationRegister.Name);
+                            WriteLine("\tszc\t" + sourceRegister.Name + "," + dr.Name);
+                        }
+
+                        if (DestinationOperand.Register is WordRegister wordRegister &&
+                            wordRegister != RightOperand.Register) {
+                            ViaRegister(wordRegister);
+
+                        }
+                        else {
+                            using var destination = WordOperation.ReserveAnyRegister(this, LeftOperand);
+                            var destinationRegister = destination.WordRegister;
+                            ViaRegister(destinationRegister);
                             destinationRegister.Store(this, DestinationOperand);
                         }
+                        break;
                     }
-                    break;
                 case '^': {
                         void OperateRegister(WordRegister register)
                         {

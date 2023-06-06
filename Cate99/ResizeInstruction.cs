@@ -49,7 +49,7 @@
                 Reduce(byteRegister.WordRegister);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, SourceOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, SourceOperand);
             Reduce(reservation.WordRegister);
         }
 

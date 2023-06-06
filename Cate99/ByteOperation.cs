@@ -74,30 +74,40 @@ namespace Inu.Cate.Tms99
             if (destinationOperand.SameStorage(leftOperand)) {
                 if (Compiler.Operate(instruction, operation, rightOperand, destinationOperand)) return;
             }
-            Debug.Assert(instance != null);
+
+            void ViaRegister(Cate.ByteRegister re)
+            {
+                re.Load(instruction, leftOperand);
+                var right = Compiler.OperandToString(instruction, rightOperand);
+                if (right != null) {
+                    instruction.WriteLine("\t" + operation + "\t" + right + "," + re.Name);
+                    instruction.AddChanged(re);
+                    instruction.RemoveRegisterAssignment(re);
+                }
+                else {
+                    Debug.Assert(instance != null);
+                    var candidates = ByteRegister.Registers.Where(r=>!Equals(r, re)).ToList();
+                    using var rightReservation = instance.ReserveAnyRegister(instruction, candidates, rightOperand);
+                    var rightRegister = rightReservation.ByteRegister;
+                    rightRegister.Load(instruction, rightOperand);
+                    instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," +
+                                          re.Name);
+                    instruction.AddChanged(re);
+                    instruction.RemoveRegisterAssignment(re);
+                }
+            }
+
+            if (destinationOperand.Register is ByteRegister byteRegister && !rightOperand.Conflicts(byteRegister)) {
+                ViaRegister(byteRegister);
+                return;
+            }
+
             var candidates = ByteRegister.Registers.Where(r => !rightOperand.Conflicts(r)).ToList();
-            using var destination = instance.ReserveAnyRegister(instruction, candidates, destinationOperand, leftOperand);
+            Debug.Assert(instance != null);
+            using var destination = instance.ReserveAnyRegister(instruction, candidates, leftOperand);
             var destinationRegister = destination.ByteRegister;
-            destinationRegister.Load(instruction, leftOperand);
-            var right = Compiler.OperandToString(instruction, rightOperand);
-            if (right != null) {
-                instruction.WriteLine("\t" + operation + "\t" + right + "," + destinationRegister.Name);
-                instruction.AddChanged(destinationRegister);
-                instruction.RemoveRegisterAssignment(destinationRegister);
-                destinationRegister.Store(instruction, destinationOperand);
-            }
-            else {
-                //instruction.BeginRegister(destinationRegister);
-                using var rightReservation = instance.ReserveAnyRegister(instruction);
-                var rightRegister = rightReservation.ByteRegister;
-                rightRegister.Load(instruction, rightOperand);
-                //destinationRegister.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + rightRegister.Name + "," + destinationRegister.Name);
-                instruction.AddChanged(destinationRegister);
-                instruction.RemoveRegisterAssignment(destinationRegister);
-                destinationRegister.Store(instruction, destinationOperand);
-                //instruction.EndRegister(destinationRegister);
-            }
+            ViaRegister(destinationRegister);
+            destinationRegister.Store(instruction, destinationOperand);
         }
 
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, string value)

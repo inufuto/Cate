@@ -12,14 +12,14 @@ namespace Inu.Cate.Tms99
                 ClearDestination();
                 return;
             }
-
+            
             var candidates = WordOperation.Registers.Where(lowRegister =>
             {
                 if (((WordRegister)lowRegister).Index == 0) return false;
                 var highRegister = WordRegister.FromIndex(((WordRegister)lowRegister).Index - 1);
                 return !IsRegisterReserved(highRegister);
             }).ToList();
-            using var low = WordOperation.ReserveAnyRegister(this, candidates, DestinationOperand, LeftOperand);
+            using var low = WordOperation.ReserveAnyRegister(this, candidates, LeftOperand);
             {
                 var lowRegister = low.WordRegister;
                 var highRegister = WordRegister.FromIndex(((WordRegister)lowRegister).Index - 1);

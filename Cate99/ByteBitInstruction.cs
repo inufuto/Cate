@@ -23,34 +23,33 @@ namespace Inu.Cate.Tms99
                     Tms99.ByteOperation.OperateConstant(this, "andi", DestinationOperand, LeftOperand, ByteRegister.ByteConst(integerOperand.IntegerValue));
                     return;
                 case '&': {
-                        void ForDestinationRegister(Cate.ByteRegister destinationRegister)
+                        void ViaRegister(Cate.ByteRegister destinationRegister)
                         {
                             var candidates = ByteOperation.Registers.Where(r => !Equals(r, destinationRegister)).ToList();
-                            using (var source = ByteOperation.ReserveAnyRegister(this, candidates, null, RightOperand)) {
-                                var sourceRegister = source.ByteRegister;
-                                if (destinationRegister.Conflicts(LeftOperand)) {
-                                    destinationRegister.Load(this, LeftOperand);
-                                    sourceRegister.Load(this, RightOperand);
-                                }
-                                else {
-                                    destinationRegister.Load(this, RightOperand);
-                                    sourceRegister.Load(this, LeftOperand);
-                                }
-
-                                WriteLine("\tinv\t" + sourceRegister.Name);
-                                AddChanged(sourceRegister);
-                                WriteLine("\tszcb\t" + sourceRegister.Name + "," + destinationRegister.Name);
-                                destinationRegister.Store(this, DestinationOperand);
+                            using var source = ByteOperation.ReserveAnyRegister(this, candidates, RightOperand);
+                            var sourceRegister = source.ByteRegister;
+                            if (destinationRegister.Conflicts(LeftOperand)) {
+                                destinationRegister.Load(this, LeftOperand);
+                                sourceRegister.Load(this, RightOperand);
                             }
+                            else {
+                                destinationRegister.Load(this, RightOperand);
+                                sourceRegister.Load(this, LeftOperand);
+                            }
+
+                            WriteLine("\tinv\t" + sourceRegister.Name);
+                            AddChanged(sourceRegister);
+                            WriteLine("\tszcb\t" + sourceRegister.Name + "," + destinationRegister.Name);
+                            destinationRegister.Store(this, DestinationOperand);
                         }
 
                         if (DestinationOperand.Register is ByteRegister byteRegister) {
-                            ForDestinationRegister(byteRegister);
+                            ViaRegister(byteRegister);
                         }
                         else {
                             using var destination = ByteOperation.ReserveAnyRegister(this, LeftOperand);
                             var destinationRegister = destination.ByteRegister;
-                            ForDestinationRegister(destinationRegister);
+                            ViaRegister(destinationRegister);
                         }
                         break;
                     }

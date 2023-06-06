@@ -26,10 +26,13 @@ namespace Inu.Cate.Tms99
                 register.Store(instruction, destinationOperand);
             }
 
+            if (destinationOperand.Register is WordRegister wordRegister && !Equals(wordRegister, rightOperand.Register)) {
+                OperateRegister(wordRegister);
+                return;
+            }
             Debug.Assert(instance != null);
             var candidates = WordRegister.Registers.Where(r => !Equals(r, rightOperand.Register)).ToList();
-
-            using var reservation = instance.ReserveAnyRegister(instruction, candidates, destinationOperand, leftOperand);
+            using var reservation = instance.ReserveAnyRegister(instruction, candidates, leftOperand);
             OperateRegister(reservation.WordRegister);
         }
 

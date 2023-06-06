@@ -17,13 +17,23 @@ namespace Inu.Cate.Tms99
                 Keyword.ShiftRight => "srl",
                 _ => throw new NotImplementedException()
             };
-            using var reservation = WordOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
-            var temporaryRegister = reservation.WordRegister;
-            temporaryRegister.Load(this, LeftOperand);
-            if (count > 0) {
-                WriteLine("\t" + operation + "\t" + temporaryRegister.Name + "," + count);
+            {
+                void ViaRegister(Cate.WordRegister r)
+                {
+                    r.Load(this, LeftOperand);
+                    if (count > 0) {
+                        WriteLine("\t" + operation + "\t" + r.Name + "," + count);
+                    }
+                }
+
+                if (DestinationOperand.Register is WordRegister wordRegister && !Equals(wordRegister, RightOperand.Register)) {
+                    ViaRegister(wordRegister);
+                    return;
+                }
+                using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+                ViaRegister(reservation.WordRegister);
+                reservation.WordRegister.Store(this, DestinationOperand);
             }
-            temporaryRegister.Store(this, DestinationOperand);
         }
 
         protected override void ShiftVariable(Operand counterOperand)
