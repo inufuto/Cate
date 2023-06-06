@@ -6,20 +6,30 @@
 
         public override void BuildAssembly()
         {
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, DestinationOperand, SourceOperand);
+            void ViaRegister(Cate.WordRegister r)
+            {
+                r.Load(this, SourceOperand);
+                using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                    WriteLine("\tmov\ta," + r.Low);
+                    WriteLine("\tcma");
+                    WriteLine("\tmov\t" + r.Low + ",a");
+                    WriteLine("\tmov\ta," + r.High);
+                    WriteLine("\tcma");
+                    WriteLine("\tmov\t" + r.High + ",a");
+                }
+
+                if (OperatorId == '-') {
+                    WriteLine("\tinx\t" + r);
+                }
+            }
+
+            if (DestinationOperand.Register is WordRegister destinationRegister) {
+                ViaRegister(destinationRegister);
+                return;
+            }
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, SourceOperand);
             var wordRegister = reservation.WordRegister;
-            wordRegister.Load(this, SourceOperand);
-            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
-                WriteLine("\tmov\ta," + wordRegister.Low);
-                WriteLine("\tcma");
-                WriteLine("\tmov\t" + wordRegister.Low + ",a");
-                WriteLine("\tmov\ta," + wordRegister.High);
-                WriteLine("\tcma");
-                WriteLine("\tmov\t" + wordRegister.High + ",a");
-            }
-            if (OperatorId == '-') {
-                WriteLine("\tinx\t" + wordRegister);
-            }
+            ViaRegister(wordRegister);
             wordRegister.Store(this, DestinationOperand);
         }
     }

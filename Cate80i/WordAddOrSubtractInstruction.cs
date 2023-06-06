@@ -93,16 +93,19 @@ namespace Inu.Cate.I8080
 
         private void IncrementOrDecrement(string operation, int count)
         {
+            void ViaRegister(Cate.WordRegister r)
+            {
+                r.Load(this, LeftOperand);
+                IncrementOrDecrement(this, operation, r, count);
+            }
+
             if (DestinationOperand.Register is WordRegister destinationRegister) {
-                destinationRegister.Load(this, LeftOperand);
-                IncrementOrDecrement(this, operation, destinationRegister, count);
+                ViaRegister(destinationRegister);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, DestinationOperand, LeftOperand);
-            var register = reservation.WordRegister;
-            register.Load(this, LeftOperand);
-            IncrementOrDecrement(this, operation, register, count);
-            register.Store(this, DestinationOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
+            ViaRegister(reservation.WordRegister);
+            reservation.WordRegister.Store(this, DestinationOperand);
         }
 
         private static void IncrementOrDecrement(Instruction instruction, string operation, Cate.WordRegister leftRegister, int count)

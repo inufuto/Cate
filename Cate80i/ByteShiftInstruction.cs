@@ -42,10 +42,13 @@ namespace Inu.Cate.I8080
         {
             if (count == 0) {
                 if (DestinationOperand.SameStorage(LeftOperand)) return;
-                using var reservation = ByteOperation.ReserveAnyRegister(this, DestinationOperand, LeftOperand);
-                var register = reservation.ByteRegister;
-                register.Load(this, LeftOperand);
-                register.Store(this, DestinationOperand);
+                if (DestinationOperand.Register is ByteRegister destinationRegister) {
+                    destinationRegister.Load(this, LeftOperand);
+                    return;
+                }
+                using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
+                reservation.ByteRegister.Load(this, LeftOperand);
+                reservation.ByteRegister.Store(this, DestinationOperand);
                 return;
             }
 
