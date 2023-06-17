@@ -251,6 +251,8 @@ namespace Inu.Cate.I8086
             switch (operand) {
                 case ConstantOperand constantOperand:
                     instruction.WriteLine("\t" + operation + this + "," + constantOperand.MemoryAddress());
+                    instruction.AddChanged(this);
+                    instruction.RemoveRegisterAssignment(this);
                     return;
                 case VariableOperand variableOperand: {
                         var sourceVariable = variableOperand.Variable;
@@ -258,9 +260,13 @@ namespace Inu.Cate.I8086
                         if (sourceVariable.Register is WordRegister sourceRegister) {
                             Debug.Assert(sourceOffset == 0);
                             instruction.WriteLine("\t" + operation + this + "," + sourceRegister);
+                            instruction.AddChanged(this);
+                            instruction.RemoveRegisterAssignment(this);
                             return;
                         }
                         instruction.WriteLine("\t" + operation + this + ",[" + variableOperand.MemoryAddress() + "]");
+                        instruction.AddChanged(this);
+                        instruction.RemoveRegisterAssignment(this);
                         return;
                     }
             }

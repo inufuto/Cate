@@ -8,32 +8,16 @@ namespace Inu.Cate
         private class Saving : RegisterReservation.Saving
         {
             private readonly Cate.WordRegister register;
-            //private RegisterReservation? reservation;
 
             public Saving(Cate.WordRegister register, Instruction instruction, WordOperation wordOperation)
             {
                 this.register = register;
-                //var candidates = wordOperation.Registers
-                //    .Where(r => !Equals(r, register) && !instruction.IsRegisterReserved(r)).ToList();
-                //if (candidates.Any()) {
-                //    reservation = wordOperation.ReserveAnyRegister(instruction, candidates);
-                //    reservation.WordRegister.CopyFrom(instruction, register);
-                //}
-                //else {
                 register.Save(instruction);
-                //}
             }
 
             public override void Restore(Instruction instruction)
             {
-                //if (reservation != null) {
-                //    register.CopyFrom(instruction, reservation.WordRegister);
-                //    reservation.Dispose();
-                //    reservation = null;
-                //}
-                //else {
                 register.Restore(instruction);
-                //}
             }
         }
         protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
@@ -51,21 +35,6 @@ namespace Inu.Cate
 
         public virtual RegisterReservation ReserveRegister(Instruction instruction, WordRegister register)
         {
-            //if (instruction.IsRegisterReserved(register)) {
-            //    var candidates = Registers.Where(
-            //        r => !Equals(r, register) &&
-            //        CanCopyRegisterToSave(instruction, r)
-            //    ).ToList();
-            //    if (candidates.Any()) {
-            //        return ReserveAnyRegister(instruction, candidates);
-            //    }
-            //    else {
-            //        register.Save(instruction);
-            //        action();
-            //        register.Restore(instruction);
-            //    }
-            //    return;
-            //}
             return instruction.ReserveRegister(register);
         }
 
@@ -77,9 +46,7 @@ namespace Inu.Cate
 
         public RegisterReservation ReserveRegister(Instruction instruction, WordRegister register, Operand operand)
         {
-            //if (Equals(operand.Register, register)) {
             instruction.CancelOperandRegister(operand);
-            //}
             return instruction.ReserveRegister(register, operand);
         }
 
@@ -90,7 +57,6 @@ namespace Inu.Cate
                 var register = instruction.GetVariableRegister(variableOperand);
                 if (!(register is WordRegister wordRegister) || !candidates.Contains(register))
                     return ReserveAnyRegister(instruction, candidates);
-                //instruction.CancelOperandRegister(sourceOperand);
                 return ReserveRegister(instruction, wordRegister, sourceOperand);
             }
         }
@@ -113,13 +79,6 @@ namespace Inu.Cate
             }
 
             var savedRegister = candidates.Last();
-            //var changed = instruction.ChangedRegisters.Contains(savedRegister);
-            //savedRegister.Save(instruction);
-            //instruction.ReserveRegister(savedRegister);
-            //savedRegister.Restore(instruction);
-            //if (!changed) {
-            //    instruction.ChangedRegisters.Remove(savedRegister);
-            //}
             return instruction.ReserveRegister(savedRegister);
         }
 
@@ -129,11 +88,10 @@ namespace Inu.Cate
         }
 
         public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
-        //public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
+
         public RegisterReservation.Saving Save(WordRegister register, Instruction instruction)
         {
             return new Saving(register, instruction, this);
         }
-
     }
 }

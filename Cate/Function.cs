@@ -292,13 +292,12 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("__4 = *pMovable | pMovable[1]")) {
+                if (instruction.ToString().Contains("*pUpper = cType + 6")) {
                     var aaa = 111;
                 }
 #endif
                 instruction.ReserveOperandRegisters();
                 instruction.BuildResultVariables();
-                //System.Console.WriteLine(instruction);
                 instruction.BuildAssembly();
             }
 
