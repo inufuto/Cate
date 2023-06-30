@@ -73,7 +73,7 @@ namespace Inu.Cate.Mos6502
 
         public override bool IsOffsetInRange(int offset)
         {
-            return offset >= 0 && offset < 0x100;
+            return offset is >= 0 and < 0x100;
         }
 
         public override void LoadConstant(Instruction instruction, string value)
@@ -95,6 +95,7 @@ namespace Inu.Cate.Mos6502
         //    //instruction.AddChanged(this);
         //    instruction.SetVariableRegister(operand, this);
         //}
+
 
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)

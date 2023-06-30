@@ -28,7 +28,7 @@ namespace Inu.Cate
 
         public List<WordRegister> PairRegisters => Registers.Where(r => r.IsPair()).ToList();
 
-        public List<WordRegister> PointerRegisters(int offset)
+        public virtual List<WordRegister> PointerRegisters(int offset)
         {
             return Registers.Where(r => r.IsPointer(offset)).ToList();
         }
@@ -92,6 +92,11 @@ namespace Inu.Cate
         public RegisterReservation.Saving Save(WordRegister register, Instruction instruction)
         {
             return new Saving(register, instruction, this);
+        }
+
+        public List<WordRegister> RegistersOtherThan(WordRegister wordRegister)
+        {
+            return Registers.Where(r => !Equals(r, wordRegister)).ToList();
         }
     }
 }

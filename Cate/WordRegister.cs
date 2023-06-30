@@ -111,8 +111,53 @@ namespace Inu.Cate
             }
             throw new NotImplementedException();
         }
-        public abstract void Store(Instruction instruction, AssignableOperand destinationOperand);
-        public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
+
+        public virtual void Store(Instruction instruction, AssignableOperand destinationOperand)
+        {
+            switch (destinationOperand) {
+                case VariableOperand destinationVariableOperand: {
+                        var destinationVariable = destinationVariableOperand.Variable;
+                        var destinationOffset = destinationVariableOperand.Offset;
+                        if (destinationVariable.Register is WordRegister destinationRegister) {
+                            Debug.Assert(destinationOffset == 0);
+                            if (!Equals(destinationRegister, this)) {
+                                destinationRegister.CopyFrom(instruction, this);
+                            }
+                            instruction.SetVariableRegister(destinationVariable, destinationOffset, destinationRegister);
+                            return;
+                        }
+                        StoreToMemory(instruction, destinationVariable, destinationOffset);
+                        return;
+                    }
+                case IndirectOperand destinationIndirectOperand: {
+                        var destinationPointer = destinationIndirectOperand.Variable;
+                        var destinationOffset = destinationIndirectOperand.Offset;
+                        if (destinationPointer.Register is WordRegister destinationPointerRegister) {
+                            StoreIndirect(instruction,
+                                destinationPointerRegister, destinationOffset);
+                            return;
+                        }
+                        using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.PointerRegisters(destinationOffset));
+                        StoreIndirect(instruction, reservation.WordRegister, destinationOffset);
+                        return;
+                    }
+            }
+            throw new NotImplementedException();
+        }
+
+        protected virtual void StoreToMemory(Instruction instruction, Variable variable, int offset)
+        {
+            StoreToMemory(instruction, variable.MemoryAddress(offset));
+            instruction.SetVariableRegister(variable, offset, this);
+        }
+
+
+        public virtual void LoadFromMemory(Instruction instruction, Variable variable, int offset)
+        {
+            LoadFromMemory(instruction, variable.MemoryAddress(offset));
+            instruction.SetVariableRegister(variable, offset, this);
+            instruction.AddChanged(this);
+        }
 
 
         public abstract void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset);

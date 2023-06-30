@@ -1061,7 +1061,8 @@ namespace Inu.Cate
             while (true) {
                 if (CurrentToken is ReservedWord operatorToken) {
                     var operatorId = operatorToken.Id;
-                    if (!BinomialLevels[level].Contains(operatorId))
+                    var binomialLevel = BinomialLevels[level];
+                    if (binomialLevel != null && !binomialLevel.Contains(operatorId))
                         return left;
                     var rightToken = NextToken();
                     var right = factorFunction();
