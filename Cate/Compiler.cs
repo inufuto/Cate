@@ -1561,19 +1561,19 @@ namespace Inu.Cate
         }
 
 
-        protected  LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
+        protected virtual LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
             Operand sourceOperand)
         {
             return new ByteLoadInstruction(function, destinationOperand, sourceOperand);
         }
 
-        protected  LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand,
+        protected virtual LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand,
             Operand sourceOperand)
         {
             return new WordLoadInstruction(function, destinationOperand, sourceOperand);
         }
 
-        protected  LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
+        protected virtual LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
             Operand sourceOperand)
         {
             return new PointerLoadInstruction(function, destinationOperand, sourceOperand);

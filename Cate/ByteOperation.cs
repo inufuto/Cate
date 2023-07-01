@@ -63,7 +63,7 @@ namespace Inu.Cate
             int offset, int count)
         {
             using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerOperation.RegistersToOffset(offset));
-            reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
+            reservation.PointerRegister.LoadFromMemory(instruction, pointer, 0);
             OperateIndirect(instruction, operation, change, reservation.PointerRegister, offset, count);
         }
 

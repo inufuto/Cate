@@ -5,6 +5,8 @@ namespace Inu.Cate
     public abstract class WordPointerRegister : PointerRegister
     {
         public override WordRegister WordRegister { get; }
+        public ByteRegister? Low => WordRegister.Low ?? null;
+        public ByteRegister? High => WordRegister.High ?? null;
 
         protected WordPointerRegister(WordRegister wordRegister) : base(wordRegister.Id, wordRegister.Name)
         {

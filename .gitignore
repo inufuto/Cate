@@ -86,3 +86,4 @@ Cate86/Properties/launchSettings.json
 /Cate/bin/Release/net6.0
 /Cate80/bin/Release/net6.0
 /Language/bin/Release/net6.0
+*.url

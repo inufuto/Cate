@@ -24,6 +24,11 @@ namespace Inu.Cate
         }
 
 
+        public RegisterReservation ReserveAnyRegister(Instruction instruction)
+        {
+            return ReserveAnyRegister(instruction, Registers);
+        }
+
         public RegisterReservation ReserveAnyRegister(Instruction instruction, Operand sourceOperand)
         {
             return ReserveAnyRegister(instruction, Registers, sourceOperand);

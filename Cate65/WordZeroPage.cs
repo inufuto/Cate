@@ -38,7 +38,7 @@ namespace Inu.Cate.Mos6502
 
         private static bool IsIdInRange(int id)
         {
-            return id >= MinId && id < MinId + Count;
+            return id is >= MinId and < MinId + Count;
         }
 
         private static RegisterReservation ReserveA(Instruction instruction)
@@ -58,34 +58,32 @@ namespace Inu.Cate.Mos6502
 
         public static Register First = new WordZeroPage(MinId);
 
-        public override void Add(Instruction instruction, int offset)
-        {
-            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-                Debug.Assert(Low != null && High != null);
-                ByteRegister.A.CopyFrom(instruction, Low);
-                ByteRegister.A.Operate(instruction, "clc|adc", true, "#low " + offset);
-                Low.CopyFrom(instruction, ByteRegister.A);
-                ByteRegister.A.CopyFrom(instruction, High);
-                ByteRegister.A.Operate(instruction, "adc", true, "#high " + offset);
-                High.CopyFrom(instruction, ByteRegister.A);
-            }
-        }
+        //public override void Add(Instruction instruction, int offset)
+        //{
+        //    using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+        //        Debug.Assert(Low != null && High != null);
+        //        ByteRegister.A.CopyFrom(instruction, Low);
+        //        ByteRegister.A.Operate(instruction, "clc|adc", true, "#low " + offset);
+        //        Low.CopyFrom(instruction, ByteRegister.A);
+        //        ByteRegister.A.CopyFrom(instruction, High);
+        //        ByteRegister.A.Operate(instruction, "adc", true, "#high " + offset);
+        //        High.CopyFrom(instruction, ByteRegister.A);
+        //    }
+        //}
 
-        public override bool IsOffsetInRange(int offset)
-        {
-            return offset is >= 0 and < 0x100;
-        }
+        //public override bool IsOffsetInRange(int offset)
+        //{
+        //    return offset is >= 0 and < 0x100;
+        //}
 
         public override void LoadConstant(Instruction instruction, string value)
         {
             Debug.Assert(Low != null && High != null);
             Low.LoadConstant(instruction, "low " + value);
             High.LoadConstant(instruction, "high " + value);
-            //instruction.AddChanged(this);
-            //instruction.RemoveVariableRegister(this);
         }
 
-        public override bool IsPointer(int offset) => true;
+        //public override bool IsPointer(int offset) => true;
 
         //public override void Load(Instruction instruction, Operand operand)
         //{
@@ -103,7 +101,6 @@ namespace Inu.Cate.Mos6502
             Debug.Assert(Low != null && High != null);
             Low.LoadFromMemory(instruction, variable.MemoryAddress(offset));
             High.LoadFromMemory(instruction, variable.MemoryAddress(offset + 1));
-            //instruction.AddChanged(this);
             instruction.SetVariableRegister(variable, offset, this);
         }
 
@@ -131,7 +128,7 @@ namespace Inu.Cate.Mos6502
             High.StoreToMemory(instruction, label + "+1");
         }
 
-        public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Low != null && High != null);
             Low.LoadIndirect(instruction, pointerRegister, offset);
@@ -140,7 +137,7 @@ namespace Inu.Cate.Mos6502
             //instruction.RemoveVariableRegister(this);
         }
 
-        public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Low != null && High != null);
             Low.StoreIndirect(instruction, pointerRegister, offset);
@@ -149,12 +146,12 @@ namespace Inu.Cate.Mos6502
 
         public override void CopyFrom(Instruction instruction, WordRegister register)
         {
-            if (!(register is WordZeroPage zeroPage))
-                throw new NotImplementedException();
+            //if (register is not WordZeroPage zeroPage)
+            //    throw new NotImplementedException();
             Debug.Assert(Low != null && High != null);
-            Debug.Assert(zeroPage.Low != null && zeroPage.High != null);
-            Low.CopyFrom(instruction, zeroPage.Low);
-            High.CopyFrom(instruction, zeroPage.High);
+            Debug.Assert(register is { Low: { }, High: { } });
+            Low.CopyFrom(instruction, register.Low);
+            High.CopyFrom(instruction, register.High);
             //instruction.AddChanged(this);
             //instruction.RemoveVariableRegister(this);
         }

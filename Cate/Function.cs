@@ -127,7 +127,7 @@ namespace Inu.Cate
             ISet<Register> savedRegisters = new HashSet<Register>();
             foreach (var instruction in Instructions.Where(i => !i.IsEmpty())) {
                 foreach (var changedRegister in instruction.ChangedRegisters()) {
-                    var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister).Where(r => !savedRegisters.Contains(r));
+                    var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister).Where(r => !savedRegisters.Contains(r)).ToList();
                     foreach (var savingRegister in savingRegisters) {
                         var saved = false;
                         foreach (var variable in instruction.SavingVariables) {
@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("pFront = offset + VVramFront_")) {
+                if (instruction.ToString().Contains("pVVram = DrawCell_(pVVram,b,y)")) {
                     var aaa = 111;
                 }
 #endif

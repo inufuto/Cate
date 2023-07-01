@@ -249,13 +249,15 @@ namespace Inu.Cate
         {
             var s = new StringBuilder();
             s.Append(Label);
-            if (offset > 0) {
-                s.Append('+');
-                s.Append(offset.ToString());
-            }
-            else if (offset < 0) {
-                s.Append('-');
-                s.Append((-offset).ToString());
+            switch (offset) {
+                case > 0:
+                    s.Append('+');
+                    s.Append(offset.ToString());
+                    break;
+                case < 0:
+                    s.Append('-');
+                    s.Append((-offset).ToString());
+                    break;
             }
             return s.ToString();
         }

@@ -115,8 +115,8 @@ namespace Inu.Cate
             get
             {
                 var temporaryRegisterIds = new HashSet<Register>();
-                var changedRegisters = ResultRegister != null ? this.changedRegisters.Where(r => !Equals(r, ResultRegister)) : this.changedRegisters;
-                foreach (var changedRegister in changedRegisters) {
+                var registers = ResultRegister != null ? changedRegisters.Where(r => !Equals(r, ResultRegister)) : changedRegisters;
+                foreach (var changedRegister in registers) {
                     var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister);
                     foreach (var savingRegister in savingRegisters) {
                         temporaryRegisterIds.Add(savingRegister);

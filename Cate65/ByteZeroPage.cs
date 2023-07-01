@@ -42,7 +42,7 @@ namespace Inu.Cate.Mos6502
 
         private static bool IsIdInRange(int id)
         {
-            return id >= MinId && id < MinId + Count;
+            return id is >= MinId and < MinId + Count;
         }
 
 
@@ -51,7 +51,6 @@ namespace Inu.Cate.Mos6502
         public int Offset => IdToOffset(Id);
 
         public override WordRegister? PairRegister => WordZeroPage.FromOffset(Offset);
-        public static Register First => new ByteZeroPage(MinId);
 
         public override void LoadConstant(Instruction instruction, string value)
         {
@@ -86,7 +85,7 @@ namespace Inu.Cate.Mos6502
             instruction.SetVariableRegister(variable, offset, this);
         }
 
-        public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.A };
             using (var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates)) {
@@ -98,7 +97,7 @@ namespace Inu.Cate.Mos6502
             instruction.RemoveRegisterAssignment(this);
         }
 
-        public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.A };
             using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);

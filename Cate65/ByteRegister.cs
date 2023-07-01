@@ -56,12 +56,12 @@ namespace Inu.Cate.Mos6502
             instruction.WriteLine("\tst" + Name + "\t" + label);
         }
 
-        public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Equals(A));
-            Debug.Assert(pointerRegister is WordZeroPage);
+            Debug.Assert(pointerRegister is PointerZeroPage);
             if (pointerRegister.IsOffsetInRange(offset)) {
-                Debug.Assert(offset >= 0 && offset < 0x100);
+                Debug.Assert(offset is >= 0 and < 0x100);
                 using (ByteOperation.ReserveRegister(instruction, Y)) {
                     Y.LoadConstant(instruction, offset);
                     instruction.WriteLine("\tld" + Name + "\t(" + pointerRegister.Name + "),y");
@@ -71,8 +71,8 @@ namespace Inu.Cate.Mos6502
                 instruction.ResultFlags |= Instruction.Flag.Z;
             }
             else {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction);
-                var temporaryRegister = reservation.WordRegister;
+                using var reservation = PointerOperation.ReserveAnyRegister(instruction);
+                var temporaryRegister = reservation.PointerRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 temporaryRegister.Add(instruction, offset);
                 LoadIndirect(instruction, temporaryRegister, 0);
@@ -81,10 +81,10 @@ namespace Inu.Cate.Mos6502
             }
         }
 
-        public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Equals(A));
-            Debug.Assert(pointerRegister is WordZeroPage);
+            Debug.Assert(pointerRegister is PointerZeroPage);
             if (pointerRegister.IsOffsetInRange(offset)) {
                 Y.LoadConstant(instruction, offset);
                 instruction.WriteLine("\tst" + Name + "\t(" + pointerRegister.Name + "),y");
@@ -204,7 +204,7 @@ namespace Inu.Cate.Mos6502
     {
         public IndexRegister(int id, string name) : base(id, name) { }
 
-        public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.LoadIndirect(instruction, pointerRegister, offset);
@@ -212,7 +212,7 @@ namespace Inu.Cate.Mos6502
             }
         }
 
-        public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, this);

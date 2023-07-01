@@ -282,5 +282,10 @@ namespace Inu.Cate.Mos6502
             // Register value is not guaranteed due to branching
             RemoveRegisterAssignment(ByteRegister.A);
         }
+
+        protected override void ComparePointer()
+        {
+            CompareWord();
+        }
     }
 }

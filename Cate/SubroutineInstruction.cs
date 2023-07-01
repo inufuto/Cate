@@ -194,6 +194,9 @@ namespace Inu.Cate
                     case WordRegister wordRegister:
                         wordRegister.Store(this, DestinationOperand);
                         break;
+                    case PointerRegister pointerRegister:
+                        pointerRegister.Store(this, DestinationOperand);
+                        break;
                 }
                 //if (resultSaved) {
                 //    CancelRegister(rr);

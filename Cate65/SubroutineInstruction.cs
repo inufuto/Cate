@@ -50,9 +50,14 @@ namespace Inu.Cate.Mos6502
         }
 
 
-        public static Register ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(ParameterizableType type)
         {
-            return byteCount == 1 ? (Register)ByteRegister.Y : PairRegister.Xy;
+            return type.ByteCount switch
+            {
+                1 => ByteRegister.Y,
+                2 => (type is PointerType ? PairPointerRegister.Xy : PairWordRegister.Xy),
+                _ => null
+            };
         }
     }
 }
