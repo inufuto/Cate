@@ -167,7 +167,8 @@ namespace Inu.Cate
                 case VariableOperand variableOperand: {
                         var variable = variableOperand.Variable;
                         var offset = variableOperand.Offset;
-                        if (variable.Register is ByteRegister register) {
+                        var variableRegister = variable.Register;
+                        if (variableRegister is ByteRegister register) {
                             Debug.Assert(offset == 0);
                             //var register = Compiler.Instance.ByteOperation.RegisterFromId(variable.Register.Value);
                             if (Equals(register, this)) {

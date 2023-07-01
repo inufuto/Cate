@@ -10,7 +10,7 @@ namespace Inu.Cate.Mos6502
         public PairPointerRegister(WordRegister wordRegister) : base(wordRegister)
         { }
 
-        public override bool IsAddable() => true;
+        //public override bool IsAddable() => true;
 
         public override bool IsOffsetInRange(int offset)
         {

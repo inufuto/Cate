@@ -3,28 +3,27 @@ using System.Linq;
 
 namespace Inu.Cate
 {
-    public abstract class WordOperation
+    public abstract class WordOperation : RegisterOperation<WordRegister>
     {
-        private class Saving : RegisterReservation.Saving
-        {
-            private readonly Cate.WordRegister register;
+        //private class Saving : RegisterReservation.Saving
+        //{
+        //    private readonly Cate.WordRegister register;
 
-            public Saving(Cate.WordRegister register, Instruction instruction, WordOperation wordOperation)
-            {
-                this.register = register;
-                register.Save(instruction);
-            }
+        //    public Saving(Cate.WordRegister register, Instruction instruction, WordOperation wordOperation)
+        //    {
+        //        this.register = register;
+        //        register.Save(instruction);
+        //    }
 
-            public override void Restore(Instruction instruction)
-            {
-                register.Restore(instruction);
-            }
-        }
-        protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
+        //    public override void Restore(Instruction instruction)
+        //    {
+        //        register.Restore(instruction);
+        //    }
+        //}
+        //protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
 
-        public Compiler Compiler => Compiler.Instance;
 
-        public abstract List<WordRegister> Registers { get; }
+        //public abstract override List<WordRegister> Registers { get; }
 
         public List<WordRegister> PairRegisters => Registers.Where(r => r.IsPair()).ToList();
 
@@ -89,14 +88,10 @@ namespace Inu.Cate
 
         public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
 
-        public RegisterReservation.Saving Save(WordRegister register, Instruction instruction)
-        {
-            return new Saving(register, instruction, this);
-        }
+        //public RegisterReservation.Saving Save(WordRegister register, Instruction instruction)
+        //{
+        //    return new Saving(register, instruction, this);
+        //}
 
-        public List<WordRegister> RegistersOtherThan(WordRegister wordRegister)
-        {
-            return Registers.Where(r => !Equals(r, wordRegister)).ToList();
-        }
     }
 }

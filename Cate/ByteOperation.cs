@@ -5,43 +5,43 @@ using System.Linq;
 
 namespace Inu.Cate
 {
-    public abstract class ByteOperation
+    public abstract class ByteOperation : RegisterOperation<ByteRegister>
     {
-        private class Saving : RegisterReservation.Saving
-        {
-            private readonly ByteRegister register;
-            private RegisterReservation? reservation;
+        //private class Saving : RegisterReservation.Saving
+        //{
+        //    private readonly ByteRegister register;
+        //    private RegisterReservation? reservation;
 
-            public Saving(ByteRegister register, Instruction instruction, ByteOperation wordOperation)
-            {
-                this.register = register;
-                var candidates = wordOperation.Registers
-                    .Where(r => !Equals(r, register) && !instruction.IsRegisterReserved(r)).ToList();
-                if (candidates.Any()) {
-                    reservation = wordOperation.ReserveAnyRegister(instruction, candidates);
-                    reservation.ByteRegister.CopyFrom(instruction, register);
-                }
-                else {
-                    register.Save(instruction);
-                }
-            }
+        //    public Saving(ByteRegister register, Instruction instruction, ByteOperation wordOperation)
+        //    {
+        //        this.register = register;
+        //        var candidates = wordOperation.Registers
+        //            .Where(r => !Equals(r, register) && !instruction.IsRegisterReserved(r)).ToList();
+        //        if (candidates.Any()) {
+        //            reservation = wordOperation.ReserveAnyRegister(instruction, candidates);
+        //            reservation.ByteRegister.CopyFrom(instruction, register);
+        //        }
+        //        else {
+        //            register.Save(instruction);
+        //        }
+        //    }
 
-            public override void Restore(Instruction instruction)
-            {
-                if (reservation != null) {
-                    register.CopyFrom(instruction, reservation.ByteRegister);
-                    reservation.Dispose();
-                    reservation = null;
-                }
-                else {
-                    register.Restore(instruction);
-                }
-            }
-        }
+        //    public override void Restore(Instruction instruction)
+        //    {
+        //        if (reservation != null) {
+        //            register.CopyFrom(instruction, reservation.ByteRegister);
+        //            reservation.Dispose();
+        //            reservation = null;
+        //        }
+        //        else {
+        //            register.Restore(instruction);
+        //        }
+        //    }
+        //}
 
         //protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
-        protected static WordOperation WordOperation => Compiler.Instance.WordOperation;
-        protected static PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
+        //protected static WordOperation WordOperation => Compiler.Instance.WordOperation;
+        //protected static PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
 
 
         public abstract List<ByteRegister> Accumulators { get; }
@@ -94,7 +94,8 @@ namespace Inu.Cate
                 case IndirectOperand indirectOperand: {
                         var pointer = indirectOperand.Variable;
                         var offset = indirectOperand.Offset;
-                        if (pointer.Register is PointerRegister pointerRegister) {
+                        var variableRegister = instruction.GetVariableRegister(indirectOperand.Variable, 0);
+                        if (variableRegister is PointerRegister pointerRegister) {
                             //var pointerRegister = Compiler.Instance.WordOperation.RegisterFromId(pointer.Register.Value);
                             OperateIndirect(instruction, operation, change, pointerRegister, offset, count);
                             return;
@@ -118,7 +119,7 @@ namespace Inu.Cate
 
         public abstract void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset, int value);
 
-        public abstract List<ByteRegister> Registers { get; }
+        //public abstract List<ByteRegister> Registers { get; }
 
 
         public RegisterReservation ReserveRegister(Instruction instruction, ByteRegister register)
@@ -223,14 +224,14 @@ namespace Inu.Cate
         public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);
 
 
-        public RegisterReservation.Saving Save(ByteRegister register, Instruction instruction)
-        {
-            return new Saving(register, instruction, this);
-        }
+        //public RegisterReservation.Saving Save(ByteRegister register, Instruction instruction)
+        //{
+        //    return new Saving(register, instruction, this);
+        //}
 
-        public List<ByteRegister> RegistersOtherThan(ByteRegister register)
-        {
-            return Registers.Where(r => !Equals(r, register)).ToList();
-        }
+        //public List<ByteRegister> RegistersOtherThan(ByteRegister register)
+        //{
+        //    return Registers.Where(r => !Equals(r, register)).ToList();
+        //}
     }
 }

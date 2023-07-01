@@ -93,7 +93,7 @@ namespace Inu.Cate.Z80
                 return;
             }
             if (offset == 0) {
-                if (pointerRegister.IsAddable()) {
+                if (PointerRegister.IsAddable(pointerRegister)) {
                     instruction.WriteLine("\tld\t(" + pointerRegister + ")," + value);
                     return;
                 }
@@ -103,7 +103,7 @@ namespace Inu.Cate.Z80
                 }
                 return;
             }
-            if (pointerRegister.IsAddable()) {
+            if (PointerRegister.IsAddable(pointerRegister)) {
                 pointerRegister.TemporaryOffset(instruction, offset, () =>
                 {
                     StoreConstantIndirect(instruction, pointerRegister, 0, value);

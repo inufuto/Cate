@@ -12,7 +12,7 @@ namespace Inu.Cate.Mos6502
         public static List<PointerRegister> Registers =>
             WordZeroPage.Registers.Select(w => (PointerRegister)new PointerZeroPage(w)).ToList();
 
-        public override bool IsAddable() => true;
+        //public override bool IsAddable() => true;
 
         public override bool IsOffsetInRange(int offset)
         {

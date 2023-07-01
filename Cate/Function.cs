@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("pVVram = DrawCell_(pVVram,b,y)")) {
+                if (instruction.ToString().Contains("pattern + ")) {
                     var aaa = 111;
                 }
 #endif

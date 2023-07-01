@@ -128,5 +128,10 @@ namespace Inu.Cate.Mc6800
             // Register value is not guaranteed due to branching
             RemoveRegisterAssignment(register);
         }
+
+        protected override void ComparePointer()
+        {
+            CompareWord();
+        }
     }
 }

@@ -3,9 +3,9 @@ using System.Linq;
 
 namespace Inu.Cate
 {
-    public abstract class PointerOperation
+    public abstract class PointerOperation : RegisterOperation<PointerRegister>
     {
-        public abstract List<PointerRegister> Registers { get; }
+        //public abstract List<PointerRegister> Registers { get; }
 
         public List<PointerRegister> RegistersToOffset(int offset)
         {

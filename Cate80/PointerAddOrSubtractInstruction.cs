@@ -36,8 +36,8 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
             return;
 
         if (OperatorId == '+') {
-            if (RightWordRegister() is WordRegister { Addable: true } rightRegister && (LeftOperand.Register is not PointerRegister leftRegister || !leftRegister.IsAddable())) {
-                using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers.Where(r => !r.IsAddable()).ToList());
+            if (RightWordRegister() is WordRegister { Addable: true } rightRegister && (LeftOperand.Register is not PointerRegister leftRegister || !leftRegister.Addable)) {
+                using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers.Where(r => !PointerRegister.IsAddable(r)).ToList());
                 leftRegister = (PointerRegister)reservation.PointerRegister;
                 leftRegister.Load(this, LeftOperand);
                 WriteLine("\tadd\t" + rightRegister.Name + "," + leftRegister.Name);
@@ -88,11 +88,9 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
             r.Store(this, DestinationOperand);
         }
 
-        if (DestinationOperand.Register is PointerRegister register) {
-            if (register.IsAddable()) {
-                ViaRegister(register);
-                return;
-            }
+        if (DestinationOperand.Register is PointerRegister { Addable: true } register) {
+            ViaRegister(register);
+            return;
         }
         using var reservation = PointerOperation.ReserveAnyRegister(this, new List<Cate.PointerRegister> { PointerRegister.Hl, PointerRegister.Ix, PointerRegister.Iy }, LeftOperand);
         ViaRegister(reservation.PointerRegister);
@@ -159,7 +157,7 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
             ViaRegister(destinationRegister);
             return;
         }
-        using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers.Where(r => r.IsAddable()).ToList(), LeftOperand);
+        using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers.Where(PointerRegister.IsAddable).ToList(), LeftOperand);
         reservation.PointerRegister.Load(this, LeftOperand);
         ViaRegister(reservation.PointerRegister);
         reservation.PointerRegister.Store(this, DestinationOperand);

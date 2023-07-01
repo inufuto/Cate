@@ -8,7 +8,7 @@ namespace Inu.Cate
     {
         protected PointerRegister(int id, string name) : base(id, Compiler.Instance.PointerByteCount, name) { }
         public abstract WordRegister WordRegister { get; }
-        public abstract bool IsAddable();
+        //public abstract bool IsAddable();
 
         public abstract bool IsOffsetInRange(int offset);
 

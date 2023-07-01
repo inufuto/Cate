@@ -413,7 +413,7 @@ namespace Inu.Cate.Z80
             Cate.PointerRegister pointerRegister,
             int offset)
         {
-            if (!pointerRegister.IsAddable()) {
+            if (!PointerRegister.IsAddable(pointerRegister)) {
                 using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerOperation.RegistersToOffset(offset));
                 reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
                 OperateAccumulatorIndirect(instruction, operation, reservation.PointerRegister, offset);

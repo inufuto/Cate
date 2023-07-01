@@ -128,10 +128,10 @@ namespace Inu.Cate.Mc6800
             instruction.SetVariableRegister(variable, offset, this);
         }
 
-        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
+        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
             int offset)
         {
-            Debug.Assert(Equals(pointerRegister, WordRegister.X));
+            Debug.Assert(Equals(pointerRegister, PointerRegister.X));
             while (true) {
                 if (pointerRegister.IsOffsetInRange(offset)) {
                     instruction.WriteLine("\tlda" + this + "\t" + offset + ",x");
@@ -145,9 +145,9 @@ namespace Inu.Cate.Mc6800
             }
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
-            Debug.Assert(Equals(pointerRegister, WordRegister.X));
+            Debug.Assert(Equals(pointerRegister, PointerRegister.X));
             while (true) {
                 if (pointerRegister.IsOffsetInRange(offset)) {
                     instruction.WriteLine("\tsta" + this + "\t" + offset + "," + pointerRegister);

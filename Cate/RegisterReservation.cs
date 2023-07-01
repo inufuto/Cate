@@ -30,6 +30,7 @@ namespace Inu.Cate
             {
                 ByteRegister byteRegister => this.instruction.ByteOperation.Save(byteRegister, this.instruction),
                 WordRegister wordRegister => this.instruction.WordOperation.Save(wordRegister, this.instruction),
+                PointerRegister pointerRegister => this.instruction.PointerOperation.Save(pointerRegister, this.instruction),
                 _ => throw new NotImplementedException()
             };
             saving.Changed = instruction.IsChanged(register);

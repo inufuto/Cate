@@ -465,10 +465,24 @@ namespace Inu.Cate
                     }
                 }
                 else {
-                    StoreWord(operand, label);
+                    if (parameter.Type is PointerType)
+                    {
+                        StorePointer(operand, label);
+                    }
+                    else
+                    {
+                        StoreWord(operand, label);
+                    }
                 }
                 assignment.SetDone(this, null);
             }
+        }
+
+        private void StorePointer(Operand operand, string label)
+        {
+            using var reservation = PointerOperation.ReserveAnyRegister(this);
+            reservation.PointerRegister.Load(this, operand);
+            reservation.PointerRegister.StoreToMemory(this, label);
         }
 
         protected virtual void StoreWord(Operand operand, string label)

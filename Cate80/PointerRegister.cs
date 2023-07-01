@@ -18,16 +18,18 @@ namespace Inu.Cate.Z80
         {
             return offset is 0 or < -128 or > 127 ? new List<Cate.PointerRegister> { Hl, Ix, Iy, De, Bc } : new List<Cate.PointerRegister> { Ix, Iy, Hl, De, Bc };
         }
+        public static bool IsAddable(Cate.PointerRegister pointerRegister)
+        {
+            return pointerRegister is PointerRegister { Addable: true };
+        }
 
-        private readonly bool addable;
+        public readonly bool Addable;
 
         protected PointerRegister(Cate.WordRegister wordRegister, bool addable) : base(wordRegister)
         {
             Registers.Add(this);
-            this.addable = addable;
+            Addable = addable;
         }
-
-        public override bool IsAddable() => addable;
 
 
         public override bool IsOffsetInRange(int offset)
@@ -62,7 +64,7 @@ namespace Inu.Cate.Z80
                 }
             }
 
-            if (IsAddable()) {
+            if (Addable) {
                 void ViaRegister(Cate.WordRegister temporaryRegister)
                 {
                     temporaryRegister.LoadConstant(instruction, offset);
