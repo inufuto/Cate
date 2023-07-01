@@ -27,7 +27,8 @@ namespace Inu.Cate.Z80
                     1 => ByteRegister.A,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => WordRegister.Ix,
+                        PointerType { ElementType: StructureType _ } => PointerRegister.Ix,
+                        PointerType => PointerRegister.Hl,
                         _ => WordRegister.Hl
                     }
                 },
@@ -36,26 +37,31 @@ namespace Inu.Cate.Z80
                     1 => ByteRegister.E,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => WordRegister.Iy,
+                        PointerType { ElementType: StructureType _ } => PointerRegister.Iy,
+                        PointerType => PointerRegister.De,
                         _ => WordRegister.De
                     }
                 },
                 2 => type.ByteCount switch
                 {
                     1 => ByteRegister.C,
-                    _ => WordRegister.Bc
+                    _ => type switch
+                    {
+                        PointerType => PointerRegister.Bc,
+                        _ => WordRegister.Bc
+                    }
                 },
                 _ => null
             };
         }
 
-        public static Register? ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(ParameterizableType type)
         {
-            return byteCount switch
+            return type.ByteCount switch
             {
                 1 => ByteRegister.A,
-                2 => WordRegister.Hl,
-                _=>null
+                2 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
+                _ => null
             };
         }
     }

@@ -25,9 +25,9 @@ namespace Inu.Cate.Z80
                 OperateA();
                 goto end;
             }
-            if (!instruction.IsRegisterReserved(WordRegister.Hl)) {
-                using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
-                    WordRegister.Hl.LoadFromMemory(instruction, address);
+            if (!instruction.IsRegisterReserved(PointerRegister.Hl)) {
+                using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+                    PointerRegister.Hl.LoadConstant(instruction, address);
                     for (var i = 0; i < count; ++i) {
                         instruction.WriteLine("\t" + operation + "(hl)");
                     }
@@ -47,9 +47,9 @@ namespace Inu.Cate.Z80
         }
 
         protected override void OperateIndirect(Instruction instruction, string operation, bool change,
-            Cate.WordRegister pointerRegister, int offset, int count)
+            Cate.PointerRegister pointerRegister, int offset, int count)
         {
-            if (pointerRegister.IsIndex() && pointerRegister.IsOffsetInRange(offset)) {
+            if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
                 for (var i = 0; i < count; ++i) {
                     instruction.WriteLine("\t" + operation + "(" + pointerRegister + "+" + offset + ")");
                 }
@@ -57,7 +57,7 @@ namespace Inu.Cate.Z80
             }
             if (offset == 0) {
                 var operand = "(" + pointerRegister + ")";
-                if (Equals(pointerRegister, WordRegister.Hl)) {
+                if (Equals(pointerRegister, PointerRegister.Hl)) {
                     for (var i = 0; i < count; ++i) {
                         instruction.WriteLine("\t" + operation + operand);
                     }
@@ -85,10 +85,10 @@ namespace Inu.Cate.Z80
             instruction.AddChanged(ByteRegister.A);
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
+        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
             int offset, int value)
         {
-            if (pointerRegister.IsIndex() && pointerRegister.IsOffsetInRange(offset)) {
+            if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
                 instruction.WriteLine("\tld\t(" + pointerRegister + "+" + offset + ")," + value);
                 return;
             }
@@ -110,10 +110,10 @@ namespace Inu.Cate.Z80
                 });
                 return;
             }
-            var candidates = WordRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList();
-            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
-            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
-            StoreConstantIndirect(instruction, reservation.WordRegister, offset, value);
+            List<Cate.PointerRegister> candidates = new List<Cate.PointerRegister>(PointerRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList());
+            using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
+            reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
+            StoreConstantIndirect(instruction, reservation.PointerRegister, offset, value);
         }
 
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister rightRegister)

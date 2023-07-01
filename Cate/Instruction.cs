@@ -98,6 +98,7 @@ namespace Inu.Cate
         public Compiler Compiler => Compiler.Instance;
         public ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
         public WordOperation WordOperation => Compiler.Instance.WordOperation;
+        public PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
 
         public virtual bool IsJump() => false;
 

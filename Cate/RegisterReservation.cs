@@ -37,6 +37,7 @@ namespace Inu.Cate
 
         public ByteRegister ByteRegister => (ByteRegister)Register;
         public WordRegister WordRegister => (WordRegister)Register;
+        public PointerRegister PointerRegister => (PointerRegister)Register;
 
         public void Dispose()
         {

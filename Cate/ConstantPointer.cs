@@ -94,7 +94,7 @@ namespace Inu.Cate
         }
     }
 
-    class VoidType : Type
+    class VoidType : ParameterizableType
     {
         public static readonly VoidType Type = new VoidType();
 

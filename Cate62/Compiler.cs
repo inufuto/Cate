@@ -6,6 +6,8 @@
         public const string MemPageName = "@MemPage";
         private static int registerId = 0;
 
+        public override int PointerByteCount => 3;
+
         public static string OffsetToString(int offset)
         {
             return offset switch
@@ -219,7 +221,8 @@
         {
             throw new NotImplementedException();
         }
+
         public override ReadOnlySpan<char> EndOfFunction => "\tret";
 
-   }
+    }
 }

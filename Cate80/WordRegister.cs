@@ -8,7 +8,7 @@ namespace Inu.Cate.Z80
 {
     internal class WordRegister : Cate.WordRegister
     {
-        public static List<Cate.WordRegister> Registers = new List<Cate.WordRegister>();
+        public static List<Cate.WordRegister> Registers = new();
 
         public static Cate.WordRegister FromId(int id)
         {
@@ -20,44 +20,46 @@ namespace Inu.Cate.Z80
             throw new ArgumentOutOfRangeException();
         }
 
-        protected WordRegister(int id, string name) : base(id, name)
+        public readonly bool Addable;
+
+        protected WordRegister(int id, string name, bool addable) : base(id, name)
         {
+            Addable = addable;
             Registers.Add(this);
         }
 
         public Cate.ByteRegister[] ByteRegisters => ByteRegister.Registers.Where(b => Name.Contains((string)b.Name)).ToArray();
 
-        public static readonly WordRegister Hl = new PairRegister(11, ByteRegister.H, ByteRegister.L);
-        public static readonly WordRegister De = new PairRegister(12, ByteRegister.D, ByteRegister.E);
-        public static readonly WordRegister Bc = new PairRegister(13, ByteRegister.B, ByteRegister.C);
-        public static readonly WordRegister Ix = new IndexRegister(21, "ix");
-        public static readonly WordRegister Iy = new IndexRegister(22, "iy");
+        public static readonly PairRegister Hl = new(11, ByteRegister.H, ByteRegister.L, true);
+        public static readonly PairRegister De = new(12, ByteRegister.D, ByteRegister.E, false);
+        public static readonly PairRegister Bc = new(13, ByteRegister.B, ByteRegister.C, false);
+        public static readonly WordRegister Ix = new WordRegister(21, "ix", true);
+        public static readonly WordRegister Iy = new WordRegister(22, "iy", true);
 
         public override bool IsPair() => Equals(this, Hl) || Equals(this, De) || Equals(this, Bc);
-        public override bool IsAddable() => Equals(this, Hl) || Equals(this, Ix) || Equals(this, Iy);
-        public override bool IsIndex() => Equals(this, Ix) || Equals(this, Iy);
-
+        //public override bool IsAddable() => Equals(this, Hl) || Equals(this, Ix) || Equals(this, Iy);
+        //public override bool IsIndex() => Equals(this, Ix) || Equals(this, Iy);
         //public override Cate.ByteRegister? Low => ByteRegister.FromName(Name.Substring(1, 1));
         //public override Cate.ByteRegister? High => ByteRegister.FromName(Name.Substring(0, 1));
 
         public static List<Cate.WordRegister> PairRegisters = Registers.Where(r => r.IsPair()).ToList();
         public static List<Cate.WordRegister> AddableRegisters = new List<Cate.WordRegister>() { Hl, Ix, Iy };
-        public static List<Cate.WordRegister> IndexRegisters = Registers.Where(r => r.IsIndex()).ToList();
-        public static List<Cate.WordRegister> RightOperandOrder = new List<Cate.WordRegister>() { De, Bc, Hl, Ix, Iy };
-        public static List<Cate.WordRegister> OffsetRegisters = new List<Cate.WordRegister>() { De, Bc };
+        //public static List<Cate.WordRegister> IndexRegisters = Registers.Where(r => r.IsIndex()).ToList();
+        //public static List<Cate.WordRegister> RightOperandOrder = new List<Cate.WordRegister>() { De, Bc, Hl, Ix, Iy };
+        //public static List<Cate.WordRegister> OffsetRegisters = new List<Cate.WordRegister>() { De, Bc };
 
 
-        public static List<Cate.WordRegister> PointerOrder(int offset)
-        {
-            if (offset == 0 || offset < -128 || offset > 127)
-                return new List<Cate.WordRegister>() { Hl, Ix, Iy, De, Bc };
-            else
-                return new List<Cate.WordRegister>() { Ix, Iy, Hl, De, Bc };
-        }
-        public static List<Cate.WordRegister> Pointers(int offset)
-        {
-            return PointerOrder(offset).Where(r => r.IsAddable()).ToList();
-        }
+        //public static List<Cate.WordRegister> PointerOrder(int offset)
+        //{
+        //    if (offset == 0 || offset < -128 || offset > 127)
+        //        return new List<Cate.WordRegister>() { Hl, Ix, Iy, De, Bc };
+        //    else
+        //        return new List<Cate.WordRegister>() { Ix, Iy, Hl, De, Bc };
+        //}
+        //public static List<Cate.WordRegister> Pointers(int offset)
+        //{
+        //    return PointerOrder(offset).Where(r => r.IsAddable()).ToList();
+        //}
 
         //public override bool Contains(Cate.ByteRegister byteRegister)
         //{
@@ -93,7 +95,7 @@ namespace Inu.Cate.Z80
             writer.WriteLine("\tpop\t" + Name + comment);
         }
 
-        public override void Add(Instruction instruction, int offset)
+        public void Add(Instruction instruction, int offset)
         {
             if (offset == 0) { return; }
 
@@ -119,7 +121,7 @@ namespace Inu.Cate.Z80
                 }
             }
 
-            if (IsAddable()) {
+            if (Addable) {
                 void ViaRegister(Cate.WordRegister temporaryRegister)
                 {
                     temporaryRegister.LoadConstant(instruction, offset);
@@ -180,21 +182,21 @@ namespace Inu.Cate.Z80
             return register;
         }
 
-        public override bool IsOffsetInRange(int offset)
-        {
-            if (offset == 0) return true;
-            if (IsIndex())
-                return offset >= -128 && offset <= 127;
-            throw new NotImplementedException();
-        }
+        //public override bool IsOffsetInRange(int offset)
+        //{
+        //    if (offset == 0) return true;
+        //    if (IsIndex())
+        //        return offset >= -128 && offset <= 127;
+        //    throw new NotImplementedException();
+        //}
 
-        public override bool IsPointer(int offset)
-        {
-            if (offset == 0) return true;
-            if (IsIndex())
-                return offset >= -128 && offset <= 127;
-            return false;
-        }
+        //public override bool IsPointer(int offset)
+        //{
+        //    if (offset == 0) return true;
+        //    if (IsIndex())
+        //        return offset >= -128 && offset <= 127;
+        //    return false;
+        //}
 
         public override void LoadConstant(Instruction instruction, string value)
         {
@@ -205,24 +207,31 @@ namespace Inu.Cate.Z80
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
-            instruction.WriteLine("\tld\t" + Name + "," + label);
+            instruction.WriteLine("\tld\t" + Name + ",(" + label+")");
             instruction.RemoveRegisterAssignment(this);
             instruction.AddChanged(this);
         }
 
-        public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
+        public override void StoreToMemory(Instruction instruction, string label)
         {
-            instruction.WriteLine("\tld\t" + this + ",(" + variable.MemoryAddress(offset) + ")");
-            instruction.SetVariableRegister(variable, offset, this);
-            instruction.AddChanged(this);
+            //instruction.RemoveVariableRegisterId(Id);
+            instruction.WriteLine("\tld\t(" + label + ")," + Name);
         }
 
-        protected override void StoreToMemory(Instruction instruction, Variable variable, int offset)
-        {
-            var destinationAddress = variable.MemoryAddress(offset);
-            instruction.WriteLine("\tld\t(" + destinationAddress + ")," + this);
-            instruction.SetVariableRegister(variable, offset, this);
-        }
+
+        //public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
+        //{
+        //    instruction.WriteLine("\tld\t" + this + ",(" + variable.MemoryAddress(offset) + ")");
+        //    instruction.SetVariableRegister(variable, offset, this);
+        //    instruction.AddChanged(this);
+        //}
+
+        //public override void StoreToMemory(Instruction instruction, Variable variable, int offset)
+        //{
+        //    var destinationAddress = variable.MemoryAddress(offset);
+        //    instruction.WriteLine("\tld\t(" + destinationAddress + ")," + this);
+        //    instruction.SetVariableRegister(variable, offset, this);
+        //}
 
 
 
@@ -261,82 +270,77 @@ namespace Inu.Cate.Z80
 
 
 
-        public override void StoreToMemory(Instruction instruction, string label)
-        {
-            //instruction.RemoveVariableRegisterId(Id);
-            instruction.WriteLine("\tld\t(" + label + ")," + Name);
-        }
 
 
-        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
             if (!IsPair()) {
-                var candidates = PairRegisters.Where(r => !Equals(r, pointerRegister)).ToList();
+                var candidates = PairRegisters.Where(r => !r.Conflicts(pointerRegister)).ToList();
                 using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
                 reservation.WordRegister.LoadIndirect(instruction, pointerRegister, offset);
                 CopyFrom(instruction, reservation.WordRegister);
                 return;
             }
             Debug.Assert(Low != null && High != null);
-            if (pointerRegister.IsIndex() && pointerRegister.IsOffsetInRange(offset + 1)) {
-                Low.LoadIndirect(instruction, pointerRegister, offset);
-                High.LoadIndirect(instruction, pointerRegister, offset + 1);
+            if (pointerRegister is IndexRegister indexRegister && indexRegister.IsOffsetInRange(offset + 1)) {
+                Low.LoadIndirect(instruction, indexRegister, offset);
+                High.LoadIndirect(instruction, indexRegister, offset + 1);
                 return;
             }
             if (offset == 0) {
-                if (Equals(pointerRegister, Hl)) {
+                if (Equals(pointerRegister, PointerRegister.Hl)) {
                     if (Equals(this, Hl)) {
                         var candidates = ByteRegister.Registers.Where(r => !this.Contains(r)).ToList();
                         using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);
                         var byteRegister = reservation.ByteRegister;
-                        byteRegister.LoadIndirect(instruction, pointerRegister, 0);
+                        byteRegister.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
                         instruction.WriteLine("\tinc\t" + pointerRegister);
-                        High.LoadIndirect(instruction, pointerRegister, 0);
-                        if (!Equals(this, pointerRegister)) {
+                        High.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
+                        if (!Conflicts(pointerRegister)) {
                             instruction.WriteLine("\tdec\t" + pointerRegister);
                         }
                         Low.CopyFrom(instruction, byteRegister);
                         return;
                     }
-                    Low.LoadIndirect(instruction, pointerRegister, 0);
+                    Low.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
                     instruction.WriteLine("\tinc\t" + pointerRegister);
-                    High.LoadIndirect(instruction, pointerRegister, 0);
+                    High.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
                     instruction.WriteLine("\tdec\t" + pointerRegister);
                     return;
                 }
                 using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-                    ByteRegister.A.LoadIndirect(instruction, pointerRegister, 0);
+                    ByteRegister.A.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
                     Low.CopyFrom(instruction, ByteRegister.A);
                     instruction.WriteLine("\tinc\t" + pointerRegister);
-                    ByteRegister.A.LoadIndirect(instruction, pointerRegister, 0);
+                    ByteRegister.A.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
                     High.CopyFrom(instruction, ByteRegister.A);
                     instruction.WriteLine("\tdec\t" + pointerRegister);
                 }
                 return;
             }
-            using (var reservation = WordOperation.ReserveRegister(instruction, pointerRegister)) {
+            using (var reservation = PointerOperation.ReserveRegister(instruction, pointerRegister)) {
                 pointerRegister.Add(instruction, offset);
                 LoadIndirect(instruction, pointerRegister, 0);
             }
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
             if (!IsPair()) {
-                var candidates = WordRegister.PairRegisters.Where(r => r != pointerRegister).ToList();
+                var candidates = PairRegisters.Where(r => !r.Conflicts(pointerRegister)).ToList();
                 using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
                 reservation.WordRegister.CopyFrom(instruction, this);
                 reservation.WordRegister.StoreIndirect(instruction, pointerRegister, offset);
                 return;
             }
             Debug.Assert(Low != null && High != null);
-            if (pointerRegister.IsIndex() && pointerRegister.IsOffsetInRange(offset + 1)) {
+            if (pointerRegister is IndexRegister indexRegister && indexRegister.IsOffsetInRange(offset + 1)) {
                 Low.StoreIndirect(instruction, pointerRegister, offset);
                 High.StoreIndirect(instruction, pointerRegister, offset + 1);
                 return;
             }
             if (offset == 0) {
-                if (Equals(pointerRegister, Hl)) {
+                if (Equals(pointerRegister, PointerRegister.Hl)) {
                     Low.StoreIndirect(instruction, pointerRegister, 0);
                     instruction.WriteLine("\tinc\t" + pointerRegister);
                     High.StoreIndirect(instruction, pointerRegister, 0);
@@ -353,7 +357,7 @@ namespace Inu.Cate.Z80
                 }
                 return;
             }
-            using (WordOperation.ReserveRegister(instruction, pointerRegister)) {
+            using (PointerOperation.ReserveRegister(instruction, pointerRegister)) {
                 pointerRegister.Add(instruction, offset);
                 StoreIndirect(instruction, pointerRegister, 0);
             }
@@ -401,24 +405,10 @@ namespace Inu.Cate.Z80
         public override Cate.ByteRegister? Low { get; }
         public override Cate.ByteRegister? High { get; }
 
-        protected internal PairRegister(int id, ByteRegister highRegister, ByteRegister lowRegister) : base(id,
-            highRegister.Name + lowRegister.Name)
+        protected internal PairRegister(int id, ByteRegister highRegister, ByteRegister lowRegister, bool addable) : base(id, highRegister.Name + lowRegister.Name, addable)
         {
             Low = lowRegister;
             High = highRegister;
-        }
-    }
-
-    internal class IndexRegister : WordRegister
-    {
-        public IndexRegister(int id, string name) : base(id, name)
-        { }
-
-        public override bool IsIndex() => true;
-
-        public override bool IsPointer(int offset)
-        {
-            return offset >= -128 && offset <= 127;
         }
     }
 }

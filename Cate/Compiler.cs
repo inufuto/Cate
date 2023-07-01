@@ -17,6 +17,7 @@ namespace Inu.Cate
         public static Compiler Instance { get; private set; } = null!;
         public readonly ByteOperation ByteOperation;
         public readonly WordOperation WordOperation;
+        public readonly PointerOperation PointerOperation;
         private readonly Tokenizer tokenizer = new Tokenizer();
         private readonly Dictionary<SourcePosition, string> errors = new Dictionary<SourcePosition, string>();
         private List<Token>? tokens = null;
@@ -30,11 +31,12 @@ namespace Inu.Cate
         private readonly ISet<string> externalNames = new SortedSet<string>();
 
 
-        protected Compiler(ByteOperation byteOperation, WordOperation wordOperation)
+        protected Compiler(ByteOperation byteOperation, WordOperation wordOperation, PointerOperation pointerOperation)
         {
             Debug.Assert(Instance == null);
             ByteOperation = byteOperation;
             WordOperation = wordOperation;
+            PointerOperation = pointerOperation;
             Instance = this;
             currentBlock = globalBlock;
             ReservedWord.AddWords(Keyword.Words);
@@ -1507,8 +1509,7 @@ namespace Inu.Cate
 
         public virtual void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int byteCount)
         {
-            foreach (var register in SavingRegisterIds(registers).ToImmutableSortedSet().Reverse())
-            {
+            foreach (var register in SavingRegisterIds(registers).ToImmutableSortedSet().Reverse()) {
                 RestoreRegister(writer, register, byteCount);
             }
         }
@@ -1547,7 +1548,7 @@ namespace Inu.Cate
 
         public abstract void AllocateRegisters(List<Variable> variables, Function function);
         public abstract Register? ParameterRegister(int index, ParameterizableType type);
-        public abstract Register? ReturnRegister(int byteCount);
+        public abstract Register? ReturnRegister(ParameterizableType type);
 
         public LoadInstruction CreateLoadInstruction(Function function, AssignableOperand destinationOperand,
             Operand sourceOperand)
@@ -1555,13 +1556,29 @@ namespace Inu.Cate
             return destinationOperand.Type.ByteCount switch
             {
                 1 => CreateByteLoadInstruction(function, destinationOperand, sourceOperand),
-                _ => CreateWordLoadInstruction(function, destinationOperand, sourceOperand)
+                _ => destinationOperand.Type is PointerType ? CreatePointerLoadInstruction(function, destinationOperand, sourceOperand) : CreateWordLoadInstruction(function, destinationOperand, sourceOperand)
             };
         }
 
-        protected abstract LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand);
 
-        protected abstract LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand);
+        protected  LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new ByteLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
+        protected  LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new WordLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
+        protected  LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
 
         public abstract BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
             AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand);
@@ -1629,6 +1646,7 @@ namespace Inu.Cate
         public virtual IntegerType CounterType => IntegerType.ByteType;
         public virtual string ParameterPrefix => "@";
         public virtual string LabelPrefix => "@";
+        public virtual int PointerByteCount => 2;
 
         public int AlignedSize(int size)
         {

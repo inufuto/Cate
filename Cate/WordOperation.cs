@@ -28,10 +28,10 @@ namespace Inu.Cate
 
         public List<WordRegister> PairRegisters => Registers.Where(r => r.IsPair()).ToList();
 
-        public virtual List<WordRegister> PointerRegisters(int offset)
-        {
-            return Registers.Where(r => r.IsPointer(offset)).ToList();
-        }
+        //public virtual List<WordRegister> PointerRegisters(int offset)
+        //{
+        //    return Registers.Where(r => r.IsPointer(offset)).ToList();
+        //}
 
         public virtual RegisterReservation ReserveRegister(Instruction instruction, WordRegister register)
         {
@@ -52,10 +52,10 @@ namespace Inu.Cate
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates, Operand sourceOperand)
         {
-            if (!(sourceOperand is VariableOperand variableOperand)) return ReserveAnyRegister(instruction, candidates);
+            if (sourceOperand is not VariableOperand variableOperand) return ReserveAnyRegister(instruction, candidates);
             {
                 var register = instruction.GetVariableRegister(variableOperand);
-                if (!(register is WordRegister wordRegister) || !candidates.Contains(register))
+                if (register is not WordRegister wordRegister || !candidates.Contains(register))
                     return ReserveAnyRegister(instruction, candidates);
                 return ReserveRegister(instruction, wordRegister, sourceOperand);
             }

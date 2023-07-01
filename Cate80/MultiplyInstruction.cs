@@ -47,7 +47,7 @@ namespace Inu.Cate.Z80
                 void ViaRegister(Cate.WordRegister re)
                 {
                     var candidates = WordRegister.Registers
-                        .Where(r => !Equals(r, re) && !r.IsAddable()).ToList();
+                        .Where(r => !Equals(r, re) && !((WordRegister)r).Addable).ToList();
                     using var additionReservation = WordOperation.ReserveAnyRegister(this, candidates);
                     var additionRegister = additionReservation.WordRegister;
                     additionRegister.Load(this, LeftOperand);

@@ -38,7 +38,10 @@ namespace Inu.Cate
                 }
             }
         }
+
+        //protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
         protected static WordOperation WordOperation => Compiler.Instance.WordOperation;
+        protected static PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
 
 
         public abstract List<ByteRegister> Accumulators { get; }
@@ -54,14 +57,14 @@ namespace Inu.Cate
             int offset, int count);
 
         protected abstract void OperateIndirect(Instruction instruction, string operation, bool change,
-            WordRegister pointerRegister, int offset, int count);
+            PointerRegister pointerRegister, int offset, int count);
 
         protected virtual void OperateIndirect(Instruction instruction, string operation, bool change, Variable pointer,
             int offset, int count)
         {
-            using var reservation = Compiler.Instance.WordOperation.ReserveAnyRegister(instruction, Compiler.Instance.WordOperation.PointerRegisters(offset));
+            using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerOperation.RegistersToOffset(offset));
             reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
-            OperateIndirect(instruction, operation, change, reservation.WordRegister, offset, count);
+            OperateIndirect(instruction, operation, change, reservation.PointerRegister, offset, count);
         }
 
 
@@ -91,7 +94,7 @@ namespace Inu.Cate
                 case IndirectOperand indirectOperand: {
                         var pointer = indirectOperand.Variable;
                         var offset = indirectOperand.Offset;
-                        if (pointer.Register is WordRegister pointerRegister) {
+                        if (pointer.Register is PointerRegister pointerRegister) {
                             //var pointerRegister = Compiler.Instance.WordOperation.RegisterFromId(pointer.Register.Value);
                             OperateIndirect(instruction, operation, change, pointerRegister, offset, count);
                             return;
@@ -113,8 +116,7 @@ namespace Inu.Cate
             Operate(instruction, operation, change, operand, 1);
         }
 
-        public abstract void StoreConstantIndirect(Instruction instruction, WordRegister pointerRegister, int offset,
-            int value);
+        public abstract void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset, int value);
 
         public abstract List<ByteRegister> Registers { get; }
 

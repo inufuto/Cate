@@ -34,7 +34,7 @@ namespace Inu.Cate
         public readonly Anchor ExitAnchor;
         public readonly Dictionary<int, NamedLabel> NamedLabels = new Dictionary<int, NamedLabel>();
 
-        public Function(GlobalBlock block, int id, Visibility visibility, Type type) : base(block, id, type)
+        public Function(Block block, int id, Visibility visibility, Type type) : base(block, id, type)
         {
             Visibility = visibility;
             functionBlock = new FunctionBlock(Block, this);
@@ -142,7 +142,7 @@ namespace Inu.Cate
                 }
             }
 
-            var returnRegisterId = compiler.ReturnRegister(Type.ByteCount);
+            var returnRegisterId = compiler.ReturnRegister((ParameterizableType)Type);
             if (returnRegisterId != null) {
                 savedRegisters.Remove(returnRegisterId);
                 compiler.RemoveSavingRegister(savedRegisters, Type.ByteCount);
@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("*pUpper = cType + 6")) {
+                if (instruction.ToString().Contains("pFront = offset + VVramFront_")) {
                     var aaa = 111;
                 }
 #endif

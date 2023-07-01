@@ -43,9 +43,9 @@ namespace Inu.Cate
         }
     }
 
-    public abstract class ByteLoadInstruction : LoadInstruction
+    public class ByteLoadInstruction : LoadInstruction
     {
-        protected ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
+        public ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
 
         public override void BuildAssembly()
         {
@@ -60,15 +60,15 @@ namespace Inu.Cate
                 var pointer = indirectOperand.Variable;
                 var offset = indirectOperand.Offset;
                 var register = GetVariableRegister(pointer, 0);
-                if (register is WordRegister pointerRegister) {
+                if (register is PointerRegister pointerRegister) {
                     ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
                     return;
                 }
-                var pointerRegisters = WordOperation.PointerRegisters(offset);
+                var pointerRegisters = PointerOperation.RegistersToOffset(offset);
                 if (pointerRegisters.Any()) {
-                    using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
-                    reservation.WordRegister.LoadFromMemory(this, pointer, 0);
-                    ByteOperation.StoreConstantIndirect(this, reservation.WordRegister, offset, integerOperand.IntegerValue);
+                    using var reservation = PointerOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
+                    reservation.PointerRegister.LoadFromMemory(this, pointer, 0);
+                    ByteOperation.StoreConstantIndirect(this, reservation.PointerRegister, offset, integerOperand.IntegerValue);
                     return;
                 }
             }
@@ -108,4 +108,27 @@ namespace Inu.Cate
             reservation.WordRegister.Store(this, DestinationOperand);
         }
     }
+    public class PointerLoadInstruction : LoadInstruction
+    {
+        public PointerLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
+
+        public override void BuildAssembly()
+        {
+            if (
+                DestinationOperand.SameStorage(SourceOperand) &&
+                DestinationOperand.Type.ByteCount == SourceOperand.Type.ByteCount
+            ) {
+                return;
+            }
+
+            if (DestinationOperand.Register is PointerRegister pointerRegister) {
+                pointerRegister.Load(this, SourceOperand);
+                return;
+            }
+            using var reservation = PointerOperation.ReserveAnyRegister(this, SourceOperand);
+            reservation.PointerRegister.Load(this, SourceOperand);
+            reservation.PointerRegister.Store(this, DestinationOperand);
+        }
+    }
+
 }

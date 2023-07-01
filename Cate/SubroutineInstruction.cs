@@ -99,7 +99,7 @@ namespace Inu.Cate
             if (ResultOperand == null) {
                 return false;
             }
-            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
+            var returnRegister = Compiler.Instance.ReturnRegister((ParameterizableType)TargetFunction.Type);
             return TargetFunction.Parameters.Any(parameter => parameter.Register != null && parameter.Register.Conflicts(returnRegister));
         }
 
@@ -162,7 +162,7 @@ namespace Inu.Cate
             }
             RemoveStaticVariableAssignments();
 
-            var returnRegister = Compiler.Instance.ReturnRegister(TargetFunction.Type.ByteCount);
+            var returnRegister = Compiler.Instance.ReturnRegister((ParameterizableType)TargetFunction.Type);
             if (returnRegister != null) {
                 AddChanged(returnRegister);
             }
@@ -408,6 +408,9 @@ namespace Inu.Cate
                 case WordRegister wordRegister:
                     wordRegister.Load(this, operand);
                     break;
+                case PointerRegister pointerRegister:
+                    pointerRegister.Load(this, operand);
+                    break;
             }
             //CancelOperandRegister(operand);
             if (!Equals(operand.Register, register)) {
@@ -453,7 +456,7 @@ namespace Inu.Cate
                     }
                     else {
                         var candidates = Candidates(operand);
-                        using var reservation = ByteOperation.ReserveAnyRegister(this, candidates,  operand);
+                        using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, operand);
                         reservation.ByteRegister.Load(this, operand);
                         reservation.ByteRegister.StoreToMemory(this, label);
                     }
@@ -475,8 +478,8 @@ namespace Inu.Cate
 
         protected void StoreParametersViaPointer()
         {
-            using var pointerReservation = WordOperation.ReserveAnyRegister(this, WordOperation.PointerRegisters(0));
-            var pointerRegister = pointerReservation.WordRegister;
+            using var pointerReservation = PointerOperation.ReserveAnyRegister(this, PointerOperation.Registers);
+            var pointerRegister = pointerReservation.PointerRegister;
             var index = 0;
             var count = ParameterAssignments.Count(a => a.Parameter.Register == null);
             foreach (var assignment in ParameterAssignments.Where(assignment => assignment.Parameter.Register == null)) {
