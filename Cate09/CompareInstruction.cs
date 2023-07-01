@@ -57,6 +57,11 @@ namespace Inu.Cate.Mc6809
             Jump();
         }
 
+        protected override void ComparePointer()
+        {
+            CompareWord();
+        }
+
         private void Jump()
         {
             switch (OperatorId) {

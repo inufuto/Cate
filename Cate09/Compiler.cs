@@ -9,7 +9,7 @@ namespace Inu.Cate.Mc6809
 {
     internal class Compiler : Cate.Compiler
     {
-        public Compiler() : base(new ByteOperation(), new WordOperation())
+        public Compiler() : base(new ByteOperation(), new WordOperation(),new PointerOperation())
         { }
 
         protected override void WriteAssembly(StreamWriter writer)
@@ -99,9 +99,8 @@ namespace Inu.Cate.Mc6809
             foreach (var variable in rangeOrdered) {
                 var variableType = variable.Type;
                 Cate.Register? register = null;
-                if (variableType.ByteCount == 1) {
-                    register = AllocatableRegister(variable, ByteRegister.Registers, function);
-                }
+                if (variableType.ByteCount != 1) continue;
+                register = AllocatableRegister(variable, ByteRegister.Registers, function);
                 if (register != null) {
                     variable.Register = register;
                 }
@@ -115,14 +114,14 @@ namespace Inu.Cate.Mc6809
                     register = AllocatableRegister(variable, ByteRegister.Registers, function);
                 }
                 else {
-                    List<Cate.WordRegister> registers;
                     if (variableType is PointerType pointerType) {
-                        registers = WordRegister.PointerOrder;
+                        var registers = PointerRegister.IndexRegisters;
+                        register = AllocatableRegister(variable, registers, function);
                     }
                     else {
-                        registers = WordRegister.Registers;
+                        var registers = WordRegister.Registers;
+                        register = AllocatableRegister(variable, registers, function);
                     }
-                    register = AllocatableRegister(variable, registers, function);
                 }
                 if (register == null)
                     continue;
@@ -154,6 +153,16 @@ namespace Inu.Cate.Mc6809
                             }
                             break;
                         }
+                    case PointerRegister pointerRegister when !Conflict(variable.Intersections, pointerRegister):
+                        variable.Register = pointerRegister;
+                        break;
+                    case PointerRegister _: {
+                        register = AllocatableRegister(variable, PointerRegister.IndexRegisters, function);
+                        if (register != null) {
+                            variable.Register = register;
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -175,9 +184,9 @@ namespace Inu.Cate.Mc6809
             return SubroutineInstruction.ParameterRegister(index, type);
         }
 
-        public override Register? ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(ParameterizableType type)
         {
-            return SubroutineInstruction.ReturnRegister(byteCount);
+            return SubroutineInstruction.ReturnRegister(type);
         }
 
         protected override LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
@@ -190,6 +199,12 @@ namespace Inu.Cate.Mc6809
             Operand sourceOperand)
         {
             return new WordLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
+        protected override LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
         }
 
         public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,

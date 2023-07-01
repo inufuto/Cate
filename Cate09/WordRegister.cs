@@ -8,7 +8,7 @@ namespace Inu.Cate.Mc6809
 {
     internal abstract class WordRegister : Cate.WordRegister
     {
-        public static readonly List<Cate.WordRegister> Registers = new List<Cate.WordRegister>();
+        public static readonly List<Cate.WordRegister> Registers = new();
         public static readonly WordRegister D = new PairRegister(11, "d");
         public static readonly WordRegister X = new IndexRegister(12, "x");
         public static readonly WordRegister Y = new IndexRegister(13, "y");
@@ -47,9 +47,9 @@ namespace Inu.Cate.Mc6809
             return offset != 0 ? offset + "," + register : "," + register;
         }
 
-        public override bool IsOffsetInRange(int offset) => true;
+        //public override bool IsOffsetInRange(int offset) => true;
 
-        public override bool IsPointer(int offset) => IsIndex();
+        //public override bool IsPointer(int offset) => IsIndex();
 
 
         public override void LoadConstant(Instruction instruction, string value)
@@ -66,12 +66,12 @@ namespace Inu.Cate.Mc6809
             instruction.AddChanged(this);
         }
 
-        public void StoreToMemory(Instruction instruction, Variable variable, int offset)
-        {
-            var destinationAddress = variable.MemoryAddress(offset);
-            instruction.WriteLine("\tst" + this + "\t" + destinationAddress);
-            instruction.SetVariableRegister(variable, offset, this);
-        }
+        //public void StoreToMemory(Instruction instruction, Variable variable, int offset)
+        //{
+        //    var destinationAddress = variable.MemoryAddress(offset);
+        //    instruction.WriteLine("\tst" + this + "\t" + destinationAddress);
+        //    instruction.SetVariableRegister(variable, offset, this);
+        //}
 
 
         public override void LoadFromMemory(Instruction instruction, string label)
@@ -86,43 +86,43 @@ namespace Inu.Cate.Mc6809
             instruction.WriteLine("\tst" + this + "\t" + label);
         }
 
-        public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
-        {
-            if (pointer.Register == null && offset == 0) {
-                instruction.WriteLine("\tld" + this + "\t[" + pointer.MemoryAddress(0) + "]");
-                instruction.AddChanged(this);
-                instruction.RemoveRegisterAssignment(this);
-                return;
-            }
-            using var reservation = WordOperation.ReserveAnyRegister(instruction, Pointers);
-            var pointerRegister = reservation.WordRegister;
-            pointerRegister.LoadFromMemory(instruction, pointer, 0);
-            LoadIndirect(instruction, pointerRegister, offset);
-        }
+        //public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
+        //{
+        //    if (pointer.Register == null && offset == 0) {
+        //        instruction.WriteLine("\tld" + this + "\t[" + pointer.MemoryAddress(0) + "]");
+        //        instruction.AddChanged(this);
+        //        instruction.RemoveRegisterAssignment(this);
+        //        return;
+        //    }
+        //    using var reservation = WordOperation.ReserveAnyRegister(instruction, Pointers);
+        //    var pointerRegister = reservation.WordRegister;
+        //    pointerRegister.LoadFromMemory(instruction, pointer, 0);
+        //    LoadIndirect(instruction, pointerRegister, offset);
+        //}
 
-        private void StoreIndirect(Instruction instruction, Variable pointer, int offset)
-        {
-            if (pointer.Register == null && offset == 0) {
-                instruction.WriteLine("\tst" + this + "\t[" + pointer.MemoryAddress(0) + "]");
-                return;
-            }
-            using var reservation = WordOperation.ReserveAnyRegister(instruction, Pointers);
-            var pointerRegister = reservation.WordRegister;
-            pointerRegister.LoadFromMemory(instruction, pointer, 0);
-            StoreIndirect(instruction, pointerRegister, offset);
-        }
+        //private void StoreIndirect(Instruction instruction, Variable pointer, int offset)
+        //{
+        //    if (pointer.Register == null && offset == 0) {
+        //        instruction.WriteLine("\tst" + this + "\t[" + pointer.MemoryAddress(0) + "]");
+        //        return;
+        //    }
+        //    using var reservation = WordOperation.ReserveAnyRegister(instruction, Pointers);
+        //    var pointerRegister = reservation.WordRegister;
+        //    pointerRegister.LoadFromMemory(instruction, pointer, 0);
+        //    StoreIndirect(instruction, pointerRegister, offset);
+        //}
 
 
-        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
-            instruction.WriteLine("\tld" + this + "\t" + OffsetOperand(pointerRegister, offset));
+            instruction.WriteLine("\tld" + this + "\t" + OffsetOperand(pointerRegister.WordRegister, offset));
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
-            instruction.WriteLine("\tst" + this + "\t" + OffsetOperand(pointerRegister, offset));
+            instruction.WriteLine("\tst" + this + "\t" + OffsetOperand(pointerRegister.WordRegister, offset));
         }
 
 
@@ -184,7 +184,7 @@ namespace Inu.Cate.Mc6809
                 case IndirectOperand destinationIndirectOperand: {
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
-                        if (pointer.Register is WordRegister destinationPointerRegister) {
+                        if (pointer.Register is PointerRegister destinationPointerRegister) {
                             StoreIndirect(instruction,
                                  destinationPointerRegister, offset);
                             return;
@@ -266,18 +266,12 @@ namespace Inu.Cate.Mc6809
         public override Cate.ByteRegister? High => ByteRegister.A;
         public override bool IsPair() => true;
 
-        //public override bool Contains(Cate.ByteRegister register)
+        //public override void Add(Instruction instruction, int offset)
         //{
-        //    return base.Contains(register) || register.Id == ByteRegister.A.Id || register.Id == ByteRegister.B.Id;
+        //    instruction.WriteLine("\taddd\t#" + offset);
+        //    instruction.AddChanged(this);
+        //    instruction.RemoveRegisterAssignment(this);
         //}
-
-
-        public override void Add(Instruction instruction, int offset)
-        {
-            instruction.WriteLine("\taddd\t#" + offset);
-            instruction.AddChanged(this);
-            instruction.RemoveRegisterAssignment(this);
-        }
 
         public override void Save(Instruction instruction)
         {
@@ -307,14 +301,14 @@ namespace Inu.Cate.Mc6809
         public IndexRegister(int id, string name) : base(id, name)
         { }
 
-        public override void Add(Instruction instruction, int offset)
-        {
-            instruction.WriteLine("\tlea" + Name + "\t" + OffsetOperand(this, offset));
-            instruction.AddChanged(this);
-            instruction.RemoveRegisterAssignment(this);
-        }
+        //public override void Add(Instruction instruction, int offset)
+        //{
+        //    instruction.WriteLine("\tlea" + Name + "\t" + OffsetOperand(this, offset));
+        //    instruction.AddChanged(this);
+        //    instruction.RemoveRegisterAssignment(this);
+        //}
 
-        public override bool IsIndex() => true;
+        //public override bool IsIndex() => true;
 
         public override void Save(Instruction instruction)
         {

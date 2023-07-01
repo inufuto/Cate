@@ -58,7 +58,7 @@ namespace Inu.Cate.Mc6809
                     ViaD();
                     return;
                 }
-                if (!(DestinationOperand is IndirectOperand indirectOperand) || WordRegister.X.IsOffsetInRange(indirectOperand.Offset + 1)) {
+                if (DestinationOperand is not IndirectOperand indirectOperand || PointerRegister.X.IsOffsetInRange(indirectOperand.Offset + 1)) {
                     for (var i = 0; i < count; ++i) {
                         byteAction(operation =>
                         {

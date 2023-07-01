@@ -76,19 +76,19 @@ namespace Inu.Cate.Mc6809
             instruction.WriteLine("\tst" + Name + "\t" + variable.MemoryAddress(offset));
             instruction.SetVariableRegister(variable, offset, this);
         }
-        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
-            Debug.Assert(!Equals(pointerRegister, WordRegister.D));
-            instruction.WriteLine("\tld" + this + "\t" + WordRegister.OffsetOperand(pointerRegister, offset));
+            Debug.Assert(!Equals(pointerRegister, PointerRegister.D));
+            instruction.WriteLine("\tld" + this + "\t" + WordRegister.OffsetOperand(pointerRegister.WordRegister, offset));
             instruction.ResultFlags |= Instruction.Flag.Z;
             instruction.RemoveRegisterAssignment(this);
             instruction.AddChanged(this);
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
-            Debug.Assert(!Equals(pointerRegister, WordRegister.D));
-            instruction.WriteLine("\tst" + this + "\t" + WordRegister.OffsetOperand(pointerRegister, offset));
+            Debug.Assert(!Equals(pointerRegister, PointerRegister.D));
+            instruction.WriteLine("\tst" + this + "\t" + WordRegister.OffsetOperand(pointerRegister.WordRegister, offset));
         }
 
         public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)

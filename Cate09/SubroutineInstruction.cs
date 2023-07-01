@@ -11,8 +11,8 @@ namespace Inu.Cate.Mc6809
         {
             return index switch
             {
-                0 => type.ByteCount == 1 ? (Register)ByteRegister.A : WordRegister.X,
-                1 => type.ByteCount == 1 ? (Register)ByteRegister.B : WordRegister.Y,
+                0 => type.ByteCount == 1 ? ByteRegister.A : type is PointerType ? PointerRegister.X : WordRegister.X,
+                1 => type.ByteCount == 1 ? ByteRegister.B : type is PointerType ? PointerRegister.Y : WordRegister.Y,
                 _ => null
             };
         }
@@ -33,12 +33,12 @@ namespace Inu.Cate.Mc6809
             StoreParametersDirect();
         }
 
-        public static Register? ReturnRegister(in int byteCount)
+        public static Register? ReturnRegister(in ParameterizableType type)
         {
-            return byteCount switch
+            return type.ByteCount switch
             {
                 1 => ByteRegister.A,
-                2 => WordRegister.D,
+                2 => type is PointerType ? PointerRegister.D : WordRegister.D,
                 _ => null
             };
         }

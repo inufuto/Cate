@@ -16,10 +16,10 @@ namespace Inu.Cate.Mc6809
             };
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
+        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
             int offset, int value)
         {
-            if (!Equals(pointerRegister, WordRegister.D)) {
+            if (!Equals(pointerRegister, PointerRegister.D)) {
                 using var reservation = ReserveAnyRegister(instruction);
                 var register = reservation.ByteRegister;
                 instruction.RemoveRegisterAssignment(register);
@@ -27,8 +27,8 @@ namespace Inu.Cate.Mc6809
                 register.StoreIndirect(instruction, pointerRegister, offset);
                 return;
             }
-            using (var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.IndexRegisters)) {
-                var temporaryRegister = reservation.WordRegister;
+            using (var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.IndexRegisters)) {
+                var temporaryRegister = reservation.PointerRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 StoreConstantIndirect(instruction, temporaryRegister, offset, value);
             }
@@ -58,7 +58,7 @@ namespace Inu.Cate.Mc6809
         }
 
         protected override void OperateIndirect(Instruction instruction, string operation, bool change,
-            Cate.WordRegister pointerRegister, int offset, int count)
+            Cate.PointerRegister pointerRegister, int offset, int count)
         {
             if (offset == 0) {
                 for (var i = 0; i < count; ++i) {

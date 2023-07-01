@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
-using Inu.Language;
+﻿using Inu.Language;
 
 namespace Inu.Cate
 {
