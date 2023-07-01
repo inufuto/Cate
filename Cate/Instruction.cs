@@ -448,19 +448,32 @@ namespace Inu.Cate
             {
                 ByteRegister byteRegister => registerReservations.Any(reservation =>
                 {
-                    if (reservation.Register is WordRegister wordRegister) {
-                        return wordRegister.Contains(byteRegister);
-                    }
-
-                    return false;
+                    return reservation.Register switch
+                    {
+                        WordRegister wordRegister => wordRegister.Contains(byteRegister),
+                        PointerRegister pointerRegister => pointerRegister.WordRegister != null &&
+                                                           pointerRegister.WordRegister.Contains(byteRegister),
+                        _ => false
+                    };
                 }),
                 WordRegister wordRegister => registerReservations.Any(reservation =>
                 {
-                    if (reservation.Register is ByteRegister byteRegister) {
-                        return wordRegister.Contains(byteRegister);
-                    }
-
-                    return false;
+                    return reservation.Register switch
+                    {
+                        ByteRegister byteRegister => wordRegister.Contains(byteRegister),
+                        PointerRegister pointerRegister => Equals(pointerRegister.WordRegister, wordRegister),
+                        _ => false
+                    };
+                }),
+                PointerRegister pointerRegister => registerReservations.Any(reservation =>
+                {
+                    return reservation.Register switch
+                    {
+                        ByteRegister byteRegister => pointerRegister.WordRegister != null &&
+                                                     pointerRegister.WordRegister.Contains(byteRegister),
+                        WordRegister wordRegister => Equals(pointerRegister.WordRegister, wordRegister),
+                        _ => false
+                    };
                 }),
                 _ => false
             };

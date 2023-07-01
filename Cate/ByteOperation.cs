@@ -228,10 +228,5 @@ namespace Inu.Cate
         //{
         //    return new Saving(register, instruction, this);
         //}
-
-        //public List<ByteRegister> RegistersOtherThan(ByteRegister register)
-        //{
-        //    return Registers.Where(r => !Equals(r, register)).ToList();
-        //}
     }
 }

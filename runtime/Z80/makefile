@@ -8,7 +8,7 @@ all: $(name).lib
 objects = Temp.obj \
 	ShiftLeftA.obj ShiftRightA.obj ShiftRightSignedA.obj \
 	ShiftLeftHl.obj ShiftRightHl.obj ShiftRightSignedHl.obj \
-	CompareHlDe.obj
+	CompareHlDe.obj CompareHlDeSigned.obj
 
 $(name).lib: $(objects)
 	lib8.exe $(name).lib $(objects)

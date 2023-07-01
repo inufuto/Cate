@@ -66,7 +66,7 @@ namespace Inu.Cate.Z80
 
         private void CompareHlDe()
         {
-            Compiler.CallExternal(this, "cate.CompareHlDe");
+            Compiler.CallExternal(this, Signed ? "cate.CompareHlDeSigned" : "cate.CompareHlDe");
         }
 
         protected override void CompareWord()
@@ -77,8 +77,7 @@ namespace Inu.Cate.Z80
                 if (Equals(LeftOperand.Register, WordRegister.Hl)) {
                     CompareHlDe();
                 }
-                else
-                {
+                else {
                     using var reservation = WordOperation.ReserveRegister(this, WordRegister.Hl);
                     WordRegister.Hl.Load(this, LeftOperand);
                     CompareHlDe();

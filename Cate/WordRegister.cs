@@ -132,7 +132,7 @@ namespace Inu.Cate
                             Debug.Assert(destinationOffset == 0);
                             var wordRegister = destinationPointerRegister.WordRegister;
                             if (!Equals(wordRegister, this)) {
-                                wordRegister.CopyFrom(instruction, this);
+                                wordRegister?.CopyFrom(instruction, this);
                             }
                             instruction.SetVariableRegister(destinationVariable, destinationOffset, wordRegister);
                             return;

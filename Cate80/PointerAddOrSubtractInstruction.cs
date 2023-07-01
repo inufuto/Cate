@@ -36,7 +36,7 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
             return;
 
         if (OperatorId == '+') {
-            if (RightWordRegister() is WordRegister { Addable: true } rightRegister && (LeftOperand.Register is not PointerRegister leftRegister || !leftRegister.Addable)) {
+            if (RightWordRegister() is { Addable: true } rightRegister && (LeftOperand.Register is not PointerRegister leftRegister || !leftRegister.Addable)) {
                 using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers.Where(r => !PointerRegister.IsAddable(r)).ToList());
                 leftRegister = (PointerRegister)reservation.PointerRegister;
                 leftRegister.Load(this, LeftOperand);

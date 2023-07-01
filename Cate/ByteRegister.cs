@@ -18,7 +18,7 @@ namespace Inu.Cate
                         return true;
                     break;
                 case WordPointerRegister pointerRegister:
-                    if (pointerRegister.WordRegister.Contains(this)) {
+                    if (pointerRegister.WordRegister != null && pointerRegister.WordRegister.Contains(this)) {
                         return true;
                     }
                     break;

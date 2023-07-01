@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("@4 + VVramBack_")) {
+                if (instruction.ToString().Contains("if @6 < p2[1]")) {
                     var aaa = 111;
                 }
 #endif

@@ -15,7 +15,7 @@ namespace Inu.Cate.I8080
             }
             else {
                 if (RightOperand.Register is WordRegister rightRegister) {
-                    if (rightRegister.IsAddable() && IsOperatorExchangeable()) {
+                    if (rightRegister.Addable && IsOperatorExchangeable()) {
                         ExchangeOperands();
                     }
                 }

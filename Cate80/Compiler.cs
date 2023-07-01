@@ -196,7 +196,7 @@ namespace Inu.Cate.Z80
                         return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                     return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                 case '-': {
-                        if (rightOperand is IntegerOperand { IntegerValue: < 0 } integerOperand) {
+                        if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
                             var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
                             if (destinationOperand.Type is PointerType)
                                 return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);

@@ -4,12 +4,12 @@ namespace Inu.Cate.I8080
 {
     internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
-        public static Register? ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(ParameterizableType type)
         {
-            return byteCount switch
+            return type.ByteCount switch
             {
                 1 => ByteRegister.A,
-                2 => WordRegister.Hl,
+                2 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
                 _ => null
             };
         }
@@ -19,11 +19,11 @@ namespace Inu.Cate.I8080
             return index switch
             {
                 0 when type.ByteCount == 1 => ByteRegister.A,
-                0 => WordRegister.Hl,
+                0 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
                 1 when type.ByteCount == 1 => ByteRegister.E,
-                1 => WordRegister.De,
+                1 => type is PointerType ? PointerRegister.De : WordRegister.De,
                 2 when type.ByteCount == 1 => ByteRegister.C,
-                2 => WordRegister.Bc,
+                2 => type is PointerType ? PointerRegister.De : WordRegister.Bc,
                 _ => null
             };
         }

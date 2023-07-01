@@ -12,7 +12,9 @@ namespace Inu.Cate
         {
             public readonly Function.Parameter Parameter;
             public readonly Operand Operand;
-            public RegisterReservation? RegisterReservation;
+
+            public RegisterReservation? RegisterReservation { get; set; }
+
             public bool Done { get; private set; }
 
             public ParameterAssignment(Function.Parameter parameter, Operand operand)
@@ -46,6 +48,9 @@ namespace Inu.Cate
                     case WordRegister wordRegister:
                         wordRegister.CopyFrom(instruction, (WordRegister)other.Parameter.Register);
                         break;
+                    case PointerRegister pointerRegister:
+                        pointerRegister.CopyFrom(instruction, (PointerRegister)other.Parameter.Register);
+                        break;
                 }
                 Done = true;
                 other.Done = true;
@@ -72,6 +77,10 @@ namespace Inu.Cate
                         case WordRegister wordRegister:
                             newReservation = instruction.WordOperation.ReserveRegister(instruction, wordRegister);
                             wordRegister.CopyFrom(instruction, RegisterReservation.WordRegister);
+                            break;
+                        case PointerRegister pointerRegister:
+                            newReservation = instruction.PointerOperation.ReserveRegister(instruction, pointerRegister);
+                            pointerRegister.CopyFrom(instruction, RegisterReservation.PointerRegister);
                             break;
                         default:
                             throw new NotImplementedException();
@@ -143,15 +152,6 @@ namespace Inu.Cate
 
         public override void BuildAssembly()
         {
-            //Register? savedRegister = null;
-            //if (DestinationOperand is IndirectOperand { Variable: { Register: { } } } destinationIndirectOperand) {
-            //    var destinationRegister = destinationIndirectOperand.Variable.Register;
-            //    if (ParameterAssignments.Any(p => p.Parameter.Register != null && p.Parameter.Register.Conflicts(destinationRegister))) {
-            //        savedRegister = destinationRegister;
-            //        savedRegister.Save(this);
-            //    }
-            //}
-
             {
                 var reservations = FillParameters();
                 ResultFlags = 0;
@@ -171,16 +171,6 @@ namespace Inu.Cate
 
             void StoreResult(Register rr)
             {
-                //if (savedRegister != null) {
-                //    savedRegister.Restore(this);
-                //    var removedRegisters = ChangedRegisters().Where(r =>
-                //        Equals(savedRegister, r) || (r is ByteRegister changedByteRegister &&
-                //                                     Equals(changedByteRegister.PairRegister, savedRegister))).ToList();
-                //    foreach (var removedRegister in removedRegisters) {
-                //        RemoveChanged(removedRegister);
-                //    }
-                //}
-
                 RemoveRegisterAssignment(rr);
                 var resultSaved = !IsRegisterReserved(rr);
                 if (resultSaved) {
@@ -198,31 +188,9 @@ namespace Inu.Cate
                         pointerRegister.Store(this, DestinationOperand);
                         break;
                 }
-                //if (resultSaved) {
-                //    CancelRegister(rr);
-                //}
             }
 
             Debug.Assert(returnRegister != null);
-            //if (savedRegister != null && returnRegister.Conflicts(savedRegister)) {
-            //    switch (returnRegister) {
-            //        case ByteRegister byteRegister: {
-            //                var candidates = ByteOperation.Registers.Where(r => !IsRegisterReserved(r) && !r.Conflicts(savedRegister)).ToList();
-            //                using var reservation = ByteOperation.ReserveAnyRegister(this, candidates);
-            //                reservation.ByteRegister.CopyFrom(this, byteRegister);
-            //                StoreResult(reservation.ByteRegister);
-            //                break;
-            //            }
-            //        case WordRegister wordRegister: {
-            //                var candidates = WordOperation.Registers.Where(r => !IsRegisterReserved(r) && !r.Conflicts(savedRegister)).ToList();
-            //                using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
-            //                reservation.WordRegister.CopyFrom(this, wordRegister);
-            //                StoreResult(reservation.WordRegister);
-            //                break;
-            //            }
-            //    }
-            //    return;
-            //}
             StoreResult(returnRegister);
         }
 
@@ -235,16 +203,7 @@ namespace Inu.Cate
             foreach (var sourceOperand in SourceOperands) {
                 ReserveOperandRegister(sourceOperand);
             }
-            //if (DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register != null) {
-            //}
         }
-
-        //public override void RemoveDestinationRegister()
-        //{
-        //    if (DestinationOperand != null) {
-        //        RemoveChangedRegisters(DestinationOperand);
-        //    }
-        //}
 
         protected Dictionary<Function.Parameter, Operand> OperandPairs()
         {
@@ -276,7 +235,7 @@ namespace Inu.Cate
                     var parameter = assignment.Parameter;
                     var operand = assignment.Operand;
                     Debug.Assert(parameter.Register != null);
-                    if (!(operand is VariableOperand variableOperand)) continue;
+                    if (operand is not VariableOperand variableOperand) continue;
                     var register = GetVariableRegister(variableOperand.Variable, variableOperand.Offset, r => r.Equals(parameter.Register));
                     if (!Equals(register, parameter.Register)) continue;
                     assignment.RegisterReservation = ReserveRegister(register, operand);
@@ -315,7 +274,12 @@ namespace Inu.Cate
                             register = ByteOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
                         }
                         else {
-                            register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
+                            if (parameter.Type is PointerType) {
+                                register = PointerOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
+                            }
+                            else {
+                                register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
+                            }
                         }
                         if (register == null || Equals(register, firstRegister)) continue;
                         if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
@@ -465,12 +429,10 @@ namespace Inu.Cate
                     }
                 }
                 else {
-                    if (parameter.Type is PointerType)
-                    {
+                    if (parameter.Type is PointerType) {
                         StorePointer(operand, label);
                     }
-                    else
-                    {
+                    else {
                         StoreWord(operand, label);
                     }
                 }

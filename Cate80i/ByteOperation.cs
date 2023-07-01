@@ -46,18 +46,18 @@ namespace Inu.Cate.I8080
             ;
         }
 
-        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset, int count)
+        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset, int count)
         {
             if (offset == 0) {
-                if (Equals(pointerRegister, WordRegister.Hl)) {
+                if (Equals(pointerRegister, PointerRegister.Hl)) {
                     for (var i = 0; i < count; ++i) {
                         instruction.WriteLine("\t" + operation + "\tm");
                     }
                     return;
                 }
-                using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
-                    WordRegister.Hl.CopyFrom(instruction, pointerRegister);
-                    OperateIndirect(instruction, operation, change, WordRegister.Hl, offset, count);
+                using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+                    PointerRegister.Hl.CopyFrom(instruction, pointerRegister);
+                    OperateIndirect(instruction, operation, change, PointerRegister.Hl, offset, count);
                 }
                 return;
             }
@@ -69,20 +69,20 @@ namespace Inu.Cate.I8080
 
         protected override void OperateIndirect(Instruction instruction, string operation, bool change, Variable pointer, int offset, int count)
         {
-            if (Equals(pointer.Register, WordRegister.Hl)) {
-                OperateIndirect(instruction, operation, change, WordRegister.Hl, offset, count);
+            if (Equals(pointer.Register, PointerRegister.Hl)) {
+                OperateIndirect(instruction, operation, change, PointerRegister.Hl, offset, count);
                 return;
             }
-            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
-                WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
-                OperateIndirect(instruction, operation, change, WordRegister.Hl, offset, count);
+            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+                PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                OperateIndirect(instruction, operation, change, PointerRegister.Hl, offset, count);
             }
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
+        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset, int value)
         {
             if (offset == 0) {
-                if (Equals(pointerRegister, WordRegister.Hl)) {
+                if (Equals(pointerRegister, PointerRegister.Hl)) {
                     instruction.WriteLine("\tmvi\tm," + value);
                     return;
                 }
@@ -92,16 +92,16 @@ namespace Inu.Cate.I8080
                 }
                 return;
             }
-            if (Equals(pointerRegister, WordRegister.Hl)) {
+            if (Equals(pointerRegister, PointerRegister.Hl)) {
                 pointerRegister.TemporaryOffset(instruction, offset, () =>
                 {
                     StoreConstantIndirect(instruction, pointerRegister, 0, value);
                 });
                 return;
             }
-            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
-                WordRegister.Hl.CopyFrom(instruction, pointerRegister);
-                StoreConstantIndirect(instruction, WordRegister.Hl, offset, value);
+            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+                PointerRegister.Hl.CopyFrom(instruction, pointerRegister);
+                StoreConstantIndirect(instruction, PointerRegister.Hl, offset, value);
             }
         }
 
@@ -115,8 +115,9 @@ namespace Inu.Cate.I8080
 
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister register)
         {
-            register.StoreToMemory(instruction, Compiler.TemporaryByte);
-            return Compiler.TemporaryByte;
+            const string temporaryByte = I8080.Compiler.TemporaryByte;
+            register.StoreToMemory(instruction, temporaryByte);
+            return temporaryByte;
         }
     }
 }
