@@ -79,6 +79,7 @@ namespace Inu.Cate.Mc6809
         public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(!Equals(pointerRegister, PointerRegister.D));
+            Debug.Assert(pointerRegister.WordRegister != null);
             instruction.WriteLine("\tld" + this + "\t" + WordRegister.OffsetOperand(pointerRegister.WordRegister, offset));
             instruction.ResultFlags |= Instruction.Flag.Z;
             instruction.RemoveRegisterAssignment(this);
@@ -88,6 +89,7 @@ namespace Inu.Cate.Mc6809
         public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(!Equals(pointerRegister, PointerRegister.D));
+            Debug.Assert(pointerRegister.WordRegister != null);
             instruction.WriteLine("\tst" + this + "\t" + WordRegister.OffsetOperand(pointerRegister.WordRegister, offset));
         }
 

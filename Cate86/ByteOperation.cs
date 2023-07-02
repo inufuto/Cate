@@ -24,33 +24,33 @@ namespace Inu.Cate.I8086
             instruction.RemoveVariableRegister(variable, offset);
         }
 
-        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
+        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset,
             int count)
         {
-            if (!pointerRegister.IsPointer(offset)) {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.PointerRegisters);
-                var temporaryRegister = reservation.WordRegister;
+            if (!pointerRegister.IsOffsetInRange(offset)) {
+                using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.Registers);
+                var temporaryRegister = reservation.PointerRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 OperateIndirect(instruction, operation, change, temporaryRegister, offset, count);
                 return;
             }
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
             for (var i = 0; i < count; ++i) {
-                instruction.WriteLine("\t" + operation + "byte ptr [" + WordRegister.AsPointer(pointerRegister) + addition + "]");
+                instruction.WriteLine("\t" + operation + "byte ptr [" + PointerRegister.AsPointer(pointerRegister) + addition + "]");
             }
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
+        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset, int value)
         {
-            if (!pointerRegister.IsPointer(offset)) {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.PointerRegisters);
-                var temporaryRegister = reservation.WordRegister;
+            if (!pointerRegister.IsOffsetInRange(offset)) {
+                using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.Registers);
+                var temporaryRegister = reservation.PointerRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 StoreConstantIndirect(instruction, temporaryRegister, offset, value);
                 return;
             }
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
-            instruction.WriteLine("\tmov byte ptr [" + WordRegister.AsPointer(pointerRegister) + addition + "]," + value);
+            instruction.WriteLine("\tmov byte ptr [" + PointerRegister.AsPointer(pointerRegister) + addition + "]," + value);
         }
 
         public override List<Cate.ByteRegister> Registers => ByteRegister.Registers;

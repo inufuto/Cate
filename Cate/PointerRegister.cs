@@ -12,6 +12,10 @@ namespace Inu.Cate
 
         public abstract bool IsOffsetInRange(int offset);
 
+        public virtual bool Contains(ByteRegister byteRegister)
+        {
+            return false;
+        }
 
         public void Load(Instruction instruction, Operand sourceOperand)
         {
@@ -113,6 +117,7 @@ namespace Inu.Cate
 
         public abstract void CopyFrom(Instruction instruction, PointerRegister sourceRegister);
 
+        public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
         public virtual void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
             if (instruction.IsRegisterReserved(this)) {
@@ -130,8 +135,8 @@ namespace Inu.Cate
                 instruction.RemoveRegisterAssignment(this);
                 instruction.AddChanged(this);
                 action();
-                Add(instruction, -offset);
                 if (!changed) {
+                    Add(instruction, -offset);
                     instruction.RemoveChanged(this);
                 }
             }

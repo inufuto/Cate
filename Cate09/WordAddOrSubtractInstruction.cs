@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Inu.Cate.Mc6809
 {
@@ -75,6 +76,7 @@ namespace Inu.Cate.Mc6809
                 load = r =>
                 {
                     var wordRegister = r is PointerRegister pointerRegister ? pointerRegister.WordRegister: ((WordRegister)r);
+                    Debug.Assert(wordRegister != null);
                     wordRegister.Load(this, LeftOperand);
                 };
             }

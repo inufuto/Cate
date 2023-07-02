@@ -75,6 +75,7 @@ namespace Inu.Cate
 
             if (DestinationOperand.Register is ByteRegister byteRegister) {
                 byteRegister.Load(this, SourceOperand);
+                SetVariableRegister(DestinationOperand, byteRegister);
                 return;
             }
             using (var reservation = ByteOperation.ReserveAnyRegister(this, Candidates(), SourceOperand)) {
@@ -123,6 +124,7 @@ namespace Inu.Cate
 
             if (DestinationOperand.Register is PointerRegister pointerRegister) {
                 pointerRegister.Load(this, SourceOperand);
+                SetVariableRegister(DestinationOperand, pointerRegister);
                 return;
             }
             using var reservation = PointerOperation.ReserveAnyRegister(this, SourceOperand);

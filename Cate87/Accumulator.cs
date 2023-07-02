@@ -9,33 +9,23 @@ namespace Inu.Cate.MuCom87
         protected internal Accumulator(int id) : base(id, "a") { }
 
 
-        public override void LoadIndirect(Instruction instruction, Cate.WordRegister wordRegister)
+        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister)
         {
-            instruction.WriteLine("\tldax\t" + ((WordRegister)wordRegister).HighName);
+            instruction.WriteLine("\tldax\t" + pointerRegister.AsmName);
             instruction.AddChanged(A);
             instruction.RemoveRegisterAssignment(A);
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.WordRegister wordRegister)
+        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister)
         {
-            instruction.WriteLine("\tstax\t" + ((WordRegister)wordRegister).HighName);
+            instruction.WriteLine("\tstax\t" + pointerRegister.AsmName);
         }
 
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
         {
-            switch (sourceRegister) {
-                case ByteRegister byteRegister:
-                    instruction.WriteLine("\tmov\ta," + byteRegister.Name);
-                    instruction.AddChanged(this);
-                    instruction.RemoveRegisterAssignment(this);
-                    return;
-                    //case ByteWorkingRegister workingRegister:
-                    //    instruction.WriteLine("\tldaw\t" + workingRegister.Name);
-                    //    instruction.AddChanged(this);
-                    //    instruction.RemoveRegisterAssignment(this);
-                    //    return;
-            }
-            throw new NotImplementedException();
+            instruction.WriteLine("\tmov\ta," + sourceRegister.AsmName);
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
@@ -50,14 +40,7 @@ namespace Inu.Cate.MuCom87
                     instruction.RemoveRegisterAssignment(A);
                     return;
                 case ByteRegisterOperand registerOperand: {
-                        switch (registerOperand.Register) {
-                            case ByteRegister byteRegister:
-                                instruction.WriteLine("\t" + operation.Split('|')[0] + "\ta," + byteRegister.Name);
-                                break;
-                                //case ByteWorkingRegister workingRegister:
-                                //    instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
-                                //    break;
-                        }
+                        if (registerOperand.Register is ByteRegister byteRegister) instruction.WriteLine("\t" + operation.Split('|')[0] + "\ta," + byteRegister.AsmName);
                         return;
                     }
                 case VariableOperand variableOperand: {
@@ -69,16 +52,12 @@ namespace Inu.Cate.MuCom87
                                 Debug.Assert(offset == 0);
                                 instruction.WriteLine("\t" + operation.Split('|')[0] + "\ta," + byteRegister);
                                 return;
-                            //case ByteWorkingRegister workingRegister:
-                            //    Debug.Assert(offset == 0);
-                            //    instruction.WriteLine("\t" + operation.Split('|')[0] + "w\t" + workingRegister.Name);
-                            //    return;
                             default:
                                 using (var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers)) {
                                     var pointerRegister = reservation.WordRegister;
                                     pointerRegister.LoadConstant(instruction, variable.MemoryAddress(offset));
                                     Debug.Assert(pointerRegister.High != null);
-                                    instruction.WriteLine("\t" + operation.Split('|')[0] + "x\t" + pointerRegister.High.Name);
+                                    instruction.WriteLine("\t" + operation.Split('|')[0] + "x\t" + pointerRegister.AsmName);
                                 }
                                 return;
                         }
@@ -88,14 +67,15 @@ namespace Inu.Cate.MuCom87
                         var offset = indirectOperand.Offset;
                         {
                             var register = instruction.GetVariableRegister(pointer, 0);
-                            if (register is WordRegister pointerRegister) {
+                            if (register is PointerRegister pointerRegister) {
                                 OperateIndirect(instruction, operation, pointerRegister, offset);
                                 return;
                             }
                         }
-                        using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
                         {
-                            var pointerRegister = reservation.WordRegister;
+                            using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.Registers);
+
+                            var pointerRegister = reservation.PointerRegister;
                             pointerRegister.LoadFromMemory(instruction, pointer, 0);
                             OperateIndirect(instruction, operation, pointerRegister, offset);
                         }
@@ -110,25 +90,20 @@ namespace Inu.Cate.MuCom87
             instruction.WriteLine("\t" + operation + "a," + operand);
         }
 
-        private void OperateIndirect(Instruction instruction, string operation, Cate.WordRegister pointerRegister, int offset)
+        private static void OperateIndirect(Instruction instruction, string operation, Cate.PointerRegister pointerRegister, int offset)
         {
-            switch (pointerRegister) {
-                case WordRegister wordRegister when offset == instruction.GetRegisterOffset(wordRegister):
-                    OperateIndirect(instruction, operation, wordRegister);
-                    return;
-                case WordRegister wordRegister:
-                    wordRegister.TemporaryOffset(instruction, offset, () =>
-                    {
-                        OperateIndirect(instruction, operation, wordRegister);
-                    });
-                    return;
+            if (pointerRegister.IsOffsetInRange(offset)) {
+                OperateIndirect(instruction, operation, pointerRegister);
+                return;
             }
-            throw new NotImplementedException();
+
+            pointerRegister.TemporaryOffset(instruction, offset,
+                () => { OperateIndirect(instruction, operation, pointerRegister); });
         }
 
-        private static void OperateIndirect(Instruction instruction, string operation, WordRegister wordRegister)
+        private static void OperateIndirect(Instruction instruction, string operation, Cate.PointerRegister pointerRegister)
         {
-            instruction.WriteLine("\t" + operation.Split('|')[0] + "x\t" + wordRegister.HighName);
+            instruction.WriteLine("\t" + operation.Split('|')[0] + "x\t" + pointerRegister.AsmName);
         }
 
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)

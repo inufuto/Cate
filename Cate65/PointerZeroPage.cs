@@ -31,5 +31,10 @@ namespace Inu.Cate.Mos6502
                 High.CopyFrom(instruction, ByteRegister.A);
             }
         }
+
+        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

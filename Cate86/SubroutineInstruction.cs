@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Inu.Cate.I8086
 {
@@ -28,7 +27,8 @@ namespace Inu.Cate.I8086
                     1 => ByteRegister.Al,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => WordRegister.Bx,
+                        PointerType { ElementType: StructureType _ } => PointerRegister.Bx,
+                        PointerType=>PointerRegister.Ax,
                         _ => WordRegister.Ax
                     }
                 },
@@ -37,7 +37,8 @@ namespace Inu.Cate.I8086
                     1 => ByteRegister.Dl,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => WordRegister.Si,
+                        PointerType { ElementType: StructureType _ } => PointerRegister.Si,
+                        PointerType => PointerRegister.Dx,
                         _ => WordRegister.Dx
                     }
                 },
@@ -46,7 +47,8 @@ namespace Inu.Cate.I8086
                     1 => ByteRegister.Cl,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => WordRegister.Di,
+                        PointerType { ElementType: StructureType _ } => PointerRegister.Di,
+                        PointerType => PointerRegister.Dx,
                         _ => WordRegister.Cx
                     }
                 },
@@ -54,12 +56,12 @@ namespace Inu.Cate.I8086
             };
         }
 
-        public static Register? ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(ParameterizableType type)
         {
-            return byteCount switch
+            return type.ByteCount switch
             {
                 1 => ByteRegister.Al,
-                2 => WordRegister.Ax,
+                2 => type is PointerType ? PointerRegister.Ax : WordRegister.Ax,
                 _ => null
             };
         }

@@ -121,7 +121,7 @@ namespace Inu.Cate
             else {
                 if (register != null) {
                     if (!IsTemporary()) {
-                        writer.WriteLine("\t;" + Name + " => register " + register.Name);
+                        writer.WriteLine("\t;" + Name + " => register " + register.AsmName);
                     }
                 }
                 else if (localVariableId != null) {

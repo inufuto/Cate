@@ -183,7 +183,7 @@ namespace Inu.Cate.Mc6800
             return new MultiplyInstruction(function, destinationOperand, leftOperand, rightValue);
         }
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register returnRegisterId)
+        public override IEnumerable<Register> IncludedRegisters(Register returnRegisterId)
         {
             return new List<Register>();
         }

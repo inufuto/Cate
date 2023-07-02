@@ -18,6 +18,7 @@ namespace Inu.Cate
         }
 
         public override string ToString() => Name;
+        public virtual string AsmName => Name;
 
         protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
         protected static WordOperation WordOperation => Compiler.Instance.WordOperation;
@@ -64,7 +65,6 @@ namespace Inu.Cate
         {
             LoadFromMemory(instruction, variable.MemoryAddress(offset));
             instruction.SetVariableRegister(variable, offset, this);
-            instruction.AddChanged(this);
         }
 
         public virtual void StoreToMemory(Instruction instruction, Variable variable, int offset)
@@ -79,9 +79,14 @@ namespace Inu.Cate
 
         public virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
-            var candidates = PointerOperation.RegistersToOffset(offset).Where(r => !r.Conflicts(this)).ToList();
+            var allCandidates = PointerOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
+            var unReserved = allCandidates.Where(r => !instruction.RegisterAssignments.ContainsKey(r)).ToList();
+            var candidates = unReserved.Where(r => r.IsOffsetInRange(offset)).ToList();
             if (candidates.Count == 0) {
-                candidates = PointerOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
+                candidates = unReserved;
+            }
+            if (candidates.Count == 0) {
+                candidates = allCandidates;
             }
             if (candidates.Count == 0) {
                 candidates = PointerOperation.Registers;

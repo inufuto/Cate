@@ -2,11 +2,11 @@
 {
     internal class ByteOperation : MuCom87.ByteOperation
     {
-        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
+        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
             int offset, int value)
         {
-            if (pointerRegister is WordRegister wordRegister && offset == 0) {
-                instruction.WriteLine("\tmvix\t" + wordRegister.HighName + "," + value);
+            if (offset == 0) {
+                instruction.WriteLine("\tmvix\t" + pointerRegister.AsmName + "," + value);
                 return;
             }
             base.StoreConstantIndirect(instruction, pointerRegister, offset, value);

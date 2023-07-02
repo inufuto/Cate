@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Inu.Cate.Mc6800
 {
@@ -34,7 +33,7 @@ namespace Inu.Cate.Mc6800
                 return;
             }
 
-            if (offset >= 0 && offset < 0x100) {
+            if (offset is >= 0 and < 0x100) {
                 void AddByte(Cate.ByteRegister byteRegister)
                 {
                     byteRegister.LoadConstant(instruction, offset);
@@ -69,6 +68,11 @@ namespace Inu.Cate.Mc6800
                 }
                 instruction.RemoveRegisterAssignment(ByteRegister.A);
             }
+        }
+
+        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

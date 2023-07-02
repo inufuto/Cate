@@ -3,23 +3,16 @@ using System.Diagnostics;
 
 namespace Inu.Cate.MuCom87
 {
-    internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
+    internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
     {
-        public WordAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand) { }
+        public PointerAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
+        { }
 
         public override void BuildAssembly()
         {
-            if (LeftOperand is ConstantOperand && !(RightOperand is ConstantOperand) && IsOperatorExchangeable()) {
+            if (LeftOperand.Type is not PointerType) {
                 ExchangeOperands();
             }
-            else {
-                if (RightOperand.Register is WordRegister rightRegister) {
-                    if (!Equals(rightRegister, WordRegister.Hl) && IsOperatorExchangeable()) {
-                        ExchangeOperands();
-                    }
-                }
-            }
-
             if (IncrementOrDecrement())
                 return;
 
@@ -61,22 +54,21 @@ namespace Inu.Cate.MuCom87
 
         private void IncrementOrDecrement(string operation, int count)
         {
-            if (DestinationOperand.Register is WordRegister wordRegister && !Equals(RightOperand.Register, wordRegister)) {
-                wordRegister.Load(this, LeftOperand);
-                IncrementOrDecrement(this, operation, wordRegister, count);
+            if (DestinationOperand.Register is PointerRegister pointerRegister && !Equals(RightOperand.Register, pointerRegister)) {
+                pointerRegister.Load(this, LeftOperand);
+                IncrementOrDecrement(this, operation, pointerRegister, count);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
-            var register = reservation.WordRegister;
+            using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers, LeftOperand);
+            var register = reservation.PointerRegister;
             register.Load(this, LeftOperand);
             IncrementOrDecrement(this, operation, register, count);
             register.Store(this, DestinationOperand);
         }
 
-        private static void IncrementOrDecrement(Instruction instruction, string operation, Cate.WordRegister leftRegister, int count)
+        private static void IncrementOrDecrement(Instruction instruction, string operation, Cate.PointerRegister leftRegister, int count)
         {
             Debug.Assert(count >= 0);
-            Debug.Assert(leftRegister.High != null);
             for (var i = 0; i < count; ++i) {
                 instruction.WriteLine("\t" + operation + "\t" + leftRegister.AsmName);
             }

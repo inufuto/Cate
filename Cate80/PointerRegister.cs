@@ -82,7 +82,7 @@ namespace Inu.Cate.Z80
                 }
             }
             else {
-                Debug.Assert(WordRegister.IsPair());
+                Debug.Assert(WordRegister != null && WordRegister.IsPair());
                 using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
                     Debug.Assert(WordRegister is { Low: { }, High: { } });
                     ByteRegister.A.CopyFrom(instruction, WordRegister.Low);
@@ -95,6 +95,11 @@ namespace Inu.Cate.Z80
             }
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
+        }
+
+        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
+        {
+            throw new System.NotImplementedException();
         }
     }
 

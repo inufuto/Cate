@@ -237,7 +237,7 @@ namespace Inu.Cate.Mos6502
             return new MultiplyInstruction(function, destinationOperand, leftOperand, rightValue);
         }
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register register)
+        public override IEnumerable<Register> IncludedRegisters(Register register)
         {
             return new List<Register>() { register };
         }

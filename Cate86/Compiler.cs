@@ -8,7 +8,7 @@ namespace Inu.Cate.I8086
 {
     internal class Compiler : Cate.Compiler
     {
-        public Compiler() : base(new ByteOperation(), new WordOperation())
+        public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation())
         { }
 
         public override ISet<Register> SavingRegisters(Register register)
@@ -18,9 +18,7 @@ namespace Inu.Cate.I8086
 
         private static Register SavingRegister(Register register)
         {
-            //if (!(register is ByteRegister byteRegister) || Equals(byteRegister, ByteRegister.Ah) ||
-            //    Equals(byteRegister, ByteRegister.Al)) return register;
-            if (!(register is ByteRegister byteRegister)) {
+            if (register is not ByteRegister byteRegister) {
                 return register;
             }
             Debug.Assert(byteRegister.PairRegister != null);
@@ -39,14 +37,7 @@ namespace Inu.Cate.I8086
                         register = AllocatableRegister(variable, ByteRegister.Registers, function);
                     }
                     else {
-                        List<Cate.WordRegister> registers;
-                        if (variableType is PointerType pointerType) {
-                            registers = WordRegister.PointerOrder;
-                        }
-                        else {
-                            registers = WordRegister.Registers;
-                        }
-                        register = AllocatableRegister(variable, registers, function);
+                        register = variableType is PointerType ? AllocatableRegister(variable, PointerRegister.Registers, function) : AllocatableRegister(variable, WordRegister.Registers, function);
                     }
                     if (register == null)
                         continue;
@@ -54,43 +45,48 @@ namespace Inu.Cate.I8086
                 }
             }
 
-            var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
+            var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
                 .ThenBy(v => v.Usages.Count).ToList();
 
             Allocate1(rangeOrdered);
-            var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
+            var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
             Allocate1(usageOrdered);
 
             foreach (var variable in variables.Where(v => v.Register == null && !v.Static)) {
                 if (variable.Parameter?.Register == null)
                     continue;
                 var register = variable.Parameter.Register;
-                if (register is ByteRegister byteRegister && !Conflict(variable.Intersections, byteRegister)) {
-                    variable.Register = byteRegister;
-                }
-                else if (register is ByteRegister) {
-                    register = AllocatableRegister(variable, ByteRegister.Registers, function);
-                    if (register != null) {
-                        variable.Register = register;
+                if (register is ByteRegister byteRegister) {
+                    if (!Conflict(variable.Intersections, byteRegister)) {
+                        variable.Register = byteRegister;
                     }
-                }
-                else if (register is WordRegister wordRegister) {
-                    if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, wordRegister)) {
-                        List<Cate.WordRegister> candidates;
-                        if (variable.Type is PointerType) {
-                            candidates = WordRegister.PointerRegisters;
-                        }
-                        else {
-                            candidates = WordRegister.Registers;
-                        }
-                        register = AllocatableRegister(variable, candidates, function);
+                    else {
+                        register = AllocatableRegister(variable, ByteRegister.Registers, function);
                         if (register != null) {
                             variable.Register = register;
                         }
                     }
-                    else {
+                }
+                else if (register is WordRegister wordRegister) {
+                    if (!Conflict(variable.Intersections, wordRegister)) {
                         variable.Register = wordRegister;
-                        break;
+                    }
+                    else {
+                        register = AllocatableRegister(variable, WordRegister.Registers, function);
+                        if (register != null) {
+                            variable.Register = register;
+                        }
+                    }
+                }
+                else if (register is PointerRegister pointerRegister) {
+                    if (PointerRegister.Registers.Contains(pointerRegister) && !Conflict(variable.Intersections, pointerRegister)) {
+                        variable.Register = pointerRegister;
+                    }
+                    else {
+                        register = AllocatableRegister(variable, PointerRegister.Registers, function);
+                        if (register != null) {
+                            variable.Register = register;
+                        }
                     }
                 }
             }
@@ -127,9 +123,9 @@ namespace Inu.Cate.I8086
             return SubroutineInstruction.ParameterRegister(index, type);
         }
 
-        public override Register? ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(ParameterizableType type)
         {
-            return SubroutineInstruction.ReturnRegister(byteCount);
+            return SubroutineInstruction.ReturnRegister(type);
         }
 
         protected override LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
@@ -142,6 +138,12 @@ namespace Inu.Cate.I8086
             Operand sourceOperand)
         {
             return new WordLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
+        protected override LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
         }
 
         public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
@@ -211,7 +213,7 @@ namespace Inu.Cate.I8086
 
         public override ReadOnlySpan<char> EndOfFunction => "\tret";
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register? register)
+        public override IEnumerable<Register> IncludedRegisters(Register? register)
         {
             if (register is WordRegister wordRegister) {
                 return wordRegister.ByteRegisters;

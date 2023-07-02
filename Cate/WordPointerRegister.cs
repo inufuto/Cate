@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 
 namespace Inu.Cate
 {
@@ -8,6 +9,15 @@ namespace Inu.Cate
         public ByteRegister? Low => WordRegister?.Low ?? null;
         public ByteRegister? High => WordRegister?.High ?? null;
 
+        public override string AsmName
+        {
+            get
+            {
+                Debug.Assert(WordRegister != null, nameof(WordRegister) + " != null");
+                return WordRegister.AsmName;
+            }
+        }
+
         protected WordPointerRegister(WordRegister wordRegister) : base(wordRegister.Id, wordRegister.Name)
         {
             WordRegister = wordRegister;
@@ -15,13 +25,18 @@ namespace Inu.Cate
 
         public override bool Conflicts(Register? register)
         {
-            if (register is WordPointerRegister wordPointerRegister) {
-                return WordRegister != null && WordRegister.Conflicts(wordPointerRegister.WordRegister);
+            if (WordRegister != null) {
+                if (register is WordPointerRegister wordPointerRegister && WordRegister.Conflicts(wordPointerRegister.WordRegister)) {
+                    return true;
+                }
+                if (WordRegister.Conflicts(register)) {
+                    return true;
+                }
             }
-            return WordRegister != null && (WordRegister.Conflicts(register) || base.Conflicts(register));
+            return base.Conflicts(register);
         }
 
-        public bool Contains(ByteRegister byteRegister)
+        public override bool Contains(ByteRegister byteRegister)
         {
             return WordRegister != null && WordRegister.Contains(byteRegister);
         }
@@ -75,7 +90,9 @@ namespace Inu.Cate
 
         public override void CopyFrom(Instruction instruction, PointerRegister sourceRegister)
         {
-            if (WordRegister != null && sourceRegister.WordRegister != null) WordRegister.CopyFrom(instruction, sourceRegister.WordRegister);
+            if (WordRegister != null && sourceRegister.WordRegister != null) {
+                WordRegister.CopyFrom(instruction, sourceRegister.WordRegister);
+            }
         }
     }
 }

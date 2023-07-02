@@ -1502,7 +1502,7 @@ namespace Inu.Cate
         {
             var dictionary = DistinctRegisters(variables);
             foreach (var (register, list) in dictionary.OrderBy(p => p.Key)) {
-                var comment = "\t; " + String.Join(',', list.Select(v => v.Name).ToArray());
+                var comment = "\t; " + string.Join(',', list.Select(v => v.Name).ToArray());
                 register.Save(writer, comment, jump, tabCount);
             }
         }
@@ -1523,7 +1523,7 @@ namespace Inu.Cate
         {
             var dictionary = DistinctRegisters(variables);
             foreach (var (register, list) in dictionary.OrderByDescending(p => p.Key)) {
-                var comment = "\t; " + String.Join(',', list.Select(v => v.Name).ToArray());
+                var comment = "\t; " + string.Join(',', list.Select(v => v.Name).ToArray());
                 register.Restore(writer, comment, jump, tabCount);
             }
         }
@@ -1604,7 +1604,7 @@ namespace Inu.Cate
             AssignableOperand destinationOperand,
             Operand leftOperand, int rightValue);
 
-        public abstract IEnumerable<Register> IncludedRegisterIds(Register register);
+        public abstract IEnumerable<Register> IncludedRegisters(Register register);
 
         public void AddExternalName(string externalName)
         {

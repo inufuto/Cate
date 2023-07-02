@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Inu.Cate.I8086
@@ -60,7 +61,42 @@ namespace Inu.Cate.I8086
                 return;
             }
 
-            {
+            if (DestinationOperand.Type is PointerType) {
+                void ViaRegister(Cate.PointerRegister r)
+                {
+                    if (LeftOperand.Type is PointerType) {
+                        r.Load(this, LeftOperand);
+                        r.Operate(this, operation, true, RightOperand);
+                    }
+                    else 
+                    {
+                        Debug.Assert(r.WordRegister != null);
+                        r.WordRegister.Load(this, LeftOperand);
+                        r.WordRegister.Operate(this, operation, true, RightOperand);
+                    }
+                    AddChanged(r);
+                }
+
+                if (DestinationOperand.Register is PointerRegister pointerRegister && !Equals(RightOperand.Register, pointerRegister)) {
+                    ViaRegister(pointerRegister);
+                    return;
+                }
+
+                if (LeftOperand.Type is not PointerType) {
+                    using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+                    Debug.Assert(reservation.WordRegister != null);
+                    reservation.WordRegister.Load(this, LeftOperand);
+                    reservation.WordRegister.Operate(this, operation, true, RightOperand);
+                    AddChanged(reservation.WordRegister);
+                    reservation.WordRegister.Store(this, DestinationOperand);
+                }
+                else {
+                    using var reservation = PointerOperation.ReserveAnyRegister(this, LeftOperand);
+                    ViaRegister(reservation.PointerRegister);
+                    reservation.PointerRegister.Store(this, DestinationOperand);
+                }
+            }
+            else {
                 void ViaRegister(Cate.WordRegister r)
                 {
                     r.Load(this, LeftOperand);
@@ -77,6 +113,7 @@ namespace Inu.Cate.I8086
                 reservation.WordRegister.Store(this, DestinationOperand);
             }
         }
+
 
         protected override int Threshold() => DestinationOperand.Type.ByteCount == 1 ? 2 : 4;
 

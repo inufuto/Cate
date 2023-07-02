@@ -35,5 +35,10 @@ namespace Inu.Cate.Mc6809
                 instruction.RemoveRegisterAssignment(this);
             }
         }
+
+        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

@@ -37,52 +37,6 @@ namespace Inu.Cate.I8080
                     PointerRegister.Hl.Store(this, DestinationOperand);
                     return;
                 }
-                //if (Equals(RightOperand.Register, PointerRegister.Hl)) {
-                //    using var reservation = WordOperation.ReserveAnyRegister(this, new List<Cate.WordRegister>() { WordRegister.De, WordRegister.Bc }, LeftOperand);
-                //    var leftRegister = reservation.WordRegister;
-                //    leftRegister.Load(this, LeftOperand);
-                //    WriteLine("\tdad\t" + leftRegister.Name);
-                //    AddChanged(PointerRegister.Hl);
-                //    RemoveRegisterAssignment(PointerRegister.Hl);
-                //    PointerRegister.Hl.Store(this, DestinationOperand);
-                //    return;
-                //}
-
-                //if (!Equals(RightOperand.Register, PointerRegister.Hl)) {
-
-
-
-
-                //    void OperateHl(Cate.PointerRegister rightRegister)
-                //    {
-                //        PointerRegister.Hl.Load(this, LeftOperand);
-                //        WriteLine("\tdad\t" + rightRegister);
-                //        AddChanged(PointerRegister.Hl);
-                //        RemoveRegisterAssignment(PointerRegister.Hl);
-                //        PointerRegister.Hl.Store(this, DestinationOperand);
-                //    }
-
-                //    if (RightOperand.Register is PointerRegister rightWordRegister && (Equals(rightWordRegister, PointerRegister.De) || Equals(rightWordRegister, PointerRegister.Bc))) {
-                //        OperateHl(rightWordRegister);
-                //        return;
-                //    }
-
-                //    var candidates = new List<Cate.PointerRegister>() { PointerRegister.Bc, PointerRegister.De };
-                //    using var reservation = PointerOperation.ReserveAnyRegister(this, candidates);
-                //    {
-                //        var rightRegister = reservation.PointerRegister;
-                //        rightRegister.Load(this, RightOperand);
-                //        if (Equals(DestinationOperand.Register, PointerRegister.Hl)) {
-                //            OperateHl(rightRegister);
-                //        }
-                //        else {
-                //            using (PointerOperation.ReserveRegister(this, PointerRegister.Hl)) {
-                //                OperateHl(rightRegister);
-                //            }
-                //        }
-                //    }
-                //    return;
-                //}
             }
 
             string lowOperation, highOperation;

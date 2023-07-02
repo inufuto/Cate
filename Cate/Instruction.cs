@@ -193,7 +193,7 @@ namespace Inu.Cate
 
         public void SetVariableRegister(Operand operand, Register? register)
         {
-            if (!(operand is VariableOperand variableOperand)) {
+            if (operand is not VariableOperand variableOperand) {
                 if (register != null) {
                     RemoveRegisterAssignment(register);
                 }

@@ -142,11 +142,11 @@ namespace Inu.Cate
                 }
             }
 
-            var returnRegisterId = compiler.ReturnRegister((ParameterizableType)Type);
-            if (returnRegisterId != null) {
-                savedRegisters.Remove(returnRegisterId);
+            var returnRegister = compiler.ReturnRegister((ParameterizableType)Type);
+            if (returnRegister != null) {
+                savedRegisters.Remove(returnRegister);
                 compiler.RemoveSavingRegister(savedRegisters, Type.ByteCount);
-                foreach (var includedIds in compiler.IncludedRegisterIds(returnRegisterId)) {
+                foreach (var includedIds in compiler.IncludedRegisters(returnRegister)) {
                     savedRegisters.Remove(includedIds);
                 }
             }
@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("if @6 < p2[1]")) {
+                if (instruction.ToString().Contains("if @4 < *p2 goto IsNear@Anchor15")) {
                     var aaa = 111;
                 }
 #endif

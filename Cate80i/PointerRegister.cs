@@ -89,19 +89,26 @@ namespace Inu.Cate.I8080
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
+
+        public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
+        {
+            throw new NotImplementedException();
+        }
+
         public override void TemporaryOffset(Instruction instruction, int offset, Action action)
         {
             if (Math.Abs(offset) <= 1) {
                 base.TemporaryOffset(instruction, offset, action);
                 return;
             }
-            //if (instruction.SourceRegisterCount(this) > 1) {
             var changed = instruction.IsChanged(this);
-            Save(instruction);
+            if (!changed) {
+                Save(instruction);
+            }
             Add(instruction, offset);
             action();
-            Restore(instruction);
             if (!changed) {
+                Restore(instruction);
                 instruction.RemoveChanged(this);
             }
         }

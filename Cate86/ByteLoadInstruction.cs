@@ -15,11 +15,11 @@
                     return;
                 }
             }
-            if (DestinationOperand is IndirectOperand { Variable: { Register: WordRegister wordRegister } } destinationIndirectOperand && wordRegister.IsPointer(destinationIndirectOperand.Offset)) {
+            if (DestinationOperand is IndirectOperand { Variable: { Register: PointerRegister pointerRegister } } destinationIndirectOperand) {
                 if (SourceOperand is IntegerOperand integerOperand) {
                     var offset = destinationIndirectOperand.Offset;
                     var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
-                    WriteLine("\tmov byte ptr [" + WordRegister.AsPointer(wordRegister) + addition + "]," + integerOperand.IntegerValue);
+                    WriteLine("\tmov byte ptr [" + PointerRegister.AsPointer(pointerRegister) + addition + "]," + integerOperand.IntegerValue);
                     return;
                 }
             }

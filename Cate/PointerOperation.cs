@@ -5,8 +5,6 @@ namespace Inu.Cate
 {
     public abstract class PointerOperation : RegisterOperation<PointerRegister>
     {
-        //public abstract List<PointerRegister> Registers { get; }
-
         public List<PointerRegister> RegistersToOffset(int offset)
         {
             return Registers.Where(r => r.IsOffsetInRange(offset)).ToList(); ;
