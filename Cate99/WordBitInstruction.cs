@@ -53,7 +53,7 @@ namespace Inu.Cate.Tms99
                         void OperateRegister(WordRegister register)
                         {
                             register.Load(this, LeftOperand);
-                            WriteLine("\txor\t" + Tms99.Compiler.OperandToString(this, RightOperand) + "," + register.Name);
+                            WriteLine("\txor\t" + Tms99.Compiler.OperandToString(this, RightOperand, false) + "," + register.Name);
                             register.Store(this, DestinationOperand);
                         }
                         if (DestinationOperand.Register is WordRegister destinationRegister) {

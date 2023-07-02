@@ -11,7 +11,7 @@ namespace Inu.Cate.Tms99
         {
             LoadResult();
             if (SourceOperand != null) {
-                var register = Compiler.ReturnRegister(SourceOperand.Type.ByteCount);
+                var register = Compiler.ReturnRegister((ParameterizableType)SourceOperand.Type);
                 ISet<Register> registers = new HashSet<Register>();
                 foreach (var changedRegister in ChangedRegisters()) {
                     if (changedRegister.Conflicts(register)) {

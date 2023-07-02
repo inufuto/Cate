@@ -57,7 +57,7 @@ namespace Inu.Cate.Tms99
                         void OperateRegister(ByteRegister register)
                         {
                             register.Load(this, LeftOperand);
-                            var right = Tms99.Compiler.OperandToString(this, RightOperand);
+                            var right = Tms99.Compiler.OperandToString(this, RightOperand, true);
                             if (right != null) {
                                 WriteLine("\txor\t" + right + "," + register.Name);
                             }

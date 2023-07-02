@@ -292,7 +292,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("if @4 < *p2 goto IsNear@Anchor15")) {
+                if (instruction.ToString().Contains("p1 = __1")) {
                     var aaa = 111;
                 }
 #endif

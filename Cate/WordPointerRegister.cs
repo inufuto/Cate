@@ -41,6 +41,14 @@ namespace Inu.Cate
             return WordRegister != null && WordRegister.Contains(byteRegister);
         }
 
+        public override bool Matches(Register register)
+        {
+            if (WordRegister != null && WordRegister.Matches(register)) {
+                return true;
+            }
+            return base.Matches(register);
+        }
+
 
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
         {

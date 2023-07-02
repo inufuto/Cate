@@ -22,7 +22,7 @@ namespace Inu.Cate.Tms99
             void OperateRegister(Cate.WordRegister register)
             {
                 register.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + Tms99.Compiler.OperandToString(instruction, rightOperand) + "," + register.Name);
+                instruction.WriteLine("\t" + operation + "\t" + Tms99.Compiler.OperandToString(instruction, rightOperand, false) + "," + register.Name);
                 register.Store(instruction, destinationOperand);
             }
 
@@ -43,7 +43,7 @@ namespace Inu.Cate.Tms99
 
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, string value)
         {
-            void OperateRegisterConstant(Cate.WordRegister register)
+            void OperateRegisterConstantW(Cate.WordRegister register)
             {
                 register.Load(instruction, leftOperand);
                 instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
@@ -51,17 +51,45 @@ namespace Inu.Cate.Tms99
                 instruction.RemoveRegisterAssignment(register);
                 register.Store(instruction, destinationOperand);
             }
-            if (destinationOperand.Register is WordRegister destinationRegister) {
-                OperateRegisterConstant(destinationRegister);
+            void OperateRegisterConstantP(Cate.PointerRegister register)
+            {
+                if (leftOperand.Type is PointerType) {
+                    register.Load(instruction, leftOperand);
+                }
+                else {
+                    Debug.Assert(register.WordRegister != null);
+                    register.WordRegister.Load(instruction, leftOperand);
+                }
+                instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
+                instruction.AddChanged(register);
+                instruction.RemoveRegisterAssignment(register);
+                register.Store(instruction, destinationOperand);
+            }
+            if (destinationOperand.Register is WordRegister destinationWordRegister) {
+                OperateRegisterConstantW(destinationWordRegister);
                 return;
             }
-            if (leftOperand.Register is WordRegister leftRegister) {
-                OperateRegisterConstant(leftRegister);
+            if (destinationOperand.Register is PointerRegister destinationPointerRegister) {
+                OperateRegisterConstantP(destinationPointerRegister);
                 return;
             }
-            Debug.Assert(instance != null);
-            using var reservation = instance.ReserveAnyRegister(instruction);
-            OperateRegisterConstant(reservation.WordRegister);
+            if (leftOperand.Register is WordRegister leftWordRegister) {
+                OperateRegisterConstantW(leftWordRegister);
+                return;
+            }
+            if (leftOperand.Register is PointerRegister leftPointerRegister) {
+                OperateRegisterConstantP(leftPointerRegister);
+                return;
+            }
+
+            if (destinationOperand.Type is PointerType) {
+                using var reservation = PointerOperation.ReserveAnyRegister(instruction);
+                OperateRegisterConstantP(reservation.PointerRegister);
+            }
+            else {
+                using var reservation = WordOperation.ReserveAnyRegister(instruction);
+                OperateRegisterConstantW(reservation.WordRegister);
+            }
         }
 
 
@@ -98,7 +126,7 @@ namespace Inu.Cate.Tms99
             {
                 register.Load(instruction, leftOperand);
                 instruction.WriteLine("\t" + operation + "\t" + register.Name + "," +
-                                      Tms99.Compiler.OperandToString(instruction, rightOperand));
+                                      Tms99.Compiler.OperandToString(instruction, rightOperand, true));
             }
 
             Debug.Assert(instance != null);

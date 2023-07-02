@@ -26,7 +26,7 @@ namespace Inu.Cate.Mc6809
             return Equals(register, WordRegister.D) ? new HashSet<Register>() { ByteRegister.A, ByteRegister.B } : new HashSet<Register>() { register };
         }
 
-        private IEnumerable<Register> SavingRegisterIds(IEnumerable<Variable> variables)
+        private IEnumerable<Register> SavingRegisters(IEnumerable<Variable> variables)
         {
             var savingRegisterIds = new HashSet<Register>();
             foreach (var variable in variables) {
@@ -47,7 +47,7 @@ namespace Inu.Cate.Mc6809
         public override void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
         {
             var list = variables.ToList();
-            var savingRegisterIds = SavingRegisterIds(list);
+            var savingRegisterIds = SavingRegisters(list);
             var comment = "\t; " + Join(',', list.Select(v => v.Name).ToArray());
             SaveRegisters(writer, savingRegisterIds, comment, tabCount);
         }
@@ -72,7 +72,7 @@ namespace Inu.Cate.Mc6809
 
         public override void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
         {
-            var savingRegisterIds = SavingRegisterIds(variables);
+            var savingRegisterIds = SavingRegisters(variables);
             var comment = "\t; " + Join(',', variables.Select(v => v.Name).ToArray());
             RestoreRegisters(writer, savingRegisterIds, comment, tabCount);
         }
