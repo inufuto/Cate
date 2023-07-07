@@ -98,6 +98,7 @@ namespace Inu.Cate
                 foreach (var parameter in Parameters.Where(parameter => parameter.Register == null)) {
                     writer.WriteLine("\textrn\t" + ParameterLabel(parameter));
                 }
+
                 return;
             }
 
@@ -123,21 +124,14 @@ namespace Inu.Cate
 
             var compiler = Compiler.Instance;
             compiler.WriteBeginningOfFunction(writer, this);
-
             ISet<Register> savedRegisters = new HashSet<Register>();
             foreach (var instruction in Instructions.Where(i => !i.IsEmpty())) {
-                foreach (var changedRegister in instruction.ChangedRegisters()) {
-                    var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister).Where(r => !savedRegisters.Contains(r)).ToList();
-                    foreach (var savingRegister in savingRegisters) {
-                        var saved = false;
-                        foreach (var variable in instruction.SavingVariables) {
-                            if (variable.Register != null && Compiler.Instance.SavingRegisters(variable.Register).Contains(savingRegister)) {
-                                saved = true;
-                            }
-                        }
-                        if (!saved) {
-                            savedRegisters.Add(savingRegister);
-                        }
+                var select = instruction.SavingVariables.Where(v => v.Register != null).Select(v => v.Register).ToList();
+                var savingRegisters = Compiler.Instance.SavingRegisters(select!);
+                var changedRegisters = Compiler.Instance.SavingRegisters(instruction.ChangedRegisters());
+                foreach (var changedRegister in changedRegisters) {
+                    if (!savingRegisters.Contains(changedRegister)) {
+                        savedRegisters.Add(changedRegister);
                     }
                 }
             }
@@ -150,6 +144,7 @@ namespace Inu.Cate
                     savedRegisters.Remove(includedIds);
                 }
             }
+
             compiler.SaveRegisters(writer, savedRegisters);
 
             Instruction? prevInstruction = null;
@@ -292,7 +287,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("p1 = __1")) {
+                if (instruction.ToString().Contains("ShowSprite_(Man_,@4)")) {
                     var aaa = 111;
                 }
 #endif

@@ -10,15 +10,20 @@ namespace Inu.Cate.Tms99
     {
         public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
 
-        public override ISet<Register> SavingRegisters(Register register)
+
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            if (register is ByteRegister byteRegister) {
-                return new HashSet<Register>() { byteRegister.WordRegister };
+            switch (register) {
+                case ByteRegister byteRegister:
+                    base.AddSavingRegister(registers, byteRegister.WordRegister);
+                    break;
+                case PointerRegister { WordRegister: { } } pointerRegister:
+                    base.AddSavingRegister(registers, pointerRegister.WordRegister);
+                    break;
+                default:
+                    base.AddSavingRegister(registers, register);
+                    break;
             }
-            if (register is PointerRegister { WordRegister: { } } pointerRegister) {
-                return new HashSet<Register>() { pointerRegister.WordRegister };
-            }
-            return new HashSet<Register>() { register };
         }
 
         public override void AllocateRegisters(List<Variable> variables, Function function)

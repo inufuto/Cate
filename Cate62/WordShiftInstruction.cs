@@ -15,13 +15,13 @@
             {
                 Keyword.ShiftLeft => (low, high) =>
                 {
-                    low("shl");
+                    low("rc|shl");
                     high("rol");
                 }
                 ,
                 Keyword.ShiftRight => (low, high) =>
                 {
-                    high("\tshr");
+                    high("\trc|shr");
                     low("\tror");
                 }
                 ,

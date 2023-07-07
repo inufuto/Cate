@@ -24,14 +24,15 @@
             {
                 if (RightOperand is ConstantOperand constantOperand) {
                     var value = constantOperand.MemoryAddress();
-                    WriteLine("\t" + operation + " " + leftRegister.Label + ",low " + value);
-                    WriteLine("\t" + operation + " " + leftRegister.Label + "+1,high " + value);
+                    WriteLine("\t" + operation + " (" + leftRegister.Label + "),low " + value);
+                    WriteLine("\t" + operation + " (" + leftRegister.Label + "+1),high " + value);
                 }
                 else {
-                    using var reservation = WordOperation.ReserveAnyRegister(this, WordInternalRam.RegistersOtherThan(leftRegister), RightOperand);
+                    var candidates = WordInternalRam.Registers.Where(r => !Equals(r, leftRegister)).ToList();
+                    using var reservation = WordOperation.ReserveAnyRegister(this, candidates, RightOperand);
                     var rightRegister = (WordInternalRam)reservation.WordRegister;
-                    WriteLine("\t" + operation + " " + leftRegister.Label + ",(" + rightRegister.Label + ")");
-                    WriteLine("\t" + operation + " " + leftRegister.Label + "+1,(" + rightRegister.Label + "+1)");
+                    WriteLine("\t" + operation + " (" + leftRegister.Label + "),(" + rightRegister.Label + ")");
+                    WriteLine("\t" + operation + " (" + leftRegister.Label + "+1),(" + rightRegister.Label + "+1)");
                 }
             }
 

@@ -9,7 +9,7 @@ namespace Inu.Cate.Mc6809
 {
     internal class Compiler : Cate.Compiler
     {
-        public Compiler() : base(new ByteOperation(), new WordOperation(),new PointerOperation())
+        public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation())
         { }
 
         protected override void WriteAssembly(StreamWriter writer)
@@ -20,11 +20,16 @@ namespace Inu.Cate.Mc6809
             base.WriteAssembly(writer);
         }
 
-
-        public override ISet<Register> SavingRegisters(Register register)
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            return Equals(register, WordRegister.D) ? new HashSet<Register>() { ByteRegister.A, ByteRegister.B } : new HashSet<Register>() { register };
+            if (Equals(register, WordRegister.D)) {
+                base.AddSavingRegister(registers, ByteRegister.A);
+                base.AddSavingRegister(registers, ByteRegister.B);
+                return;
+            }
+            base.AddSavingRegister(registers, register);
         }
+
 
         private IEnumerable<Register> SavingRegisters(IEnumerable<Variable> variables)
         {
@@ -52,7 +57,7 @@ namespace Inu.Cate.Mc6809
             SaveRegisters(writer, savingRegisterIds, comment, tabCount);
         }
 
-        private void SaveRegisters(StreamWriter writer, IEnumerable<Register> registers, string? comment, int tabCount)
+        private static void SaveRegisters(StreamWriter writer, IEnumerable<Register> registers, string? comment, int tabCount)
         {
             var list = registers.ToList();
             if (!list.Any())
@@ -77,7 +82,7 @@ namespace Inu.Cate.Mc6809
             RestoreRegisters(writer, savingRegisterIds, comment, tabCount);
         }
 
-        private void RestoreRegisters(StreamWriter writer, IEnumerable<Register> registers, string? comment, int tabCount)
+        private static void RestoreRegisters(StreamWriter writer, IEnumerable<Register> registers, string? comment, int tabCount)
         {
             var list = registers.ToList();
             if (!list.Any())
@@ -157,12 +162,12 @@ namespace Inu.Cate.Mc6809
                         variable.Register = pointerRegister;
                         break;
                     case PointerRegister _: {
-                        register = AllocatableRegister(variable, PointerRegister.IndexRegisters, function);
-                        if (register != null) {
-                            variable.Register = register;
+                            register = AllocatableRegister(variable, PointerRegister.IndexRegisters, function);
+                            if (register != null) {
+                                variable.Register = register;
+                            }
+                            break;
                         }
-                        break;
-                    }
                 }
             }
         }
@@ -244,8 +249,7 @@ namespace Inu.Cate.Mc6809
         }
 
         public override MonomialInstruction CreateMonomialInstruction(Function function, int operatorId,
-            AssignableOperand destinationOperand,
-            Operand sourceOperand)
+            AssignableOperand destinationOperand, Operand sourceOperand)
         {
             if (destinationOperand.Type.ByteCount == 1) {
                 return new ByteMonomialInstruction(function, operatorId, destinationOperand, sourceOperand);

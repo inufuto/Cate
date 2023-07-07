@@ -12,8 +12,8 @@ namespace Inu.Cate.Sc62015
                 ExchangeOperands();
             }
             else {
-                if (RightOperand.Register is WordRegister rightRegister) {
-                    if (rightRegister.IsAddable() && IsOperatorExchangeable()) {
+                if (RightOperand.Register is WordRegister) {
+                    if (IsOperatorExchangeable()) {
                         ExchangeOperands();
                     }
                 }
@@ -32,15 +32,22 @@ namespace Inu.Cate.Sc62015
             void ViaRegister(Cate.WordRegister leftRegister)
             {
                 leftRegister.Load(this, LeftOperand);
-                leftRegister.Operate(this, operation, true, RightOperand);
+                if (RightOperand is ConstantOperand) {
+                    using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, RightOperand);
+                    reservation.WordRegister.Load(this, RightOperand);
+                    WriteLine("\t" + operation + " " + leftRegister.AsmName + "," + reservation.WordRegister.AsmName);
+                }
+                else {
+                    leftRegister.Operate(this, operation, true, RightOperand);
+                }
                 leftRegister.Store(this, DestinationOperand);
             }
             {
-                if (DestinationOperand.Register is WordRegister leftRegister) {
+                if (DestinationOperand.Register is WordRegister leftRegister and not WordInternalRam) {
                     ViaRegister(leftRegister);
                 }
                 else {
-                    using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+                    using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
                     ViaRegister(reservation.WordRegister);
                 }
             }
@@ -65,17 +72,18 @@ namespace Inu.Cate.Sc62015
                 IncrementOrDecrement(this, operation, destinationRegister, count);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, LeftOperand);
             reservation.WordRegister.Load(this, LeftOperand);
             IncrementOrDecrement(this, operation, reservation.WordRegister, count);
             reservation.WordRegister.Store(this, DestinationOperand);
+            ResultFlags |= Flag.Z;
         }
 
         private static void IncrementOrDecrement(Instruction instruction, string operation, Register leftRegister, int count)
         {
             Debug.Assert(count >= 0);
             for (var i = 0; i < count; ++i) {
-                instruction.WriteLine("\t" + operation + "\t(" + leftRegister);
+                instruction.WriteLine("\t" + operation + "\t" + leftRegister);
             }
             instruction.RemoveRegisterAssignment(leftRegister);
             instruction.AddChanged(leftRegister);

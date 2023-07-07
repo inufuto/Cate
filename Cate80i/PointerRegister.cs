@@ -14,7 +14,7 @@ namespace Inu.Cate.I8080
 
         public readonly bool Addable;
 
-        public PointerRegister(Cate.WordRegister wordRegister, bool addable) : base(wordRegister)
+        public PointerRegister(Cate.WordRegister wordRegister, bool addable) : base(2, wordRegister)
         {
             Addable = addable;
             Registers.Add(this);

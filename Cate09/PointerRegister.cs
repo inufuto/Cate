@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Inu.Cate.Mc6809
 {
     internal class PointerRegister : WordPointerRegister
     {
         public static readonly List<Cate.PointerRegister> Registers = new();
-        public static readonly PointerRegister X = new PointerRegister(Mc6809.WordRegister.X);
-        public static readonly PointerRegister Y = new PointerRegister(Mc6809.WordRegister.Y);
-        public static readonly PointerRegister D = new PointerRegister(Mc6809.WordRegister.D);
+        public static readonly PointerRegister X = new(Mc6809.WordRegister.X);
+        public static readonly PointerRegister Y = new(Mc6809.WordRegister.Y);
+        public static readonly PointerRegister D = new(Mc6809.WordRegister.D);
         public static readonly List<Cate.PointerRegister> IndexRegisters = new() { X, Y };
 
-        public PointerRegister(Cate.WordRegister wordRegister) : base(wordRegister)
+        public PointerRegister(Cate.WordRegister wordRegister) : base(2, wordRegister)
         {
             Registers.Add(this);
         }

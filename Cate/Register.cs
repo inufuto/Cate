@@ -80,7 +80,7 @@ namespace Inu.Cate
         public virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
             var allCandidates = PointerOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
-            var unReserved = allCandidates.Where(r => !instruction.RegisterAssignments.ContainsKey(r)).ToList();
+            var unReserved = allCandidates.Where(r => !instruction.IsRegisterReserved(r)).ToList();
             var candidates = unReserved.Where(r => r.IsOffsetInRange(offset)).ToList();
             if (candidates.Count == 0) {
                 candidates = unReserved;

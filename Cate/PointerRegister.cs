@@ -6,7 +6,7 @@ namespace Inu.Cate
 {
     public abstract class PointerRegister : Register
     {
-        protected PointerRegister(int id, string name) : base(id, Compiler.Instance.PointerByteCount, name) { }
+        protected PointerRegister(int id,int byteCount, string name) : base(id, byteCount, name) { }
         public abstract WordRegister? WordRegister { get; }
         //public abstract bool IsAddable();
 

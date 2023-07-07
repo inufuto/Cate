@@ -6,7 +6,20 @@
 
         public override void BuildAssembly()
         {
-            throw new NotImplementedException();
+            if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
+                ExchangeOperands();
+            }
+            if (IncrementOrDecrement())
+                return;
+
+            var operation = OperatorId switch
+            {
+                '+' => "add",
+                '-' => "sub",
+                _ => throw new NotImplementedException()
+            };
+            ByteOperation.OperateByteBinomial(this, operation, true);
+            ResultFlags |= Flag.Z;
         }
 
         protected override int Threshold() => 2;

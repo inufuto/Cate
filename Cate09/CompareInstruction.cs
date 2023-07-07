@@ -10,7 +10,7 @@ namespace Inu.Cate.Mc6809
         protected override void CompareByte()
         {
             if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
-                if (OperatorId == Keyword.Equal || OperatorId == Keyword.NotEqual) {
+                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
                     if (LeftOperand is VariableOperand variableOperand) {
                         var registerId = GetVariableRegister(variableOperand);
                         if (registerId != null) {

@@ -11,11 +11,6 @@ namespace Inu.Cate.I8086
         public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation())
         { }
 
-        public override ISet<Register> SavingRegisters(Register register)
-        {
-            return new HashSet<Register>() { SavingRegister(register) };
-        }
-
         private static Register SavingRegister(Register register)
         {
             if (register is not ByteRegister byteRegister) {

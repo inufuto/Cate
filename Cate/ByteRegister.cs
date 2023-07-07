@@ -51,42 +51,6 @@ namespace Inu.Cate
             instruction.SetRegisterConstant(this, value);
         }
 
-        //public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
-        //public abstract void StoreToMemory(Instruction instruction, Variable variable, int offset);
-        //public abstract void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset);
-        //public abstract void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset);
-
-        //public virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
-        //{
-        //    var wordOperation = Compiler.Instance.WordOperation;
-        //    var candidates = PointerOperation.RegistersToOffset(offset).Where(r => !r.Conflicts(this)).ToList();
-        //    if (candidates.Count == 0) {
-        //        candidates = PointerOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
-        //    }
-
-        //    using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-        //    reservation.PointerRegister.LoadFromMemory(instruction, pointer, 0);
-        //    LoadIndirect(instruction, reservation.PointerRegister, offset);
-        //}
-
-        //protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
-        //{
-        //    var register = instruction.GetVariableRegister(pointer, 0, r => r is PointerRegister p && p.IsOffsetInRange(offset)) ??
-        //                   instruction.GetVariableRegister(pointer, 0, r => r is PointerRegister p && p.IsOffsetInRange(0));
-        //    if (register is PointerRegister pointerRegister && (Equals(pointerRegister, pointer.Register) || pointerRegister.IsOffsetInRange(offset))) {
-        //        StoreIndirect(instruction, pointerRegister, offset);
-        //        return;
-        //    }
-
-        //    var pointerRegisters = PointerOperation.RegistersToOffset(offset);
-        //    if (pointerRegisters.Count == 0) {
-        //        pointerRegisters = PointerOperation.Registers;
-        //    }
-        //    var reservation = PointerOperation.ReserveAnyRegister(instruction, pointerRegisters);
-        //    reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
-        //    StoreIndirect(instruction, reservation.PointerRegister, offset);
-        //}
-
 
         public void Load(Instruction instruction, Operand sourceOperand)
         {

@@ -1,10 +1,7 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Inu.Cate.Tms99
 {
@@ -26,7 +23,7 @@ namespace Inu.Cate.Tms99
             return Registers[index];
         }
 
-        public PointerRegister(Cate.WordRegister wordRegister) : base(wordRegister) { }
+        public PointerRegister(Cate.WordRegister wordRegister) : base(2, wordRegister) { }
 
         public override bool IsOffsetInRange(int offset) => Index != 0 || offset == 0;
         public int Index

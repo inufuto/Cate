@@ -58,10 +58,32 @@
         {
             return OperatorId switch
             {
-                Keyword.ShiftLeft => "shl",
-                Keyword.ShiftRight when !((IntegerType)LeftOperand.Type).Signed => "shr",
+                Keyword.ShiftLeft => "rc|shl",
+                Keyword.ShiftRight when !((IntegerType)LeftOperand.Type).Signed => "rc|shr",
                 _ => throw new NotImplementedException()
             };
+        }
+
+        protected override void OperateByte(string operation, int count)
+        {
+            void ViaRegister(Cate.ByteRegister register)
+            {
+                register.Load(this, LeftOperand);
+                if (count != 0) {
+                    register.Operate(this, operation, true, count);
+                }
+                RemoveRegisterAssignment(register);
+            }
+
+            if ((Equals(DestinationOperand.Register, ByteRegister.A) || DestinationOperand.Register is ByteInternalRam) && !Equals(RightOperand.Register, DestinationOperand.Register)) {
+                ViaRegister((ByteRegister)DestinationOperand.Register);
+                return;
+            }
+            using var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.AccumulatorAndInternalRam, LeftOperand);
+            ViaRegister(reservation.ByteRegister);
+            reservation.ByteRegister.Store(this, DestinationOperand);
+
+            //base.OperateByte(operation, count);
         }
     }
 }

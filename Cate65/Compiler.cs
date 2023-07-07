@@ -19,20 +19,22 @@ namespace Inu.Cate.Mos6502
             base.WriteAssembly(writer);
         }
 
-
-        public override ISet<Register> SavingRegisters(Register register)
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            switch (register) {
-                case WordZeroPage wordZeroPage:
-                    Debug.Assert(wordZeroPage.Low != null);
-                    Debug.Assert(wordZeroPage.High != null);
-                    return new HashSet<Register> { wordZeroPage.Low, wordZeroPage.High };
-                case PointerZeroPage pointerZeroPage:
-                    Debug.Assert(pointerZeroPage.Low != null);
-                    Debug.Assert(pointerZeroPage.High != null);
-                    return new HashSet<Register> { pointerZeroPage.Low, pointerZeroPage.High };
-                default:
-                    return new HashSet<Register> { register };
+            if (register is WordZeroPage wordZeroPage) {
+                Debug.Assert(wordZeroPage.Low != null);
+                Debug.Assert(wordZeroPage.High != null);
+                base.AddSavingRegister(registers, wordZeroPage.Low);
+                base.AddSavingRegister(registers, wordZeroPage.High);
+            }
+            if (register is WordZeroPage pointerZeroPage) {
+                Debug.Assert(pointerZeroPage.Low != null);
+                Debug.Assert(pointerZeroPage.High != null);
+                base.AddSavingRegister(registers, pointerZeroPage.Low);
+                base.AddSavingRegister(registers, pointerZeroPage.High);
+            }
+            else {
+                base.AddSavingRegister(registers, register);
             }
         }
 

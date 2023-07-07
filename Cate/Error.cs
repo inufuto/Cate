@@ -15,38 +15,33 @@ namespace Inu.Cate
 
     internal class SyntaxError : Error
     {
-        public SyntaxError(Token token) : base(token.Position, "Syntax error: " + token.ToString())
+        public SyntaxError(Token token) : base(token.Position, "Syntax error: " + token)
         { }
     }
 
     internal class UndefinedIdentifierError : Error
     {
         public UndefinedIdentifierError(Token identifier) : base(identifier.Position,
-            "Undefined: " + identifier.ToString())
-        { }
+            "Undefined: " + identifier) { }
     }
 
     internal class MultipleIdentifierError : Error
     {
         public MultipleIdentifierError(Token identifier) : base(identifier.Position,
-            "Multiple identifier: " + identifier.ToString())
-        { }
+            "Multiple identifier: " + identifier) { }
     }
 
     internal class TypeMismatchError : Error
     {
-        public TypeMismatchError(Token token) : base(token.Position, "Type mismatch")
-        { }
+        public TypeMismatchError(Token token) : base(token.Position, "Type mismatch") { }
     }
 
     internal class InvalidOperatorError : Error
     {
         public InvalidOperatorError(SourcePosition position, int operatorId) : base(position,
-            "Invalid operator: " + ReservedWord.FromId(operatorId))
-        { }
+            "Invalid operator: " + ReservedWord.FromId(operatorId)) { }
 
-        public InvalidOperatorError(ReservedWord operatorToken) : this(operatorToken.Position, operatorToken.Id)
-        { }
+        public InvalidOperatorError(ReservedWord operatorToken) : this(operatorToken.Position, operatorToken.Id) { }
     }
 
     internal class MustBeConstantError : Error

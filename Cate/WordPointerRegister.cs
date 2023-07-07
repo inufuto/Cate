@@ -18,7 +18,7 @@ namespace Inu.Cate
             }
         }
 
-        protected WordPointerRegister(WordRegister wordRegister) : base(wordRegister.Id, wordRegister.Name)
+        protected WordPointerRegister(int byteCount, WordRegister wordRegister) : base(wordRegister.Id, byteCount,wordRegister.Name)
         {
             WordRegister = wordRegister;
         }

@@ -7,43 +7,6 @@ namespace Inu.Cate
 {
     public abstract class ByteOperation : RegisterOperation<ByteRegister>
     {
-        //private class Saving : RegisterReservation.Saving
-        //{
-        //    private readonly ByteRegister register;
-        //    private RegisterReservation? reservation;
-
-        //    public Saving(ByteRegister register, Instruction instruction, ByteOperation wordOperation)
-        //    {
-        //        this.register = register;
-        //        var candidates = wordOperation.Registers
-        //            .Where(r => !Equals(r, register) && !instruction.IsRegisterReserved(r)).ToList();
-        //        if (candidates.Any()) {
-        //            reservation = wordOperation.ReserveAnyRegister(instruction, candidates);
-        //            reservation.ByteRegister.CopyFrom(instruction, register);
-        //        }
-        //        else {
-        //            register.Save(instruction);
-        //        }
-        //    }
-
-        //    public override void Restore(Instruction instruction)
-        //    {
-        //        if (reservation != null) {
-        //            register.CopyFrom(instruction, reservation.ByteRegister);
-        //            reservation.Dispose();
-        //            reservation = null;
-        //        }
-        //        else {
-        //            register.Restore(instruction);
-        //        }
-        //    }
-        //}
-
-        //protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
-        //protected static WordOperation WordOperation => Compiler.Instance.WordOperation;
-        //protected static PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
-
-
         public abstract List<ByteRegister> Accumulators { get; }
 
         protected virtual void OperateConstant(Instruction instruction, string operation, string value, int count)

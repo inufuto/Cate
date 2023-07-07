@@ -19,15 +19,16 @@ namespace Inu.Cate.Mc6800
             base.WriteAssembly(writer);
         }
 
-
-        public override ISet<Register> SavingRegisters(Register register)
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            return !Equals(register, WordRegister.X) ? new HashSet<Register>() { register } : new HashSet<Register>();
+            if (Equals(register, WordRegister.X)) return;
+            base.AddSavingRegister(registers, register);
         }
+
 
         public override void AllocateRegisters(List<Variable> variables, Function function)
         {
-            IEnumerable<Variable> TargetVariables() => variables.Where(v => v.Register == null && !v.Static && v.Type.ByteCount == 1);
+            IEnumerable<Variable> TargetVariables() => variables.Where(v => v.Register == null && v is { Static: false, Type.ByteCount: 1 });
 
             var rangeOrdered = TargetVariables().Where(v => v.Parameter == null).OrderBy(v => v.Range)
                 .ThenByDescending(v => v.Usages.Count);

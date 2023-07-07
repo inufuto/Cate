@@ -18,9 +18,14 @@ namespace Inu.Cate.I8080
             base.WriteAssembly(writer);
         }
 
-        public override ISet<Register> SavingRegisters(Register register)
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            return new HashSet<Register>() { SavingRegister(register) };
+            if (register is ByteRegister { PairRegister: { } } byteRegister) {
+                base.AddSavingRegister(registers, byteRegister.PairRegister);
+            }
+            else {
+                base.AddSavingRegister(registers, register);
+            }
         }
 
         private static Register SavingRegister(Register register)

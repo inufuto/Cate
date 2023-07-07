@@ -11,7 +11,7 @@ namespace Inu.Cate.MuCom87
         public static readonly PointerRegister De = new(MuCom87.WordRegister.De);
         public static readonly PointerRegister Bc = new(MuCom87.WordRegister.Bc);
 
-        private PointerRegister(Cate.WordRegister wordRegister) : base(wordRegister)
+        private PointerRegister(Cate.WordRegister wordRegister) : base(2, wordRegister)
         {
             Registers.Add(this);
         }

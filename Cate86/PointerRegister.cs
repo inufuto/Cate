@@ -27,7 +27,7 @@ namespace Inu.Cate.I8086
 
         public readonly SegmentRegister? DefaultSegmentRegister;
 
-        public PointerRegister(Cate.WordRegister wordRegister, SegmentRegister? defaultSegmentRegister = null) : base(wordRegister)
+        public PointerRegister(Cate.WordRegister wordRegister, SegmentRegister? defaultSegmentRegister = null) : base(2, wordRegister)
         {
             DefaultSegmentRegister = defaultSegmentRegister;
             if (wordRegister is IndexRegister || Equals(wordRegister, I8086.WordRegister.Bx)) {

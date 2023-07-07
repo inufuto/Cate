@@ -24,8 +24,11 @@
             };
             ResultFlags |= Flag.Z;
             {
-                if (DestinationOperand is VariableOperand variableOperand &&
-                    RightOperand is ConstantOperand constantOperand) {
+                if (LeftOperand.SameStorage(DestinationOperand) && DestinationOperand is VariableOperand variableOperand && RightOperand is ConstantOperand constantOperand) {
+                    if (Equals(DestinationOperand.Register, ByteRegister.A) || DestinationOperand.Register is ByteInternalRam) {
+                        WriteLine("\t" + operation + " " + DestinationOperand.Register.AsmName + "," + constantOperand.MemoryAddress());
+                        return;
+                    }
                     WriteLine("\t" + operation + "[" + variableOperand.Variable.MemoryAddress(variableOperand.Offset) + "]," + constantOperand.MemoryAddress());
                     return;
                 }
@@ -38,11 +41,12 @@
                 register.Store(this, DestinationOperand);
             }
 
-            if (DestinationOperand.Register is Cate.ByteRegister byteRegister) {
+            var candidates = ByteRegister.AccumulatorAndInternalRam;
+            if (DestinationOperand.Register is Cate.ByteRegister byteRegister && candidates.Contains(byteRegister)) {
                 ViaRegister(byteRegister);
                 return;
             }
-            using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
+            using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand);
             ViaRegister(reservation.ByteRegister);
         }
     }

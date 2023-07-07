@@ -1,6 +1,7 @@
 zseg
-cate.signByte: public cate.signByte
+@TempByte: public @TempByte
     defb 0
-
-dseg
-@MemPage: public @MemPage
+ZB0: public ZB0
+    defb 0
+ZW0: public ZW0
+    defw 0

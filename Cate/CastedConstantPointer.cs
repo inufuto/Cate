@@ -26,7 +26,7 @@ namespace Inu.Cate
 
         public override void WriteAssembly(StreamWriter writer)
         {
-            writer.WriteLine("\tdefw " + IntegerValue);
+            writer.WriteLine("\t " + Compiler.PointerConstantDirective + IntegerValue);
         }
 
         public override Operand ToOperand()

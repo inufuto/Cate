@@ -6,7 +6,7 @@ namespace Inu.Cate.Mos6502
 {
     internal class PointerZeroPage : Cate.WordPointerRegister
     {
-        public PointerZeroPage(WordRegister wordZeroPage) : base(wordZeroPage)
+        public PointerZeroPage(WordRegister wordZeroPage) : base(2, wordZeroPage)
         { }
 
         public static List<PointerRegister> Registers =>

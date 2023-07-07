@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Inu.Language;
+﻿using Inu.Language;
 
 namespace Inu.Cate
 {

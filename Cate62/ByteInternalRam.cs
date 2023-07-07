@@ -34,9 +34,9 @@
 
         public override Cate.WordRegister? PairRegister => WordInternalRam.Registers.FirstOrDefault(w => w.Contains(this));
 
-        public ByteInternalRam(int index) : base(IndexToName(index),null) { }
+        public ByteInternalRam(int index) : base(IndexToName(index)) { }
 
-        private ByteInternalRam(string name) : base(name, null) { }
+        internal ByteInternalRam(string name) : base(name) { }
 
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
         {

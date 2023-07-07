@@ -7,7 +7,9 @@ all: $(name).lib
 
 objects = InternalRam.obj \
 	ShiftLeftA.obj ShiftRightA.obj ShiftRightSignedA.obj \
-	ShiftLeftWord.obj ShiftRightWord.obj ShiftRightSignedWord.obj
+	ShiftLeftWord.obj ShiftRightWord.obj ShiftRightSignedWord.obj \
+	CompareSignedByte.obj CompareSignedWord.obj \
+	ExpandSigned.obj
 
 $(name).lib: $(objects)
 	lib8.exe $(name).lib $(objects)

@@ -4,7 +4,7 @@ namespace Inu.Cate.Mc6800
 {
     internal class PointerRegister : Cate.WordPointerRegister
     {
-        public PointerRegister(Cate.WordRegister wordRegister) : base(wordRegister)
+        public PointerRegister(Cate.WordRegister wordRegister) : base(2, wordRegister)
         { }
 
         public static PointerRegister X = new(Mc6800.WordRegister.X);

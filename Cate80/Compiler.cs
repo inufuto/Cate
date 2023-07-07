@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -16,20 +17,14 @@ namespace Inu.Cate.Z80
             base.WriteAssembly(writer);
         }
 
-
-        public override ISet<Register> SavingRegisters(Register register)
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            return new HashSet<Register>() { SavingRegister(register) };
-        }
-
-        private static Register SavingRegister(Register register)
-        {
-            if (Equals(register, ByteRegister.A))
-                return register;
-            if (!(register is ByteRegister byteRegister))
-                return register;
-            Debug.Assert(byteRegister.PairRegister != null);
-            return byteRegister.PairRegister;
+            if (register is ByteRegister { PairRegister: { } } byteRegister) {
+                base.AddSavingRegister(registers, byteRegister.PairRegister);
+            }
+            else {
+                base.AddSavingRegister(registers, register);
+            }
         }
 
         public override void AllocateRegisters(List<Variable> variables, Function function)

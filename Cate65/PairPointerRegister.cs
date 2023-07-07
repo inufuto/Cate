@@ -5,9 +5,9 @@ namespace Inu.Cate.Mos6502
 {
     internal class PairPointerRegister : Cate.WordPointerRegister
     {
-        public static PairPointerRegister Xy = new PairPointerRegister(PairWordRegister.Xy);
+        public static PairPointerRegister Xy = new(PairWordRegister.Xy);
 
-        public PairPointerRegister(WordRegister wordRegister) : base(wordRegister)
+        public PairPointerRegister(WordRegister wordRegister) : base(2, wordRegister)
         { }
 
         //public override bool IsAddable() => true;

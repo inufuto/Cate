@@ -87,3 +87,9 @@ Cate86/Properties/launchSettings.json
 /Cate80/bin/Release/net6.0
 /Language/bin/Release/net6.0
 *.url
+runtime/SC62015/c.bat
+/Cate62/bin/Release/net6.0
+/Cate/Properties/PublishProfiles
+/Cate62/Properties/PublishProfiles
+/Cate62/Properties
+/Language/Properties/PublishProfiles

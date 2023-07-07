@@ -5,9 +5,7 @@ namespace Inu.Cate.Z80
 {
     internal class MultiplyInstruction : Cate.MultiplyInstruction
     {
-        public MultiplyInstruction(Function function, AssignableOperand destinationOperand, Operand leftOperand,
-            int rightValue) : base(function, destinationOperand, leftOperand, rightValue)
-        { }
+        public MultiplyInstruction(Function function, AssignableOperand destinationOperand, Operand leftOperand, int rightValue) : base(function, destinationOperand, leftOperand, rightValue) { }
 
         public override void BuildAssembly()
         {

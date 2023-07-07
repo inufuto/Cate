@@ -81,8 +81,8 @@ namespace Inu.Cate
             if (DestinationOperand.Register is ByteRegister destinationRegister) {
                 var pairRegister = destinationRegister.PairRegister;
                 if (pairRegister != null && Equals(pairRegister.Low, destinationRegister)) {
-                    Debug.Assert(pairRegister.High != null);
-                    if (!IsRegisterReserved(pairRegister.High)) {
+                    //Debug.Assert(pairRegister.High != null);
+                    if (!IsRegisterReserved(pairRegister)) {
                         pairRegister.Load(this, SourceOperand);
                         return;
                     }
@@ -106,8 +106,8 @@ namespace Inu.Cate
                 if (SourceOperand.Register is ByteRegister sourceRegister) {
                     var pairRegister = sourceRegister.PairRegister;
                     if (pairRegister != null) {
-                        if (Equals(pairRegister.Low, sourceRegister)) {
-                            Debug.Assert(pairRegister.High != null);
+                        if (Equals(pairRegister.Low, sourceRegister) && pairRegister.High!=null) {
+                            //Debug.Assert(pairRegister.High != null);
                             pairRegister.High.LoadConstant(this, 0);
                             pairRegister.Store(this, DestinationOperand);
                             return;

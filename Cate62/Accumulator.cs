@@ -2,11 +2,12 @@
 {
     internal class Accumulator : ByteRegister
     {
-        public Accumulator(string name, WordRegister wordRegister) : base(name, wordRegister) { }
+        public Accumulator(string name) : base(name) { }
+
         public override void Operate(Instruction instruction, string operation, bool change, int count)
         {
             for (var i = 0; i < count; ++i) {
-                instruction.WriteLine("\t" + operation + Name);
+                instruction.WriteLine("\t" + operation + " " + Name);
             }
             instruction.AddChanged(this);
         }
@@ -17,8 +18,7 @@
                 Operate(instruction, operation, change, constantOperand.MemoryAddress());
             }
             else {
-                using var reservation = ByteOperation.ReserveAnyRegister(instruction,
-                    ByteOperation.RegistersOtherThan(ByteRegister.A), operand);
+                using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteInternalRam.Registers, operand);
                 var operandRegister = reservation.ByteRegister;
                 operandRegister.Load(instruction, operand);
                 Operate(instruction, operation, change, operandRegister.Name);

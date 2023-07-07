@@ -440,20 +440,35 @@ namespace Inu.Cate
             }
         }
 
-        private void StorePointer(Operand operand, string label)
-        {
-            using var reservation = PointerOperation.ReserveAnyRegister(this);
-            reservation.PointerRegister.Load(this, operand);
-            reservation.PointerRegister.StoreToMemory(this, label);
-        }
-
         protected virtual void StoreWord(Operand operand, string label)
         {
+            if (operand is VariableOperand variableOperand) {
+                var variableRegister = GetVariableRegister(variableOperand);
+                if (variableRegister is WordRegister wordRegister) {
+                    wordRegister.Load(this, operand);
+                    wordRegister.StoreToMemory(this, label);
+                    return;
+                }
+            }
             using var reservation = WordOperation.ReserveAnyRegister(this);
             reservation.WordRegister.Load(this, operand);
             reservation.WordRegister.StoreToMemory(this, label);
         }
 
+        protected virtual void StorePointer(Operand operand, string label)
+        {
+            if (operand is VariableOperand variableOperand) {
+                var variableRegister = GetVariableRegister(variableOperand);
+                if (variableRegister is PointerRegister pointerRegister) {
+                    pointerRegister.Load(this, operand);
+                    pointerRegister.StoreToMemory(this, label);
+                    return;
+                }
+            }
+            using var reservation = PointerOperation.ReserveAnyRegister(this);
+            reservation.PointerRegister.Load(this, operand);
+            reservation.PointerRegister.StoreToMemory(this, label);
+        }
 
         protected void StoreParametersViaPointer()
         {
