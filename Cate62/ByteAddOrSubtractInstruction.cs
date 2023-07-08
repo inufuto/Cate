@@ -6,6 +6,7 @@
 
         public override void BuildAssembly()
         {
+            ResultFlags |= Flag.Z;
             if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
                 ExchangeOperands();
             }
@@ -18,8 +19,21 @@
                 '-' => "sub",
                 _ => throw new NotImplementedException()
             };
-            ByteOperation.OperateByteBinomial(this, operation, true);
-            ResultFlags |= Flag.Z;
+
+            void ViaRegister(Cate.ByteRegister register)
+            {
+                register.Load(this, LeftOperand);
+                register.Operate(this, operation, true, RightOperand);
+            }
+
+            var candidates = ByteRegister.AccumulatorAndInternalRam.Where(r => !Equals(r, RightOperand.Register)).ToList();
+            if (DestinationOperand.Register is ByteRegister destinationRegister && candidates.Contains(destinationRegister)) {
+                ViaRegister(destinationRegister);
+                return;
+            }
+            using var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand);
+            ViaRegister(reservation.ByteRegister);
+            reservation.ByteRegister.Store(this, DestinationOperand);
         }
 
         protected override int Threshold() => 2;

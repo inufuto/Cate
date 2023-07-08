@@ -24,19 +24,19 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
             return;
         }
         if (BitCount == 1) {
-            void ViaRegister(Cate.PointerRegister r)
+            void ViaRegister(Cate.WordRegister r)
             {
                 r.Load(this, LeftOperand);
                 Shift(() => WriteLine("\tadd\t" + r.AsmName + "," + r.AsmName));
                 AddChanged(r);
                 RemoveRegisterAssignment(r);
             }
-            if (DestinationOperand.Register is PointerRegister pointerRegister) {
-                ViaRegister(pointerRegister);
+            if (DestinationOperand.Register is WordRegister wordRegister) {
+                ViaRegister(wordRegister);
                 return;
             }
-            using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers, LeftOperand);
-            ViaRegister(reservation.PointerRegister);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
+            ViaRegister(reservation.WordRegister);
             reservation.PointerRegister.Store(this, DestinationOperand);
             return;
         }

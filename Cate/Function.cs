@@ -287,7 +287,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("ShowSprite_(Man_,@4)")) {
+                if (instruction.ToString().Contains("offset = @4 + @6")) {
                     var aaa = 111;
                 }
 #endif

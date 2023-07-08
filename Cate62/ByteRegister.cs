@@ -132,7 +132,7 @@ namespace Inu.Cate.Sc62015
                 case VariableOperand variableOperand: {
                         var variableRegister = instruction.GetVariableRegister(variableOperand);
                         if (variableRegister is ByteRegister) {
-                            instruction.WriteLine("\t" + operation + "," + variableRegister.AsmName);
+                            instruction.WriteLine("\t" + operation + " " + AsmName + "," + variableRegister.AsmName);
                         }
                         break;
                     }

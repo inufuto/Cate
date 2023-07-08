@@ -271,8 +271,8 @@
 
                 if (LeftOperand is VariableOperand leftVariableOperand) {
                     var leftRegister = GetVariableRegister(leftVariableOperand);
-                    if (leftRegister != null) {
-                        CompareL(leftRegister);
+                    if (leftRegister is PointerInternalRam leftInternalRam) {
+                        CompareL(leftInternalRam);
                     }
                     else {
                         using var leftReservation = PointerOperation.ReserveAnyRegister(this, PointerInternalRam.Registers, LeftOperand);
