@@ -1,4 +1,11 @@
 zseg
+@WB: public @WB
+    defs 8*1
+@WW: public @WW
+    defs 8*2
+@WP: public @WP
+    defs 8*2
+
 @TempByte: public @TempByte
     defb 0
 ZB0: public ZB0

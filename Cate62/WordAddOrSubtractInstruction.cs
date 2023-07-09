@@ -43,8 +43,10 @@ namespace Inu.Cate.Sc62015
                 leftRegister.Store(this, DestinationOperand);
             }
             {
-                if (DestinationOperand.Register is WordRegister leftRegister and not WordInternalRam) {
-                    ViaRegister(leftRegister);
+                if (DestinationOperand.Register is WordRegister destinationRegister and not WordInternalRam) {
+                    using (WordOperation.ReserveRegister(this, destinationRegister, LeftOperand)) {
+                        ViaRegister(destinationRegister);
+                    }
                 }
                 else {
                     using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
@@ -67,12 +69,12 @@ namespace Inu.Cate.Sc62015
 
         private void IncrementOrDecrement(string operation, int count)
         {
-            if (DestinationOperand.Register is WordRegister destinationRegister) {
+            if (DestinationOperand.Register is WordRegister destinationRegister && destinationRegister is not WordInternalRam) {
                 destinationRegister.Load(this, LeftOperand);
                 IncrementOrDecrement(this, operation, destinationRegister, count);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, LeftOperand);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
             reservation.WordRegister.Load(this, LeftOperand);
             IncrementOrDecrement(this, operation, reservation.WordRegister, count);
             reservation.WordRegister.Store(this, DestinationOperand);

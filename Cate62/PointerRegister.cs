@@ -151,9 +151,9 @@
                 }
             }
             else {
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, Registers, operand);
-                reservation.PointerRegister.Load(instruction, operand);
-                instruction.WriteLine("\t" + operation + " " + AsmName + "," + reservation.PointerRegister.AsmName);
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, Sc62015.WordRegister.Registers, operand);
+                reservation.WordRegister.Load(instruction, operand);
+                instruction.WriteLine("\t" + operation + " " + AsmName + "," + reservation.WordRegister.AsmName);
             }
             if (change) {
                 instruction.AddChanged(this);

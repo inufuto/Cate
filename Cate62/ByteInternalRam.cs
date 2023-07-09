@@ -1,7 +1,10 @@
-﻿namespace Inu.Cate.Sc62015
+﻿using System.Net.NetworkInformation;
+
+namespace Inu.Cate.Sc62015
 {
     internal class ByteInternalRam : ByteRegister
     {
+        public const string Prefix = "@wb";
         public const int Count = 8;
         public static readonly ByteInternalRam BL = new ByteInternalRam("bl");
         public static readonly ByteInternalRam BH = new ByteInternalRam("bh");
@@ -29,8 +32,9 @@
 
         private static string Label(int index)
         {
-            return ("<@b" + index);
+            return ("<"+Prefix + "+" + index + "*1");
         }
+
 
         public override Cate.WordRegister? PairRegister => WordInternalRam.Registers.FirstOrDefault(w => w.Contains(this));
 

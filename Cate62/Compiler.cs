@@ -5,7 +5,6 @@ namespace Inu.Cate.Sc62015
 
     public class Compiler : Cate.Compiler
     {
-        public const string MemPageName = "@MemPage";
         private const string TempByteLabel = "@TempByte";
         public const string TemporaryByte = "(<" + TempByteLabel + ")";
         private static int registerId = 0;
@@ -31,6 +30,9 @@ namespace Inu.Cate.Sc62015
         protected override void WriteAssembly(StreamWriter writer)
         {
             writer.WriteLine("\text " + TempByteLabel);
+            writer.WriteLine("extrn " + ByteInternalRam.Prefix);
+            writer.WriteLine("extrn " + WordInternalRam.Prefix);
+            writer.WriteLine("extrn " + PointerInternalRam.Prefix);
             base.WriteAssembly(writer);
         }
 

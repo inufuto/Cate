@@ -162,13 +162,12 @@
                         var rightRegister = GetVariableRegister(rightVariableOperand);
                         if (rightRegister != null) {
                             CompareR(rightRegister);
-                        }
-                        else {
-                            using var rightReservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, RightOperand);
-                            rightReservation.WordRegister.Load(this, RightOperand);
-                            CompareR(rightReservation.WordRegister);
+                            return;
                         }
                     }
+                    using var rightReservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, RightOperand);
+                    rightReservation.WordRegister.Load(this, RightOperand);
+                    CompareR(rightReservation.WordRegister);
                 }
 
                 if (LeftOperand is VariableOperand leftVariableOperand) {
@@ -260,13 +259,12 @@
                         var rightRegister = GetVariableRegister(rightVariableOperand);
                         if (rightRegister != null) {
                             CompareR(rightRegister);
-                        }
-                        else {
-                            using var rightReservation = PointerOperation.ReserveAnyRegister(this, PointerOperation.Registers, RightOperand);
-                            rightReservation.PointerRegister.Load(this, RightOperand);
-                            CompareR(rightReservation.PointerRegister);
+                            return;
                         }
                     }
+                    using var rightReservation = PointerOperation.ReserveAnyRegister(this, PointerOperation.Registers, RightOperand);
+                    rightReservation.PointerRegister.Load(this, RightOperand);
+                    CompareR(rightReservation.PointerRegister);
                 }
 
                 if (LeftOperand is VariableOperand leftVariableOperand) {

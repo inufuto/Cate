@@ -2,6 +2,7 @@
 {
     internal class WordInternalRam : WordRegister
     {
+        public const string Prefix = "@ww";
         public const int Count = 8;
         public static readonly WordInternalRam BX = new("bx", "0d4h", ByteInternalRam.BL, ByteInternalRam.BH);
         public static readonly WordInternalRam CX = new("cx", "0d6h", ByteInternalRam.CL, ByteInternalRam.CH);
@@ -26,7 +27,7 @@
 
         private static string IndexToLabel(int index)
         {
-            return ("<@w" + index);
+            return ("<" + Prefix + "+" + index + "*2");
         }
 
         public override Cate.ByteRegister? Low { get; }

@@ -23,6 +23,13 @@
             void ViaRegister(Cate.ByteRegister register)
             {
                 register.Load(this, LeftOperand);
+                if (!Equals(register, ByteRegister.A)) {
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.A, RightOperand)) {
+                        ByteRegister.A.Load(this, RightOperand);
+                        register.Operate(this, operation, true, ByteRegister.A.AsmName);
+                        return;
+                    }
+                }
                 register.Operate(this, operation, true, RightOperand);
             }
 

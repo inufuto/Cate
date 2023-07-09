@@ -30,8 +30,10 @@ namespace Inu.Cate.Sc62015
             }
 
             {
-                if (DestinationOperand.Register is PointerRegister leftRegister and not PointerInternalRam) {
-                    ViaRegister(leftRegister);
+                if (DestinationOperand.Register is PointerRegister destinationRegister and not PointerInternalRam) {
+                    using (PointerOperation.ReserveRegister(this, destinationRegister, LeftOperand)) {
+                        ViaRegister(destinationRegister);
+                    }
                 }
                 else {
                     using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers, LeftOperand);
@@ -54,12 +56,12 @@ namespace Inu.Cate.Sc62015
 
         private void IncrementOrDecrement(string operation, int count)
         {
-            if (DestinationOperand.Register is PointerRegister destinationRegister) {
+            if (DestinationOperand.Register is PointerRegister destinationRegister && destinationRegister is not PointerInternalRam) {
                 destinationRegister.Load(this, LeftOperand);
                 IncrementOrDecrement(this, operation, destinationRegister, count);
                 return;
             }
-            using var reservation = PointerOperation.ReserveAnyRegister(this, PointerOperation.Registers, LeftOperand);
+            using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers, LeftOperand);
             reservation.PointerRegister.Load(this, LeftOperand);
             IncrementOrDecrement(this, operation, reservation.PointerRegister, count);
             reservation.PointerRegister.Store(this, DestinationOperand);

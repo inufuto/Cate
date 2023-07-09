@@ -2,6 +2,7 @@
 {
     internal class PointerInternalRam : PointerRegister
     {
+        public const string Prefix = "@wp";
         public const int Count = 8;
         public static readonly PointerInternalRam SI = new("si", "0dah");
         public static readonly PointerInternalRam DI = new("di", "0ddh");
@@ -24,7 +25,7 @@
 
         private static string IndexToLabel(int index)
         {
-            return ("<@p" + index);
+            return ("<" + Prefix + "+" + index + "*3");
         }
 
         public override string MV => "mvp";
