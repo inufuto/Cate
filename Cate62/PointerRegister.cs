@@ -148,13 +148,15 @@
                 var operandRegister = instruction.GetVariableRegister(variableOperand);
                 if (operandRegister != null && (operandRegister is not PointerInternalRam && operandRegister is not WordInternalRam && operandRegister is not ByteInternalRam)) {
                     instruction.WriteLine("\t" + operation + " " + AsmName + "," + operandRegister.AsmName);
+                    goto exit;
                 }
             }
-            else {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction, Sc62015.WordRegister.Registers, operand);
+            using (var reservation =
+                WordOperation.ReserveAnyRegister(instruction, Sc62015.WordRegister.Registers, operand)) {
                 reservation.WordRegister.Load(instruction, operand);
                 instruction.WriteLine("\t" + operation + " " + AsmName + "," + reservation.WordRegister.AsmName);
             }
+        exit:
             if (change) {
                 instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);

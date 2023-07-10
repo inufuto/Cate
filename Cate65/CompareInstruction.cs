@@ -42,7 +42,7 @@ namespace Inu.Cate.Mos6502
         {
             var operandZero = RightOperand is IntegerOperand { IntegerValue: 0 };
             if (operandZero) {
-                if (OperatorId == Keyword.Equal || OperatorId == Keyword.NotEqual) {
+                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
                     if (LeftOperand is VariableOperand variableOperand) {
                         var registerId = GetVariableRegister(variableOperand);
                         if (registerId != null) {

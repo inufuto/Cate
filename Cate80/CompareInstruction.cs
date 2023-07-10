@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Inu.Cate.Z80
 {
@@ -51,7 +49,7 @@ namespace Inu.Cate.Z80
         {
             if (LeftOperand is VariableOperand leftVariableOperand) {
                 if (VariableRegisterMatches(leftVariableOperand, ByteRegister.A)) {
-                    if ((OperatorId == Keyword.Equal || OperatorId == Keyword.NotEqual) && CanOmitOperation(Flag.Z))
+                    if (OperatorId is Keyword.Equal or Keyword.NotEqual && CanOmitOperation(Flag.Z))
                         return;
                     WriteLine("\tor\ta");
                     return;

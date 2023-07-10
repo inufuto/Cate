@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Reflection;
 
 namespace Inu.Cate.Sc62015
 {
@@ -42,9 +41,14 @@ namespace Inu.Cate.Sc62015
         {
             using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 ByteRegister.A.Load(this, SourceOperand);
-                using (WordOperation.ReserveRegister(this, WordRegister.BA)) {
+                if (Equals(DestinationOperand.Register, WordRegister.BA)) {
                     Compiler.CallExternal(this, "cate.ExpandSigned");
-                    WordRegister.BA.Store(this, DestinationOperand);
+                }
+                else {
+                    using (WordOperation.ReserveRegister(this, WordRegister.BA)) {
+                        Compiler.CallExternal(this, "cate.ExpandSigned");
+                        WordRegister.BA.Store(this, DestinationOperand);
+                    }
                 }
             }
         }

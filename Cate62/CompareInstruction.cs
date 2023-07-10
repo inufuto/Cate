@@ -84,7 +84,9 @@
             switch (OperatorId) {
                 case Keyword.Equal:
                     if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
-                        if (CanOmitOperation(Flag.Z)) goto JumpEqual;
+                        if (CanOmitOperation(Flag.Z)) {
+                            goto JumpEqual;
+                        }
                         if (!Equals(LeftRegister(), ByteRegister.A))
                             CompareZero();
                         else

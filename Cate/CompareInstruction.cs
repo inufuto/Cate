@@ -58,7 +58,7 @@ namespace Inu.Cate
 
         protected bool CanOmitOperation(Flag flag)
         {
-            return PreviousInstructions.All(
+            return PreviousInstructions.Any() && PreviousInstructions.All(
                 instruction => instruction.ResultFlags.HasFlag(flag) &&
                 instruction.ResultOperand != null && instruction.ResultOperand.Equals(LeftOperand)
             );
