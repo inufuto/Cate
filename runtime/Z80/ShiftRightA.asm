@@ -1,10 +1,12 @@
 cseg
 cate.ShiftRightA: public cate.ShiftRightA
-    inc b
-    dec b
-    if nz
-        do
-            srl a
-        dwnz
-    endif
+    push bc
+        inc b
+        dec b
+        if nz
+            do
+                srl a
+            dwnz
+        endif
+    pop bc
 ret

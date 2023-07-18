@@ -4,10 +4,10 @@ cate.CompareHlDe: public cate.CompareHlDe
         ld b,a
             ld a,h
             cp d
-            if nz
+            if z
                 ld a,l
                 cp e
             endif
-        ld b,c
+        ld a,b
     pop bc
 ret
