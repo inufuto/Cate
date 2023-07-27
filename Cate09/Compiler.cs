@@ -23,8 +23,12 @@ namespace Inu.Cate.Mc6809
         public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
             if (Equals(register, WordRegister.D)) {
-                base.AddSavingRegister(registers, ByteRegister.A);
-                base.AddSavingRegister(registers, ByteRegister.B);
+                registers.Add(ByteRegister.A);
+                registers.Add(ByteRegister.B);
+                return;
+            }
+            if (Equals(register, ByteRegister.A) || Equals(register, ByteRegister.B)) {
+                registers.Add(register);
                 return;
             }
             base.AddSavingRegister(registers, register);
