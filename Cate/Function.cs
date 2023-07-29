@@ -287,7 +287,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("pFront = offset")) {
+                if (instruction.ToString().Contains("if JoystickAvailable == 0")) {
                     var aaa = 111;
                 }
 #endif

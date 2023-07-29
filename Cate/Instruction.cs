@@ -642,21 +642,28 @@ namespace Inu.Cate
 
         public void RemoveChanged(Register register)
         {
-            if (!(register is WordRegister wordRegister) || !wordRegister.IsPair()) {
-                changedRegisters.Remove(register);
-                return;
+            if (register is WordRegister wordRegister && wordRegister.IsPair()) {
+                Debug.Assert(wordRegister is { Low: { }, High: { } });
+                changedRegisters.Remove(wordRegister.Low);
+                changedRegisters.Remove(wordRegister.High);
             }
-            Debug.Assert(wordRegister is { Low: { }, High: { } });
-            changedRegisters.Remove(wordRegister.Low);
-            changedRegisters.Remove(wordRegister.High);
+            if (register is PointerRegister { WordRegister: { } } pointerRegister && pointerRegister.WordRegister.IsPair()) {
+                Debug.Assert(pointerRegister.WordRegister is { Low: { }, High: { } });
+                changedRegisters.Remove(pointerRegister.WordRegister.Low);
+                changedRegisters.Remove(pointerRegister.WordRegister.High);
+            }
+            else {
+                changedRegisters.Remove(register);
+            }
         }
 
         public bool IsChanged(Register register)
         {
-            if (!(register is WordRegister wordRegister) || !wordRegister.IsPair())
-                return changedRegisters.Contains(register);
-            Debug.Assert(wordRegister is { Low: { }, High: { } });
-            return changedRegisters.Contains(wordRegister.Low) || changedRegisters.Contains(wordRegister.High);
+            if (register is WordRegister wordRegister && wordRegister.IsPair()) {
+                Debug.Assert(wordRegister is { Low: { }, High: { } });
+                return changedRegisters.Contains(wordRegister.Low) || changedRegisters.Contains(wordRegister.High);
+            }
+            return changedRegisters.Contains(register);
         }
     }
 }
