@@ -263,12 +263,20 @@ namespace Inu.Cate.Mos6502
 
         public override void Save(Instruction instruction)
         {
-            throw new NotImplementedException();
+            Cate.Compiler.Instance.AddExternalName("ZB0");
+            instruction.WriteLine("\tsta\t<ZB0");
+            instruction.WriteLine("\tt" + Name + "a");
+            instruction.WriteLine("\tpha");
+            instruction.WriteLine("\tlda\t<ZB0");
         }
 
         public override void Restore(Instruction instruction)
         {
-            throw new NotImplementedException();
+            Cate.Compiler.Instance.AddExternalName("ZB0");
+            instruction.WriteLine("\tsta\t<ZB0");
+            instruction.WriteLine("\tpla");
+            instruction.WriteLine("\tta" + Name);
+            instruction.WriteLine("\tlda\t<ZB0");
         }
 
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
