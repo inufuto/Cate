@@ -281,8 +281,9 @@ namespace Inu.Cate.Tms99
         {
             return register switch
             {
-                WordRegister wordRegister => new List<Register>() { wordRegister.ByteRegister },
-                ByteRegister byteRegister => new List<Register>() { byteRegister.WordRegister },
+                ByteRegister byteRegister => new List<Register> { byteRegister.WordRegister },
+                WordRegister wordRegister => new List<Register> { wordRegister.ByteRegister },
+                PointerRegister pointerRegister => new List<Register>() { pointerRegister.WordRegister },
                 _ => throw new NotImplementedException()
             };
         }
