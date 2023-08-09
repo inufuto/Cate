@@ -210,10 +210,12 @@ namespace Inu.Cate.I8086
 
         public override IEnumerable<Register> IncludedRegisters(Register? register)
         {
-            if (register is WordRegister wordRegister) {
-                return wordRegister.ByteRegisters;
-            }
-            return new List<Register>();
+            return register switch
+            {
+                WordRegister wordRegister => wordRegister.ByteRegisters,
+                PointerRegister pointerRegister => IncludedRegisters(pointerRegister.WordRegister),
+                _ => new List<Register>()
+            };
         }
 
         public override Operand LowByteOperand(Operand operand)

@@ -140,8 +140,8 @@ namespace Inu.Cate
             if (returnRegister != null) {
                 savedRegisters.Remove(returnRegister);
                 compiler.RemoveSavingRegister(savedRegisters, Type.ByteCount);
-                foreach (var includedIds in compiler.IncludedRegisters(returnRegister)) {
-                    savedRegisters.Remove(includedIds);
+                foreach (var includedRegister in compiler.IncludedRegisters(returnRegister)) {
+                    savedRegisters.Remove(includedRegister);
                 }
             }
 
