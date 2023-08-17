@@ -20,7 +20,7 @@ namespace Inu.Cate.I8080
 
         public override void BuildAssembly()
         {
-            if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
+            if (Equals(RightOperand.Register, ByteRegister.A) && !Equals(LeftOperand.Register, ByteRegister.A) && IsOperatorExchangeable()) {
                 ExchangeOperands();
             }
 

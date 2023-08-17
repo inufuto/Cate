@@ -287,7 +287,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("__4 = *pCell >> __5")) {
+                if (instruction.ToString().Contains("@5 = left | right")) {
                     var aaa = 111;
                 }
 #endif
