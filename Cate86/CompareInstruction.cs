@@ -89,16 +89,16 @@ namespace Inu.Cate.I8086
                 temporaryRegister.Load(this, LeftOperand);
                 switch (RightOperand) {
                     case ConstantOperand constantOperand: {
-                            WriteLine("\tcmp\t" + this + "," + constantOperand.MemoryAddress());
+                            WriteLine("\tcmp\t" + temporaryRegister + "," + constantOperand.MemoryAddress());
                             break;
                         }
                     case VariableOperand variableOperand: {
                             var register = GetVariableRegister(variableOperand);
                             if (register is PointerRegister pointerRegister) {
-                                WriteLine("\tcmp\t" + this + "," + pointerRegister);
+                                WriteLine("\tcmp\t" + temporaryRegister + "," + pointerRegister);
                             }
                             else {
-                                WriteLine("\tcmp\t" + this + ",[" +
+                                WriteLine("\tcmp\t" + temporaryRegister + ",[" +
                                           variableOperand.Variable.MemoryAddress(variableOperand.Offset) + "]");
                             }
                             break;
