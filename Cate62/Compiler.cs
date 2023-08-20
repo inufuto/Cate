@@ -36,20 +36,6 @@ namespace Inu.Cate.Sc62015
             base.WriteAssembly(writer);
         }
 
-        //public override ISet<Register> SavingRegisters(Register register)
-        //{
-        //    return new HashSet<Register>() { SavingRegister(register) };
-        //}
-
-        private static Register SavingRegister(Register register)
-        {
-            if (register is not ByteRegister byteRegister) {
-                return register;
-            }
-            Debug.Assert(byteRegister.PairRegister != null);
-            return byteRegister.PairRegister;
-        }
-
         public override void AllocateRegisters(List<Variable> variables, Function function)
         {
             var ordered = variables.Where(v => v.Register == null && v is { Static: false })
