@@ -6,7 +6,7 @@ namespace Inu.Cate
 {
     public abstract class PointerRegister : Register
     {
-        protected PointerRegister(int id,int byteCount, string name) : base(id, byteCount, name) { }
+        protected PointerRegister(int id, int byteCount, string name) : base(id, byteCount, name) { }
         public abstract WordRegister? WordRegister { get; }
         //public abstract bool IsAddable();
 
@@ -105,8 +105,13 @@ namespace Inu.Cate
                                 destinationPointerRegister, destinationOffset);
                             return;
                         }
-                        using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerOperation.RegistersToOffset(destinationOffset));
-                        reservation.PointerRegister.LoadFromMemory(instruction, destinationPointer,0);
+
+                        var candidates = PointerOperation.RegistersToOffset(destinationOffset);
+                        if (candidates.Count == 0) {
+                            candidates = PointerOperation.Registers;
+                        }
+                        using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
+                        reservation.PointerRegister.LoadFromMemory(instruction, destinationPointer, 0);
                         StoreIndirect(instruction, reservation.PointerRegister, destinationOffset);
                         return;
                     }
