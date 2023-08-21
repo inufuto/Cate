@@ -65,6 +65,7 @@ namespace Inu.Cate
         {
             LoadFromMemory(instruction, variable.MemoryAddress(offset));
             instruction.SetVariableRegister(variable, offset, this);
+            instruction.AddChanged(this);
         }
 
         public virtual void StoreToMemory(Instruction instruction, Variable variable, int offset)

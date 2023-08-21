@@ -652,9 +652,9 @@ namespace Inu.Cate
                 changedRegisters.Remove(pointerRegister.WordRegister.Low);
                 changedRegisters.Remove(pointerRegister.WordRegister.High);
             }
-            else {
+            //else {
                 changedRegisters.Remove(register);
-            }
+            //}
         }
 
         public bool IsChanged(Register register)

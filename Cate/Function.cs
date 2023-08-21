@@ -285,7 +285,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("pTeam[2] = pFormation")) {
+                if (instruction.ToString().Contains("*@4 = pCourse[2]")) {
                     var aaa = 111;
                 }
 #endif
