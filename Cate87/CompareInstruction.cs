@@ -118,8 +118,7 @@ namespace Inu.Cate.MuCom87
 
         private void OperateRegister(string operation, Action action, Cate.ByteRegister? register)
         {
-            if (register is ByteRegister byteRegister)
-            {
+            if (register is ByteRegister byteRegister) {
                 OperateRegister(operation, action, byteRegister.AsmName);
                 return;
             }
@@ -192,14 +191,27 @@ namespace Inu.Cate.MuCom87
 
         private void CallExternalWord(string functionName, string skip)
         {
-            using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
-                using (WordOperation.ReserveRegister(this, WordRegister.Bc)) {
-                    WordRegister.Bc.Load(this, RightOperand);
-                    WordRegister.Hl.Load(this, LeftOperand);
-                    Compiler.CallExternal(this, functionName);
+            if (LeftOperand.Type is PointerType) {
+                using (PointerOperation.ReserveRegister(this, PointerRegister.Hl)) {
+                    using (PointerOperation.ReserveRegister(this, PointerRegister.Bc)) {
+                        PointerRegister.Bc.Load(this, RightOperand);
+                        PointerRegister.Hl.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, functionName);
+                    }
+                    AddChanged(PointerRegister.Hl);
                 }
-                AddChanged(WordRegister.Hl);
             }
+            else {
+                using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                    using (WordOperation.ReserveRegister(this, WordRegister.Bc)) {
+                        WordRegister.Bc.Load(this, RightOperand);
+                        WordRegister.Hl.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, functionName);
+                    }
+                    AddChanged(WordRegister.Hl);
+                }
+            }
+
             if (skip.Equals("skz")) {
                 ((Compiler)Compiler).SkipIfZero(this);
             }
