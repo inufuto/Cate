@@ -127,6 +127,14 @@ namespace Inu.Cate
                 SetVariableRegister(DestinationOperand, pointerRegister);
                 return;
             }
+
+            if (SourceOperand is VariableOperand variableOperand) {
+                var variableRegister = GetVariableRegister(variableOperand);
+                if (variableRegister is PointerRegister sourceRegister) {
+                    sourceRegister.Store(this, DestinationOperand);
+                    return;
+                }
+            }
             using var reservation = PointerOperation.ReserveAnyRegister(this, SourceOperand);
             reservation.PointerRegister.Load(this, SourceOperand);
             reservation.PointerRegister.Store(this, DestinationOperand);

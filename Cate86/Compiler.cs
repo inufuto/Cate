@@ -268,7 +268,7 @@ namespace Inu.Cate.I8086
 
         protected override void RestoreRegister(StreamWriter writer, Register register, int byteCount)
         {
-            if (Equals(register, WordRegister.Ax) && byteCount == 1) {
+            if ((Equals(register, ByteRegister.Ah) || Equals(register, WordRegister.Ax) || Equals(register, PointerRegister.Ax)) && byteCount == 1) {
                 writer.WriteLine("\tmov [@Temporary@Byte],al");
                 register.Restore(writer, null, false, 0);
                 writer.WriteLine("\tmov al,[@Temporary@Byte]");

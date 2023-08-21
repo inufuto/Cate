@@ -48,7 +48,7 @@ namespace Inu.Cate.I8086
                     _ => type switch
                     {
                         PointerType { ElementType: StructureType _ } => PointerRegister.Di,
-                        PointerType => PointerRegister.Dx,
+                        PointerType => PointerRegister.Cx,
                         _ => WordRegister.Cx
                     }
                 },

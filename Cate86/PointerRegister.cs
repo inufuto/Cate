@@ -35,7 +35,10 @@ namespace Inu.Cate.I8086
             }
         }
 
-        public override bool IsOffsetInRange(int offset) => true;
+        public override bool IsOffsetInRange(int offset)
+        {
+            return Equals(Bx) || Equals(Si) || Equals(Di) || Equals(Bp);
+        }
 
         public override void Add(Instruction instruction, int offset)
         {

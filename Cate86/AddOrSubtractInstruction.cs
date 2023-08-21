@@ -182,6 +182,10 @@ namespace Inu.Cate.I8086
                     ViaRegister(wordRegister);
                     return;
                 }
+                if (DestinationOperand.Register is PointerRegister pointerRegister && !Equals(RightOperand.Register, pointerRegister)) {
+                    ViaRegister(pointerRegister.WordRegister);
+                    return;
+                }
                 using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
                 ViaRegister(reservation.WordRegister);
                 reservation.WordRegister.Store(this, DestinationOperand);

@@ -186,8 +186,6 @@ namespace Inu.Cate
             foreach (var anchor in Anchors.Where(anchor => anchor.Address > lastAddress)) {
                 writer.WriteLine(anchor.Label + ":");
             }
-
-            //writer.WriteLine(ExitLabel + ":");
             compiler.RestoreRegisters(writer, savedRegisters, Type.ByteCount);
             compiler.WriteEndOfFunction(writer, this);
         }
@@ -287,7 +285,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("if pCard == p goto TestMatching@Anchor83")) {
+                if (instruction.ToString().Contains("pTeam[2] = pFormation")) {
                     var aaa = 111;
                 }
 #endif
