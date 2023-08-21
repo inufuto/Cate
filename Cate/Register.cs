@@ -96,7 +96,7 @@ namespace Inu.Cate
             reservation.PointerRegister.LoadFromMemory(instruction, pointer, 0);
             LoadIndirect(instruction, reservation.PointerRegister, offset);
         }
-        protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
+        public virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
             var register = instruction.GetVariableRegister(pointer, 0, r => r is PointerRegister p && p.IsOffsetInRange(offset)) ??
                            instruction.GetVariableRegister(pointer, 0, r => r is PointerRegister p && p.IsOffsetInRange(0));

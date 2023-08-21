@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Reflection;
 
 namespace Inu.Cate.Mc6800
 {
@@ -11,6 +12,11 @@ namespace Inu.Cate.Mc6800
         public static List<Cate.PointerRegister> Registers => new() { X };
 
         public override bool IsOffsetInRange(int offset) => offset is >= 0 and <= 0xff;
+
+        public override void StoreIndirect(Instruction instruction, Variable pointer, int offset)
+        {
+            WordRegister.StoreIndirect(instruction, pointer, offset);
+        }
 
         public override void Add(Instruction instruction, int offset)
         {

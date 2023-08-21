@@ -100,23 +100,30 @@ namespace Inu.Cate
                 case IndirectOperand destinationIndirectOperand: {
                         var destinationPointer = destinationIndirectOperand.Variable;
                         var destinationOffset = destinationIndirectOperand.Offset;
-                        if (destinationPointer.Register is PointerRegister destinationPointerRegister) {
-                            StoreIndirect(instruction,
-                                destinationPointerRegister, destinationOffset);
-                            return;
-                        }
-
-                        var candidates = PointerOperation.RegistersToOffset(destinationOffset);
-                        if (candidates.Count == 0) {
-                            candidates = PointerOperation.Registers;
-                        }
-                        using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-                        reservation.PointerRegister.LoadFromMemory(instruction, destinationPointer, 0);
-                        StoreIndirect(instruction, reservation.PointerRegister, destinationOffset);
+                        StoreIndirect(instruction, destinationPointer, destinationOffset);
                         return;
                     }
             }
             throw new NotImplementedException();
+        }
+
+        public override void StoreIndirect(Instruction instruction, Variable destinationPointer,
+            int destinationOffset)
+        {
+            if (destinationPointer.Register is PointerRegister destinationPointerRegister) {
+                StoreIndirect(instruction,
+                    destinationPointerRegister, destinationOffset);
+                return;
+            }
+
+            var candidates = PointerOperation.RegistersToOffset(destinationOffset);
+            if (candidates.Count == 0) {
+                candidates = PointerOperation.Registers;
+            }
+
+            using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
+            reservation.PointerRegister.LoadFromMemory(instruction, destinationPointer, 0);
+            StoreIndirect(instruction, reservation.PointerRegister, destinationOffset);
         }
 
         public abstract void Add(Instruction instruction, int offset);
