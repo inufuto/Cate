@@ -90,6 +90,10 @@ namespace Inu.Cate
                         var pointer = sourceIndirectOperand.Variable;
                         var offset = sourceIndirectOperand.Offset;
                         var register = pointer.Register ?? instruction.GetVariableRegister(pointer, 0);
+                        if (register is WordRegister wordRegister)
+                        {
+                            register = wordRegister.ToPointer();
+                        }
                         if (register is PointerRegister pointerRegister) {
                             if (pointerRegister.IsOffsetInRange(0)) {
                                 LoadIndirect(instruction, pointerRegister, offset);
