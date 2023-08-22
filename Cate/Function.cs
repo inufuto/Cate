@@ -285,7 +285,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("*pLeft = *pLeft | 64")) {
+                if (instruction.ToString().Contains("old = SetLineCell_(LineLastX,LineLastY,*@3)")) {
                     var aaa = 111;
                 }
 #endif

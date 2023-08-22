@@ -401,11 +401,19 @@ namespace Inu.Cate.Z80
 
         public override void Save(Instruction instruction)
         {
+            if (Equals(A)) {
+                instruction.WriteLine("\tpush\taf");
+                return;
+            }
             throw new NotImplementedException();
         }
 
         public override void Restore(Instruction instruction)
         {
+            if (Equals(A)) {
+                instruction.WriteLine("\tpop\taf");
+                return;
+            }
             throw new NotImplementedException();
         }
 
