@@ -29,7 +29,6 @@ namespace Inu.Cate.Z80
 
             const string operation = "cp\t";
             if (LeftOperand is VariableOperand variableOperand) {
-                var variableRegister = GetVariableRegister(variableOperand);
                 if (VariableRegisterMatches(variableOperand, ByteRegister.A)) {
                     ByteRegister.A.Operate(this, operation, false, RightOperand);
                     goto jump;

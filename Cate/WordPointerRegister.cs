@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace Inu.Cate
@@ -18,7 +19,7 @@ namespace Inu.Cate
             }
         }
 
-        protected WordPointerRegister(int byteCount, WordRegister wordRegister) : base(wordRegister.Id, byteCount,wordRegister.Name)
+        protected WordPointerRegister(int byteCount, WordRegister wordRegister) : base(wordRegister.Id, byteCount, wordRegister.Name)
         {
             WordRegister = wordRegister;
         }
@@ -98,7 +99,11 @@ namespace Inu.Cate
         {
             if (sourceRegister.WordRegister != null) {
                 WordRegister.CopyFrom(instruction, sourceRegister.WordRegister);
+                instruction.AddChanged(this);
+                instruction.RemoveRegisterAssignment(this);
+                return;
             }
+            throw new NotImplementedException();
         }
     }
 }

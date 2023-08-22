@@ -40,7 +40,6 @@ namespace Inu.Cate.I8080
 
             const string operation = "cmp|cpi";
             if (LeftOperand is VariableOperand variableOperand) {
-                GetVariableRegister(variableOperand);
                 if (VariableRegisterMatches(variableOperand, ByteRegister.A)) {
                     if (RightOperand is IndirectOperand indirectOperand && indirectOperand.Offset != 0) {
                         using var reservation = ByteOperation.ReserveAnyRegister(this, ByteOperation.RegistersOtherThan(ByteRegister.A));

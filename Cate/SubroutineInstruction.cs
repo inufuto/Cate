@@ -489,18 +489,6 @@ namespace Inu.Cate
                     }
                 }
 
-                void StoreWordViaRegister(WordRegister register)
-                {
-                    Debug.Assert(register.Low != null);
-                    Debug.Assert(register.High != null);
-                    register.Low.StoreIndirect(this, pointerRegister, 0);
-                    pointerRegister.Add(this, 1);
-                    register.High.StoreIndirect(this, pointerRegister, 0);
-                    if (!last) {
-                        pointerRegister.Add(this, 1);
-                    }
-                }
-
                 var operand = assignment.Operand;
                 if (index == 0) {
                     pointerRegister.LoadConstant(this, TargetFunction.ParameterLabel(parameter));
@@ -539,20 +527,51 @@ namespace Inu.Cate
                 else {
                     if (operand.Register is WordRegister wordRegister && wordRegister.IsPair()) {
                         wordRegister.Load(this, operand);
-                        StoreWordViaRegister(wordRegister);
+                        StoreViaPointer(pointerRegister, wordRegister, last);
                     }
                     else {
-                        using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.PairRegisters);
-                        reservation.WordRegister.Load(this, operand);
-                        StoreWordViaRegister(reservation.WordRegister);
+                        if (operand.Type is PointerType) {
+                            using var reservation = PointerOperation.ReserveAnyRegister(this);
+                            reservation.PointerRegister.Load(this, operand);
+                            StoreViaPointer(pointerRegister, reservation.PointerRegister, last);
+                        }
+                        else {
+                            using var reservation = WordOperation.ReserveAnyRegister(this);
+                            reservation.WordRegister.Load(this, operand);
+                            StoreViaPointer(pointerRegister, reservation.WordRegister, last);
+                        }
                     }
                 }
                 //CancelOperandRegister(operand);
                 assignment.SetDone(this, null);
                 ++index;
             }
+        }
 
-            ;
+        private void StoreViaPointer(PointerRegister pointerRegister, PointerRegister register, bool last)
+        {
+            var wordRegister = register.WordRegister;
+            Debug.Assert(wordRegister != null);
+            Debug.Assert(wordRegister.Low != null);
+            Debug.Assert(wordRegister.High != null);
+            wordRegister.Low.StoreIndirect(this, pointerRegister, 0);
+            pointerRegister.Add(this, 1);
+            wordRegister.High.StoreIndirect(this, pointerRegister, 0);
+            if (!last) {
+                pointerRegister.Add(this, 1);
+            }
+        }
+
+        protected virtual void StoreViaPointer(PointerRegister pointerRegister, WordRegister register, bool last)
+        {
+            Debug.Assert(register.Low != null);
+            Debug.Assert(register.High != null);
+            register.Low.StoreIndirect(this, pointerRegister, 0);
+            pointerRegister.Add(this, 1);
+            register.High.StoreIndirect(this, pointerRegister, 0);
+            if (!last) {
+                pointerRegister.Add(this, 1);
+            }
         }
     }
 }

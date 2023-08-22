@@ -285,7 +285,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("old = SetLineCell_(LineLastX,LineLastY,*@3)")) {
+                if (instruction.ToString().Contains("@2 = InitMonsters_(Chasers_,4,2,pStage)")) {
                     var aaa = 111;
                 }
 #endif

@@ -45,8 +45,8 @@ namespace Inu.Cate
                             Debug.Assert(sourceOffset == 0);
                             if (!Equals(sourceRegister, this)) {
                                 CopyFrom(instruction, sourceRegister);
-                                instruction.CancelOperandRegister(sourceVariableOperand);
                             }
+                            instruction.CancelOperandRegister(sourceVariableOperand);
                             return;
                         }
                         LoadFromMemory(instruction, sourceVariable, sourceOffset);

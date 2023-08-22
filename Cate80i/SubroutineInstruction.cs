@@ -23,7 +23,7 @@ namespace Inu.Cate.I8080
                 1 when type.ByteCount == 1 => ByteRegister.E,
                 1 => type is PointerType ? PointerRegister.De : WordRegister.De,
                 2 when type.ByteCount == 1 => ByteRegister.C,
-                2 => type is PointerType ? PointerRegister.De : WordRegister.Bc,
+                2 => type is PointerType ? PointerRegister.Bc : WordRegister.Bc,
                 _ => null
             };
         }

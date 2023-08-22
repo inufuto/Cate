@@ -68,17 +68,6 @@ namespace Inu.Cate.I8080
             var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
                 .ThenBy(v => v.Usages.Count).ToList();
             AllocateOrdered(rangeOrdered);
-            //foreach (var variable in rangeOrdered) {
-            //    if (variable.Type.ByteCount == 1 && !Conflict(variable.Intersections, ByteRegister.A) && CanAllocate(variable, ByteRegister.A)) {
-            //        variable.Register = ByteRegister.A;
-            //        continue;
-            //    }
-            //    if (variable.Type.ByteCount != 2)
-            //        continue;
-            //    if (!Conflict(variable.Intersections, WordRegister.Hl)) {
-            //        variable.Register = WordRegister.Hl;
-            //    }
-            //}
             var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
             AllocateOrdered(usageOrdered);
 
@@ -96,16 +85,6 @@ namespace Inu.Cate.I8080
                     }
                 }
                 else if (register is WordRegister wordRegister) {
-                    //if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, wordRegister)) {
-                    //    register = AllocatableRegister(variable, WordRegister.Registers, function);
-                    //    if (register != null) {
-                    //        variable.Register = register;
-                    //    }
-                    //}
-                    //else {
-                    //    variable.Register = wordRegister;
-                    //    break;
-                    //}
                     register = AllocatableRegister(variable, WordRegister.Registers, function);
                     if (register != null) {
                         variable.Register = register;
@@ -285,10 +264,18 @@ namespace Inu.Cate.I8080
                 case ConstantOperand constantOperand:
                     return new StringOperand(newType, "low(" + constantOperand.MemoryAddress() + ")");
                 case VariableOperand variableOperand:
-                    if (!(variableOperand.Register is Cate.WordRegister wordRegister))
-                        return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset);
-                    Debug.Assert(wordRegister.Low != null);
-                    return new ByteRegisterOperand(newType, wordRegister.Low);
+                    switch (variableOperand.Register) {
+                        case Cate.WordRegister wordRegister:
+                            Debug.Assert(wordRegister.Low != null);
+                            return new ByteRegisterOperand(newType, wordRegister.Low);
+                        case Cate.PointerRegister pointerRegister:
+                            Debug.Assert(pointerRegister.WordRegister != null);
+                            Debug.Assert(pointerRegister.WordRegister.Low != null);
+                            return new ByteRegisterOperand(newType, pointerRegister.WordRegister.Low);
+                        default:
+                            return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset);
+                    }
+
                 case IndirectOperand indirectOperand:
                     return new IndirectOperand(indirectOperand.Variable, newType, indirectOperand.Offset);
                 default:
@@ -303,10 +290,17 @@ namespace Inu.Cate.I8080
                 case ConstantOperand constantOperand:
                     return new StringOperand(newType, "high(" + constantOperand.MemoryAddress() + ")");
                 case VariableOperand variableOperand:
-                    if (!(variableOperand.Register is Cate.WordRegister wordRegister))
-                        return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset + 1);
-                    Debug.Assert(wordRegister.High != null);
-                    return new ByteRegisterOperand(newType, wordRegister.High);
+                    switch (variableOperand.Register) {
+                        case Cate.WordRegister wordRegister:
+                            Debug.Assert(wordRegister.High != null);
+                            return new ByteRegisterOperand(newType, wordRegister.High);
+                        case Cate.PointerRegister pointerRegister:
+                            Debug.Assert(pointerRegister.WordRegister != null);
+                            Debug.Assert(pointerRegister.WordRegister.High != null);
+                            return new ByteRegisterOperand(newType, pointerRegister.WordRegister.High);
+                        default:
+                            return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset + 1);
+                    }
                 case IndirectOperand indirectOperand:
                     return new IndirectOperand(indirectOperand.Variable, newType, indirectOperand.Offset + 1);
                 default:
