@@ -59,12 +59,15 @@ namespace Inu.Cate.Mos6502
         public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Equals(A));
-            Debug.Assert(pointerRegister is PointerZeroPage);
             if (pointerRegister.IsOffsetInRange(offset)) {
                 Debug.Assert(offset is >= 0 and < 0x100);
-                using (ByteOperation.ReserveRegister(instruction, Y)) {
-                    Y.LoadConstant(instruction, offset);
-                    instruction.WriteLine("\tld" + Name + "\t(" + pointerRegister.Name + "),y");
+                if (pointerRegister is PointerZeroPage) {
+                    ViaZeroPage(pointerRegister);
+                }
+                else {
+                    using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerZeroPage.Registers);
+                    reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
+                    ViaZeroPage(reservation.PointerRegister);
                 }
                 instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
@@ -79,21 +82,40 @@ namespace Inu.Cate.Mos6502
                 instruction.RemoveRegisterAssignment(temporaryRegister);
                 instruction.AddChanged(temporaryRegister);
             }
+
+            void ViaZeroPage(PointerRegister zeroPage)
+            {
+                using (ByteOperation.ReserveRegister(instruction, Y)) {
+                    Y.LoadConstant(instruction, offset);
+                    instruction.WriteLine("\tld" + Name + "\t(" + zeroPage.Name + "),y");
+                }
+            }
         }
 
         public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Equals(A));
-            Debug.Assert(pointerRegister is PointerZeroPage);
             if (pointerRegister.IsOffsetInRange(offset)) {
-                Y.LoadConstant(instruction, offset);
-                instruction.WriteLine("\tst" + Name + "\t(" + pointerRegister.Name + "),y");
+                if (pointerRegister is PointerZeroPage zeroPage) {
+                    ViaZeroPage(zeroPage);
+                }
+                else {
+                    using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerZeroPage.Registers);
+                    reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
+                    ViaZeroPage(reservation.PointerRegister);
+                }
             }
             else {
                 pointerRegister.Add(instruction, offset);
                 StoreIndirect(instruction, pointerRegister, 0);
                 instruction.RemoveRegisterAssignment(pointerRegister);
                 instruction.AddChanged(pointerRegister);
+            }
+
+            void ViaZeroPage(PointerRegister zeroPage)
+            {
+                Y.LoadConstant(instruction, offset);
+                instruction.WriteLine("\tst" + Name + "\t(" + zeroPage.AsmName + "),y");
             }
         }
 
