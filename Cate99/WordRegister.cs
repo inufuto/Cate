@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Inu.Cate.Tms99
 {
@@ -129,16 +128,6 @@ namespace Inu.Cate.Tms99
             instruction.WriteLine("\tmov *r10+," + NameFromIndex(Index));
         }
 
-        //public override void Add(Instruction instruction, int offset)
-        //{
-        //    instruction.WriteLine("\tai\t" + Name + "," + offset);
-        //    instruction.AddChanged(this);
-        //    instruction.RemoveRegisterAssignment(this);
-        //}
-
-        //public override bool IsOffsetInRange(int offset) => Index != 0 || offset == 0;
-
-        //public override bool IsPointer(int offset) => IsOffsetInRange(offset);
 
         public override void LoadConstant(Instruction instruction, string value)
         {
@@ -175,46 +164,6 @@ namespace Inu.Cate.Tms99
             LoadFromMemory(instruction, variable.MemoryAddress(offset));
         }
 
-
-        //public override void Load(Instruction instruction, Operand sourceOperand)
-        //{
-        //    switch (sourceOperand) {
-        //        case IntegerOperand sourceIntegerOperand:
-        //            LoadConstant(instruction, sourceIntegerOperand.IntegerValue);
-        //            return;
-        //        case PointerOperand sourcePointerOperand:
-        //            LoadConstant(instruction, sourcePointerOperand.MemoryAddress());
-        //            return;
-        //        case VariableOperand sourceVariableOperand: {
-        //                var sourceVariable = sourceVariableOperand.Variable;
-        //                var sourceOffset = sourceVariableOperand.Offset;
-        //                var variableRegister = instruction.GetVariableRegister(sourceVariable, sourceOffset);
-        //                if (variableRegister is WordRegister sourceRegister) {
-        //                    Debug.Assert(sourceOffset == 0);
-        //                    if (!Equals(sourceRegister, this)) {
-        //                        CopyFrom(instruction, sourceRegister);
-        //                    }
-        //                    return;
-        //                }
-        //                LoadFromMemory(instruction, sourceVariable, sourceOffset);
-        //                return;
-        //            }
-        //        case IndirectOperand sourceIndirectOperand: {
-        //                var pointer = sourceIndirectOperand.Variable;
-        //                var offset = sourceIndirectOperand.Offset;
-        //                if (pointer.Register is WordRegister pointerRegister) {
-        //                    LoadIndirect(instruction, pointerRegister, offset);
-        //                    return;
-        //                }
-        //                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.PointerRegisters(offset));
-        //                var temporaryRegister = reservation.WordRegister;
-        //                temporaryRegister.LoadFromMemory(instruction, pointer, 0);
-        //                LoadIndirect(instruction, temporaryRegister, offset);
-        //                return;
-        //            }
-        //    }
-        //    throw new NotImplementedException();
-        //}
 
         public override void Store(Instruction instruction, AssignableOperand destinationOperand)
         {

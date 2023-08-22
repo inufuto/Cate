@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -170,20 +169,21 @@ namespace Inu.Cate.Z80
             Operand rightOperand)
         {
             if (destinationOperand.Type.ByteCount == 1) {
-                switch (operatorId) {
-                    case '|':
-                    case '^':
-                    case '&':
-                        return new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case '+':
-                    case '-':
-                        return new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case Keyword.ShiftLeft:
-                    case Keyword.ShiftRight:
-                        return new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    default:
-                        throw new NotImplementedException();
-                }
+                return operatorId switch
+                {
+                    '|' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '^' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '&' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '+' => new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    '-' => new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    Keyword.ShiftLeft => new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    Keyword.ShiftRight => new ByteShiftInstruction(function, operatorId, destinationOperand,
+                        leftOperand, rightOperand),
+                    _ => throw new NotImplementedException()
+                };
             }
             switch (operatorId) {
                 case '+':
@@ -283,21 +283,10 @@ namespace Inu.Cate.Z80
             return new List<Register>();
         }
 
-        //public override int RegisterSize(int id)
-        //{
-        //    return id <= ByteRegister.L.Id ? 1 : 2;
-        //}
-
         public override void CallExternal(Instruction instruction, string externalName)
         {
             instruction.WriteLine("\tcall\t" + externalName);
             Instance.AddExternalName(externalName);
-        }
-
-        public static bool IsHlFree(Instruction instruction, VariableOperand excludedVariableOperand)
-        {
-            return !instruction.IsRegisterReserved(WordRegister.Hl); //&&
-            //!instruction.IsRegisterInVariableRange(WordRegister.Hl.Id, excludedVariableOperand.Variable);
         }
 
         public override Operand LowByteOperand(Operand operand)

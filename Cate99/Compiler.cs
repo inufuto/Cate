@@ -177,26 +177,40 @@ namespace Inu.Cate.Tms99
         public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
             Operand leftOperand, Operand rightOperand)
         {
-            if (destinationOperand.Type.ByteCount == 1) {
-                switch (operatorId) {
-                    case '|':
-                    case '^':
-                    case '&':
-                        return new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case '+':
-                    case '-':
-                        return new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case Keyword.ShiftLeft:
-                    case Keyword.ShiftRight:
-                        return new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    default:
-                        throw new NotImplementedException();
-                }
+            if (destinationOperand.Type.ByteCount == 1)
+            {
+                return operatorId switch
+                {
+                    '|' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '^' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '&' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '+' => new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    '-' => new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    Keyword.ShiftLeft => new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    Keyword.ShiftRight => new ByteShiftInstruction(function, operatorId, destinationOperand,
+                        leftOperand, rightOperand),
+                    _ => throw new NotImplementedException()
+                };
             }
             switch (operatorId) {
                 case '+':
-                case '-':
+                    if (destinationOperand.Type is PointerType)
+                        return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                     return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                case '-': {
+                    if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
+                        var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
+                        if (destinationOperand.Type is PointerType)
+                            return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                        return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                    }
+                    if (destinationOperand.Type is PointerType)
+                        return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                    return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                }
                 case '|':
                 case '^':
                 case '&':

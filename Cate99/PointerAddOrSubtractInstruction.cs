@@ -2,20 +2,19 @@
 
 namespace Inu.Cate.Tms99;
 
-internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
+internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
 {
-    public WordAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand) { }
+    public PointerAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand) { }
 
     public override void BuildAssembly()
     {
-        if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
+        if (LeftOperand.Type is not PointerType) {
             ExchangeOperands();
         }
         if (IncrementOrDecrement()) return;
 
         ResultFlags |= Flag.Z;
-        if (RightOperand is IntegerOperand integerOperand)
-        {
+        if (RightOperand is IntegerOperand integerOperand) {
             var value = OperatorId switch
             {
                 '+' => integerOperand.IntegerValue,
@@ -33,7 +32,7 @@ internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
             '-' => "s",
             _ => throw new NotImplementedException()
         };
-        Tms99.WordOperation.Operate(this, operation, DestinationOperand, LeftOperand, RightOperand);
+        Tms99.PointerOperation.Operate(this, operation, DestinationOperand, LeftOperand, RightOperand);
     }
 
 
@@ -49,30 +48,30 @@ internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
             return;
         }
 
-        void ForRegister(Cate.WordRegister wordRegister)
+        void ForRegister(Cate.PointerRegister pointerRegister)
         {
-            wordRegister.Load(this, LeftOperand);
+            pointerRegister.Load(this, LeftOperand);
             while (count > 2) {
                 var half = count / 2;
                 for (var i = 0; i < half; ++i) {
-                    WriteLine("\t" + operation + "t\t" + wordRegister.Name);
+                    WriteLine("\t" + operation + "t\t" + pointerRegister.Name);
                 }
                 count -= half * 2;
             }
             for (var i = 0; i < count; ++i) {
-                WriteLine("\t" + operation + "\t" + wordRegister.Name);
+                WriteLine("\t" + operation + "\t" + pointerRegister.Name);
             }
-            wordRegister.Store(this, DestinationOperand);
+            pointerRegister.Store(this, DestinationOperand);
         }
-        if (DestinationOperand.Register is WordRegister destinationRegister) {
+        if (DestinationOperand.Register is PointerRegister destinationRegister) {
             ForRegister(destinationRegister);
         }
-        else if (LeftOperand.Register is WordRegister leftRegister) {
+        else if (LeftOperand.Register is PointerRegister leftRegister) {
             ForRegister(leftRegister);
         }
         else {
-            using var reservation = WordOperation.ReserveAnyRegister(this);
-            ForRegister(reservation.WordRegister);
+            using var reservation = PointerOperation.ReserveAnyRegister(this);
+            ForRegister(reservation.PointerRegister);
         }
         ResultFlags |= Flag.Z;
     }
