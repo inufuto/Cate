@@ -104,6 +104,7 @@ namespace Inu.Cate
         }
 
         public ImmutableSortedDictionary<int, Usage> Usages => usages.ToImmutableSortedDictionary();
+        public Type? FirstType => Type.FirstPrimitiveType;
 
         public bool IsConstant() => value != null;
 

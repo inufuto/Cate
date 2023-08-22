@@ -141,6 +141,7 @@ namespace Inu.Cate
                 if (
                     assignment is RegisterVariableAssignment variableAssignment &&
                     variableAssignment.Variable.SameStorage(variable) &&
+                    register.ByteCount == variable.FirstType!.ByteCount &&
                     variableAssignment.Offset == offset &&
                     IsMatch(register)
                 )
@@ -653,7 +654,7 @@ namespace Inu.Cate
                 changedRegisters.Remove(pointerRegister.WordRegister.High);
             }
             //else {
-                changedRegisters.Remove(register);
+            changedRegisters.Remove(register);
             //}
         }
 

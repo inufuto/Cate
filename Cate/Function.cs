@@ -285,7 +285,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("InitCards_(pStage[20],pStage[19])")) {
+                if (instruction.ToString().Contains("*pLeft = *pLeft | 64")) {
                     var aaa = 111;
                 }
 #endif

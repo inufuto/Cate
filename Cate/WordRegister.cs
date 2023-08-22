@@ -79,8 +79,11 @@ namespace Inu.Cate
                 case IndirectOperand sourceIndirectOperand: {
                         var pointer = sourceIndirectOperand.Variable;
                         var offset = sourceIndirectOperand.Offset;
-                        var register = pointer.Register ?? instruction.GetVariableRegister(pointer, 0);
-                        if (register is PointerRegister pointerRegister) {
+                        var variableRegister = pointer.Register ?? instruction.GetVariableRegister(pointer, 0);
+                        if (variableRegister is WordRegister wRegister) {
+                            variableRegister = wRegister.ToPointer();
+                        }
+                        if (variableRegister is PointerRegister pointerRegister) {
                             if (pointerRegister.IsOffsetInRange(0)) {
                                 LoadIndirect(instruction, pointerRegister, offset);
                                 instruction.AddChanged(this);

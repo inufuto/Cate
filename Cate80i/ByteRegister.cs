@@ -266,7 +266,7 @@ namespace Inu.Cate.I8080
             });
         }
 
-        protected override void StoreIndirect(Instruction instruction, Variable pointer, int offset)
+        public override void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
             if (offset == 0) {
                 base.StoreIndirect(instruction, pointer, offset);

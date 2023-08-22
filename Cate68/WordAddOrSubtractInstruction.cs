@@ -51,7 +51,7 @@ namespace Inu.Cate.Mc6800
 
             if (RightOperand is IntegerOperand integerOperand) {
                 var rightConstant = integerOperand.IntegerValue;
-                if (rightConstant >= 0 && rightConstant < 0x100) {
+                if (rightConstant is >= 0 and < 0x100) {
                     void AddByte(Cate.ByteRegister byteRegister)
                     {
                         functionName += byteRegister.Name.ToUpper();

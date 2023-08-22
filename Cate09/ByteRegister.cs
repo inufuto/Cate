@@ -105,7 +105,7 @@ namespace Inu.Cate.Mc6809
             base.LoadIndirect(instruction, pointer, offset);
         }
 
-        protected override void StoreIndirect(Instruction instruction, Variable pointer, int offset)
+        public override void StoreIndirect(Instruction instruction, Variable pointer, int offset)
         {
             if (offset == 0 && instruction.GetVariableRegister(pointer, 0) == null) {
                 instruction.WriteLine("\tst" + this + "\t[" + pointer.MemoryAddress(0) + "]");

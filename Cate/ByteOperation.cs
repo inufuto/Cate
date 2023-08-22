@@ -58,6 +58,9 @@ namespace Inu.Cate
                         var pointer = indirectOperand.Variable;
                         var offset = indirectOperand.Offset;
                         var variableRegister = instruction.GetVariableRegister(indirectOperand.Variable, 0);
+                        if (variableRegister is WordRegister wRegister) {
+                            variableRegister = wRegister.ToPointer();
+                        }
                         if (variableRegister is PointerRegister pointerRegister) {
                             //var pointerRegister = Compiler.Instance.WordOperation.RegisterFromId(pointer.Register.Value);
                             OperateIndirect(instruction, operation, change, pointerRegister, offset, count);

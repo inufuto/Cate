@@ -38,6 +38,9 @@ namespace Inu.Cate
                         var sourceOffset = sourceVariableOperand.Offset;
                         var variableRegister = instruction.GetVariableRegister(sourceVariableOperand, r => r.Equals(this)) ??
                                                instruction.GetVariableRegister(sourceVariableOperand);
+                        if (variableRegister is WordRegister wRegister) {
+                            variableRegister = wRegister.ToPointer();
+                        }
                         if (variableRegister is PointerRegister sourceRegister) {
                             Debug.Assert(sourceOffset == 0);
                             if (!Equals(sourceRegister, this)) {

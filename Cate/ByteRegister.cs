@@ -155,11 +155,6 @@ namespace Inu.Cate
                 case IndirectOperand destinationIndirectOperand: {
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
-                        //var register = instruction.GetVariableRegister(pointer, 0);
-                        //if (register is WordRegister pointerRegister && pointerRegister.IsPointer(offset)) {
-                        //    StoreIndirect(instruction, pointerRegister, offset);
-                        //    return;
-                        //}
                         StoreIndirect(instruction, pointer, offset);
                         return;
                     }
