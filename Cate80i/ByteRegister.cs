@@ -387,8 +387,8 @@ namespace Inu.Cate.I8080
                                     return;
                                 }
                             }
-                            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
-                                WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+                                PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
                                 OperateIndirect(instruction, operation, offset);
                             }
                             return;
