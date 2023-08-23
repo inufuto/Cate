@@ -285,7 +285,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("return 0")) {
+                if (instruction.ToString().Contains("*pUpper = cType + 4")) {
                     var aaa = 111;
                 }
 #endif

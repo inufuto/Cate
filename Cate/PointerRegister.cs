@@ -32,6 +32,13 @@ namespace Inu.Cate
                     instruction.SetRegisterConstant(this, sourcePointerOperand);
                     instruction.AddChanged(this);
                     return;
+                case IntegerOperand sourceIntegerOperand:
+                    var value = sourceIntegerOperand.IntegerValue;
+                    if (instruction.IsConstantAssigned(this, value)) return;
+                    LoadConstant(instruction, value.ToString());
+                    instruction.SetRegisterConstant(this, value);
+                    instruction.AddChanged(this);
+                    return;
                 case VariableOperand sourceVariableOperand: {
                         var sourceVariable = sourceVariableOperand.Variable;
                         var sourceOffset = sourceVariableOperand.Offset;

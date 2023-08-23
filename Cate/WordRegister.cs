@@ -144,6 +144,7 @@ namespace Inu.Cate
                             return;
                         }
                         using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerOperation.RegistersToOffset(destinationOffset));
+                        reservation.PointerRegister.LoadFromMemory(instruction, destinationPointer,0);
                         StoreIndirect(instruction, reservation.PointerRegister, destinationOffset);
                         return;
                     }

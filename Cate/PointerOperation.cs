@@ -17,7 +17,7 @@ namespace Inu.Cate
 
         public RegisterReservation ReserveRegister(Instruction instruction, PointerRegister register, Operand operand)
         {
-            instruction.CancelOperandRegister(operand);
+            //instruction.CancelOperandRegister(operand);
             return instruction.ReserveRegister(register, operand);
         }
 
