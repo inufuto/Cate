@@ -402,8 +402,8 @@ namespace Inu.Cate.Z80
 
     internal class PairRegister : WordRegister
     {
-        public override Cate.ByteRegister? Low { get; }
-        public override Cate.ByteRegister? High { get; }
+        public override Cate.ByteRegister Low { get; }
+        public override Cate.ByteRegister High { get; }
 
         protected internal PairRegister(int id, ByteRegister highRegister, ByteRegister lowRegister, bool addable) : base(id, highRegister.Name + lowRegister.Name, addable)
         {

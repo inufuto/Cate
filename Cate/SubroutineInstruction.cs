@@ -547,29 +547,17 @@ namespace Inu.Cate
             }
         }
 
-        private void StoreViaPointer(PointerRegister pointerRegister, PointerRegister register, bool last)
+        protected virtual void StoreViaPointer(PointerRegister pointerRegister, PointerRegister register, bool last)
         {
-            var wordRegister = register.WordRegister;
-            Debug.Assert(wordRegister != null);
-            Debug.Assert(wordRegister.Low != null);
-            Debug.Assert(wordRegister.High != null);
-            wordRegister.Low.StoreIndirect(this, pointerRegister, 0);
-            pointerRegister.Add(this, 1);
-            wordRegister.High.StoreIndirect(this, pointerRegister, 0);
-            if (!last) {
-                pointerRegister.Add(this, 1);
-            }
+            Debug.Assert(register.WordRegister != null);
+            StoreViaPointer(pointerRegister, register.WordRegister, last);
         }
 
         protected virtual void StoreViaPointer(PointerRegister pointerRegister, WordRegister register, bool last)
         {
-            Debug.Assert(register.Low != null);
-            Debug.Assert(register.High != null);
-            register.Low.StoreIndirect(this, pointerRegister, 0);
-            pointerRegister.Add(this, 1);
-            register.High.StoreIndirect(this, pointerRegister, 0);
+            register.StoreIndirect(this, pointerRegister, 0);
             if (!last) {
-                pointerRegister.Add(this, 1);
+                pointerRegister.Add(this, register.ByteCount);
             }
         }
     }

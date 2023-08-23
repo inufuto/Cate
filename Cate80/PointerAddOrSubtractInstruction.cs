@@ -36,15 +36,25 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
             return;
 
         if (OperatorId == '+') {
-            if (RightWordRegister() is { Addable: true } rightRegister && (LeftOperand.Register is not PointerRegister leftRegister || !leftRegister.Addable)) {
-                using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers.Where(r => !PointerRegister.IsAddable(r)).ToList());
-                leftRegister = (PointerRegister)reservation.PointerRegister;
-                leftRegister.Load(this, LeftOperand);
-                WriteLine("\tadd\t" + rightRegister.Name + "," + leftRegister.Name);
-                AddChanged(rightRegister);
-                RemoveRegisterAssignment(rightRegister);
-                rightRegister.Store(this, DestinationOperand);
+            if (RightWordRegister() is { Addable: true } rightRegister && LeftOperand.Register is not PointerRegister { Addable: true } l) {
+                if (LeftOperand.Register is PointerRegister leftPointerRegister) {
+                    ViaLeftRegister(leftPointerRegister);
+                }
+                else {
+                    using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers.Where(r => !PointerRegister.IsAddable(r)).ToList(), LeftOperand);
+                    var leftRegister = (PointerRegister)reservation.PointerRegister;
+                    ViaLeftRegister(leftRegister);
+                }
                 return;
+
+                void ViaLeftRegister(Cate.PointerRegister pointerRegister)
+                {
+                    pointerRegister.Load(this, LeftOperand);
+                    WriteLine("\tadd\t" + rightRegister.Name + "," + pointerRegister.AsmName);
+                    AddChanged(rightRegister);
+                    RemoveRegisterAssignment(rightRegister);
+                    rightRegister.Store(this, DestinationOperand);
+                }
             }
         }
 
