@@ -285,7 +285,7 @@ namespace Inu.Cate
 
             foreach (var instruction in Instructions) {
 #if DEBUG
-                if (instruction.ToString().Contains("@3 = *p & -8")) {
+                if (instruction.ToString().Contains("pBullet[4] = -1")) {
                     var aaa = 111;
                 }
 #endif

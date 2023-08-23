@@ -88,7 +88,7 @@ namespace Inu.Cate.Mc6809
                 WriteLine("\tld" + destinationRegister.Name + ",#0");
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PointerOrder);
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers);
             var register = reservation.WordRegister;
             register.LoadConstant(this, 0);
             register.Store(this, DestinationOperand);

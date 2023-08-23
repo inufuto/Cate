@@ -186,6 +186,9 @@ namespace Inu.Cate.Mc6809
             if (register is WordRegister wordRegister && wordRegister.Contains(this)) {
                 return true;
             }
+            if (register is PointerRegister pointerRegister && pointerRegister.Contains(this)) {
+                return true;
+            }
             return Equals(this, register);
         }
 

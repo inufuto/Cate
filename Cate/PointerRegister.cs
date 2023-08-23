@@ -157,5 +157,14 @@ namespace Inu.Cate
                 }
             }
         }
+
+        public virtual void Exchange(Instruction instruction, PointerRegister register)
+        {
+            Debug.Assert(!Equals(this, register));
+            using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerOperation.Registers.Where(r => !Equals(r, this) && !Equals(r, register)).ToList());
+            reservation.PointerRegister.CopyFrom(instruction, register);
+            register.CopyFrom(instruction, this);
+            CopyFrom(instruction, reservation.PointerRegister);
+        }
     }
 }

@@ -42,14 +42,13 @@ namespace Inu.Cate
                 Debug.Assert(other.Parameter.Register != null);
                 switch (Parameter.Register) {
                     case ByteRegister byteRegister:
-                        var otherByteRegister = (ByteRegister)other.Parameter.Register;
-                        byteRegister.Exchange(instruction, otherByteRegister);
+                        byteRegister.Exchange(instruction, (ByteRegister)other.Parameter.Register);
                         break;
                     case WordRegister wordRegister:
-                        wordRegister.CopyFrom(instruction, (WordRegister)other.Parameter.Register);
+                        wordRegister.Exchange(instruction, (WordRegister)other.Parameter.Register);
                         break;
                     case PointerRegister pointerRegister:
-                        pointerRegister.CopyFrom(instruction, (PointerRegister)other.Parameter.Register);
+                        pointerRegister.Exchange(instruction, (PointerRegister)other.Parameter.Register);
                         break;
                 }
                 Done = true;

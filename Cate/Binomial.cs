@@ -24,12 +24,8 @@ namespace Inu.Cate
         {
             {
                 if (leftValue.IsConstant() && !rightValue.IsConstant() && ExchangeableOperators.Contains(operatorId)) {
-                    var temporary = leftValue;
-                    leftValue = rightValue;
-                    rightValue = temporary;
+                    (leftValue, rightValue) = (rightValue, leftValue);
                 }
-
-                //Debug.Assert(leftOperand != null && rightOperand != null);
                 var leftOperand = leftValue.ToOperand(function);
                 var rightOperand = rightValue.ToOperand(function);
                 var instruction = Compiler.Instance.CreateBinomialInstruction(

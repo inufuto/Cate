@@ -37,7 +37,23 @@ namespace Inu.Cate.Mc6809
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
-            throw new System.NotImplementedException();
+            var register = operand.Register;
+            if (register is PointerRegister rightRegister) {
+                instruction.WriteLine("\tst" + rightRegister + "\t" + DirectPage.Word);
+                instruction.WriteLine("\t" + operation + Name + "\t" + DirectPage.Word);
+                instruction.ResultFlags |= Instruction.Flag.Z;
+                return;
+            }
+            Mc6809.WordOperation.Operate(instruction, operation + Name, change, operand, 1);
+        }
+
+        public override void Exchange(Instruction instruction, Cate.PointerRegister register)
+        {
+            instruction.WriteLine("\texg\t" + register + "," + this);
+            instruction.RemoveRegisterAssignment(this);
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(register);
+            instruction.AddChanged(register);
         }
     }
 }

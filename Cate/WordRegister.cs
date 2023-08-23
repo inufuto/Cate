@@ -157,5 +157,13 @@ namespace Inu.Cate
 
         public abstract void Operate(Instruction instruction, string operation, bool change, Operand operand);
 
+        public virtual void Exchange(Instruction instruction, WordRegister register)
+        {
+            Debug.Assert(!Equals(this, register));
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.Registers.Where(r => !Equals(r, this) && !Equals(r, register)).ToList());
+            reservation.WordRegister.CopyFrom(instruction, register);
+            register.CopyFrom(instruction, this);
+            CopyFrom(instruction, reservation.WordRegister);
+        }
     }
 }

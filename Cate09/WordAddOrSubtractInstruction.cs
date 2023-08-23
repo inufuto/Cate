@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace Inu.Cate.Mc6809
 {
@@ -12,7 +11,7 @@ namespace Inu.Cate.Mc6809
 
         public override void BuildAssembly()
         {
-            if (LeftOperand is ConstantOperand && !(RightOperand is ConstantOperand) && IsOperatorExchangeable()) {
+            if (LeftOperand is ConstantOperand && RightOperand is not ConstantOperand && IsOperatorExchangeable()) {
                 ExchangeOperands();
             }
             else if (!Equals(LeftOperand.Register, WordRegister.D) && Equals(RightOperand.Register, WordRegister.D)) {
@@ -36,7 +35,7 @@ namespace Inu.Cate.Mc6809
                 WordRegister.D.Store(this, DestinationOperand);
                 ResultFlags |= Flag.Z;
             }
-            if (Equals(LeftOperand.Register, WordRegister.D) && DestinationOperand.Register == WordRegister.D) {
+            if (Equals(LeftOperand.Register, WordRegister.D) && Equals(DestinationOperand.Register, WordRegister.D)) {
                 AddD();
                 return;
             }
@@ -60,31 +59,15 @@ namespace Inu.Cate.Mc6809
                     return AddConstant(value.ToString());
                 }
             }
-            if (RightOperand is ConstantOperand constantOperand && constantOperand.Type is PointerType) {
-                return AddConstant(constantOperand.MemoryAddress());
-            }
             return false;
         }
 
         private bool AddConstant(string value)
         {
-            Action<Register> load;
-            if (LeftOperand.Type is PointerType) {
-                load = r => ((PointerRegister)r).Load(this, LeftOperand);
-            }
-            else {
-                load = r =>
-                {
-                    var wordRegister = r is PointerRegister pointerRegister ? pointerRegister.WordRegister: ((WordRegister)r);
-                    Debug.Assert(wordRegister != null);
-                    wordRegister.Load(this, LeftOperand);
-                };
-            }
-
-            void ViaRegister(Register r)
+            void ViaRegister(Cate.WordRegister r)
             {
-                load(r);
-                if (Equals(r, WordRegister.D) || Equals(r, PointerRegister.D)) {
+                r.Load(this, LeftOperand);
+                if (Equals(r, WordRegister.D)) {
                     WriteLine("\taddd\t#" + value);
                 }
                 else {
@@ -97,27 +80,13 @@ namespace Inu.Cate.Mc6809
 
             switch (DestinationOperand.Register) {
                 case WordRegister wordRegister when RightOperand.Conflicts(wordRegister):
-                    //wordRegister.Load(this, LeftOperand);
                     ViaRegister(wordRegister);
-                    return true;
-                case PointerRegister pointerRegister when RightOperand.Conflicts(pointerRegister):
-                    //pointerRegister.Load(this, LeftOperand);
-                    ViaRegister(pointerRegister);
                     return true;
             }
 
-            if (DestinationOperand.Type is PointerType) {
-                using var reservation = PointerOperation.ReserveAnyRegister(this, LeftOperand);
-                var register = reservation.PointerRegister;
-                ViaRegister(register);
-                register.Store(this, DestinationOperand);
-            }
-            else {
-                using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
-                var register = reservation.WordRegister;
-                ViaRegister(register);
-                register.Store(this, DestinationOperand);
-            }
+            using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+            ViaRegister(reservation.WordRegister);
+            reservation.WordRegister.Store(this, DestinationOperand);
 
             return true;
         }
