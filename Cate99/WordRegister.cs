@@ -131,6 +131,12 @@ namespace Inu.Cate.Tms99
 
         public override void LoadConstant(Instruction instruction, string value)
         {
+            if (value == "0") {
+                Clear(instruction);
+                instruction.AddChanged(this);
+                instruction.RemoveRegisterAssignment(this);
+                return;
+            }
             instruction.WriteLine("\tli\t" + Name + "," + value);
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);

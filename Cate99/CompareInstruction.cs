@@ -75,9 +75,6 @@ namespace Inu.Cate.Tms99
                 }
                 Tms99.WordOperation.OperateConstant(this, "ci", LeftOperand, integerOperand.IntegerValue);
             }
-            else if (RightOperand is PointerOperand pointerOperand) {
-                Tms99.WordOperation.OperateConstant(this, "ci", LeftOperand, pointerOperand.MemoryAddress());
-            }
             else {
                 Tms99.WordOperation.Operate(this, "c", LeftOperand, RightOperand);
             }
@@ -87,7 +84,27 @@ namespace Inu.Cate.Tms99
 
         protected override void ComparePointer()
         {
-            CompareWord();
+            if (RightOperand is NullPointerOperand) {
+                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
+                    if (LeftOperand is VariableOperand variableOperand) {
+                        var leftRegister = GetVariableRegister(variableOperand);
+                        if (leftRegister != null) {
+                            if (CanOmitOperation(Flag.Z)) {
+                                goto jump;
+                            }
+                        }
+                    }
+                }
+                Tms99.PointerOperation.OperateConstant(this, "ci", LeftOperand, "0");
+            }
+            else if (RightOperand is PointerOperand pointerOperand) {
+                Tms99.PointerOperation.OperateConstant(this, "ci", LeftOperand, pointerOperand.MemoryAddress());
+            }
+            else {
+                Tms99.PointerOperation.Operate(this, "c", LeftOperand, RightOperand);
+            }
+        jump:
+            Jump();
         }
 
         private void Jump()
