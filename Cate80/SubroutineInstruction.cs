@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Inu.Cate.Z80
 {
@@ -16,7 +17,13 @@ namespace Inu.Cate.Z80
 
         protected override void StoreParameters()
         {
-            StoreParametersViaPointer();
+            if (SourceOperands.Count >= 5) {
+                StoreParametersViaPointer();
+            }
+            else {
+                StoreParametersDirect();
+            }
+
         }
 
         protected override void StoreViaPointer(Cate.PointerRegister pointerRegister, Cate.WordRegister register, bool last)
@@ -32,7 +39,8 @@ namespace Inu.Cate.Z80
                 }
             }
             else {
-                using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters);
+                var candidates = WordRegister.PairRegisters.Where(r => !r.Conflicts(pointerRegister)).ToList();
+                using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
                 reservation.WordRegister.CopyFrom(this, register);
                 StoreViaPointer(pointerRegister, reservation.WordRegister, last);
             }
