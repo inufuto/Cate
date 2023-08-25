@@ -14,7 +14,7 @@
                 using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates)) {
                     var temporary = reservation.ByteRegister;
                     temporary.CopyFrom(this, ByteRegister.A);
-                    WriteLine("\tsbb\ta," + temporary.Name);
+                    WriteLine("\tsbb\ta," + temporary.AsmName);
                 }
                 ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
             }

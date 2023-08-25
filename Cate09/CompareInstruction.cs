@@ -10,7 +10,7 @@ namespace Inu.Cate.Mc6809
         protected override void CompareByte()
         {
             if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
-                if (OperatorId == Keyword.Equal || OperatorId == Keyword.NotEqual) {
+                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
                     if (LeftOperand is VariableOperand variableOperand) {
                         var registerId = GetVariableRegister(variableOperand);
                         if (registerId != null) {
@@ -37,7 +37,7 @@ namespace Inu.Cate.Mc6809
         protected override void CompareWord()
         {
             if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
-                if (OperatorId == Keyword.Equal || OperatorId == Keyword.NotEqual) {
+                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
                     if (LeftOperand is VariableOperand variableOperand) {
                         var registerId = GetVariableRegister(variableOperand);
                         if (registerId != null) {
@@ -55,6 +55,40 @@ namespace Inu.Cate.Mc6809
             }
         jump:
             Jump();
+        }
+
+        protected override void ComparePointer()
+        {
+            if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
+                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
+                    if (LeftOperand is VariableOperand variableOperand) {
+                        var registerId = GetVariableRegister(variableOperand);
+                        if (registerId != null) {
+                            if (CanOmitOperation(Flag.Z)) {
+                                goto jump;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (LeftOperand.Register is PointerRegister leftRegister) {
+                ViaRegister(leftRegister);
+                goto jump;
+            }
+            using (var reservation = PointerOperation.ReserveAnyRegister(this, LeftOperand)) {
+                var register = reservation.PointerRegister;
+                ViaRegister(register);
+            }
+        jump:
+            Jump();
+            return;
+
+            void ViaRegister(Cate.PointerRegister register)
+            {
+                register.Load(this, LeftOperand);
+                register.Operate(this, "cmp", false, RightOperand);
+            }
         }
 
         private void Jump()

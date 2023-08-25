@@ -5,7 +5,7 @@ namespace Inu.Cate.MuCom87
     internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
         public const string TemporaryByte = MuCom87.Compiler.TemporaryByte;   //"@TempParam";
-        private bool accumulatorSaved;
+        //private bool accumulatorSaved=false;
 
         public SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand,
             List<Operand> sourceOperands) : base(function, targetFunction, destinationOperand, sourceOperands)
@@ -13,36 +13,14 @@ namespace Inu.Cate.MuCom87
             ParameterAssignments.Reverse();
         }
 
-        //protected override void CopyByte(Instruction instruction, Cate.ByteRegister destination, Cate.ByteRegister source)
-        //{
-        //    if (ParameterAssignments.Any(a => Equals(a.Register, ByteRegister.A))) {
-        //        instruction.WriteLine("\tstaw\t" + ByteWorkingRegister.TemporaryByte);
-        //        instruction.WriteLine("\tmov\ta," + source.Name);
-        //        instruction.WriteLine("\tmov\t" + destination.Name + ",a");
-        //        instruction.WriteLine("\tldaw\t" + ByteWorkingRegister.TemporaryByte);
-        //    }
-        //    else {
-        //        base.CopyByte(instruction, destination, source);
-        //    }
-        //}
-
         protected override void Call()
         {
-            if (accumulatorSaved) {
-                WriteLine("\tldaw\t" + TemporaryByte);
-            }
+            //if (accumulatorSaved) {
+            //    WriteLine("\tldaw\t" + TemporaryByte);
+            //}
             WriteLine("\tcall\t" + TargetFunction.Label);
         }
 
-        //protected override Register? SaveAccumulator(Register register, ParameterAssignment assignment)
-        //{
-        //    if (Equals(register, ByteRegister.A) && ParameterAssignments.Any(a => !a.Equals(assignment) && !a.Done)) {
-        //        WriteLine("\tstaw\t" + TemporaryByte);
-        //        accumulatorSaved = true;
-        //        return null;
-        //    }
-        //    return base.SaveAccumulator(register, assignment);
-        //}
 
         protected override void StoreParameters()
         {
@@ -54,21 +32,21 @@ namespace Inu.Cate.MuCom87
             return index switch
             {
                 0 when type.ByteCount == 1 => ByteRegister.A,
-                0 => WordRegister.Hl,
+                0 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
                 1 when type.ByteCount == 1 => ByteRegister.E,
-                1 => WordRegister.De,
+                1 => type is PointerType ? PointerRegister.De : WordRegister.De,
                 2 when type.ByteCount == 1 => ByteRegister.C,
-                2 => WordRegister.Bc,
+                2 => type is PointerType ? PointerRegister.Bc : WordRegister.Bc,
                 _ => null
             };
         }
 
-        public static Register? ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(ParameterizableType type)
         {
-            return byteCount switch
+            return type.ByteCount switch
             {
                 1 => ByteRegister.A,
-                2 => WordRegister.Hl,
+                2 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
                 _ => null
             };
         }

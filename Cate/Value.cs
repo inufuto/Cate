@@ -41,10 +41,7 @@ namespace Inu.Cate
         public virtual Value? CastTo(Type type)
         {
             var value = ConvertTypeTo(type);
-            if (value != null) {
-                return value;
-            }
-            return Type.Cast(this, type);
+            return value ?? Type.Cast(this, type);
         }
 
         public virtual BooleanValue? ToBooleanValue()

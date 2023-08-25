@@ -3,6 +3,7 @@
     public abstract class ParameterizableType : Type
     {
         public override int MaxElementSize => ByteCount;
+        public override ParameterizableType? FirstPrimitiveType => this;
 
         public override Value? Cast(Value value, Type type)
         {

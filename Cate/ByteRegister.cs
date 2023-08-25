@@ -17,7 +17,12 @@ namespace Inu.Cate
                     if (wordRegister.Contains(this))
                         return true;
                     break;
-                    //case ByteRegister byteRegister:
+                case WordPointerRegister pointerRegister:
+                    if (pointerRegister.WordRegister != null && pointerRegister.WordRegister.Contains(this)) {
+                        return true;
+                    }
+                    break;
+                //case ByteRegister byteRegister:
                     //    if (PairRegister != null && PairRegister.Contains(byteRegister))
                     //        return true;
                     //    break;
@@ -34,7 +39,7 @@ namespace Inu.Cate
         }
 
 
-        public abstract void LoadConstant(Instruction instruction, string value);
+        //public abstract void LoadConstant(Instruction instruction, string value);
 
         public virtual void LoadConstant(Instruction instruction, int value)
         {
@@ -44,42 +49,6 @@ namespace Inu.Cate
             }
             LoadConstant(instruction, value.ToString());
             instruction.SetRegisterConstant(this, value);
-        }
-
-        public abstract void LoadFromMemory(Instruction instruction, Variable variable, int offset);
-        public abstract void StoreToMemory(Instruction instruction, Variable variable, int offset);
-        public abstract void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
-        public abstract void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
-
-        public virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
-        {
-            var wordOperation = Compiler.Instance.WordOperation;
-            var candidates = wordOperation.PointerRegisters(offset).Where(r => !r.Conflicts(this)).ToList();
-            if (candidates.Count == 0) {
-                candidates = wordOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
-            }
-
-            using var reservation = wordOperation.ReserveAnyRegister(instruction, candidates);
-            reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
-            LoadIndirect(instruction, reservation.WordRegister, offset);
-        }
-
-        protected virtual void StoreIndirect(Instruction instruction, Variable pointer, int offset)
-        {
-            var register = instruction.GetVariableRegister(pointer, 0, r => r is WordRegister wr && wr.IsPointer(offset)) ??
-                           instruction.GetVariableRegister(pointer, 0, r => r is WordRegister wr && wr.IsPointer(0));
-            if (register is WordRegister wordRegister && (Equals(wordRegister, pointer.Register) || wordRegister.IsPointer(offset))) {
-                StoreIndirect(instruction, wordRegister, offset);
-                return;
-            }
-
-            var pointerRegisters = Compiler.Instance.WordOperation.PointerRegisters(offset);
-            if (pointerRegisters.Count == 0) {
-                pointerRegisters = Compiler.Instance.WordOperation.Registers;
-            }
-            var reservation = Compiler.Instance.WordOperation.ReserveAnyRegister(instruction, pointerRegisters);
-            reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
-            StoreIndirect(instruction, reservation.WordRegister, offset);
         }
 
 
@@ -97,7 +66,7 @@ namespace Inu.Cate
                         var register = instruction.GetVariableRegister(variableOperand);
                         if (register is ByteRegister byteRegister) {
                             if (Equals(byteRegister, this)) {
-                                instruction.RemoveRegisterAssignment(this);
+                                //instruction.RemoveRegisterAssignment(this);
                             }
                             else if (byteRegister.ByteCount == 1) {
                                 CopyFrom(instruction, byteRegister);
@@ -121,18 +90,22 @@ namespace Inu.Cate
                         var pointer = sourceIndirectOperand.Variable;
                         var offset = sourceIndirectOperand.Offset;
                         var register = pointer.Register ?? instruction.GetVariableRegister(pointer, 0);
-                        if (register is WordRegister pointerRegister) {
-                            if (pointerRegister.IsPointer(0)) {
+                        if (register is WordRegister wordRegister)
+                        {
+                            register = wordRegister.ToPointer();
+                        }
+                        if (register is PointerRegister pointerRegister) {
+                            if (pointerRegister.IsOffsetInRange(0)) {
                                 LoadIndirect(instruction, pointerRegister, offset);
                                 instruction.AddChanged(this);
                                 instruction.CancelOperandRegister(sourceIndirectOperand);
                                 return;
                             }
-                            var candidates = WordOperation.Registers.Where(r => r.IsPointer(offset)).ToList();
+                            var candidates = PointerOperation.Registers.Where(r => r.IsOffsetInRange(offset)).ToList();
                             if (candidates.Any()) {
-                                var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
-                                reservation.WordRegister.CopyFrom(instruction, pointerRegister);
-                                LoadIndirect(instruction, reservation.WordRegister, offset);
+                                var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
+                                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
+                                LoadIndirect(instruction, reservation.PointerRegister, offset);
                                 instruction.AddChanged(this);
                                 instruction.CancelOperandRegister(sourceIndirectOperand);
                                 return;
@@ -162,7 +135,8 @@ namespace Inu.Cate
                 case VariableOperand variableOperand: {
                         var variable = variableOperand.Variable;
                         var offset = variableOperand.Offset;
-                        if (variable.Register is ByteRegister register) {
+                        var variableRegister = variable.Register;
+                        if (variableRegister is ByteRegister register) {
                             Debug.Assert(offset == 0);
                             //var register = Compiler.Instance.ByteOperation.RegisterFromId(variable.Register.Value);
                             if (Equals(register, this)) {
@@ -181,11 +155,6 @@ namespace Inu.Cate
                 case IndirectOperand destinationIndirectOperand: {
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
-                        //var register = instruction.GetVariableRegister(pointer, 0);
-                        //if (register is WordRegister pointerRegister && pointerRegister.IsPointer(offset)) {
-                        //    StoreIndirect(instruction, pointerRegister, offset);
-                        //    return;
-                        //}
                         StoreIndirect(instruction, pointer, offset);
                         return;
                     }
@@ -197,9 +166,9 @@ namespace Inu.Cate
         }
 
 
-        public abstract void LoadFromMemory(Instruction instruction, string label);
+        //public abstract void LoadFromMemory(Instruction instruction, string label);
 
-        public abstract void StoreToMemory(Instruction instruction, string label);
+        //public abstract void StoreToMemory(Instruction instruction, string label);
 
 
         public abstract void CopyFrom(Instruction instruction, ByteRegister sourceRegister);

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Inu.Language;
+﻿using Inu.Language;
 
 namespace Inu.Cate
 {
@@ -11,6 +10,7 @@ namespace Inu.Cate
 
         public abstract int Incremental { get; }
         public abstract int MaxElementSize { get; }
+        public abstract ParameterizableType? FirstPrimitiveType { get; }
 
         public abstract Constant DefaultValue();
         public abstract Constant? ParseConstant(Compiler compiler);

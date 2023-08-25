@@ -6,7 +6,7 @@
 
         protected bool IncrementOrDecrement()
         {
-            if (!(RightOperand is IntegerOperand rightIntegerOperand))
+            if (RightOperand is not IntegerOperand rightIntegerOperand)
                 return false;
 
             var mask = rightIntegerOperand.Type.ByteCount == 1 ? 0xff : 0xffff;

@@ -40,7 +40,7 @@ namespace Inu.Cate.Mc6800
 
             if (
                 LeftOperand.SameStorage(DestinationOperand) &&
-                (!(DestinationOperand is IndirectOperand indirectOperand) || WordRegister.X.IsOffsetInRange(indirectOperand.Offset + 1))
+                (!(DestinationOperand is IndirectOperand indirectOperand) || PointerRegister.X.IsOffsetInRange(indirectOperand.Offset + 1))
             ) {
                 for (var i = 0; i < count; ++i) {
                     byteAction(operation =>

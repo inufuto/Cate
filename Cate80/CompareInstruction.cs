@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 namespace Inu.Cate.Z80
 {
@@ -32,7 +29,6 @@ namespace Inu.Cate.Z80
 
             const string operation = "cp\t";
             if (LeftOperand is VariableOperand variableOperand) {
-                GetVariableRegister(variableOperand);
                 if (VariableRegisterMatches(variableOperand, ByteRegister.A)) {
                     ByteRegister.A.Operate(this, operation, false, RightOperand);
                     goto jump;
@@ -52,7 +48,7 @@ namespace Inu.Cate.Z80
         {
             if (LeftOperand is VariableOperand leftVariableOperand) {
                 if (VariableRegisterMatches(leftVariableOperand, ByteRegister.A)) {
-                    if ((OperatorId == Keyword.Equal || OperatorId == Keyword.NotEqual) && CanOmitOperation(Flag.Z))
+                    if (OperatorId is Keyword.Equal or Keyword.NotEqual && CanOmitOperation(Flag.Z))
                         return;
                     WriteLine("\tor\ta");
                     return;
@@ -64,94 +60,61 @@ namespace Inu.Cate.Z80
             }
         }
 
+
+        private void CompareHlDe()
+        {
+            Compiler.CallExternal(this, Signed ? "cate.CompareHlDeSigned" : "cate.CompareHlDe");
+        }
+
         protected override void CompareWord()
         {
-            if (RightOperand is IntegerOperand { IntegerValue: 0 } || RightOperand is NullPointerOperand) {
-                if (LeftOperand.Register is WordRegister leftRegister) {
-                    if (leftRegister.IsPair()) {
-                        CompareWordZero(leftRegister);
-                        goto jump;
-                    }
-                }
-                using (var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.PairRegisters)) {
-                    reservation.WordRegister.Load(this, LeftOperand);
-                    CompareWordZero(reservation.WordRegister);
-                }
-                goto jump;
-            }
 
-            void Subtract(Register rightRegister)
+            void CompareDe()
             {
-                WriteLine("\tor\ta");
-                WriteLine("\tsbc\thl," + rightRegister.Name);
-                AddChanged(WordRegister.Hl);
-                RemoveRegisterAssignment(WordRegister.Hl);
+                if (Equals(LeftOperand.Register, WordRegister.Hl)) {
+                    CompareHlDe();
+                }
+                else {
+                    using var reservation = WordOperation.ReserveRegister(this, WordRegister.Hl);
+                    WordRegister.Hl.Load(this, LeftOperand);
+                    CompareHlDe();
+                }
             }
 
-
-            void SubtractHl()
-            {
-                if (RightOperand.Register is WordRegister rightRegister) {
-                    if (!rightRegister.IsAddable()) {
-                        Subtract(rightRegister);
-                        return;
-                    }
-                }
-                var candidates = new List<Cate.WordRegister>() { WordRegister.De, WordRegister.Bc }.ToList();
-                using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
-                reservation.WordRegister.Load(this, RightOperand);
-                Subtract(reservation.WordRegister);
+            if (Equals(RightOperand.Register, WordRegister.De)) {
+                CompareDe();
             }
-
-            if (Equals(LeftOperand.Register, WordRegister.Hl)) {
-                using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
-                    SubtractHl();
-                }
-                goto jump;
+            else {
+                using var reservation = WordOperation.ReserveRegister(this, WordRegister.De, RightOperand);
+                WordRegister.De.Load(this, RightOperand);
+                CompareDe();
             }
-            if (Equals(RightOperand.Register, WordRegister.Hl)) {
-                void CompareDeHl()
-                {
-                    WriteLine("\tex\tde,hl");
-                    Subtract(WordRegister.De);
-                    WriteLine("\tex\tde,hl");
-                    AddChanged(WordRegister.De);
-                    RemoveRegisterAssignment(WordRegister.De);
-                }
-
-                if (Equals(LeftOperand.Register, WordRegister.De)) {
-                    using (
-                        WordOperation.ReserveRegister(this, WordRegister.De)) {
-                        CompareDeHl();
-                    }
-                    goto jump;
-                }
-
-                using (WordOperation.ReserveRegister(this, WordRegister.De)) {
-                    WordRegister.De.Load(this, LeftOperand);
-                    CompareDeHl();
-                }
-                goto jump;
-            }
-            using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
-                WordRegister.Hl.Load(this, LeftOperand);
-                SubtractHl();
-            }
-
-        jump:
             Jump(false);
         }
 
-        private void CompareWordZero(Cate.WordRegister leftRegister)
+        protected override void ComparePointer()
         {
-            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
-                Debug.Assert(leftRegister.Low != null);
-                Debug.Assert(leftRegister.High != null);
-                ByteRegister.A.CopyFrom(this, leftRegister.Low);
-                WriteLine("\tor\t" + leftRegister.High.Name);
-                AddChanged(ByteRegister.A);
-                RemoveRegisterAssignment(ByteRegister.A);
+            void CompareDe()
+            {
+                if (Equals(LeftOperand.Register, PointerRegister.Hl)) {
+                    CompareHlDe();
+                }
+                else {
+                    using var reservation = PointerOperation.ReserveRegister(this, PointerRegister.Hl);
+                    PointerRegister.Hl.Load(this, LeftOperand);
+                    CompareHlDe();
+                }
             }
+
+            if (Equals(RightOperand.Register, PointerRegister.De)) {
+                CompareDe();
+            }
+            else {
+                using var reservation = PointerOperation.ReserveRegister(this, PointerRegister.De, RightOperand);
+                PointerRegister.De.Load(this, RightOperand);
+                CompareDe();
+            }
+            Jump(false);
         }
 
         private void Jump(bool operandZero)

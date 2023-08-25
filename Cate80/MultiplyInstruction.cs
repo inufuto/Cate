@@ -5,9 +5,7 @@ namespace Inu.Cate.Z80
 {
     internal class MultiplyInstruction : Cate.MultiplyInstruction
     {
-        public MultiplyInstruction(Function function, AssignableOperand destinationOperand, Operand leftOperand,
-            int rightValue) : base(function, destinationOperand, leftOperand, rightValue)
-        { }
+        public MultiplyInstruction(Function function, AssignableOperand destinationOperand, Operand leftOperand, int rightValue) : base(function, destinationOperand, leftOperand, rightValue) { }
 
         public override void BuildAssembly()
         {
@@ -47,7 +45,7 @@ namespace Inu.Cate.Z80
                 void ViaRegister(Cate.WordRegister re)
                 {
                     var candidates = WordRegister.Registers
-                        .Where(r => !Equals(r, re) && !r.IsAddable()).ToList();
+                        .Where(r => !Equals(r, re) && !((WordRegister)r).Addable).ToList();
                     using var additionReservation = WordOperation.ReserveAnyRegister(this, candidates);
                     var additionRegister = additionReservation.WordRegister;
                     additionRegister.Load(this, LeftOperand);

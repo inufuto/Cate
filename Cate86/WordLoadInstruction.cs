@@ -19,11 +19,10 @@
                         return;
                 }
             }
-            if (DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Register != null) {
-                var register = indirectOperand.Variable.Register;
+            if (DestinationOperand is IndirectOperand { Variable.Register: PointerRegister pointerRegister } indirectOperand) {
                 var offset = indirectOperand.Offset;
                 var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
-                var pointer = WordRegister.AsPointer((Cate.WordRegister)register) + addition;
+                var pointer = PointerRegister.AsPointer(pointerRegister) + addition;
                 switch (SourceOperand) {
                     case IntegerOperand integerOperand:
                         WriteLine("\tmov word ptr [" + pointer + "]," + integerOperand.IntegerValue);

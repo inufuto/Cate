@@ -5,8 +5,8 @@
         public readonly string Label;
 
         // zero page area names
-        public static readonly ZeroPageByte Byte = new ZeroPageByte("@Temp@Byte");
-        public static readonly ZeroPageWord Word = new ZeroPageWord("@Temp@Word");
+        public static readonly ZeroPageByte Byte = new("@Temp@Byte");
+        public static readonly ZeroPageWord Word = new("@Temp@Word");
         public static readonly ZeroPageByte WordHigh = Word.High;
         public static readonly ZeroPageByte WordLow = Word.Low;
         public static readonly ZeroPageWord Word2 = new ZeroPageWord("@Temp@Word2");

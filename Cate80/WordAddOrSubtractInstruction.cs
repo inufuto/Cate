@@ -6,7 +6,7 @@ namespace Inu.Cate.Z80
 {
     internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
     {
-        private static readonly List<Cate.WordRegister> RightCandidates = new List<Cate.WordRegister>()
+        private static readonly List<Cate.WordRegister> RightCandidates = new()
             {WordRegister.De, WordRegister.Bc};
 
         protected override int Threshold() => 4;
@@ -14,19 +14,21 @@ namespace Inu.Cate.Z80
         public WordAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
             Operand leftOperand, Operand rightOperand)
             : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
-        { }
+        {
+            Debug.Assert(rightOperand.Type is IntegerType);
+        }
 
         public override bool CanAllocateRegister(Variable variable, Register register1)
         {
             if (RightOperand is VariableOperand rightVariableOperand && rightVariableOperand.Variable.Equals(variable)) {
                 if (rightVariableOperand.Register is WordRegister wordRegister) {
-                    if (!wordRegister.IsAddable())
+                    if (Equals(wordRegister, WordRegister.De) || Equals(wordRegister, WordRegister.Bc))
                         return false;
                 }
             }
             if (LeftOperand is VariableOperand leftVariableOperand && leftVariableOperand.Variable.Equals(variable)) {
                 if (leftVariableOperand.Register is WordRegister wordRegister) {
-                    if (!wordRegister.IsAddable())
+                    if (Equals(wordRegister, WordRegister.De) || Equals(wordRegister, WordRegister.Bc))
                         return false;
                 }
             }
@@ -35,12 +37,12 @@ namespace Inu.Cate.Z80
 
         public override void BuildAssembly()
         {
-            if (LeftOperand is ConstantOperand && !(RightOperand is ConstantOperand) && IsOperatorExchangeable()) {
+            if (LeftOperand is ConstantOperand && RightOperand is not ConstantOperand && IsOperatorExchangeable()) {
                 ExchangeOperands();
             }
             else {
-                if (RightOperand.Register is WordRegister rightRegister) {
-                    if (rightRegister.IsAddable() && IsOperatorExchangeable()) {
+                if (RightOperand.Register is WordRegister wordRegister) {
+                    if ((!Equals(wordRegister, WordRegister.De) || !Equals(wordRegister, WordRegister.Bc)) && IsOperatorExchangeable()) {
                         ExchangeOperands();
                     }
                 }
@@ -79,7 +81,7 @@ namespace Inu.Cate.Z80
 
         private void AddConstant(int value)
         {
-            void ViaRegister(Cate.WordRegister r)
+            void ViaRegister(WordRegister r)
             {
                 r.Load(this, LeftOperand);
                 r.Add(this, value);
@@ -87,13 +89,13 @@ namespace Inu.Cate.Z80
             }
 
             if (DestinationOperand.Register is WordRegister register) {
-                if (register.IsAddable()) {
+                if (register.Addable) {
                     ViaRegister(register);
                     return;
                 }
             }
             using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.AddableRegisters, LeftOperand);
-            ViaRegister(reservation.WordRegister);
+            ViaRegister((WordRegister)reservation.WordRegister);
         }
 
         private void AddRegister(Cate.WordRegister register)
@@ -142,26 +144,26 @@ namespace Inu.Cate.Z80
 
         private void IncrementOrDecrement(string operation, int count)
         {
+            void ViaRegister(Register register)
+            {
+                Debug.Assert(count >= 0);
+                for (var i = 0; i < count; ++i) {
+                    WriteLine("\t" + operation + "\t" + register);
+                }
+                RemoveRegisterAssignment(register);
+                AddChanged(register);
+            }
+
             if (DestinationOperand.Register is WordRegister destinationRegister) {
                 destinationRegister.Load(this, LeftOperand);
-                IncrementOrDecrement(this, operation, destinationRegister, count);
+                ViaRegister(destinationRegister);
                 return;
             }
             using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.AddableRegisters, LeftOperand);
             reservation.WordRegister.Load(this, LeftOperand);
-            IncrementOrDecrement(this, operation, reservation.WordRegister, count);
+            ViaRegister(reservation.WordRegister);
             reservation.WordRegister.Store(this, DestinationOperand);
             ;
-        }
-
-        private static void IncrementOrDecrement(Instruction instruction, string operation, Cate.WordRegister leftRegister, int count)
-        {
-            Debug.Assert(count >= 0);
-            for (var i = 0; i < count; ++i) {
-                instruction.WriteLine("\t" + operation + "\t" + leftRegister);
-            }
-            instruction.RemoveRegisterAssignment(leftRegister);
-            instruction.AddChanged(leftRegister);
         }
     }
 }

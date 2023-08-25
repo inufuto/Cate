@@ -32,7 +32,7 @@ namespace Inu.Cate.MuCom87
                 wordRegister.LoadFromMemory(instruction, address);
                 for (var i = 0; i < count; ++i) {
                     Debug.Assert(wordRegister.High != null);
-                    instruction.WriteLine("\t" + operation + "x\t" + wordRegister.High.Name);
+                    instruction.WriteLine("\t" + operation + "x\t" + wordRegister.AsmName);
                 }
             }
             if (change) {
@@ -40,24 +40,24 @@ namespace Inu.Cate.MuCom87
             }
         }
 
-        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
+        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset,
             int count)
         {
             using (ReserveRegister(instruction, ByteRegister.A)) {
-                ByteRegister.A.LoadFromMemory(instruction, pointerRegister.Name);
+                ByteRegister.A.LoadFromMemory(instruction, pointerRegister.AsmName);
                 ByteRegister.A.Operate(instruction, operation, change, count);
-                ByteRegister.A.StoreToMemory(instruction, pointerRegister.Name);
+                ByteRegister.A.StoreToMemory(instruction, pointerRegister.AsmName);
             }
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
+        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
             int offset, int value)
         {
             switch (pointerRegister) {
-                case WordRegister wordRegister when offset == 0:
+                case PointerRegister wordRegister when offset == 0:
                     //TODO
                     break;
-                case WordRegister wordRegister:
+                case PointerRegister wordRegister:
                     wordRegister.TemporaryOffset(instruction, offset, () =>
                     {
                         StoreConstantIndirect(instruction, wordRegister, 0, value);
@@ -78,7 +78,7 @@ namespace Inu.Cate.MuCom87
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister register)
         {
             //throw new System.NotImplementedException();
-            var label = Compiler.TemporaryByte;
+            const string label = MuCom87.Compiler.TemporaryByte;
             register.StoreToMemory(instruction, label);
             return label;
         }

@@ -25,7 +25,7 @@ namespace Inu.Cate.Mc6809
                         var offset = variableOperand.Offset;
                         var registerId = variable.Register;
                         if (registerId is WordRegister register) {
-                            Debug.Assert(operation.Replace("\t", "").Length == 3);
+                            //Debug.Assert(operation.Replace("\t", "").Length == 3);
                             register.Operate(instruction, operation, count);
                             instruction.ResultFlags |= Instruction.Flag.Z;
                             return;

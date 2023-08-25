@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using static System.String;
 
 namespace Inu.Cate.MuCom87
@@ -8,7 +7,7 @@ namespace Inu.Cate.MuCom87
     {
         private static int subLabelIndex;
 
-        public CompareInstruction(Function function, int operatorId, Operand leftOperand, Operand rightOperand, Anchor anchor) : base(function, operatorId, leftOperand, rightOperand, anchor) { }
+        protected CompareInstruction(Function function, int operatorId, Operand leftOperand, Operand rightOperand, Anchor anchor) : base(function, operatorId, leftOperand, rightOperand, anchor) { }
 
         protected override void CompareByte()
         {
@@ -97,8 +96,8 @@ namespace Inu.Cate.MuCom87
                         var pointer = indirectOperand.Variable;
                         var offset = indirectOperand.Offset;
                         var register = GetVariableRegister(pointer, offset);
-                        if (register is WordRegister wordRegister) {
-                            OperateIndirect(operation, action, wordRegister);
+                        if (register is PointerRegister pointerRegister) {
+                            OperateIndirect(operation, action, pointerRegister);
                             return;
                         }
                         break;
@@ -110,22 +109,18 @@ namespace Inu.Cate.MuCom87
 
         protected abstract void OperateViaAccumulator(string operation, Action action);
 
-        private void OperateIndirect(string operation, Action action, WordRegister register)
+        private void OperateIndirect(string operation, Action action, PointerRegister pointerRegister)
         {
             ByteRegister.A.Load(this, LeftOperand);
-            WriteJumpLine("\t" + operation.Split('|')[0] + "x\t" + register.HighName);
+            WriteJumpLine("\t" + operation.Split('|')[0] + "x\t" + pointerRegister.AsmName);
             action();
         }
 
         private void OperateRegister(string operation, Action action, Cate.ByteRegister? register)
         {
-            switch (register) {
-                case ByteRegister byteRegister:
-                    OperateRegister(operation, action, byteRegister.Name);
-                    return;
-                    //case ByteWorkingRegister workingRegister:
-                    //    OperateWorkingRegister(operation, action, workingRegister.Name);
-                    //    return;
+            if (register is ByteRegister byteRegister) {
+                OperateRegister(operation, action, byteRegister.AsmName);
+                return;
             }
             throw new NotImplementedException();
         }
@@ -188,16 +183,35 @@ namespace Inu.Cate.MuCom87
             }
             throw new NotImplementedException();
         }
+
+        protected override void ComparePointer()
+        {
+            CompareWord();
+        }
+
         private void CallExternalWord(string functionName, string skip)
         {
-            using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
-                using (WordOperation.ReserveRegister(this, WordRegister.Bc)) {
-                    WordRegister.Bc.Load(this, RightOperand);
-                    WordRegister.Hl.Load(this, LeftOperand);
-                    Compiler.CallExternal(this, functionName);
+            if (LeftOperand.Type is PointerType) {
+                using (PointerOperation.ReserveRegister(this, PointerRegister.Hl)) {
+                    using (PointerOperation.ReserveRegister(this, PointerRegister.Bc)) {
+                        PointerRegister.Bc.Load(this, RightOperand);
+                        PointerRegister.Hl.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, functionName);
+                    }
+                    AddChanged(PointerRegister.Hl);
                 }
-                AddChanged(WordRegister.Hl);
             }
+            else {
+                using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                    using (WordOperation.ReserveRegister(this, WordRegister.Bc)) {
+                        WordRegister.Bc.Load(this, RightOperand);
+                        WordRegister.Hl.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, functionName);
+                    }
+                    AddChanged(WordRegister.Hl);
+                }
+            }
+
             if (skip.Equals("skz")) {
                 ((Compiler)Compiler).SkipIfZero(this);
             }

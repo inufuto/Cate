@@ -8,8 +8,8 @@
         {
             if (SourceOperand.SameStorage(DestinationOperand)) return;
 
-            var source = Tms99.Compiler.OperandToString(this, SourceOperand);
-            var destination = Tms99.Compiler.OperandToString(this, DestinationOperand);
+            var source = Tms99.Compiler.OperandToString(this, SourceOperand, false);
+            var destination = Tms99.Compiler.OperandToString(this, DestinationOperand, true);
             if (SourceOperand is IntegerOperand { IntegerValue: 0 } && destination != null) {
                 WriteLine("\tclr\t" + destination);
                 return;

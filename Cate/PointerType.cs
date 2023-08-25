@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
-using Inu.Language;
+﻿using Inu.Language;
 
 namespace Inu.Cate
 {
@@ -23,7 +21,7 @@ namespace Inu.Cate
             return ElementType.GetHashCode();
         }
 
-        public override int ByteCount => 2;
+        public override int ByteCount => Compiler.Instance.PointerByteCount;
         public override int Incremental => ElementType.ByteCount;
 
         public override Constant DefaultValue()

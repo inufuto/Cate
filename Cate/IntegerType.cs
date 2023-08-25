@@ -129,13 +129,12 @@ namespace Inu.Cate
 
         public override Value? ConvertType(Value value, Type type)
         {
-            if (type is IntegerType integerType) {
-                if (ByteCount == integerType.ByteCount) {
-                    return new TypeChange(integerType, value);
-                }
-                return new Resize(value, this, integerType);
-            }
-            return base.ConvertType(value, type);
+            return type switch
+            {
+                IntegerType integerType when ByteCount == integerType.ByteCount => new TypeChange(integerType, value),
+                IntegerType integerType => new Resize(value, this, integerType),
+                _ => base.ConvertType(value, type)
+            };
         }
 
         public override Type? CombineType(Type type)

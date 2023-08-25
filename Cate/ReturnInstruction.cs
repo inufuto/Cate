@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Linq;
+﻿using System.Linq;
 
 namespace Inu.Cate
 {
@@ -22,7 +21,7 @@ namespace Inu.Cate
             return "return " + SourceOperand;
         }
 
-        protected override Register? ResultRegister => SourceOperand != null ? Compiler.Instance.ReturnRegister(SourceOperand.Type.ByteCount) : null;
+        protected override Register? ResultRegister => SourceOperand != null ? Compiler.Instance.ReturnRegister((ParameterizableType)SourceOperand.Type) : null;
 
         public override bool IsJump()
         {
@@ -47,7 +46,7 @@ namespace Inu.Cate
         {
             if (SourceOperand == null)
                 return;
-            var register = Compiler.Instance.ReturnRegister(SourceOperand.Type.ByteCount);
+            var register = Compiler.Instance.ReturnRegister((ParameterizableType)SourceOperand.Type);
             switch (register) {
                 case ByteRegister byteRegister:
                     byteRegister.Load(this, SourceOperand);
@@ -56,6 +55,10 @@ namespace Inu.Cate
                 case WordRegister wordRegister:
                     wordRegister.Load(this, SourceOperand);
                     RemoveChanged(wordRegister);
+                    break;
+                case PointerRegister pointerRegister:
+                    pointerRegister.Load(this, SourceOperand);
+                    RemoveChanged(pointerRegister);
                     break;
             }
         }

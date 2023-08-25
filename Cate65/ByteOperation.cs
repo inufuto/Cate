@@ -27,9 +27,9 @@ namespace Inu.Cate.Mos6502
         }
 
         protected override void OperateIndirect(Instruction instruction, string operation, bool change,
-            WordRegister pointerRegister, int offset, int count)
+            PointerRegister pointerRegister, int offset, int count)
         {
-            if (!(pointerRegister is WordZeroPage zeroPage)) {
+            if (pointerRegister is not PointerZeroPage zeroPage) {
                 throw new NotImplementedException();
             }
             while (true) {
@@ -46,7 +46,7 @@ namespace Inu.Cate.Mos6502
             }
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, WordRegister pointerRegister, int offset,
+        public override void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset,
             int value)
         {
             using var reservation = ReserveAnyRegister(instruction);

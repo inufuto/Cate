@@ -36,7 +36,7 @@ namespace Inu.Cate.Tms99
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
-        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
+        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset,
             int count)
         {
             using (var reservation = ReserveAnyRegister(instruction)) {
@@ -50,7 +50,7 @@ namespace Inu.Cate.Tms99
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
+        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset, int value)
         {
             var candidates = Registers.Where(r => !r.Conflicts(pointerRegister)).ToList();
             using var reservation = ReserveAnyRegister(instruction, candidates);
@@ -72,13 +72,13 @@ namespace Inu.Cate.Tms99
         public static void Operate(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand)
         {
             if (destinationOperand.SameStorage(leftOperand)) {
-                if (Compiler.Operate(instruction, operation, rightOperand, destinationOperand)) return;
+                if (Tms99.Compiler.Operate(instruction, operation, rightOperand, destinationOperand)) return;
             }
 
             void ViaRegister(Cate.ByteRegister re)
             {
                 re.Load(instruction, leftOperand);
-                var right = Compiler.OperandToString(instruction, rightOperand);
+                var right = Tms99.Compiler.OperandToString(instruction, rightOperand, false);
                 if (right != null) {
                     instruction.WriteLine("\t" + operation + "\t" + right + "," + re.Name);
                     instruction.AddChanged(re);
@@ -139,8 +139,8 @@ namespace Inu.Cate.Tms99
         {
             Debug.Assert(instance != null);
 
-            var left = Compiler.OperandToString(instruction, leftOperand);
-            var right = Compiler.OperandToString(instruction, rightOperand);
+            var left = Tms99.Compiler.OperandToString(instruction, leftOperand, false);
+            var right = Tms99.Compiler.OperandToString(instruction, rightOperand, true);
             if (left != null) {
                 if (right != null) {
                     instruction.WriteLine("\t" + operation + "\t" + left + "," + right);
@@ -172,8 +172,8 @@ namespace Inu.Cate.Tms99
 
                 if (rightOperand is IndirectOperand { Variable: { Register: null } } indirectOperand) {
                     var offset = indirectOperand.Offset;
-                    var candidates = WordRegister.Registers.Where(r => r.IsOffsetInRange(offset)).ToList();
-                    using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                    var candidates = PointerOperation.RegistersToOffset(offset);
+                    using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
                     var pointerRegister = reservation.WordRegister;
                     pointerRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
                     if (offset == 0) {

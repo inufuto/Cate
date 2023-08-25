@@ -18,11 +18,11 @@ namespace Inu.Cate.Mc6800
             using var reservation = ByteOperation.ReserveAnyRegister(instruction);
             var register = reservation.ByteRegister;
             var leftTemporary = leftOperand is IndirectOperand leftIndirectOperand &&
-                                !WordRegister.X.IsOffsetInRange(leftIndirectOperand.Offset);
+                                !PointerRegister.X.IsOffsetInRange(leftIndirectOperand.Offset);
             var rightTemporary = rightOperand is IndirectOperand rightIndirectOperand &&
-                                 !WordRegister.X.IsOffsetInRange(rightIndirectOperand.Offset);
+                                 !PointerRegister.X.IsOffsetInRange(rightIndirectOperand.Offset);
             var destinationTemporary = destinationOperand is IndirectOperand destinationIndirectOperand &&
-                                       !WordRegister.X.IsOffsetInRange(destinationIndirectOperand.Offset);
+                                       !PointerRegister.X.IsOffsetInRange(destinationIndirectOperand.Offset);
 
             if (leftTemporary) {
                 ZeroPage.Word.From(instruction, leftOperand);

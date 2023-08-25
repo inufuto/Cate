@@ -3,35 +3,9 @@ using System.Linq;
 
 namespace Inu.Cate
 {
-    public abstract class WordOperation
+    public abstract class WordOperation : RegisterOperation<WordRegister>
     {
-        private class Saving : RegisterReservation.Saving
-        {
-            private readonly Cate.WordRegister register;
-
-            public Saving(Cate.WordRegister register, Instruction instruction, WordOperation wordOperation)
-            {
-                this.register = register;
-                register.Save(instruction);
-            }
-
-            public override void Restore(Instruction instruction)
-            {
-                register.Restore(instruction);
-            }
-        }
-        protected static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
-
-        public Compiler Compiler => Compiler.Instance;
-
-        public abstract List<WordRegister> Registers { get; }
-
         public List<WordRegister> PairRegisters => Registers.Where(r => r.IsPair()).ToList();
-
-        public List<WordRegister> PointerRegisters(int offset)
-        {
-            return Registers.Where(r => r.IsPointer(offset)).ToList();
-        }
 
         public virtual RegisterReservation ReserveRegister(Instruction instruction, WordRegister register)
         {
@@ -52,10 +26,10 @@ namespace Inu.Cate
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates, Operand sourceOperand)
         {
-            if (!(sourceOperand is VariableOperand variableOperand)) return ReserveAnyRegister(instruction, candidates);
+            if (sourceOperand is not VariableOperand variableOperand) return ReserveAnyRegister(instruction, candidates);
             {
                 var register = instruction.GetVariableRegister(variableOperand);
-                if (!(register is WordRegister wordRegister) || !candidates.Contains(register))
+                if (register is not WordRegister wordRegister || !candidates.Contains(register))
                     return ReserveAnyRegister(instruction, candidates);
                 return ReserveRegister(instruction, wordRegister, sourceOperand);
             }
@@ -88,10 +62,5 @@ namespace Inu.Cate
         }
 
         public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
-
-        public RegisterReservation.Saving Save(WordRegister register, Instruction instruction)
-        {
-            return new Saving(register, instruction, this);
-        }
     }
 }

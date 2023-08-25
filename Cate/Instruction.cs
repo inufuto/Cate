@@ -98,6 +98,7 @@ namespace Inu.Cate
         public Compiler Compiler => Compiler.Instance;
         public ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
         public WordOperation WordOperation => Compiler.Instance.WordOperation;
+        public PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
 
         public virtual bool IsJump() => false;
 
@@ -114,12 +115,9 @@ namespace Inu.Cate
             get
             {
                 var temporaryRegisterIds = new HashSet<Register>();
-                var changedRegisters = ResultRegister != null ? this.changedRegisters.Where(r => !Equals(r, ResultRegister)) : this.changedRegisters;
-                foreach (var changedRegister in changedRegisters) {
-                    var savingRegisters = Compiler.Instance.SavingRegisters(changedRegister);
-                    foreach (var savingRegister in savingRegisters) {
-                        temporaryRegisterIds.Add(savingRegister);
-                    }
+                var registers = ResultRegister != null ? changedRegisters.Where(r => !Equals(r, ResultRegister)) : changedRegisters;
+                foreach (var changedRegister in registers) {
+                    Compiler.Instance.AddSavingRegister(temporaryRegisterIds, changedRegister);
                 }
                 return temporaryRegisterIds;
             }
@@ -143,6 +141,7 @@ namespace Inu.Cate
                 if (
                     assignment is RegisterVariableAssignment variableAssignment &&
                     variableAssignment.Variable.SameStorage(variable) &&
+                    register.ByteCount == variable.FirstType!.ByteCount &&
                     variableAssignment.Offset == offset &&
                     IsMatch(register)
                 )
@@ -192,7 +191,7 @@ namespace Inu.Cate
 
         public void SetVariableRegister(Operand operand, Register? register)
         {
-            if (!(operand is VariableOperand variableOperand)) {
+            if (operand is not VariableOperand variableOperand) {
                 if (register != null) {
                     RemoveRegisterAssignment(register);
                 }
@@ -447,19 +446,32 @@ namespace Inu.Cate
             {
                 ByteRegister byteRegister => registerReservations.Any(reservation =>
                 {
-                    if (reservation.Register is WordRegister wordRegister) {
-                        return wordRegister.Contains(byteRegister);
-                    }
-
-                    return false;
+                    return reservation.Register switch
+                    {
+                        WordRegister wordRegister => wordRegister.Contains(byteRegister),
+                        PointerRegister pointerRegister => pointerRegister.WordRegister != null &&
+                                                           pointerRegister.WordRegister.Contains(byteRegister),
+                        _ => false
+                    };
                 }),
                 WordRegister wordRegister => registerReservations.Any(reservation =>
                 {
-                    if (reservation.Register is ByteRegister byteRegister) {
-                        return wordRegister.Contains(byteRegister);
-                    }
-
-                    return false;
+                    return reservation.Register switch
+                    {
+                        ByteRegister byteRegister => wordRegister.Contains(byteRegister),
+                        PointerRegister pointerRegister => Equals(pointerRegister.WordRegister, wordRegister),
+                        _ => false
+                    };
+                }),
+                PointerRegister pointerRegister => registerReservations.Any(reservation =>
+                {
+                    return reservation.Register switch
+                    {
+                        ByteRegister byteRegister => pointerRegister.WordRegister != null &&
+                                                     pointerRegister.WordRegister.Contains(byteRegister),
+                        WordRegister wordRegister => Equals(pointerRegister.WordRegister, wordRegister),
+                        _ => false
+                    };
                 }),
                 _ => false
             };
@@ -631,21 +643,28 @@ namespace Inu.Cate
 
         public void RemoveChanged(Register register)
         {
-            if (!(register is WordRegister wordRegister) || !wordRegister.IsPair()) {
-                changedRegisters.Remove(register);
-                return;
+            if (register is WordRegister wordRegister && wordRegister.IsPair()) {
+                Debug.Assert(wordRegister is { Low: { }, High: { } });
+                changedRegisters.Remove(wordRegister.Low);
+                changedRegisters.Remove(wordRegister.High);
             }
-            Debug.Assert(wordRegister is { Low: { }, High: { } });
-            changedRegisters.Remove(wordRegister.Low);
-            changedRegisters.Remove(wordRegister.High);
+            if (register is PointerRegister { WordRegister: { } } pointerRegister && pointerRegister.WordRegister.IsPair()) {
+                Debug.Assert(pointerRegister.WordRegister is { Low: { }, High: { } });
+                changedRegisters.Remove(pointerRegister.WordRegister.Low);
+                changedRegisters.Remove(pointerRegister.WordRegister.High);
+            }
+            //else {
+            changedRegisters.Remove(register);
+            //}
         }
 
         public bool IsChanged(Register register)
         {
-            if (!(register is WordRegister wordRegister) || !wordRegister.IsPair())
-                return changedRegisters.Contains(register);
-            Debug.Assert(wordRegister is { Low: { }, High: { } });
-            return changedRegisters.Contains(wordRegister.Low) || changedRegisters.Contains(wordRegister.High);
+            if (register is WordRegister wordRegister && wordRegister.IsPair()) {
+                Debug.Assert(wordRegister is { Low: { }, High: { } });
+                return changedRegisters.Contains(wordRegister.Low) || changedRegisters.Contains(wordRegister.High);
+            }
+            return changedRegisters.Contains(register);
         }
     }
 }

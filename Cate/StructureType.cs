@@ -59,6 +59,7 @@ namespace Inu.Cate
 
         public override int Incremental => throw new System.NotImplementedException();
         public override int MaxElementSize => Members.Select(m => m.Type.MaxElementSize).Max();
+        public override ParameterizableType? FirstPrimitiveType => Members.Count > 0 ? Members[0].Type.FirstPrimitiveType : null;
 
         public override Constant DefaultValue()
         {

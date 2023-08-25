@@ -1,11 +1,13 @@
 cseg
 cate.ShiftLeftHl: public cate.ShiftLeftHl
-    inc b
-    dec b
-    if nz
-        do
-            sla l
-            rl h
-        dwnz
-    endif
+    push bc
+        inc b
+        dec b
+        if nz
+            do
+                sla l
+                rl h
+            dwnz
+        endif
+    pop bc
 ret

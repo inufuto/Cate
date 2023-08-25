@@ -104,6 +104,7 @@ namespace Inu.Cate
         }
 
         public ImmutableSortedDictionary<int, Usage> Usages => usages.ToImmutableSortedDictionary();
+        public Type? FirstType => Type.FirstPrimitiveType;
 
         public bool IsConstant() => value != null;
 
@@ -121,7 +122,7 @@ namespace Inu.Cate
             else {
                 if (register != null) {
                     if (!IsTemporary()) {
-                        writer.WriteLine("\t;" + Name + " => register " + register.Name);
+                        writer.WriteLine("\t;" + Name + " => register " + register.AsmName);
                     }
                 }
                 else if (localVariableId != null) {
@@ -249,13 +250,15 @@ namespace Inu.Cate
         {
             var s = new StringBuilder();
             s.Append(Label);
-            if (offset > 0) {
-                s.Append('+');
-                s.Append(offset.ToString());
-            }
-            else if (offset < 0) {
-                s.Append('-');
-                s.Append((-offset).ToString());
+            switch (offset) {
+                case > 0:
+                    s.Append('+');
+                    s.Append(offset.ToString());
+                    break;
+                case < 0:
+                    s.Append('-');
+                    s.Append((-offset).ToString());
+                    break;
             }
             return s.ToString();
         }

@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Inu.Cate.Mc6800
 {
     internal class Compiler : Cate.Compiler
     {
-        public Compiler() : base(new ByteOperation(), new WordOperation()) { }
+        public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
         protected override void WriteAssembly(StreamWriter writer)
         {
             //writer.WriteLine("\tinclude\t'Temp6800.inc'");
@@ -20,15 +19,16 @@ namespace Inu.Cate.Mc6800
             base.WriteAssembly(writer);
         }
 
-
-        public override ISet<Register> SavingRegisters(Register register)
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            return !Equals(register, WordRegister.X) ? new HashSet<Register>() { register } : new HashSet<Register>();
+            if (Equals(register, WordRegister.X)) return;
+            base.AddSavingRegister(registers, register);
         }
+
 
         public override void AllocateRegisters(List<Variable> variables, Function function)
         {
-            IEnumerable<Variable> TargetVariables() => variables.Where(v => v.Register == null && !v.Static && v.Type.ByteCount == 1);
+            IEnumerable<Variable> TargetVariables() => variables.Where(v => v.Register == null && v is { Static: false, Type.ByteCount: 1 });
 
             var rangeOrdered = TargetVariables().Where(v => v.Parameter == null).OrderBy(v => v.Range)
                 .ThenByDescending(v => v.Usages.Count);
@@ -57,9 +57,13 @@ namespace Inu.Cate.Mc6800
             return index == 0 && type.ByteCount == 1 ? ByteRegister.A : null;
         }
 
-        public override Register ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(ParameterizableType type)
         {
-            return byteCount == 1 ? (Register)ByteRegister.A : WordRegister.X;
+            return type.ByteCount switch
+            {
+                1 => ByteRegister.A,
+                _ => type is PointerType ? PointerRegister.X : WordRegister.X
+            };
         }
 
         protected override LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
@@ -72,6 +76,12 @@ namespace Inu.Cate.Mc6800
             Operand sourceOperand)
         {
             return new WordLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
+        protected override LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
         }
 
         public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
@@ -174,7 +184,7 @@ namespace Inu.Cate.Mc6800
             return new MultiplyInstruction(function, destinationOperand, leftOperand, rightValue);
         }
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register returnRegisterId)
+        public override IEnumerable<Register> IncludedRegisters(Register returnRegisterId)
         {
             return new List<Register>();
         }
@@ -257,8 +267,8 @@ namespace Inu.Cate.Mc6800
                     ByteRegister.B.LoadConstant(instruction, "low " + value);
                     return;
                 case PointerOperand pointerOperand:
-                    ByteRegister.A.LoadConstant(instruction, "high(" + pointerOperand.MemoryAddress()+")");
-                    ByteRegister.B.LoadConstant(instruction, "low(" + pointerOperand.MemoryAddress()+")");
+                    ByteRegister.A.LoadConstant(instruction, "high(" + pointerOperand.MemoryAddress() + ")");
+                    ByteRegister.B.LoadConstant(instruction, "low(" + pointerOperand.MemoryAddress() + ")");
                     return;
                 case VariableOperand variableOperand: {
                         var variable = variableOperand.Variable;
@@ -271,9 +281,10 @@ namespace Inu.Cate.Mc6800
                         var pointer = indirectOperand.Variable;
                         var offset = indirectOperand.Offset;
                         Debug.Assert(pointer.Register == null);
-                        WordRegister.X.LoadFromMemory(instruction, pointer, 0);
-                        ByteRegister.A.LoadIndirect(instruction, WordRegister.X, offset);
-                        ByteRegister.B.LoadIndirect(instruction, WordRegister.X, offset + 1);
+                        var pointerRegister = PointerRegister.X;
+                        pointerRegister.LoadFromMemory(instruction, pointer, 0);
+                        ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset);
+                        ByteRegister.B.LoadIndirect(instruction, pointerRegister, offset + 1);
                         return;
                     }
             }

@@ -21,16 +21,44 @@ namespace Inu.Cate.Mc6800
                 _ => throw new NotImplementedException()
             };
 
+            Action load, save;
+            if (LeftOperand.Type is PointerType)
+            {
+                load = () =>
+                {
+                    PointerRegister.X.Load(this, LeftOperand);
+                };
+            }
+            else
+            {
+                load = () =>
+                {
+                    WordRegister.X.Load(this, LeftOperand);
+                };
+            }
+            if (DestinationOperand.Type is PointerType) {
+                save = () =>
+                {
+                    PointerRegister.X.Store(this, DestinationOperand);
+                };
+            }
+            else {
+                save = () =>
+                {
+                    WordRegister.X.Store(this, DestinationOperand);
+                };
+            }
+
             if (RightOperand is IntegerOperand integerOperand) {
                 var rightConstant = integerOperand.IntegerValue;
-                if (rightConstant >= 0 && rightConstant < 0x100) {
+                if (rightConstant is >= 0 and < 0x100) {
                     void AddByte(Cate.ByteRegister byteRegister)
                     {
                         functionName += byteRegister.Name.ToUpper();
-                        WordRegister.X.Load(this, LeftOperand);
+                        load();
                         byteRegister.LoadConstant(this, rightConstant);
                         Compiler.CallExternal(this, functionName);
-                        WordRegister.X.Store(this, DestinationOperand);
+                        save();
                     }
 
                     if (!IsRegisterReserved(ByteRegister.A)) {
@@ -54,14 +82,14 @@ namespace Inu.Cate.Mc6800
                 }
             }
             functionName += "AB";
-            WordRegister.X.Load(this, LeftOperand);
+            load();
             using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                 using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
                     Mc6800.Compiler.LoadPairRegister(this, RightOperand);
                     Compiler.CallExternal(this, functionName);
                 }
             }
-            WordRegister.X.Store(this, DestinationOperand);
+            save();
         }
 
         protected override void Increment(int count)
@@ -77,11 +105,32 @@ namespace Inu.Cate.Mc6800
 
         private void IncrementOrDecrement(string operation, int count)
         {
-            WordRegister.X.Load(this, LeftOperand);
+            Action load, save;
+            if (LeftOperand.Type is PointerType) {
+                load = () =>
+                {
+                    PointerRegister.X.Load(this, LeftOperand);
+                };
+                save = () =>
+                {
+                    PointerRegister.X.Store(this, DestinationOperand);
+                };
+            }
+            else {
+                load = () =>
+                {
+                    WordRegister.X.Load(this, LeftOperand);
+                };
+                save = () =>
+                {
+                    WordRegister.X.Store(this, DestinationOperand);
+                };
+            }
+            load();
             for (var i = 0; i < count; ++i) {
                 WriteLine("\t" + operation);
             }
-            WordRegister.X.Store(this, DestinationOperand);
+            save();
         }
     }
 }

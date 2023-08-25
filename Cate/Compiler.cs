@@ -17,6 +17,7 @@ namespace Inu.Cate
         public static Compiler Instance { get; private set; } = null!;
         public readonly ByteOperation ByteOperation;
         public readonly WordOperation WordOperation;
+        public readonly PointerOperation PointerOperation;
         private readonly Tokenizer tokenizer = new Tokenizer();
         private readonly Dictionary<SourcePosition, string> errors = new Dictionary<SourcePosition, string>();
         private List<Token>? tokens = null;
@@ -30,11 +31,12 @@ namespace Inu.Cate
         private readonly ISet<string> externalNames = new SortedSet<string>();
 
 
-        protected Compiler(ByteOperation byteOperation, WordOperation wordOperation)
+        protected Compiler(ByteOperation byteOperation, WordOperation wordOperation, PointerOperation pointerOperation)
         {
             Debug.Assert(Instance == null);
             ByteOperation = byteOperation;
             WordOperation = wordOperation;
+            PointerOperation = pointerOperation;
             Instance = this;
             currentBlock = globalBlock;
             ReservedWord.AddWords(Keyword.Words);
@@ -70,7 +72,7 @@ namespace Inu.Cate
         {
             if (errors.ContainsKey(position))
                 return;
-            string s = $"{position}: {error}";
+            var s = $"{position}: {error}";
             errors[position] = s;
             Console.Error.WriteLine(s);
         }
@@ -1061,7 +1063,8 @@ namespace Inu.Cate
             while (true) {
                 if (CurrentToken is ReservedWord operatorToken) {
                     var operatorId = operatorToken.Id;
-                    if (!BinomialLevels[level].Contains(operatorId))
+                    var binomialLevel = BinomialLevels[level];
+                    if (binomialLevel != null && !binomialLevel.Contains(operatorId))
                         return left;
                     var rightToken = NextToken();
                     var right = factorFunction();
@@ -1209,7 +1212,7 @@ namespace Inu.Cate
             var value = ParseFactor();
             if (value == null) { return null; }
         repeat:
-            if (!(CurrentToken is ReservedWord operatorToken))
+            if (CurrentToken is not ReservedWord operatorToken)
                 return value;
             switch (operatorToken.Id) {
                 case '[': {
@@ -1289,8 +1292,7 @@ namespace Inu.Cate
                 return value;
             }
             value = ParseNamedValue();
-            if (value != null) { return value; }
-            return ParseLiteral();
+            return value ?? ParseLiteral();
         }
 
         private Value? ParseNamedValue()
@@ -1303,7 +1305,7 @@ namespace Inu.Cate
                 throw new UndefinedIdentifierError(identifier);
             return namedValue switch
             {
-                Variable variable when variable.Type is ArrayType arrayType => new ConstantPointer(
+                Variable { Type: ArrayType arrayType } variable => new ConstantPointer(
                     arrayType.ToPointerType(), variable, 0, arrayType.ElementCount),
                 Variable variable => new VariableValue(variable),
                 NamedConstant namedConstant => namedConstant.Value,
@@ -1387,11 +1389,12 @@ namespace Inu.Cate
             return constantBoolean;
         }
 
-        public ConstantPointer ParseConstantPointer()
+        public Constant ParseConstantPointer()
         {
             var token = CurrentToken;
             var value = ParseConstantExpression();
-            if (!(value is ConstantPointer constantInteger)) {
+            if (value is NullPointer) return value;
+            if (value is not ConstantPointer constantInteger) {
                 throw new TypeMismatchError(token);
             }
             return constantInteger;
@@ -1472,24 +1475,99 @@ namespace Inu.Cate
             }
         }
 
-        public abstract ISet<Register> SavingRegisters(Register register);
-
-        private IEnumerable<Register> SavingRegisterIds(IEnumerable<Register> registers)
+        public virtual void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            var savingRegisterIds = new HashSet<Register>();
-            foreach (var register in registers) {
-                var set = SavingRegisters(register);
-                foreach (var r in set) {
-                    savingRegisterIds.Add(r);
+            if (registers.Contains(register)) return;
+
+            if (register is ByteRegister byteRegister) {
+                var pairRegister = byteRegister.PairRegister;
+                if (pairRegister != null) {
+                    if (registers.Contains(pairRegister)) return;
+                    if (registers.Any(r => r is PointerRegister p && Equals(p.WordRegister, pairRegister))) return;
+                    var added = new HashSet<Register>();
+                    var removed = new HashSet<Register>();
+                    foreach (var r in registers) {
+                        if (r is not ByteRegister b || !Equals(b.PairRegister, pairRegister)) continue;
+                        added.Add(pairRegister);
+                        removed.Add(b);
+                    }
+                    if (added.Any()) {
+                        foreach (var r in removed) {
+                            registers.Remove(r);
+                        }
+                        foreach (var r in added) {
+                            registers.Add(r);
+                        }
+                        return;
+                    }
                 }
             }
-            return savingRegisterIds;
+            if (register is WordRegister wordRegister) {
+                if (registers.Any(r => r is PointerRegister p && Equals(p.WordRegister, wordRegister))) return;
+                var added = new HashSet<Register>();
+                var removed = new HashSet<Register>();
+                foreach (var r in registers) {
+                    if (r is not ByteRegister b || !Equals(b.PairRegister, wordRegister)) continue;
+                    added.Add(wordRegister);
+                    removed.Add(b);
+                }
+                if (added.Any()) {
+                    foreach (var r in removed) {
+                        registers.Remove(r);
+                    }
+                    foreach (var r in added) {
+                        registers.Add(r);
+                    }
+                    return;
+                }
+            }
+            if (register is PointerRegister { WordRegister: { } } pointerRegister) {
+                var added = new HashSet<Register>();
+                var removed = new HashSet<Register>();
+                foreach (var r in registers) {
+                    switch (r) {
+                        case ByteRegister b when Equals(b.PairRegister, pointerRegister.WordRegister):
+                            added.Add(pointerRegister);
+                            removed.Add(b);
+                            break;
+                        case WordRegister w when Equals(w, pointerRegister.WordRegister):
+                            added.Add(pointerRegister);
+                            removed.Add(w);
+                            break;
+                    }
+                }
+                if (added.Any()) {
+                    foreach (var r in removed) {
+                        registers.Remove(r);
+                    }
+                    foreach (var r in added) {
+                        registers.Add(r);
+                    }
+                    return;
+                }
+            }
+            registers.Add(register);
+        }
+
+
+        protected ISet<Register> SavingRegisters(Register register)
+        {
+            return SavingRegisters(new List<Register>() { register });
+        }
+
+        public ISet<Register> SavingRegisters(IEnumerable<Register> registers)
+        {
+            var savingRegisters = new HashSet<Register>();
+            foreach (var register in registers) {
+                AddSavingRegister(savingRegisters, register);
+            }
+            return savingRegisters;
         }
 
 
         public virtual void SaveRegisters(StreamWriter writer, ISet<Register> registers)
         {
-            var set = SavingRegisterIds((ISet<Register>)registers).ToImmutableSortedSet();
+            var set = SavingRegisters(registers).ToImmutableSortedSet();
             foreach (var r in set) {
                 r.Save(writer, null, false, 0);
             }
@@ -1499,15 +1577,14 @@ namespace Inu.Cate
         {
             var dictionary = DistinctRegisters(variables);
             foreach (var (register, list) in dictionary.OrderBy(p => p.Key)) {
-                var comment = "\t; " + String.Join(',', list.Select(v => v.Name).ToArray());
+                var comment = "\t; " + string.Join(',', list.Select(v => v.Name).ToArray());
                 register.Save(writer, comment, jump, tabCount);
             }
         }
 
         public virtual void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int byteCount)
         {
-            foreach (var register in SavingRegisterIds(registers).ToImmutableSortedSet().Reverse())
-            {
+            foreach (var register in SavingRegisters(registers).ToImmutableSortedSet().Reverse()) {
                 RestoreRegister(writer, register, byteCount);
             }
         }
@@ -1521,7 +1598,7 @@ namespace Inu.Cate
         {
             var dictionary = DistinctRegisters(variables);
             foreach (var (register, list) in dictionary.OrderByDescending(p => p.Key)) {
-                var comment = "\t; " + String.Join(',', list.Select(v => v.Name).ToArray());
+                var comment = "\t; " + string.Join(',', list.Select(v => v.Name).ToArray());
                 register.Restore(writer, comment, jump, tabCount);
             }
         }
@@ -1531,7 +1608,8 @@ namespace Inu.Cate
             var dictionary = new Dictionary<Register, List<Variable>>();
             foreach (var variable in variables) {
                 Debug.Assert(variable.Register != null);
-                var registers = SavingRegisters(variable.Register);
+                var registers = new HashSet<Register>();
+                AddSavingRegister(registers, variable.Register);
                 foreach (var register in registers) {
                     if (dictionary.TryGetValue(register, out var list)) {
                         list.Add(variable);
@@ -1546,7 +1624,7 @@ namespace Inu.Cate
 
         public abstract void AllocateRegisters(List<Variable> variables, Function function);
         public abstract Register? ParameterRegister(int index, ParameterizableType type);
-        public abstract Register? ReturnRegister(int byteCount);
+        public abstract Register? ReturnRegister(ParameterizableType type);
 
         public LoadInstruction CreateLoadInstruction(Function function, AssignableOperand destinationOperand,
             Operand sourceOperand)
@@ -1554,13 +1632,29 @@ namespace Inu.Cate
             return destinationOperand.Type.ByteCount switch
             {
                 1 => CreateByteLoadInstruction(function, destinationOperand, sourceOperand),
-                _ => CreateWordLoadInstruction(function, destinationOperand, sourceOperand)
+                _ => destinationOperand.Type is PointerType ? CreatePointerLoadInstruction(function, destinationOperand, sourceOperand) : CreateWordLoadInstruction(function, destinationOperand, sourceOperand)
             };
         }
 
-        protected abstract LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand);
 
-        protected abstract LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand);
+        protected virtual LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new ByteLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
+        protected virtual LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new WordLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
+        protected virtual LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
 
         public abstract BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
             AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand);
@@ -1586,7 +1680,7 @@ namespace Inu.Cate
             AssignableOperand destinationOperand,
             Operand leftOperand, int rightValue);
 
-        public abstract IEnumerable<Register> IncludedRegisterIds(Register register);
+        public abstract IEnumerable<Register> IncludedRegisters(Register register);
 
         public void AddExternalName(string externalName)
         {
@@ -1628,6 +1722,8 @@ namespace Inu.Cate
         public virtual IntegerType CounterType => IntegerType.ByteType;
         public virtual string ParameterPrefix => "@";
         public virtual string LabelPrefix => "@";
+        public virtual string PointerConstantDirective => "defw";
+        public virtual int PointerByteCount => 2;
 
         public int AlignedSize(int size)
         {
@@ -1671,7 +1767,7 @@ namespace Inu.Cate
             MakeAlignment(writer, ref offset);
         }
 
-        public virtual void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
+        public virtual void RemoveSavingRegister(ISet<Register> savedRegisters, int byteCount)
         { }
     }
 }

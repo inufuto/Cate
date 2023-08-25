@@ -19,70 +19,6 @@ namespace Inu.Cate.Mc6800
             return X;
         }
 
-        public override bool IsIndex() => true;
-
-        public override void Add(Instruction instruction, int offset)
-        {
-            if (offset == 0)
-                return;
-            if (offset > 0 && offset <= 16) {
-                while (offset > 0) {
-                    instruction.WriteLine("\tinx");
-                    --offset;
-                }
-                instruction.RemoveRegisterAssignment(X);
-                return;
-            }
-            if (offset < 0 && offset >= -16) {
-                while (offset < 0) {
-                    instruction.WriteLine("\tdex");
-                    ++offset;
-                }
-                instruction.RemoveRegisterAssignment(X);
-                return;
-            }
-
-            if (offset >= 0 && offset < 0x100) {
-                void AddByte(Cate.ByteRegister byteRegister)
-                {
-                    byteRegister.LoadConstant(instruction, offset);
-                    instruction.Compiler.CallExternal(instruction, "Cate.AddX" + byteRegister.Name.ToUpper());
-                    instruction.RemoveRegisterAssignment(X);
-                }
-                if (!instruction.IsRegisterReserved(ByteRegister.A)) {
-                    using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-                        AddByte(ByteRegister.A);
-                        instruction.RemoveRegisterAssignment(ByteRegister.A);
-                    }
-                    return;
-                }
-                if (!instruction.IsRegisterReserved(ByteRegister.B)) {
-                    using (ByteOperation.ReserveRegister(instruction, ByteRegister.B)) {
-                        AddByte(ByteRegister.B);
-                        instruction.RemoveRegisterAssignment(ByteRegister.B);
-                    }
-                    return;
-                }
-                using var reservation = ByteOperation.ReserveAnyRegister(instruction);
-                AddByte(reservation.ByteRegister);
-                return;
-            }
-            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-                ByteRegister.A.LoadConstant(instruction, "high " + offset);
-                using (ByteOperation.ReserveRegister(instruction, ByteRegister.B)) {
-                    ByteRegister.B.LoadConstant(instruction, "low " + offset);
-                    instruction.Compiler.CallExternal(instruction, "Cate.AddXAB");
-                    instruction.RemoveRegisterAssignment(X);
-                    instruction.RemoveRegisterAssignment(ByteRegister.B);
-                }
-                instruction.RemoveRegisterAssignment(ByteRegister.A);
-            }
-        }
-
-        public override bool IsOffsetInRange(int offset) => offset >= 0 && offset <= 0xff;
-
-        public override bool IsPointer(int offset) => true;   //IsOffsetInRange(offset);
-
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tldx\t#" + value);
@@ -95,43 +31,6 @@ namespace Inu.Cate.Mc6800
             Debug.Assert(Equals(X));
             instruction.WriteLine("\tldx\t" + label);
         }
-
-
-        //public override void Load(Instruction instruction, Operand sourceOperand)
-        //{
-        //    Debug.Assert(Equals(this, X));
-
-        //    switch (sourceOperand) {
-        //        case IntegerOperand integerOperand:
-        //            var value = integerOperand.IntegerValue;
-        //            if (instruction.IsConstantAssigned(this, value)) return;
-        //            LoadConstant(instruction, value.ToString());
-        //            instruction.SetRegisterConstant(this, value);
-        //            return;
-        //        case PointerOperand pointerOperand:
-        //            instruction.WriteLine("\tldx\t#" + pointerOperand.MemoryAddress());
-        //            instruction.RemoveRegisterAssignment(X);
-        //            return;
-        //        case VariableOperand variableOperand: {
-        //                var register = instruction.GetVariableRegister(variableOperand);
-        //                if (Equals(register, X))
-        //                    return;
-        //                var variable = variableOperand.Variable;
-        //                var offset = variableOperand.Offset;
-        //                LoadFromMemory(instruction, variable, offset);
-        //                return;
-        //            }
-        //        case IndirectOperand indirectOperand: {
-        //                var pointer = indirectOperand.Variable;
-        //                var offset = indirectOperand.Offset;
-        //                Debug.Assert(pointer.Register == null);
-        //                X.LoadFromMemory(instruction, pointer, 0);
-        //                X.LoadIndirect(instruction, WordRegister.X, offset);
-        //                return;
-        //            }
-        //    }
-        //    throw new NotImplementedException();
-        //}
 
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
@@ -158,13 +57,14 @@ namespace Inu.Cate.Mc6800
                     var offset = indirectOperand.Offset;
                     instruction.WriteLine("\tstx\t" + ZeroPage.Word);
                     Debug.Assert(pointer.Register == null);
-                    X.LoadFromMemory(instruction, pointer, 0);
+                    var pointerRegister = PointerRegister.X;
+                    pointerRegister.LoadFromMemory(instruction, pointer, 0);
                     using (var reservation = ByteOperation.ReserveAnyRegister(instruction)) {
                         var register = reservation.ByteRegister;
                         instruction.WriteLine("\tlda" + register + "\t" + ZeroPage.WordLow);
-                        register.StoreIndirect(instruction, X, offset + 1);
+                        register.StoreIndirect(instruction, pointerRegister, offset + 1);
                         instruction.WriteLine("\tlda" + register + "\t" + ZeroPage.WordHigh);
-                        register.StoreIndirect(instruction, X, offset);
+                        register.StoreIndirect(instruction, pointerRegister, offset);
                     }
                     return;
             }
@@ -179,12 +79,12 @@ namespace Inu.Cate.Mc6800
         }
 
 
-        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Equals(this, WordRegister.X));
-            Debug.Assert(Equals(pointerRegister, WordRegister.X));
+            Debug.Assert(Equals(pointerRegister, PointerRegister.X));
             while (true) {
-                if (X.IsOffsetInRange(offset)) {
+                if (PointerRegister.X.IsOffsetInRange(offset)) {
                     instruction.WriteLine("\tldx\t" + offset + ",x");
                     instruction.ResultFlags |= Instruction.Flag.Z;
                     instruction.RemoveRegisterAssignment(X);
@@ -198,14 +98,37 @@ namespace Inu.Cate.Mc6800
 
         public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
-            LoadFromMemory(instruction, pointer, 0);
-            LoadIndirect(instruction, this, offset);
+            PointerRegister.X.LoadFromMemory(instruction, pointer, 0);
+            LoadIndirect(instruction, PointerRegister.X, offset);
+        }
+
+        public override void StoreIndirect(Instruction instruction, Variable pointer, int offset)
+        {
+            StoreToMemory(instruction, "<"+ZeroPage.Word.Label);
+            var variableRegister = instruction.GetVariableRegister(pointer, 0);
+            if (Equals(variableRegister, PointerRegister.X)) {
+                ViaRegister();
+                return;
+            }
+            using var registerReservation = PointerOperation.ReserveRegister(instruction, PointerRegister.X);
+            ViaRegister();
+            return;
+
+            void ViaRegister()
+            {
+                X.LoadFromMemory(instruction, pointer, 0);
+                using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
+                var byteRegister = reservation.ByteRegister;
+                byteRegister.LoadFromMemory(instruction, "<" + ZeroPage.Word.High.Label);
+                instruction.WriteLine("\tsta" + byteRegister.AsmName + "\t" + offset + "+0,x");
+                byteRegister.LoadFromMemory(instruction, "<" + ZeroPage.Word.Low.Label);
+                instruction.WriteLine("\tsta" + byteRegister.AsmName + "\t" + offset + "+1,x");
+            }
         }
 
 
-        public override void StoreIndirect(Instruction instruction, Cate.WordRegister destinationPointerRegister, int destinationOffset)
+        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister destinationPointerRegister, int destinationOffset)
         {
-            // TODO
             throw new NotImplementedException();
         }
 
@@ -216,20 +139,6 @@ namespace Inu.Cate.Mc6800
         }
 
 
-        //public static void OperateIndirect(Instruction instruction, string operation, int offset, int count)
-        //{
-        //    while (true) {
-        //        if (X.IsOffsetInRange(offset)) {
-        //            for (var i = 0; i < count; ++i) {
-        //                instruction.WriteLine("\t" + operation + "\t" + offset + ",x");
-        //            }
-        //            instruction.ResultFlags |= Instruction.Flag.Z;
-        //            return;
-        //        }
-        //        X.Add(instruction, offset);
-        //        offset = 0;
-        //    }
-        //}
         private void OperateConstant(Instruction instruction, string operation, bool change, string value)
         {
             instruction.WriteLine("\t" + operation + Name + "\t#" + value);
@@ -288,16 +197,6 @@ namespace Inu.Cate.Mc6800
                         OperateMemory(instruction, operation, change, variable, offset);
                         return;
                     }
-                    //case IndirectOperand indirectOperand: {
-                    //        var pointer = indirectOperand.Variable;
-                    //        var offset = indirectOperand.Offset;
-                    //        if (pointer.Register is WordRegister pointerRegister) {
-                    //            OperateIndirect(instruction, operation, pointerRegister, offset);
-                    //            return;
-                    //        }
-                    //        OperateIndirect(instruction, operation, pointer, offset);
-                    //        return;
-                    //    }
             }
             throw new NotImplementedException();
         }

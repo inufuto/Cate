@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -27,8 +25,8 @@ namespace Inu.Cate.Tms99
                 goto jump;
             }
 
-            var left = Tms99.Compiler.OperandToString(this, LeftOperand);
-            var right = Tms99.Compiler.OperandToString(this, RightOperand);
+            var left = Tms99.Compiler.OperandToString(this, LeftOperand, false);
+            var right = Tms99.Compiler.OperandToString(this, RightOperand, true);
             if (left != null) {
                 if (right != null) {
                     WriteLine("\tcb\t" + left + "," + right);
@@ -64,7 +62,7 @@ namespace Inu.Cate.Tms99
         {
             if (RightOperand is IntegerOperand integerOperand) {
                 if (integerOperand.IntegerValue == 0) {
-                    if (OperatorId == Keyword.Equal || OperatorId == Keyword.NotEqual) {
+                    if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
                         if (LeftOperand is VariableOperand variableOperand) {
                             var registerId = GetVariableRegister(variableOperand);
                             if (registerId != null) {
@@ -77,11 +75,33 @@ namespace Inu.Cate.Tms99
                 }
                 Tms99.WordOperation.OperateConstant(this, "ci", LeftOperand, integerOperand.IntegerValue);
             }
-            else if (RightOperand is PointerOperand pointerOperand) {
-                Tms99.WordOperation.OperateConstant(this, "ci", LeftOperand, pointerOperand.MemoryAddress());
-            }
             else {
                 Tms99.WordOperation.Operate(this, "c", LeftOperand, RightOperand);
+            }
+        jump:
+            Jump();
+        }
+
+        protected override void ComparePointer()
+        {
+            if (RightOperand is NullPointerOperand) {
+                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
+                    if (LeftOperand is VariableOperand variableOperand) {
+                        var leftRegister = GetVariableRegister(variableOperand);
+                        if (leftRegister != null) {
+                            if (CanOmitOperation(Flag.Z)) {
+                                goto jump;
+                            }
+                        }
+                    }
+                }
+                Tms99.PointerOperation.OperateConstant(this, "ci", LeftOperand, "0");
+            }
+            else if (RightOperand is PointerOperand pointerOperand) {
+                Tms99.PointerOperation.OperateConstant(this, "ci", LeftOperand, pointerOperand.MemoryAddress());
+            }
+            else {
+                Tms99.PointerOperation.Operate(this, "c", LeftOperand, RightOperand);
             }
         jump:
             Jump();

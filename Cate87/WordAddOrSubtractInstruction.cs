@@ -14,7 +14,7 @@ namespace Inu.Cate.MuCom87
             }
             else {
                 if (RightOperand.Register is WordRegister rightRegister) {
-                    if (rightRegister.IsAddable() && IsOperatorExchangeable()) {
+                    if (!Equals(rightRegister, WordRegister.Hl) && IsOperatorExchangeable()) {
                         ExchangeOperands();
                     }
                 }
@@ -78,7 +78,7 @@ namespace Inu.Cate.MuCom87
             Debug.Assert(count >= 0);
             Debug.Assert(leftRegister.High != null);
             for (var i = 0; i < count; ++i) {
-                instruction.WriteLine("\t" + operation + "\t" + leftRegister.High.Name);
+                instruction.WriteLine("\t" + operation + "\t" + leftRegister.AsmName);
             }
             instruction.RemoveRegisterAssignment(leftRegister);
             instruction.AddChanged(leftRegister);

@@ -42,8 +42,9 @@ namespace Inu.Cate
 
         public override void WriteAssembly(StreamWriter writer)
         {
+            var directive = Compiler.Instance.PointerConstantDirective;
             if (Variable != null) {
-                writer.Write("\tdefw " + Variable.Label);
+                writer.Write("\t" + directive + " " + Variable.Label);
                 if (Offset != 0) {
                     writer.Write(" + " + Type.ElementType.ByteCount * Offset);
                 }
@@ -51,7 +52,7 @@ namespace Inu.Cate
                 writer.WriteLine();
             }
             else {
-                writer.WriteLine("\tdefw 0");
+                writer.WriteLine("\t" + directive + " 0");
             }
         }
 
@@ -77,7 +78,7 @@ namespace Inu.Cate
 
         public override void WriteAssembly(StreamWriter writer)
         {
-            writer.WriteLine("\tdefw " + 0);
+            writer.WriteLine("\t" + Compiler.PointerConstantDirective + " " + 0);
         }
 
         public override Operand ToOperand()
@@ -94,7 +95,7 @@ namespace Inu.Cate
         }
     }
 
-    class VoidType : Type
+    class VoidType : ParameterizableType
     {
         public static readonly VoidType Type = new VoidType();
 

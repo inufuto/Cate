@@ -19,7 +19,7 @@
                 return;
             }
 
-            if (SourceOperand.Register is ByteRegister byteRegister && DestinationOperand is VariableOperand variableOperand && variableOperand.Register == null) {
+            if (SourceOperand.Register is ByteRegister byteRegister && DestinationOperand is VariableOperand { Register: null } variableOperand) {
                 byteRegister.StoreToMemory(this, variableOperand.Variable, variableOperand.Offset);
                 return;
             }

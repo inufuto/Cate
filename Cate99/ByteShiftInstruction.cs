@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Inu.Cate.Tms99
 {
@@ -18,10 +19,12 @@ namespace Inu.Cate.Tms99
             };
             var r0 = ByteRegister.FromIndex(0);
             var r1 = ByteRegister.FromIndex(1);
-            using (ByteOperation.ReserveRegister(this, r1)) {
+            var candidates = ByteRegister.Registers.Where(r=>!Equals(r, r0)).ToList();
+            using (var reservation = ByteOperation.ReserveAnyRegister(this,candidates, RightOperand)) {
                 void CallShift()
                 {
                     r0.Load(this, LeftOperand);
+                    r1.CopyFrom(this, reservation.ByteRegister);
                     r1.Expand(this, ((IntegerType)RightOperand.Type).Signed);
                     Compiler.CallExternal(this, functionName);
                     WriteLine("\tandi\tr0,>ff00");
@@ -29,7 +32,7 @@ namespace Inu.Cate.Tms99
                     AddChanged(r0);
                     r0.Store(this, DestinationOperand);
                 }
-                r1.Load(this, RightOperand);
+                reservation.ByteRegister.Load(this, RightOperand);
                 if (Equals(DestinationOperand.Register, r0)) {
                     CallShift();
                 }

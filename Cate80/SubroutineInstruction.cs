@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Inu.Cate.Z80
 {
-    class SubroutineInstruction : Cate.SubroutineInstruction
+    internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
         public SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand,
             List<Operand> sourceOperands) : base(function, targetFunction, destinationOperand, sourceOperands)
@@ -15,8 +17,35 @@ namespace Inu.Cate.Z80
 
         protected override void StoreParameters()
         {
-            StoreParametersViaPointer();
+            if (SourceOperands.Count >= 5) {
+                StoreParametersViaPointer();
+            }
+            else {
+                StoreParametersDirect();
+            }
+
         }
+
+        protected override void StoreViaPointer(Cate.PointerRegister pointerRegister, Cate.WordRegister register, bool last)
+        {
+            if (register is PairRegister pairRegister) {
+                Debug.Assert(pairRegister.Low != null);
+                Debug.Assert(pairRegister.High != null);
+                pairRegister.Low.StoreIndirect(this, pointerRegister, 0);
+                pointerRegister.Add(this, 1);
+                pairRegister.High.StoreIndirect(this, pointerRegister, 0);
+                if (!last) {
+                    pointerRegister.Add(this, 1);
+                }
+            }
+            else {
+                var candidates = WordRegister.PairRegisters.Where(r => !r.Conflicts(pointerRegister)).ToList();
+                using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
+                reservation.WordRegister.CopyFrom(this, register);
+                StoreViaPointer(pointerRegister, reservation.WordRegister, last);
+            }
+        }
+
 
         public static Register? ParameterRegister(int index, ParameterizableType type)
         {
@@ -27,7 +56,8 @@ namespace Inu.Cate.Z80
                     1 => ByteRegister.A,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => WordRegister.Ix,
+                        PointerType { ElementType: StructureType _ } => PointerRegister.Ix,
+                        PointerType => PointerRegister.Hl,
                         _ => WordRegister.Hl
                     }
                 },
@@ -36,26 +66,31 @@ namespace Inu.Cate.Z80
                     1 => ByteRegister.E,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => WordRegister.Iy,
+                        PointerType { ElementType: StructureType _ } => PointerRegister.Iy,
+                        PointerType => PointerRegister.De,
                         _ => WordRegister.De
                     }
                 },
                 2 => type.ByteCount switch
                 {
                     1 => ByteRegister.C,
-                    _ => WordRegister.Bc
+                    _ => type switch
+                    {
+                        PointerType => PointerRegister.Bc,
+                        _ => WordRegister.Bc
+                    }
                 },
                 _ => null
             };
         }
 
-        public static Register? ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(ParameterizableType type)
         {
-            return byteCount switch
+            return type.ByteCount switch
             {
                 1 => ByteRegister.A,
-                2 => WordRegister.Hl,
-                _=>null
+                2 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
+                _ => null
             };
         }
     }

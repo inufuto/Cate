@@ -2,7 +2,7 @@
 
 namespace Inu.Cate.Z80
 {
-    class ReturnInstruction : Cate.ReturnInstruction
+    internal class ReturnInstruction : Cate.ReturnInstruction
     {
         public ReturnInstruction(Function function, Operand? sourceOperand, Anchor anchor) : base(function, sourceOperand, anchor) { }
 

@@ -29,6 +29,17 @@ namespace Inu.Cate.Mos6502
             register.StoreToMemory(this, label + "+1");
         }
 
+        protected override void StorePointer(Operand operand, string label)
+        {
+            using var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.Registers);
+            var register = reservation.ByteRegister;
+            register.Load(this, Compiler.LowByteOperand(operand));
+            register.StoreToMemory(this, label + "+0");
+            register.Load(this, Compiler.HighByteOperand(operand));
+            register.StoreToMemory(this, label + "+1");
+        }
+
+
         protected override List<Cate.ByteRegister> Candidates(Operand operand)
         {
             return operand switch
@@ -50,9 +61,14 @@ namespace Inu.Cate.Mos6502
         }
 
 
-        public static Register ReturnRegister(int byteCount)
+        public static Register? ReturnRegister(ParameterizableType type)
         {
-            return byteCount == 1 ? (Register)ByteRegister.Y : PairRegister.Xy;
+            return type.ByteCount switch
+            {
+                1 => ByteRegister.Y,
+                2 => (type is PointerType ? PairPointerRegister.Xy : PairWordRegister.Xy),
+                _ => null
+            };
         }
     }
 }

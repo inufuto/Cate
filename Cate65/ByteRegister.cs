@@ -56,44 +56,66 @@ namespace Inu.Cate.Mos6502
             instruction.WriteLine("\tst" + Name + "\t" + label);
         }
 
-        public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Equals(A));
-            Debug.Assert(pointerRegister is WordZeroPage);
             if (pointerRegister.IsOffsetInRange(offset)) {
-                Debug.Assert(offset >= 0 && offset < 0x100);
-                using (ByteOperation.ReserveRegister(instruction, Y)) {
-                    Y.LoadConstant(instruction, offset);
-                    instruction.WriteLine("\tld" + Name + "\t(" + pointerRegister.Name + "),y");
+                Debug.Assert(offset is >= 0 and < 0x100);
+                if (pointerRegister is PointerZeroPage) {
+                    ViaZeroPage(pointerRegister);
+                }
+                else {
+                    using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerZeroPage.Registers);
+                    reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
+                    ViaZeroPage(reservation.PointerRegister);
                 }
                 instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
                 instruction.ResultFlags |= Instruction.Flag.Z;
             }
             else {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction);
-                var temporaryRegister = reservation.WordRegister;
+                using var reservation = PointerOperation.ReserveAnyRegister(instruction);
+                var temporaryRegister = reservation.PointerRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 temporaryRegister.Add(instruction, offset);
                 LoadIndirect(instruction, temporaryRegister, 0);
                 instruction.RemoveRegisterAssignment(temporaryRegister);
                 instruction.AddChanged(temporaryRegister);
             }
+
+            void ViaZeroPage(PointerRegister zeroPage)
+            {
+                using (ByteOperation.ReserveRegister(instruction, Y)) {
+                    Y.LoadConstant(instruction, offset);
+                    instruction.WriteLine("\tld" + Name + "\t(" + zeroPage.Name + "),y");
+                }
+            }
         }
 
-        public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(Equals(A));
-            Debug.Assert(pointerRegister is WordZeroPage);
             if (pointerRegister.IsOffsetInRange(offset)) {
-                Y.LoadConstant(instruction, offset);
-                instruction.WriteLine("\tst" + Name + "\t(" + pointerRegister.Name + "),y");
+                if (pointerRegister is PointerZeroPage zeroPage) {
+                    ViaZeroPage(zeroPage);
+                }
+                else {
+                    using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerZeroPage.Registers);
+                    reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
+                    ViaZeroPage(reservation.PointerRegister);
+                }
             }
             else {
                 pointerRegister.Add(instruction, offset);
                 StoreIndirect(instruction, pointerRegister, 0);
                 instruction.RemoveRegisterAssignment(pointerRegister);
                 instruction.AddChanged(pointerRegister);
+            }
+
+            void ViaZeroPage(PointerRegister zeroPage)
+            {
+                Y.LoadConstant(instruction, offset);
+                instruction.WriteLine("\tst" + Name + "\t(" + zeroPage.AsmName + "),y");
             }
         }
 
@@ -204,7 +226,7 @@ namespace Inu.Cate.Mos6502
     {
         public IndexRegister(int id, string name) : base(id, name) { }
 
-        public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.LoadIndirect(instruction, pointerRegister, offset);
@@ -212,7 +234,7 @@ namespace Inu.Cate.Mos6502
             }
         }
 
-        public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, this);
@@ -263,12 +285,20 @@ namespace Inu.Cate.Mos6502
 
         public override void Save(Instruction instruction)
         {
-            throw new NotImplementedException();
+            Cate.Compiler.Instance.AddExternalName("ZB0");
+            instruction.WriteLine("\tsta\t<ZB0");
+            instruction.WriteLine("\tt" + Name + "a");
+            instruction.WriteLine("\tpha");
+            instruction.WriteLine("\tlda\t<ZB0");
         }
 
         public override void Restore(Instruction instruction)
         {
-            throw new NotImplementedException();
+            Cate.Compiler.Instance.AddExternalName("ZB0");
+            instruction.WriteLine("\tsta\t<ZB0");
+            instruction.WriteLine("\tpla");
+            instruction.WriteLine("\tta" + Name);
+            instruction.WriteLine("\tlda\t<ZB0");
         }
 
         public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)

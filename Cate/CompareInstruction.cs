@@ -43,17 +43,22 @@ namespace Inu.Cate
                 CompareByte();
             }
             else {
-                CompareWord();
+                if (LeftOperand.Type is PointerType)
+                    ComparePointer();
+                else
+                    CompareWord();
             }
         }
+
 
         protected abstract void CompareByte();
 
         protected abstract void CompareWord();
+        protected abstract void ComparePointer();
 
         protected bool CanOmitOperation(Flag flag)
         {
-            return PreviousInstructions.All(
+            return PreviousInstructions.Any() && PreviousInstructions.All(
                 instruction => instruction.ResultFlags.HasFlag(flag) &&
                 instruction.ResultOperand != null && instruction.ResultOperand.Equals(LeftOperand)
             );

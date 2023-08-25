@@ -9,7 +9,7 @@ namespace Inu.Cate.Mc6809
 {
     internal class Compiler : Cate.Compiler
     {
-        public Compiler() : base(new ByteOperation(), new WordOperation())
+        public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation())
         { }
 
         protected override void WriteAssembly(StreamWriter writer)
@@ -20,13 +20,22 @@ namespace Inu.Cate.Mc6809
             base.WriteAssembly(writer);
         }
 
-
-        public override ISet<Register> SavingRegisters(Register register)
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            return Equals(register, WordRegister.D) ? new HashSet<Register>() { ByteRegister.A, ByteRegister.B } : new HashSet<Register>() { register };
+            if (Equals(register, WordRegister.D)) {
+                registers.Add(ByteRegister.A);
+                registers.Add(ByteRegister.B);
+                return;
+            }
+            if (Equals(register, ByteRegister.A) || Equals(register, ByteRegister.B)) {
+                registers.Add(register);
+                return;
+            }
+            base.AddSavingRegister(registers, register);
         }
 
-        private IEnumerable<Register> SavingRegisterIds(IEnumerable<Variable> variables)
+
+        private IEnumerable<Register> SavingRegisters(IEnumerable<Variable> variables)
         {
             var savingRegisterIds = new HashSet<Register>();
             foreach (var variable in variables) {
@@ -47,12 +56,12 @@ namespace Inu.Cate.Mc6809
         public override void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
         {
             var list = variables.ToList();
-            var savingRegisterIds = SavingRegisterIds(list);
+            var savingRegisterIds = SavingRegisters(list);
             var comment = "\t; " + Join(',', list.Select(v => v.Name).ToArray());
             SaveRegisters(writer, savingRegisterIds, comment, tabCount);
         }
 
-        private void SaveRegisters(StreamWriter writer, IEnumerable<Register> registers, string? comment, int tabCount)
+        private static void SaveRegisters(StreamWriter writer, IEnumerable<Register> registers, string? comment, int tabCount)
         {
             var list = registers.ToList();
             if (!list.Any())
@@ -72,12 +81,12 @@ namespace Inu.Cate.Mc6809
 
         public override void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
         {
-            var savingRegisterIds = SavingRegisterIds(variables);
+            var savingRegisterIds = SavingRegisters(variables);
             var comment = "\t; " + Join(',', variables.Select(v => v.Name).ToArray());
             RestoreRegisters(writer, savingRegisterIds, comment, tabCount);
         }
 
-        private void RestoreRegisters(StreamWriter writer, IEnumerable<Register> registers, string? comment, int tabCount)
+        private static void RestoreRegisters(StreamWriter writer, IEnumerable<Register> registers, string? comment, int tabCount)
         {
             var list = registers.ToList();
             if (!list.Any())
@@ -99,9 +108,8 @@ namespace Inu.Cate.Mc6809
             foreach (var variable in rangeOrdered) {
                 var variableType = variable.Type;
                 Cate.Register? register = null;
-                if (variableType.ByteCount == 1) {
-                    register = AllocatableRegister(variable, ByteRegister.Registers, function);
-                }
+                if (variableType.ByteCount != 1) continue;
+                register = AllocatableRegister(variable, ByteRegister.Registers, function);
                 if (register != null) {
                     variable.Register = register;
                 }
@@ -115,14 +123,14 @@ namespace Inu.Cate.Mc6809
                     register = AllocatableRegister(variable, ByteRegister.Registers, function);
                 }
                 else {
-                    List<Cate.WordRegister> registers;
                     if (variableType is PointerType pointerType) {
-                        registers = WordRegister.PointerOrder;
+                        var registers = PointerRegister.IndexRegisters;
+                        register = AllocatableRegister(variable, registers, function);
                     }
                     else {
-                        registers = WordRegister.Registers;
+                        var registers = WordRegister.Registers;
+                        register = AllocatableRegister(variable, registers, function);
                     }
-                    register = AllocatableRegister(variable, registers, function);
                 }
                 if (register == null)
                     continue;
@@ -154,6 +162,16 @@ namespace Inu.Cate.Mc6809
                             }
                             break;
                         }
+                    case PointerRegister pointerRegister when !Conflict(variable.Intersections, pointerRegister):
+                        variable.Register = pointerRegister;
+                        break;
+                    case PointerRegister _: {
+                            register = AllocatableRegister(variable, PointerRegister.IndexRegisters, function);
+                            if (register != null) {
+                                variable.Register = register;
+                            }
+                            break;
+                        }
                 }
             }
         }
@@ -175,9 +193,9 @@ namespace Inu.Cate.Mc6809
             return SubroutineInstruction.ParameterRegister(index, type);
         }
 
-        public override Register? ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(ParameterizableType type)
         {
-            return SubroutineInstruction.ReturnRegister(byteCount);
+            return SubroutineInstruction.ReturnRegister(type);
         }
 
         protected override LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
@@ -192,30 +210,50 @@ namespace Inu.Cate.Mc6809
             return new WordLoadInstruction(function, destinationOperand, sourceOperand);
         }
 
+        protected override LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
+            Operand sourceOperand)
+        {
+            return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
+        }
+
         public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
             AssignableOperand destinationOperand,
             Operand leftOperand, Operand rightOperand)
         {
-            if (destinationOperand.Type.ByteCount == 1) {
-                switch (operatorId) {
-                    case '|':
-                    case '^':
-                    case '&':
-                        return new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case '+':
-                    case '-':
-                        return new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case Keyword.ShiftLeft:
-                    case Keyword.ShiftRight:
-                        return new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    default:
-                        throw new NotImplementedException();
-                }
+            if (destinationOperand.Type.ByteCount == 1)
+            {
+                return operatorId switch
+                {
+                    '|' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '^' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '&' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
+                    '+' => new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    '-' => new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    Keyword.ShiftLeft => new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    Keyword.ShiftRight => new ByteShiftInstruction(function, operatorId, destinationOperand,
+                        leftOperand, rightOperand),
+                    _ => throw new NotImplementedException()
+                };
             }
             switch (operatorId) {
                 case '+':
-                case '-':
+                    if (destinationOperand.Type is PointerType)
+                        return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                     return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                case '-': {
+                    if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
+                        var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
+                        if (destinationOperand.Type is PointerType)
+                            return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                        return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                    }
+                    if (destinationOperand.Type is PointerType)
+                        return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                    return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                }
                 case '|':
                 case '^':
                 case '&':
@@ -229,8 +267,7 @@ namespace Inu.Cate.Mc6809
         }
 
         public override MonomialInstruction CreateMonomialInstruction(Function function, int operatorId,
-            AssignableOperand destinationOperand,
-            Operand sourceOperand)
+            AssignableOperand destinationOperand, Operand sourceOperand)
         {
             if (destinationOperand.Type.ByteCount == 1) {
                 return new ByteMonomialInstruction(function, operatorId, destinationOperand, sourceOperand);
@@ -285,7 +322,7 @@ namespace Inu.Cate.Mc6809
             return new MultiplyInstruction(function, destinationOperand, leftOperand, rightValue);
         }
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register? register)
+        public override IEnumerable<Register> IncludedRegisters(Register? register)
         {
             return Equals(register, WordRegister.D) ? new List<Register>() { ByteRegister.A, ByteRegister.B } : new List<Register>();
         }

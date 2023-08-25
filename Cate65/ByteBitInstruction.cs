@@ -13,7 +13,7 @@ namespace Inu.Cate.Mos6502
                 ExchangeOperands();
             }
 
-            string operation = OperatorId switch
+            var operation = OperatorId switch
             {
                 '|' => "ora",
                 '^' => "eor",

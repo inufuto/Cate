@@ -11,7 +11,7 @@ namespace Inu.Cate.Mc6809
 
         public override void BuildAssembly()
         {
-            if (LeftOperand is ConstantOperand && !(RightOperand is ConstantOperand) && IsOperatorExchangeable()) {
+            if (LeftOperand is ConstantOperand && RightOperand is not ConstantOperand && IsOperatorExchangeable()) {
                 ExchangeOperands();
             }
             else if (!Equals(LeftOperand.Register, WordRegister.D) && Equals(RightOperand.Register, WordRegister.D)) {
@@ -35,7 +35,7 @@ namespace Inu.Cate.Mc6809
                 WordRegister.D.Store(this, DestinationOperand);
                 ResultFlags |= Flag.Z;
             }
-            if (Equals(LeftOperand.Register, WordRegister.D) && DestinationOperand.Register == WordRegister.D) {
+            if (Equals(LeftOperand.Register, WordRegister.D) && Equals(DestinationOperand.Register, WordRegister.D)) {
                 AddD();
                 return;
             }
@@ -46,40 +46,49 @@ namespace Inu.Cate.Mc6809
 
         private bool AddConstant()
         {
-            if (!(RightOperand is IntegerOperand integerOperand))
-                return false;
-            if (Equals(LeftOperand.Register, WordRegister.D) && Equals(DestinationOperand.Register, WordRegister.D))
-                return false;
+            if (RightOperand is IntegerOperand integerOperand) {
+                if (Equals(LeftOperand.Register, WordRegister.D) && Equals(DestinationOperand.Register, WordRegister.D))
+                    return false;
 
-            var value = integerOperand.IntegerValue;
-            if (OperatorId == '-') {
-                value = -value;
-            }
-            {
-                void ViaRegister(Cate.WordRegister r)
-                {
-                    r.Load(this, LeftOperand);
-                    if (Equals(r, WordRegister.D)) {
-                        WriteLine("\taddd\t#" + value);
-                    }
-                    else {
-                        WriteLine("\tlea" + r + "\t" + value + "," + r);
-                    }
-
-                    AddChanged(r);
-                    RemoveRegisterAssignment(r);
+                var value = integerOperand.IntegerValue;
+                if (OperatorId == '-') {
+                    value = -value;
                 }
 
-                if (DestinationOperand.Register is WordRegister wordRegister && RightOperand.Conflicts(wordRegister)) {
+                {
+                    return AddConstant(value.ToString());
+                }
+            }
+            return false;
+        }
+
+        private bool AddConstant(string value)
+        {
+            void ViaRegister(Cate.WordRegister r)
+            {
+                r.Load(this, LeftOperand);
+                if (Equals(r, WordRegister.D)) {
+                    WriteLine("\taddd\t#" + value);
+                }
+                else {
+                    WriteLine("\tlea" + r + "\t" + value + "," + r);
+                }
+
+                AddChanged(r);
+                RemoveRegisterAssignment(r);
+            }
+
+            switch (DestinationOperand.Register) {
+                case WordRegister wordRegister when RightOperand.Conflicts(wordRegister):
                     ViaRegister(wordRegister);
                     return true;
-                }
-                using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
-                var register = reservation.WordRegister;
-                ViaRegister(register);
-                register.Store(this, DestinationOperand);
-                return true;
             }
+
+            using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+            ViaRegister(reservation.WordRegister);
+            reservation.WordRegister.Store(this, DestinationOperand);
+
+            return true;
         }
 
 

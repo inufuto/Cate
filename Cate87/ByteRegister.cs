@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -49,11 +48,11 @@ namespace Inu.Cate.MuCom87
             writer.WriteLine("\tpop\tv" + comment);
         }
 
-        public override Cate.WordRegister? PairRegister => WordRegister.Registers.FirstOrDefault(wordRegister => wordRegister.Name.Contains(Name));
+        public override Cate.WordRegister? PairRegister => WordRegister.Registers.FirstOrDefault(wordRegister => wordRegister.Contains(this));
 
         public override void LoadConstant(Instruction instruction, string value)
         {
-            instruction.WriteLine("\tmvi\t" + Name + "," + value);
+            instruction.WriteLine("\tmvi\t" + AsmName + "," + value);
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
         }
@@ -95,31 +94,23 @@ namespace Inu.Cate.MuCom87
             instruction.WriteLine("\tmov\t" + label + "," + Name);
         }
 
-        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
             if (pointerRegister.Contains(this)) {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction);
-                var r = reservation.WordRegister;
-                r.CopyFrom(instruction, pointerRegister);
-                instruction.AddChanged(r);
-                LoadIndirect(instruction, r, offset);
+                using var reservation = PointerOperation.ReserveAnyRegister(instruction);
+                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
+                instruction.AddChanged(reservation.PointerRegister);
+                LoadIndirect(instruction, reservation.PointerRegister, offset);
                 return;
             }
-            switch (pointerRegister) {
-                case WordRegister wordRegister when offset == instruction.GetRegisterOffset(wordRegister):
-                    LoadIndirect(instruction, wordRegister);
-                    return;
-                case WordRegister wordRegister:
-                    wordRegister.TemporaryOffset(instruction, offset, () =>
-                    {
-                        LoadIndirect(instruction, wordRegister);
-                    });
-                    return;
+            if (pointerRegister.IsOffsetInRange(offset)) {
+                LoadIndirect(instruction, pointerRegister);
+                return;
             }
-            throw new NotImplementedException();
+            pointerRegister.TemporaryOffset(instruction, offset, () => { LoadIndirect(instruction, pointerRegister); });
         }
 
-        public virtual void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister)
+        public virtual void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister)
         {
             using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.LoadIndirect(instruction, pointerRegister);
@@ -127,40 +118,24 @@ namespace Inu.Cate.MuCom87
             }
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
-            switch (pointerRegister) {
-                case WordRegister wordRegister when offset == instruction.GetRegisterOffset(wordRegister):
-                    StoreIndirect(instruction, wordRegister);
-                    return;
-                case WordRegister wordRegister:
-                    var changed = instruction.IsChanged(pointerRegister);
-                    if (Math.Abs(offset) > 2) {
-                        pointerRegister.Save(instruction);
-                        pointerRegister.Add(instruction, offset);
-                        StoreIndirect(instruction, pointerRegister, 0);
-                        pointerRegister.Restore(instruction);
-                    }
-                    else {
-                        pointerRegister.Add(instruction, offset);
-                        StoreIndirect(instruction, pointerRegister, 0);
-                        pointerRegister.Add(instruction, -offset);
-                    }
-                    if (changed)
-                        instruction.AddChanged(pointerRegister);
-                    else
-                        instruction.RemoveChanged(pointerRegister);
-                    //instruction.RemoveRegisterAssignment(pointerRegister);
-                    return;
+            if (pointerRegister.IsOffsetInRange(offset))
+            {
+                StoreIndirect(instruction, pointerRegister);
+                return;
             }
-            throw new NotImplementedException();
+            pointerRegister.TemporaryOffset(instruction, offset, () =>
+            {
+                StoreIndirect(instruction, pointerRegister);
+            });
         }
 
-        public virtual void StoreIndirect(Instruction instruction, Cate.WordRegister wordRegister)
+        public virtual void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister)
         {
             using (ByteOperation.ReserveRegister(instruction, A)) {
                 A.CopyFrom(instruction, this);
-                A.StoreIndirect(instruction, wordRegister);
+                A.StoreIndirect(instruction, pointerRegister);
             }
         }
 

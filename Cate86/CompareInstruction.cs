@@ -63,7 +63,48 @@ namespace Inu.Cate.I8086
                 temporaryRegister.Load(this, LeftOperand);
                 temporaryRegister.Operate(this, "cmp ", false, RightOperand);
             }
+        jump:
+            Jump();
+        }
 
+        protected override void ComparePointer()
+        {
+            if (LeftOperand.Register != null && RightOperand is IntegerOperand { IntegerValue: 0 }) {
+                WriteLine("\tor " + LeftOperand.Register + "," + LeftOperand.Register);
+                goto jump;
+            }
+            if (LeftOperand is VariableOperand { Register: null } leftVariableOperand) {
+                switch (RightOperand) {
+                    case ConstantOperand constantOperand:
+                        WriteLine("\tcmp word ptr [" + leftVariableOperand.MemoryAddress() + "]," +
+                                  constantOperand.MemoryAddress());
+                        goto jump;
+                    case VariableOperand { Register: { } } rightVariableOperand:
+                        WriteLine("\tcmp [" + leftVariableOperand.MemoryAddress() + "]," + rightVariableOperand.Register);
+                        goto jump;
+                }
+            }
+            using (var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers, LeftOperand)) {
+                var temporaryRegister = reservation.PointerRegister;
+                temporaryRegister.Load(this, LeftOperand);
+                switch (RightOperand) {
+                    case ConstantOperand constantOperand: {
+                            WriteLine("\tcmp\t" + temporaryRegister + "," + constantOperand.MemoryAddress());
+                            break;
+                        }
+                    case VariableOperand variableOperand: {
+                            var register = GetVariableRegister(variableOperand);
+                            if (register is PointerRegister pointerRegister) {
+                                WriteLine("\tcmp\t" + temporaryRegister + "," + pointerRegister);
+                            }
+                            else {
+                                WriteLine("\tcmp\t" + temporaryRegister + ",[" +
+                                          variableOperand.Variable.MemoryAddress(variableOperand.Offset) + "]");
+                            }
+                            break;
+                        }
+                }
+            }
         jump:
             Jump();
         }

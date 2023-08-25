@@ -10,7 +10,7 @@ namespace Inu.Cate.I8080
     {
         public const string TemporaryByte = "@Temporary@Byte";
 
-        public Compiler() : base(new ByteOperation(), new WordOperation()) { }
+        public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
 
         protected override void WriteAssembly(StreamWriter writer)
         {
@@ -18,9 +18,14 @@ namespace Inu.Cate.I8080
             base.WriteAssembly(writer);
         }
 
-        public override ISet<Register> SavingRegisters(Register register)
+        public override void AddSavingRegister(ISet<Register> registers, Register register)
         {
-            return new HashSet<Register>() { SavingRegister(register) };
+            if (register is ByteRegister { PairRegister: { } } byteRegister) {
+                base.AddSavingRegister(registers, byteRegister.PairRegister);
+            }
+            else {
+                base.AddSavingRegister(registers, register);
+            }
         }
 
         private static Register SavingRegister(Register register)
@@ -40,14 +45,19 @@ namespace Inu.Cate.I8080
                 foreach (var variable in ordered) {
                     var variableType = variable.Type;
                     Register? register;
-                    if (variableType.ByteCount == 1)
-                    {
+                    if (variableType.ByteCount == 1) {
                         var registers = ByteRegister.Registers;
                         register = AllocatableRegister(variable, registers, function);
                     }
                     else {
-                        var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
-                        register = AllocatableRegister(variable, registers, function);
+                        if (variableType is PointerType) {
+                            var registers = new List<PointerRegister>() { PointerRegister.Hl, PointerRegister.De, PointerRegister.Bc };
+                            register = AllocatableRegister(variable, registers, function);
+                        }
+                        else {
+                            var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
+                            register = AllocatableRegister(variable, registers, function);
+                        }
                     }
                     if (register == null)
                         continue;
@@ -58,17 +68,6 @@ namespace Inu.Cate.I8080
             var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
                 .ThenBy(v => v.Usages.Count).ToList();
             AllocateOrdered(rangeOrdered);
-            //foreach (var variable in rangeOrdered) {
-            //    if (variable.Type.ByteCount == 1 && !Conflict(variable.Intersections, ByteRegister.A) && CanAllocate(variable, ByteRegister.A)) {
-            //        variable.Register = ByteRegister.A;
-            //        continue;
-            //    }
-            //    if (variable.Type.ByteCount != 2)
-            //        continue;
-            //    if (!Conflict(variable.Intersections, WordRegister.Hl)) {
-            //        variable.Register = WordRegister.Hl;
-            //    }
-            //}
             var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
             AllocateOrdered(usageOrdered);
 
@@ -86,15 +85,15 @@ namespace Inu.Cate.I8080
                     }
                 }
                 else if (register is WordRegister wordRegister) {
-                    if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, wordRegister)) {
-                        register = AllocatableRegister(variable, WordRegister.Registers, function);
-                        if (register != null) {
-                            variable.Register = register;
-                        }
+                    register = AllocatableRegister(variable, WordRegister.Registers, function);
+                    if (register != null) {
+                        variable.Register = register;
                     }
-                    else {
-                        variable.Register = wordRegister;
-                        break;
+                }
+                else if (register is PointerRegister) {
+                    register = AllocatableRegister(variable, PointerRegister.Registers, function);
+                    if (register != null) {
+                        variable.Register = register;
                     }
                 }
             }
@@ -129,9 +128,9 @@ namespace Inu.Cate.I8080
             return SubroutineInstruction.ParameterRegister(index, type);
         }
 
-        public override Register? ReturnRegister(int byteCount)
+        public override Register? ReturnRegister(ParameterizableType type)
         {
-            return SubroutineInstruction.ReturnRegister(byteCount);
+            return SubroutineInstruction.ReturnRegister(type);
         }
 
         protected override LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
@@ -167,11 +166,18 @@ namespace Inu.Cate.I8080
             }
             switch (operatorId) {
                 case '+':
+                    if (destinationOperand.Type is PointerType)
+                        return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                     return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                 case '-': {
-                        if (rightOperand is IntegerOperand integerOperand && integerOperand.IntegerValue < 0) {
-                            return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue));
+                        if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
+                            var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
+                            if (destinationOperand.Type is PointerType)
+                                return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                            return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
                         }
+                        if (destinationOperand.Type is PointerType)
+                            return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                         return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                     }
                 case '|':
@@ -243,7 +249,7 @@ namespace Inu.Cate.I8080
             return new MultiplyInstruction(function, destinationOperand, leftOperand, rightValue);
         }
 
-        public override IEnumerable<Register> IncludedRegisterIds(Register register)
+        public override IEnumerable<Register> IncludedRegisters(Register register)
         {
             if (register is WordRegister wordRegister) {
                 return wordRegister.ByteRegisters;
@@ -258,10 +264,18 @@ namespace Inu.Cate.I8080
                 case ConstantOperand constantOperand:
                     return new StringOperand(newType, "low(" + constantOperand.MemoryAddress() + ")");
                 case VariableOperand variableOperand:
-                    if (!(variableOperand.Register is Cate.WordRegister wordRegister))
-                        return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset);
-                    Debug.Assert(wordRegister.Low != null);
-                    return new ByteRegisterOperand(newType, wordRegister.Low);
+                    switch (variableOperand.Register) {
+                        case Cate.WordRegister wordRegister:
+                            Debug.Assert(wordRegister.Low != null);
+                            return new ByteRegisterOperand(newType, wordRegister.Low);
+                        case Cate.PointerRegister pointerRegister:
+                            Debug.Assert(pointerRegister.WordRegister != null);
+                            Debug.Assert(pointerRegister.WordRegister.Low != null);
+                            return new ByteRegisterOperand(newType, pointerRegister.WordRegister.Low);
+                        default:
+                            return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset);
+                    }
+
                 case IndirectOperand indirectOperand:
                     return new IndirectOperand(indirectOperand.Variable, newType, indirectOperand.Offset);
                 default:
@@ -276,10 +290,17 @@ namespace Inu.Cate.I8080
                 case ConstantOperand constantOperand:
                     return new StringOperand(newType, "high(" + constantOperand.MemoryAddress() + ")");
                 case VariableOperand variableOperand:
-                    if (!(variableOperand.Register is Cate.WordRegister wordRegister))
-                        return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset + 1);
-                    Debug.Assert(wordRegister.High != null);
-                    return new ByteRegisterOperand(newType, wordRegister.High);
+                    switch (variableOperand.Register) {
+                        case Cate.WordRegister wordRegister:
+                            Debug.Assert(wordRegister.High != null);
+                            return new ByteRegisterOperand(newType, wordRegister.High);
+                        case Cate.PointerRegister pointerRegister:
+                            Debug.Assert(pointerRegister.WordRegister != null);
+                            Debug.Assert(pointerRegister.WordRegister.High != null);
+                            return new ByteRegisterOperand(newType, pointerRegister.WordRegister.High);
+                        default:
+                            return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset + 1);
+                    }
                 case IndirectOperand indirectOperand:
                     return new IndirectOperand(indirectOperand.Variable, newType, indirectOperand.Offset + 1);
                 default:

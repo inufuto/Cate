@@ -91,11 +91,16 @@ namespace Inu.Cate
 
         public override void WriteAssembly(StreamWriter writer)
         {
-            if (Type.ByteCount > 1) {
-                writer.WriteLine("\tdefw " + IntegerValue);
-            }
-            else {
-                writer.WriteLine("\tdefb " + IntegerValue);
+            switch (Type.ByteCount) {
+                case 1:
+                    writer.WriteLine("\tdefb " + IntegerValue);
+                    break;
+                case 2:
+                    writer.WriteLine("\tdefw " + IntegerValue);
+                    break;
+                case 3:
+                    writer.WriteLine("\tdefp " + IntegerValue);
+                    break;
             }
         }
 
