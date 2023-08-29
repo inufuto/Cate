@@ -175,16 +175,29 @@ namespace Inu.Cate.Z80
 
         public override void LoadFromMemory(Instruction instruction, string label)
         {
-            Debug.Assert(Equals(A));
-            instruction.WriteLine("\tld\ta,(" + label + ")");
-            instruction.RemoveRegisterAssignment(this);
-            instruction.AddChanged(this);
+            if (Equals(A)) {
+                instruction.WriteLine("\tld\ta,(" + label + ")");
+                instruction.RemoveRegisterAssignment(this);
+                instruction.AddChanged(this);
+                return;
+            }
+            using (ByteOperation.ReserveRegister(instruction, A)) {
+                A.LoadFromMemory(instruction, label);
+                CopyFrom(instruction, A);
+            }
         }
 
         public override void StoreToMemory(Instruction instruction, string label)
         {
-            Debug.Assert(Equals(A));
-            instruction.WriteLine("\tld\t(" + label + "),a");
+            if (Equals(A)) {
+                instruction.WriteLine("\tld\t(" + label + "),a");
+                return;
+            }
+
+            using (ByteOperation.ReserveRegister(instruction, A)) {
+                A.CopyFrom(instruction, this);
+                A.StoreToMemory(instruction, label);
+            }
         }
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
@@ -357,24 +370,22 @@ namespace Inu.Cate.Z80
                     instruction.WriteLine("\t" + operation + integerOperand.IntegerValue);
                     instruction.RemoveRegisterAssignment(A);
                     return;
-                case VariableOperand variableOperand:
-                {
-                    var variable = variableOperand.Variable;
-                    var offset = variableOperand.Offset;
-                    var register = instruction.GetVariableRegister(variableOperand);
-                    if (register is ByteRegister byteRegister)
-                    {
-                        Debug.Assert(offset == 0);
-                        instruction.WriteLine("\t" + operation + byteRegister);
+                case VariableOperand variableOperand: {
+                        var variable = variableOperand.Variable;
+                        var offset = variableOperand.Offset;
+                        var register = instruction.GetVariableRegister(variableOperand);
+                        if (register is ByteRegister byteRegister) {
+                            Debug.Assert(offset == 0);
+                            instruction.WriteLine("\t" + operation + byteRegister);
+                            return;
+                        }
+
+                        using var reservation = PointerOperation.ReserveAnyRegister(instruction,
+                            new List<Cate.PointerRegister> { PointerRegister.Hl, PointerRegister.Ix, PointerRegister.Iy });
+                        reservation.PointerRegister.LoadConstant(instruction, variable.MemoryAddress(offset));
+                        instruction.WriteLine("\t" + operation + "(" + reservation.PointerRegister + ")");
                         return;
                     }
-
-                    using var reservation = PointerOperation.ReserveAnyRegister(instruction,
-                        new List<Cate.PointerRegister> { PointerRegister.Hl, PointerRegister.Ix, PointerRegister.Iy });
-                    reservation.PointerRegister.LoadConstant(instruction, variable.MemoryAddress(offset));
-                    instruction.WriteLine("\t" + operation + "(" + reservation.PointerRegister + ")");
-                    return;
-            }
                 case IndirectOperand indirectOperand: {
                         var pointer = indirectOperand.Variable;
                         var offset = indirectOperand.Offset;
