@@ -22,7 +22,7 @@ namespace Inu.Cate
             switch (sourceOperand) {
                 case NullPointerOperand :
                     if (instruction.IsConstantAssigned(this, 0)) return;
-                    LoadConstant(instruction, "0");
+                    LoadConstant(instruction, 0);
                     instruction.SetRegisterConstant(this, 0);
                     instruction.AddChanged(this);
                     return;

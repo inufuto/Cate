@@ -56,6 +56,11 @@ namespace Inu.Cate
         public abstract void Save(Instruction instruction);
         public abstract void Restore(Instruction instruction);
 
+        public virtual void LoadConstant(Instruction instruction, int value)
+        {
+            LoadConstant(instruction, value.ToString());
+        }
+
         public abstract void LoadConstant(Instruction instruction, string value);
 
         public abstract void LoadFromMemory(Instruction instruction, string label);

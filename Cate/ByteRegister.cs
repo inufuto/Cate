@@ -41,7 +41,7 @@ namespace Inu.Cate
 
         //public abstract void LoadConstant(Instruction instruction, string value);
 
-        public virtual void LoadConstant(Instruction instruction, int value)
+        public override void LoadConstant(Instruction instruction, int value)
         {
             if (instruction.IsConstantAssigned(this, value)) {
                 instruction.AddChanged(this);

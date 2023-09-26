@@ -591,12 +591,30 @@ namespace Inu.Cate
 
         public bool IsConstantAssigned(Register register, PointerOperand pointerOperand)
         {
-            return RegisterAssignments.TryGetValue(register, out var assignment) && assignment is RegisterConstantAssignment { Constant: ConstantPointer constantPointer } && constantPointer.Variable == pointerOperand.Variable && constantPointer.Offset == pointerOperand.Offset;
+            var variable = pointerOperand.Variable;
+            var offset = pointerOperand.Offset;
+            return IsConstantAssigned(register, variable, offset);
+        }
+
+        public bool IsConstantAssigned(Register register, Variable variable, int offset)
+        {
+            if (!RegisterAssignments.TryGetValue(register, out var assignment)) return false;
+            if (assignment is not RegisterConstantAssignment { Constant: ConstantPointer constantPointer }) return false;
+            return constantPointer.Variable == variable && constantPointer.Offset == offset;
         }
 
         public void SetRegisterConstant(Register register, PointerOperand pointerOperand)
         {
-            RegisterAssignments[register] = new RegisterConstantAssignment(new ConstantPointer((PointerType)pointerOperand.Type, pointerOperand.Variable, pointerOperand.Offset));
+            var type = pointerOperand.Type;
+            var variable = pointerOperand.Variable;
+            var offset = pointerOperand.Offset;
+            SetRegisterConstant(register, (PointerType)type, variable, offset);
+        }
+
+        public void SetRegisterConstant(Register register, PointerType type, Variable variable, int offset)
+        {
+            RegisterAssignments[register] =
+                new RegisterConstantAssignment(new ConstantPointer(type, variable, offset));
         }
 
         public int GetRegisterOffset(WordRegister register)

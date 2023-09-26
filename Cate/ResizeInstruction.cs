@@ -41,10 +41,6 @@ namespace Inu.Cate
 
         public override Operand? ResultOperand => DestinationOperand;
 
-        //public override void RemoveDestinationRegister()
-        //{
-        //    RemoveChangedRegisters(DestinationOperand);
-        //}
 
         public override void BuildAssembly()
         {
