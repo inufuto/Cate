@@ -12,27 +12,9 @@ internal class Compiler : Cate.Compiler
     public override void SaveRegisters(StreamWriter writer, ISet<Register> registers)
     {
         var listList = ListList(registers);
-        foreach (var list in listList) {
-            if (list.Count > 1) {
-                var register = list.First();
-                Debug.Assert(register != null);
-                var name = register.AsmName;
-                var count = list.Count * register.ByteCount;
-                writer.WriteLine("\tphsm " + name + "," + count);
-            }
-            else {
-                list.First().Save(writer, "", false, 0);
-            }
-        }
-    }
-
-    public override void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int byteCount)
-    {
-        var listList = ListList(registers);
         listList.Reverse();
         foreach (var list in listList) {
-            if (list.Count > 1)
-            {
+            if (list.Count > 1) {
                 var register = list.Last();
                 string name = register switch
                 {
@@ -43,10 +25,27 @@ internal class Compiler : Cate.Compiler
                     _ => throw new NotImplementedException()
                 };
                 var count = list.Count * register.ByteCount;
-                writer.WriteLine("\tppsm " + name + "," + count);
+                writer.WriteLine("\tphsm " + name + "," + count);
             }
             else {
                 list.Last().Save(writer, "", false, 0);
+            }
+        }
+    }
+
+    public override void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int byteCount)
+    {
+        var listList = ListList(registers);
+        foreach (var list in listList) {
+            if (list.Count > 1) {
+                var register = list.First();
+                Debug.Assert(register != null);
+                var name = register.AsmName;
+                var count = list.Count * register.ByteCount;
+                writer.WriteLine("\tppsm " + name + "," + count);
+            }
+            else {
+                list.First().Restore(writer, "", false, 0); 
             }
         }
     }
