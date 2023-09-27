@@ -7,6 +7,8 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
     protected override void Call()
     {
         WriteLine("\tcal " + TargetFunction.Label);
+        RemoveRegisterAssignment(IndexRegister.Ix);
+        RemoveRegisterAssignment(IndexRegister.Iz);
     }
 
     protected override void StoreParameters()

@@ -97,6 +97,8 @@ internal class ByteRegister : Cate.ByteRegister
         else {
             if (offset == 0) {
                 instruction.WriteLine("\tld " + AsmName + ",(" + pointerRegister.AsmName + ")");
+                instruction.RemoveRegisterAssignment(this);
+                instruction.AddChanged(this);
             }
             else if (Compiler.IsOffsetInRange(offset)) {
                 using var reservation = PointerOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(false));
@@ -141,6 +143,8 @@ internal class ByteRegister : Cate.ByteRegister
     public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
     {
         instruction.WriteLine("\tld " + AsmName + "," + sourceRegister.AsmName);
+        instruction.AddChanged(this);
+        instruction.RemoveRegisterAssignment(this);
     }
 
     public override void Operate(Instruction instruction, string operation, bool change, int count)
@@ -161,30 +165,33 @@ internal class ByteRegister : Cate.ByteRegister
                 var value = integerOperand.IntegerValue;
                 instruction.WriteLine("\t" + operation + " " + AsmName + "," + IntValue(value));
                 instruction.RemoveRegisterAssignment(this);
-                break;
+                instruction.ResultFlags |= Instruction.Flag.Z;
+                return;
             case VariableOperand variableOperand: {
                     var variableRegister = instruction.GetVariableRegister(variableOperand);
                     if (variableRegister is ByteRegister) {
                         instruction.WriteLine("\t" + operation + " " + AsmName + "," + variableRegister.AsmName);
+                        instruction.RemoveRegisterAssignment(this);
+                        instruction.ResultFlags |= Instruction.Flag.Z;
+                        return;
                     }
                     break;
                 }
-            case IndirectOperand indirectOperand:
-                using (var reservation = ByteOperation.ReserveAnyRegister(instruction, Registers.Where(r => !r.Equals(this)).ToList())) {
-                    var operandRegister = reservation.ByteRegister;
-                    operandRegister.Load(instruction, indirectOperand);
-                    instruction.WriteLine("\t" + operation + " " + AsmName + "," + operandRegister.AsmName);
-                }
-                break;
-            //using (var reservation = PointerOperation.ReserveAnyRegister(instruction, IndexRegister.Registers)) {
-            //    var indexRegister = reservation.PointerRegister;
-            //    indexRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
-            //    instruction.WriteLine("\t" + operation + " " + AsmName + ",(" + indexRegister.AsmName + IndexRegister.OffsetValue(indirectOperand.Offset)+")");
+            //case IndirectOperand indirectOperand:
+            //    using (var reservation = ByteOperation.ReserveAnyRegister(instruction, Registers.Where(r => !r.Equals(this)).ToList())) {
+            //        var operandRegister = reservation.ByteRegister;
+            //        operandRegister.Load(instruction, indirectOperand);
+            //        instruction.WriteLine("\t" + operation + " " + AsmName + "," + operandRegister.AsmName);
+            //        return;
+            //    }
             //    break;
-            //}
-            default:
-                throw new NotImplementedException();
         }
+        var candidates = Registers.Where(r => !r.Equals(this)).ToList();
+        using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates, operand);
+        var operandRegister = reservation.ByteRegister;
+        operandRegister.Load(instruction, operand);
+        instruction.WriteLine("\t" + operation + " " + AsmName + "," + operandRegister.AsmName);
+        instruction.ResultFlags |= Instruction.Flag.Z;
     }
 
     public static string IntValue(int value)
