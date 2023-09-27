@@ -34,10 +34,10 @@ internal class CompareInstruction : Cate.CompareInstruction
         {
             var leftRegister = ByteRegister.Registers[0];
             using (ByteOperation.ReserveRegister(this, leftRegister)) {
-                leftRegister.Load(this, RightOperand);
+                leftRegister.Load(this, LeftOperand);
                 var rightRegister = ByteRegister.Registers[1];
                 using (ByteOperation.ReserveRegister(this, rightRegister)) {
-                    rightRegister.Load(this, LeftOperand);
+                    rightRegister.Load(this, RightOperand);
                     Compiler.CallExternal(this, "cate.CompareSignedByte");
                 }
             }
@@ -59,10 +59,10 @@ internal class CompareInstruction : Cate.CompareInstruction
         {
             var leftRegister = WordRegister.Registers[0];
             using (WordOperation.ReserveRegister(this, leftRegister)) {
-                leftRegister.Load(this, RightOperand);
+                leftRegister.Load(this, LeftOperand);
                 var rightRegister = WordRegister.Registers[1];
                 using (WordOperation.ReserveRegister(this, rightRegister)) {
-                    rightRegister.Load(this, LeftOperand);
+                    rightRegister.Load(this, RightOperand);
                     Compiler.CallExternal(this, "cate.CompareSignedWord");
                 }
             }
@@ -84,10 +84,10 @@ internal class CompareInstruction : Cate.CompareInstruction
         {
             var leftRegister = WordPointerRegister.Registers[0];
             using (PointerOperation.ReserveRegister(this, leftRegister)) {
-                leftRegister.Load(this, RightOperand);
+                leftRegister.Load(this, LeftOperand);
                 var rightRegister = WordPointerRegister.Registers[1];
                 using (PointerOperation.ReserveRegister(this, rightRegister)) {
-                    rightRegister.Load(this, LeftOperand);
+                    rightRegister.Load(this, RightOperand);
                     Compiler.CallExternal(this, "cate.CompareSignedWord");
                 }
             }
