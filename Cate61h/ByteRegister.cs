@@ -42,6 +42,7 @@ internal class ByteRegister : Cate.ByteRegister
     {
         LoadConstant(instruction, IntValue(value));
         instruction.SetRegisterConstant(this, value);
+        instruction.AddChanged(this);
     }
 
     public override void LoadConstant(Instruction instruction, string value)

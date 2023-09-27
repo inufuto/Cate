@@ -50,6 +50,18 @@ public abstract class WordRegister : Register
     public void Load(Instruction instruction, Operand sourceOperand)
     {
         switch (sourceOperand) {
+            case NullPointerOperand:
+                if (instruction.IsConstantAssigned(this, 0)) return;
+                LoadConstant(instruction, 0);
+                instruction.SetRegisterConstant(this, 0);
+                instruction.AddChanged(this);
+                return;
+            case PointerOperand sourcePointerOperand:
+                if (instruction.IsConstantAssigned(this, sourcePointerOperand)) return;
+                LoadConstant(instruction, sourcePointerOperand.MemoryAddress());
+                instruction.SetRegisterConstant(this, sourcePointerOperand);
+                instruction.AddChanged(this);
+                return;
             case IntegerOperand sourceIntegerOperand:
                 var value = sourceIntegerOperand.IntegerValue;
                 if (instruction.IsConstantAssigned(this, value)) return;
