@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("p[1] = 255")) {
+            if (instruction.ToString().Contains("pByte = pStage[3]")) {
                 var aaa = 111;
             }
 #endif

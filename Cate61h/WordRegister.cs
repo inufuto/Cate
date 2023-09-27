@@ -102,7 +102,28 @@ internal class WordRegister : Cate.WordRegister
     public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
     {
         if (pointerRegister is IndexRegister indexRegister) {
-            instruction.WriteLine("\tldw " + AsmName + ",(" + indexRegister.AsmName + IndexRegister.OffsetValue(offset) + ")");
+            var sign = offset >= 0 ? "+" : "-";
+            var abs = Math.Abs(offset);
+            switch (abs) {
+                case 0:
+                    WithOffset("$sx");
+                    break;
+                case 1:
+                    WithOffset("$sz");
+                    break;
+                default: {
+                        using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+                        var byteRegister = reservation.ByteRegister;
+                        byteRegister.LoadConstant(instruction, abs);
+                        WithOffset(byteRegister.AsmName);
+                        break;
+                    }
+            }
+
+            void WithOffset(string offsetValue)
+            {
+                instruction.WriteLine("\tldw " + AsmName + ",(" + indexRegister.AsmName + sign + offsetValue + ")");
+            }
         }
         else {
             if (offset == 0) {
