@@ -168,7 +168,11 @@ internal class WordRegister : Cate.WordRegister
 
     public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
     {
+        if (instruction.IsRegisterCopy(this, sourceRegister)) return;
         instruction.WriteLine("\tldw " + AsmName + "," + sourceRegister.AsmName);
+        instruction.AddChanged(this);
+        instruction.RemoveRegisterAssignment(this);
+        instruction.SetRegisterCopy(this, sourceRegister);
     }
 
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)

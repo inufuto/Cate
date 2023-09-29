@@ -1,6 +1,4 @@
-﻿using System.Reflection.Emit;
-
-namespace Inu.Cate.Hd61700;
+﻿namespace Inu.Cate.Hd61700;
 
 internal class ByteRegister : Cate.ByteRegister
 {
@@ -142,9 +140,10 @@ internal class ByteRegister : Cate.ByteRegister
 
     public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
     {
+        if (instruction.IsRegisterCopy(this, sourceRegister)) return;
         instruction.WriteLine("\tld " + AsmName + "," + sourceRegister.AsmName);
         instruction.AddChanged(this);
-        instruction.RemoveRegisterAssignment(this);
+        instruction.SetRegisterCopy(this, sourceRegister);
     }
 
     public override void Operate(Instruction instruction, string operation, bool change, int count)

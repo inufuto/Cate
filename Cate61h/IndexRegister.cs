@@ -62,8 +62,10 @@ internal class IndexRegister : Cate.PointerRegister
 
     private void FromWordRegister(Instruction instruction, Cate.WordRegister wordRegister)
     {
+        if (instruction.IsRegisterCopy(this, wordRegister)) return;
         instruction.WriteLine("\tpre " + AsmName + "," + wordRegister.AsmName);
-        instruction.RemoveRegisterAssignment(this);
+        instruction.AddChanged(this);
+        instruction.SetRegisterCopy(this, wordRegister);
     }
 
     public override void StoreToMemory(Instruction instruction, string label)
