@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Xml.Linq;
 
 namespace Inu.Cate.Hd61700;
 
@@ -11,12 +10,26 @@ internal class Compiler : Cate.Compiler
 
     public override void SaveRegisters(StreamWriter writer, ISet<Register> registers)
     {
+        SaveRegisters(writer, registers, 0, _ => "");
+    }
+
+    public override void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
+    {
+        var comments = RegisterComments(variables, out var registers);
+        SaveRegisters(writer, registers, tabCount, register => comments[register]);
+        //base.SaveRegisters(writer, variables, jump, tabCount);
+    }
+
+    private static void SaveRegisters(StreamWriter writer, ISet<Register> registers, int tabCount,
+        Func<Register, string> toComment)
+    {
         var listList = ListList(registers);
         listList.Reverse();
         foreach (var list in listList) {
             if (list.Count > 1) {
+                var comment = string.Join(",", list.Select(toComment).Where(s => !string.IsNullOrEmpty(s)).ToList());
                 var register = list.Last();
-                string name = register switch
+                var name = register switch
                 {
                     ByteRegister byteRegister => byteRegister.AsmName,
                     WordRegister wordRegister => wordRegister.HighByteName,
@@ -25,29 +38,49 @@ internal class Compiler : Cate.Compiler
                     _ => throw new NotImplementedException()
                 };
                 var count = list.Count * register.ByteCount;
-                writer.WriteLine("\tphsm " + name + "," + count);
+                Instruction.WriteTabs(writer, tabCount);
+                writer.WriteLine("\tphsm " + name + "," + count + " ;" + comment);
             }
             else {
-                list.Last().Save(writer, "", false, 0);
+                var register = list.Last();
+                register.Save(writer, toComment(register), false, tabCount);
             }
         }
     }
 
+
+
     public override void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int byteCount)
+    {
+        RestoreRegisters(writer, registers, 0, _ => "");
+    }
+
+    private static void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int tabCount,
+        Func<Register, string> toComment)
     {
         var listList = ListList(registers);
         foreach (var list in listList) {
             if (list.Count > 1) {
+                var comment = string.Join(",", list.Select(toComment).Where(s => !string.IsNullOrEmpty(s)).ToList());
                 var register = list.First();
                 Debug.Assert(register != null);
                 var name = register.AsmName;
                 var count = list.Count * register.ByteCount;
-                writer.WriteLine("\tppsm " + name + "," + count);
+                Instruction.WriteTabs(writer, tabCount);
+                writer.WriteLine("\tppsm " + name + "," + count + " ;" + comment);
             }
             else {
-                list.First().Restore(writer, "", false, 0); 
+                var register = list.First();
+                register.Restore(writer, toComment(register), false, tabCount);
             }
         }
+    }
+
+    public override void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
+    {
+        var comments = RegisterComments(variables, out var registers);
+        RestoreRegisters(writer, registers, tabCount, register => comments[register]);
+        //base.RestoreRegisters(writer, variables, jump, tabCount);
     }
 
 
@@ -70,6 +103,19 @@ internal class Compiler : Cate.Compiler
         }
 
         return listList;
+    }
+
+    private static Dictionary<Register, string> RegisterComments(IEnumerable<Variable> variables, out HashSet<Register> registers)
+    {
+        var comments = new Dictionary<Register, string>();
+        registers = new HashSet<Register>();
+        foreach (var variable in variables) {
+            var register = variable.Register;
+            if (register == null) continue;
+            registers.Add(register);
+            comments[register] = variable.Name;
+        }
+        return comments;
     }
 
 
