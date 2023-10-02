@@ -99,3 +99,4 @@ runtime/SC62015/c.bat
 /Cate61h/bin/Release/net6.0
 /Cate61h/Properties/PublishProfiles
 *.json
+/Cate61h/.vs/ProjectEvaluation
