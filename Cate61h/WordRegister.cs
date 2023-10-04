@@ -109,7 +109,7 @@ internal class WordRegister : Cate.WordRegister
                     WithOffset("$sx");
                     break;
                 case 1:
-                    WithOffset("$sz");
+                    WithOffset("$sy");
                     break;
                 default: {
                         using var reservation = ByteOperation.ReserveAnyRegister(instruction);
