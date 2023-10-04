@@ -27,7 +27,14 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
         void ViaRegister(PointerRegister register)
         {
             register.Load(this, LeftOperand);
-            register.Operate(this, operation, true, RightOperand);
+            if (RightOperand is IntegerOperand { IntegerValue: 1 }) {
+                WriteLine("\tadw " + register.AsmName + ",$sy");
+                RemoveRegisterAssignment(register);
+                AddChanged(register);
+            }
+            else {
+                register.Operate(this, operation, true, RightOperand);
+            }
             register.Store(this, DestinationOperand);
         }
     }

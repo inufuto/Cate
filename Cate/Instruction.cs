@@ -329,6 +329,7 @@ public abstract class Instruction
     {
         var variableRegisters = new HashSet<Register>();
         var constantRegisters = new HashSet<Register>();
+        var registerCopies = new HashSet<Register>();
         foreach (var previousInstruction in PreviousInstructions) {
             foreach (var (register, assignment) in previousInstruction.RegisterAssignments) {
                 switch (assignment) {
@@ -345,7 +346,7 @@ public abstract class Instruction
                         break;
                     case RegisterCopy registerCopy:
                         if (!previousInstruction.IsRegisterInVariableRange(register, null)) {
-                            RegisterAssignments[register] = registerCopy;
+                            registerCopies.Add(register);
                         }
                         break;
                 }
@@ -380,6 +381,28 @@ public abstract class Instruction
             }
             if (value != null) {
                 RegisterAssignments[register] = new RegisterConstantAssignment(value);
+            }
+        nextRegister:;
+        }
+
+        foreach (var register in registerCopies) {
+            Register? sourceRegister = null;
+            foreach (var previousInstruction in PreviousInstructions) {
+                if (previousInstruction.RegisterAssignments.TryGetValue(register, out var assignment)) {
+                    if (assignment is RegisterCopy registerCopy) {
+                        if (sourceRegister == null) {
+                            sourceRegister = registerCopy.SourceRegister;
+                        }
+                        else if (!Equals(registerCopy.SourceRegister, sourceRegister)) {
+                            goto nextRegister;
+                        }
+                    }
+                    else goto nextRegister;
+                }
+                else goto nextRegister;
+            }
+            if (sourceRegister != null) {
+                RegisterAssignments[register] = new RegisterCopy(sourceRegister);
             }
         nextRegister:;
         }

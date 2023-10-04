@@ -24,7 +24,7 @@
                 _ => throw new NotImplementedException()
             };
 
-            if (DestinationOperand.Register is ByteRegister destinationRegister) {
+            if (DestinationOperand.Register is ByteRegister destinationRegister && !Equals(RightOperand.Register, DestinationOperand.Register)) {
                 ViaRegister(destinationRegister);
                 return;
             }

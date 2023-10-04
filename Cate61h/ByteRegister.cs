@@ -176,14 +176,6 @@ internal class ByteRegister : Cate.ByteRegister
                     }
                     break;
                 }
-            //case IndirectOperand indirectOperand:
-            //    using (var reservation = ByteOperation.ReserveAnyRegister(instruction, Registers.Where(r => !r.Equals(this)).ToList())) {
-            //        var operandRegister = reservation.ByteRegister;
-            //        operandRegister.Load(instruction, indirectOperand);
-            //        instruction.WriteLine("\t" + operation + " " + AsmName + "," + operandRegister.AsmName);
-            //        return;
-            //    }
-            //    break;
         }
         var candidates = Registers.Where(r => !r.Equals(this)).ToList();
         using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates, operand);
@@ -191,6 +183,10 @@ internal class ByteRegister : Cate.ByteRegister
         operandRegister.Load(instruction, operand);
         instruction.WriteLine("\t" + operation + " " + AsmName + "," + operandRegister.AsmName);
         instruction.ResultFlags |= Instruction.Flag.Z;
+        if (change) {
+            instruction.RemoveRegisterAssignment(this);
+            instruction.AddChanged(this);
+        }
     }
 
     public static string IntValue(int value)

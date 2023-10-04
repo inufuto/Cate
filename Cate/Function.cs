@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pMonster[4] = dx")) {
+            if (instruction.ToString().Contains("*pCell = *pCell | rightBit")) {
                 var aaa = 111;
             }
 #endif
