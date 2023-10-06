@@ -28,7 +28,7 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
         {
             register.Load(this, LeftOperand);
             if (RightOperand is IntegerOperand { IntegerValue: 1 }) {
-                WriteLine("\tadw " + register.AsmName + ",$sy");
+                WriteLine("\t" + operation + " " + register.AsmName + ",$sy");
                 RemoveRegisterAssignment(register);
                 AddChanged(register);
             }

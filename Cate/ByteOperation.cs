@@ -130,7 +130,7 @@ namespace Inu.Cate
         {
             if (!(sourceOperand is VariableOperand variableOperand)) return ReserveAnyRegister(instruction, candidates);
             var register = instruction.GetVariableRegister(variableOperand);
-            if (!(register is ByteRegister byteRegister) || !candidates.Contains(byteRegister))
+            if (register is not ByteRegister byteRegister || !candidates.Contains(byteRegister))
                 return ReserveAnyRegister(instruction, candidates);
             //instruction.CancelOperandRegister(sourceOperand);
             return ReserveRegister(instruction, byteRegister, sourceOperand);

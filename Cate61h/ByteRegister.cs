@@ -164,6 +164,7 @@ internal class ByteRegister : Cate.ByteRegister
                 var value = integerOperand.IntegerValue;
                 instruction.WriteLine("\t" + operation + " " + AsmName + "," + IntValue(value));
                 instruction.RemoveRegisterAssignment(this);
+                instruction.AddChanged(this);
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
             case VariableOperand variableOperand: {
@@ -171,6 +172,7 @@ internal class ByteRegister : Cate.ByteRegister
                     if (variableRegister is ByteRegister) {
                         instruction.WriteLine("\t" + operation + " " + AsmName + "," + variableRegister.AsmName);
                         instruction.RemoveRegisterAssignment(this);
+                        instruction.AddChanged(this);
                         instruction.ResultFlags |= Instruction.Flag.Z;
                         return;
                     }
