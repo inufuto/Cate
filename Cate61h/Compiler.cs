@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Drawing;
 
 namespace Inu.Cate.Hd61700;
 
@@ -39,7 +40,7 @@ internal class Compiler : Cate.Compiler
                 };
                 var count = list.Count * register.ByteCount;
                 Instruction.WriteTabs(writer, tabCount);
-                writer.WriteLine("\tphsm " + name + "," + count + " ;" + comment);
+                writer.WriteLine("\tphsm " + name + "," + count + (comment != "" ? " ;" + comment : ""));
             }
             else {
                 var register = list.Last();
@@ -67,7 +68,7 @@ internal class Compiler : Cate.Compiler
                 var name = register.AsmName;
                 var count = list.Count * register.ByteCount;
                 Instruction.WriteTabs(writer, tabCount);
-                writer.WriteLine("\tppsm " + name + "," + count + " ;" + comment);
+                writer.WriteLine("\tppsm " + name + "," + count + (comment != "" ? " ;" + comment : ""));
             }
             else {
                 var register = list.First();
@@ -93,11 +94,10 @@ internal class Compiler : Cate.Compiler
         List<Register>? currentList = null;
         Register? prevRegister = null;
         foreach (var register in list) {
-            if (currentList == null || prevRegister == null || prevRegister.Id + prevRegister.ByteCount != register.Id) {
+            if (currentList == null || prevRegister == null || prevRegister.Id + prevRegister.ByteCount != register.Id || currentList.Select(r => r.ByteCount).Sum() >= 8) {
                 currentList = new List<Register>();
                 listList.Add(currentList);
             }
-
             currentList.Add(register);
             prevRegister = register;
         }

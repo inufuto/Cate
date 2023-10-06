@@ -17,13 +17,13 @@ internal class ByteRegister : Cate.ByteRegister
     public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
     {
         Instruction.WriteTabs(writer, tabCount);
-        writer.WriteLine("\tphs " + AsmName + " ;" + comment);
+        writer.WriteLine("\tphs " + AsmName + (comment != "" ? " ;" + comment : ""));
     }
 
     public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
     {
         Instruction.WriteTabs(writer, tabCount);
-        writer.WriteLine("\tpps " + AsmName + " ;" + comment);
+        writer.WriteLine("\tpps " + AsmName + (comment != "" ? " ;" + comment : ""));
     }
 
     public override void Save(Instruction instruction)

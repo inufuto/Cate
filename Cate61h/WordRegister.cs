@@ -19,13 +19,13 @@ internal class WordRegister : Cate.WordRegister
     public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
     {
         Instruction.WriteTabs(writer, tabCount);
-        writer.WriteLine("\tphsw " + HighByteName + " ;" + comment);
+        writer.WriteLine("\tphsw " + HighByteName + (comment != "" ? " ;" + comment : ""));
     }
 
     public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
     {
         Instruction.WriteTabs(writer, tabCount);
-        writer.WriteLine("\tppsw " + AsmName + " ;" + comment);
+        writer.WriteLine("\tppsw " + AsmName + (comment != "" ? " ;" + comment : ""));
     }
 
     public override void Save(Instruction instruction)
