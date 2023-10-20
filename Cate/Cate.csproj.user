@@ -3,4 +3,9 @@
   <PropertyGroup>
     <_LastSelectedProfileId>D:\Projects\cs\console\cate\Cate\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>
