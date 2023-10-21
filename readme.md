@@ -17,3 +17,4 @@ This repository contains following Visual Studio Solutions:
 |Cate87.sln|for μCOM87(μPD7800~7806)|
 |Cate86.sln|for 8086|
 |Cate62.sln|for SC62015|
+|Cate61h.sln|for HD61700|

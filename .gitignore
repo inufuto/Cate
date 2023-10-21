@@ -100,3 +100,4 @@ runtime/SC62015/c.bat
 /Cate61h/Properties/PublishProfiles
 *.json
 /Cate61h/.vs/ProjectEvaluation
+/Cate61h/Cate61h.csproj.user
