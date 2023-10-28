@@ -10,8 +10,9 @@ internal class WordAddOrSubtractInstruction : Cate.AddOrSubtractInstruction
 
     public override void BuildAssembly()
     {
-        if (IncrementOrDecrement())
-            return;
+        if (LeftOperand is VariableOperand variableOperand && !Equals(GetVariableRegister(variableOperand), PairRegister.D) && RightOperand is IntegerOperand) {
+            if (IncrementOrDecrement()) return;
+        }
 
         var operation = OperatorId switch
         {
@@ -19,25 +20,6 @@ internal class WordAddOrSubtractInstruction : Cate.AddOrSubtractInstruction
             '-' => "sub",
             _ => throw new NotImplementedException()
         };
-
-        if (LeftOperand is VariableOperand variableOperand && Equals(GetVariableRegister(variableOperand), IndexRegister.X) && RightOperand is IntegerOperand integerOperand && Math.Abs(integerOperand.IntegerValue) < 10) {
-            using (WordOperation.ReserveRegister(this, IndexRegister.X, DestinationOperand)) {
-                IndexRegister.X.Load(this, LeftOperand);
-                var value = integerOperand.IntegerValue;
-                if (value > 0) {
-                    for (var i = 0; i < value; ++i) {
-                        WriteLine("\tinx");
-                    }
-                }
-                else {
-                    for (var i = 0; i < -value; ++i) {
-                        WriteLine("\tdex");
-                    }
-                }
-                IndexRegister.X.Store(this, DestinationOperand);
-            }
-            return;
-        }
         using (WordOperation.ReserveRegister(this, PairRegister.D, DestinationOperand)) {
             PairRegister.D.Load(this, LeftOperand);
             PairRegister.D.Operate(this, operation, false, RightOperand);
@@ -45,7 +27,7 @@ internal class WordAddOrSubtractInstruction : Cate.AddOrSubtractInstruction
         }
     }
 
-    protected override int Threshold() => 2;
+    protected override int Threshold() => 10;
 
     protected override void Increment(int count)
     {

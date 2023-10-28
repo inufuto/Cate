@@ -43,13 +43,13 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
             ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
             ByteRegister.B.LoadConstant(this, RightValue);
             WriteLine("\tmul");
-            PairRegister.D.StoreToMemory(this, "<" + ZeroPage.Word);
+            PairRegister.D.StoreToMemory(this,  ZeroPage.Word.Label);
             ByteRegister.A.Load(this, Compiler.HighByteOperand(LeftOperand));
             ByteRegister.B.LoadConstant(this, RightValue);
             WriteLine("\tmul");
             WriteLine("\ttba");
-            WriteLine("\tadda\t<" + ZeroPage.WordHigh);
-            ByteRegister.B.LoadFromMemory(this, "<" + ZeroPage.WordLow);
+            WriteLine("\tadda\t" + ZeroPage.WordHigh.Label);
+            ByteRegister.B.LoadFromMemory(this,  ZeroPage.WordLow.Label);
             PairRegister.D.Store(this, DestinationOperand);
         }
     }

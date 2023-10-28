@@ -458,6 +458,11 @@ namespace Inu.Cate
         {
             if (operand is VariableOperand variableOperand) {
                 var variableRegister = GetVariableRegister(variableOperand);
+                if (variableRegister is WordRegister wordRegister) {
+                    wordRegister.Load(this, operand);
+                    wordRegister.StoreToMemory(this, label);
+                    return;
+                }
                 if (variableRegister is PointerRegister pointerRegister) {
                     pointerRegister.Load(this, operand);
                     pointerRegister.StoreToMemory(this, label);

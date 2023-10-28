@@ -118,7 +118,7 @@ internal class PairRegister : Cate.WordRegister
     public override void CopyFrom(Instruction instruction, WordRegister sourceRegister)
     {
         if (Equals(sourceRegister, this)) return;
-        var label = "<" + ZeroPage.Word.Label;
+        var label = ZeroPage.Word.Label;
         sourceRegister.StoreToMemory(instruction, label);
         LoadFromMemory(instruction, label);
         instruction.SetRegisterCopy(this, sourceRegister);

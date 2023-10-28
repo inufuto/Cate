@@ -35,8 +35,8 @@ internal class IndexRegister : Mc6800.IndexRegister
     {
         if (Equals(this, sourceRegister)) return;
         Debug.Assert(Equals(sourceRegister, PairRegister.D));
-        instruction.WriteLine("\tstd\t<" + ZeroPage.Word.Label);
-        LoadFromMemory(instruction, "<" + ZeroPage.Word.Label);
+        instruction.WriteLine("\tstd\t" + ZeroPage.Word.Label);
+        LoadFromMemory(instruction, ZeroPage.Word.Label);
         instruction.SetRegisterCopy(this, sourceRegister);
     }
 

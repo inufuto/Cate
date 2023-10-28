@@ -81,9 +81,9 @@ internal class IndexRegister : Cate.WordRegister
             X.LoadFromMemory(instruction, pointer, 0);
             using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
             var byteRegister = reservation.ByteRegister;
-            byteRegister.LoadFromMemory(instruction, "<" + ZeroPage.Word.High.Label);
+            byteRegister.LoadFromMemory(instruction, ZeroPage.Word.High.Label);
             instruction.WriteLine("\tsta" + byteRegister.AsmName + "\t" + offset + "+0,x");
-            byteRegister.LoadFromMemory(instruction, "<" + ZeroPage.Word.Low.Label);
+            byteRegister.LoadFromMemory(instruction, ZeroPage.Word.Low.Label);
             instruction.WriteLine("\tsta" + byteRegister.AsmName + "\t" + offset + "+1,x");
         }
     }
