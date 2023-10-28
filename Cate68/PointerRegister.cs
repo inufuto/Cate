@@ -7,7 +7,7 @@ namespace Inu.Cate.Mc6800
         public PointerRegister(Cate.WordRegister wordRegister) : base(2, wordRegister)
         { }
 
-        public static PointerRegister X = new(Mc6800.WordRegister.X);
+        public static PointerRegister X = new(Mc6800.IndexRegister.X);
         public static List<Cate.PointerRegister> Registers => new() { X };
 
         public override bool IsOffsetInRange(int offset) => offset is >= 0 and <= 0xff;
@@ -26,7 +26,7 @@ namespace Inu.Cate.Mc6800
         {
             if (offset == 0)
                 return;
-            if (offset > 0 && offset <= 16) {
+            if (offset is > 0 and <= 16) {
                 while (offset > 0) {
                     instruction.WriteLine("\tinx");
                     --offset;
@@ -34,7 +34,7 @@ namespace Inu.Cate.Mc6800
                 instruction.RemoveRegisterAssignment(X);
                 return;
             }
-            if (offset < 0 && offset >= -16) {
+            if (offset is < 0 and >= -16) {
                 while (offset < 0) {
                     instruction.WriteLine("\tdex");
                     ++offset;

@@ -78,13 +78,13 @@ namespace Inu.Cate.Mc6800
         {
             switch (OperatorId) {
                 case Keyword.Equal:
-                    WordRegister.X.Load(this, LeftOperand);
-                    WordRegister.X.Operate(this, "cp", false, RightOperand);
+                    IndexRegister.X.Load(this, LeftOperand);
+                    IndexRegister.X.Operate(this, "cp", false, RightOperand);
                     WriteJumpLine("\tbeq\t" + Anchor);
                     return;
                 case Keyword.NotEqual:
-                    WordRegister.X.Load(this, LeftOperand);
-                    WordRegister.X.Operate(this, "cp", false, RightOperand);
+                    IndexRegister.X.Load(this, LeftOperand);
+                    IndexRegister.X.Operate(this, "cp", false, RightOperand);
                     WriteJumpLine("\tbne\t" + Anchor);
                     return;
             }

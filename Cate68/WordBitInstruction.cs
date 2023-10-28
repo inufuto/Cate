@@ -11,27 +11,19 @@ namespace Inu.Cate.Mc6800
 
         public override void BuildAssembly()
         {
-            string lowOperation, highOperation;
-            switch (OperatorId) {
-                case '|':
-                    lowOperation = highOperation = "ora";
-                    break;
-                case '^':
-                    lowOperation = highOperation = "eor";
-                    break;
-                case '&':
-                    lowOperation = highOperation = "and";
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
-
-            OperatePair(lowOperation, highOperation);
+            var operation = OperatorId switch
+            {
+                '|' => "ora",
+                '^' => "eor",
+                '&' => "and",
+                _ => throw new NotImplementedException()
+            };
+            OperatePair(operation);
         }
 
-        private void OperatePair(string lowOperation, string highOperation)
+        private void OperatePair(string operation)
         {
-            Mc6800.WordOperation.OperatePair(this, LeftOperand, RightOperand, DestinationOperand, lowOperation, highOperation);
+            Mc6800.WordOperation.OperatePair(this, LeftOperand, RightOperand, DestinationOperand, operation, operation);
         }
     }
 }

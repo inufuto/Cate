@@ -15,7 +15,7 @@ namespace Inu.Cate.Mc6800
             else {
                 WriteLine("\tbsr\t" + TargetFunction.Label);
             }
-            RemoveRegisterAssignment(WordRegister.X);
+            RemoveRegisterAssignment(IndexRegister.X);
         }
 
         protected override void StoreParameters()

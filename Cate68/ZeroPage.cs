@@ -67,8 +67,8 @@
                 Clear(instruction);
                 return;
             }
-            WordRegister.X.Load(instruction, operand);
-            WordRegister.X.StoreToMemory(instruction, Name);
+            IndexRegister.X.Load(instruction, operand);
+            IndexRegister.X.StoreToMemory(instruction, Name);
         }
 
         public void Clear(Instruction instruction)
@@ -79,8 +79,8 @@
 
         public void To(Instruction instruction, AssignableOperand operand)
         {
-            WordRegister.X.LoadFromMemory(instruction, Name);
-            WordRegister.X.Store(instruction, operand);
+            IndexRegister.X.LoadFromMemory(instruction, Name);
+            IndexRegister.X.Store(instruction, operand);
         }
 
 

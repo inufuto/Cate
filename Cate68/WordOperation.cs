@@ -4,9 +4,9 @@ namespace Inu.Cate.Mc6800
 {
     internal class WordOperation : Cate.WordOperation
     {
-        public virtual List<Cate.WordRegister> AddableRegisters => new List<Cate.WordRegister>();
+        public virtual List<Cate.WordRegister> AddableRegisters => new();
 
-        public override List<Cate.WordRegister> Registers => WordRegister.Registers;
+        public override List<Cate.WordRegister> Registers => new() { IndexRegister.X };
 
 
         public static void OperatePair(
@@ -73,8 +73,8 @@ namespace Inu.Cate.Mc6800
             }
 
             if (destinationTemporary) {
-                WordRegister.X.StoreToMemory(instruction, ZeroPage.Word.Name);
-                WordRegister.X.Store(instruction, destinationOperand);
+                IndexRegister.X.StoreToMemory(instruction, ZeroPage.Word.Name);
+                IndexRegister.X.Store(instruction, destinationOperand);
             }
             else {
                 instruction.RemoveVariableRegister(destinationOperand);
