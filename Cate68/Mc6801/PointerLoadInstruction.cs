@@ -14,7 +14,7 @@ namespace Inu.Cate.Mc6800.Mc6801
             if (SourceOperand.SameStorage(DestinationOperand))
                 return;
 
-            if (DestinationOperand is IndirectOperand && SourceOperand is IndirectOperand) {
+            if (DestinationOperand is IndirectOperand) {
                 using (WordOperation.ReserveRegister(this, PairRegister.D)) {
                     ViaRegister(PairRegister.D);
                 }

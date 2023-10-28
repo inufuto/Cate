@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("*pPoint = VramPtr_(x,y)")) {
+            if (instruction.ToString().Contains("pTeam[1] = pFormation")) {
                 var aaa = 111;
             }
 #endif

@@ -6,6 +6,15 @@ internal class Compiler : Mc6800.Compiler
 {
     public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
 
+    public override Register? ReturnRegister(ParameterizableType type)
+    {
+        return type.ByteCount switch
+        {
+            1 => ByteRegister.A,
+            _ => type is PointerType ? Mc6801.PointerRegister.X : Mc6801.IndexRegister.X
+        };
+    }
+
     protected override LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
     {
         return new WordLoadInstruction(function, destinationOperand, sourceOperand);
@@ -20,8 +29,7 @@ internal class Compiler : Mc6800.Compiler
     public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
         Operand leftOperand, Operand rightOperand)
     {
-        if (destinationOperand.Type.ByteCount == 2)
-        {
+        if (destinationOperand.Type.ByteCount == 2) {
             switch (operatorId) {
                 //case '|':
                 //case '^':
