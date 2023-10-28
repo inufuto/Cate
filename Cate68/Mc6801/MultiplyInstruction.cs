@@ -26,6 +26,7 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
                         WriteLine("\trol\t" + variable.MemoryAddress(offset));
                     });
                     RemoveVariableRegister(variableOperand);
+                    RemoveVariableRegister(LeftOperand);
                     return;
                 }
             }

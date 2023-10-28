@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pSource = pSource + 1")) {
+            if (instruction.ToString().Contains("t = cardCount << 4")) {
                 var aaa = 111;
             }
 #endif

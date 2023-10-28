@@ -11,42 +11,71 @@ namespace Inu.Cate.Mc6800.Mc6801
 
         protected override void ShiftConstant(int count)
         {
-            Action action = OperatorId switch
-            {
-                Keyword.ShiftLeft => () =>
-                {
-                    WriteLine("\tasld");
-                }
-                ,
-                Keyword.ShiftRight when ((IntegerType)LeftOperand.Type).Signed => () =>
-                {
-                    WriteLine("\tasra");
-                    WriteLine("\trorb");
-                }
-                ,
-                Keyword.ShiftRight => () =>
-                {
-                    WriteLine("\tlsrd");
-                }
-                ,
-                _ => throw new NotImplementedException()
-            };
-
             if (
-                LeftOperand.SameStorage(DestinationOperand) &&
+                LeftOperand.SameStorage(DestinationOperand) && count <= 2 &&
                 (!(DestinationOperand is IndirectOperand indirectOperand) || PointerRegister.X.IsOffsetInRange(indirectOperand.Offset + 1))
             ) {
+                Action<Action<string>, Action<string>> byteAction = OperatorId switch
+                {
+                    Keyword.ShiftLeft => (low, high) =>
+                    {
+                        low("asl");
+                        high("rol");
+                    }
+                    ,
+                    Keyword.ShiftRight when ((IntegerType)LeftOperand.Type).Signed => (low, high) =>
+                    {
+                        high("\tasr");
+                        low("\tror");
+                    }
+                    ,
+                    Keyword.ShiftRight => (low, high) =>
+                    {
+                        high("\tlsr");
+                        low("\tror");
+                    }
+                    ,
+                    _ => throw new NotImplementedException()
+                };
                 for (var i = 0; i < count; ++i) {
-                    action();
+                    byteAction(operation =>
+                    {
+                        ByteOperation.Operate(this, operation, true, Compiler.LowByteOperand(DestinationOperand));
+                    }, operation =>
+                    {
+                        ByteOperation.Operate(this, operation, true, Compiler.HighByteOperand(DestinationOperand));
+                    });
                 }
                 return;
             }
-            using (WordOperation.ReserveRegister(this, PairRegister.D)) {
-                PairRegister.D.Load(this, LeftOperand);
-                for (var i = 0; i < count; ++i) {
-                    action();
+            {
+                Action action = OperatorId switch
+                {
+                    Keyword.ShiftLeft => () =>
+                    {
+                        WriteLine("\tasld");
+                    }
+                    ,
+                    Keyword.ShiftRight when ((IntegerType)LeftOperand.Type).Signed => () =>
+                    {
+                        WriteLine("\tasra");
+                        WriteLine("\trorb");
+                    }
+                    ,
+                    Keyword.ShiftRight => () =>
+                    {
+                        WriteLine("\tlsrd");
+                    }
+                    ,
+                    _ => throw new NotImplementedException()
+                };
+                using (WordOperation.ReserveRegister(this, PairRegister.D)) {
+                    PairRegister.D.Load(this, LeftOperand);
+                    for (var i = 0; i < count; ++i) {
+                        action();
+                    }
+                    PairRegister.D.Store(this, DestinationOperand);
                 }
-                PairRegister.D.Store(this, DestinationOperand);
             }
         }
 

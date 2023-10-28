@@ -26,8 +26,8 @@ internal class WordLoadInstruction : LoadInstruction
         void ViaRegister(WordRegister wordRegister)
         {
             wordRegister.Load(this, SourceOperand);
-            wordRegister.Store(this, DestinationOperand);
             RemoveVariableRegister(DestinationOperand);
+            wordRegister.Store(this, DestinationOperand);
         }
     }
 }
