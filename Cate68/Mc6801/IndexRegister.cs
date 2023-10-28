@@ -10,9 +10,11 @@ internal class IndexRegister : Mc6800.IndexRegister
     private protected IndexRegister(int id, string name) : base(id, name) { }
     public override void CopyFrom(Instruction instruction, WordRegister sourceRegister)
     {
+        if (Equals(this, sourceRegister)) return;
         Debug.Assert(Equals(sourceRegister, PairRegister.D));
         instruction.WriteLine("\tstd\t<" + ZeroPage.Word.Label);
         LoadFromMemory(instruction, "<" + ZeroPage.Word.Label);
+        instruction.SetRegisterCopy(this, sourceRegister);
     }
 
     public override void Save(Instruction instruction)

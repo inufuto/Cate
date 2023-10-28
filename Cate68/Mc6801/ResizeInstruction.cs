@@ -16,7 +16,7 @@
 
         protected override void Expand()
         {
-            if (SourceOperand.Register != null) {
+            if (SourceOperand is VariableOperand variableOperand && Equals(GetVariableRegister(variableOperand), ByteRegister.B) && !IsRegisterReserved(ByteRegister.A)) {
                 using (WordOperation.ReserveRegister(this, PairRegister.D)) {
                     ByteRegister.B.Load(this, SourceOperand);
                     WriteLine("\tclra");

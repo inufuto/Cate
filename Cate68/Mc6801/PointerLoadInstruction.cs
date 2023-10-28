@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Inu.Cate.Mc6800.Mc6801
 {
@@ -20,7 +21,8 @@ namespace Inu.Cate.Mc6800.Mc6801
                 return;
             }
 
-            using var reservation = WordOperation.ReserveAnyRegister(this, SourceOperand);
+            var list = new List<WordRegister>() { IndexRegister.X, PairRegister.D };
+            using var reservation = WordOperation.ReserveAnyRegister(this, list, SourceOperand);
             ViaRegister(reservation.WordRegister);
             return;
 
@@ -28,7 +30,7 @@ namespace Inu.Cate.Mc6800.Mc6801
             {
                 wordRegister.Load(this, SourceOperand);
                 wordRegister.Store(this, DestinationOperand);
-                RemoveVariableRegister(DestinationOperand);
+                //RemoveVariableRegister(DestinationOperand);
             }
         }
     }

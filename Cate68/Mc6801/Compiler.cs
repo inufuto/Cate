@@ -39,11 +39,11 @@ internal class Compiler : Mc6800.Compiler
         return base.CreateBinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
     }
 
-    public override Cate.ResizeInstruction CreateResizeInstruction(Function function, AssignableOperand destinationOperand,
-        IntegerType destinationType, Operand sourceOperand, IntegerType sourceType)
-    {
-        return new ResizeInstruction(function, destinationOperand, destinationType, sourceOperand, sourceType);
-    }
+    //public override Cate.ResizeInstruction CreateResizeInstruction(Function function, AssignableOperand destinationOperand,
+    //    IntegerType destinationType, Operand sourceOperand, IntegerType sourceType)
+    //{
+    //    return new ResizeInstruction(function, destinationOperand, destinationType, sourceOperand, sourceType);
+    //}
 
     public override Cate.MultiplyInstruction CreateMultiplyInstruction(Function function, AssignableOperand destinationOperand,
         Operand leftOperand, int rightValue)

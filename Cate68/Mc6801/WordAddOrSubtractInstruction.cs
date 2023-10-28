@@ -20,6 +20,24 @@ internal class WordAddOrSubtractInstruction : Cate.AddOrSubtractInstruction
             _ => throw new NotImplementedException()
         };
 
+        if (LeftOperand is VariableOperand variableOperand && Equals(GetVariableRegister(variableOperand), IndexRegister.X) && RightOperand is IntegerOperand integerOperand && Math.Abs(integerOperand.IntegerValue) < 10) {
+            using (WordOperation.ReserveRegister(this, IndexRegister.X, DestinationOperand)) {
+                IndexRegister.X.Load(this, LeftOperand);
+                var value = integerOperand.IntegerValue;
+                if (value > 0) {
+                    for (var i = 0; i < value; ++i) {
+                        WriteLine("\tinx");
+                    }
+                }
+                else {
+                    for (var i = 0; i < -value; ++i) {
+                        WriteLine("\tdex");
+                    }
+                }
+                IndexRegister.X.Store(this, DestinationOperand);
+            }
+            return;
+        }
         using (WordOperation.ReserveRegister(this, PairRegister.D, DestinationOperand)) {
             PairRegister.D.Load(this, LeftOperand);
             PairRegister.D.Operate(this, operation, false, RightOperand);

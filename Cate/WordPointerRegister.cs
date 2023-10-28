@@ -84,6 +84,20 @@ namespace Inu.Cate
             WordRegister.StoreToMemory(instruction, label);
         }
 
+        public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
+        {
+            var variableRegister = instruction.GetVariableRegister(variable, offset);
+            if (variableRegister is WordRegister wordRegister) {
+                WordRegister.CopyFrom(instruction, wordRegister);
+                return;
+            }
+            if (variableRegister is PointerRegister pointerRegister) {
+                CopyFrom(instruction, pointerRegister);
+                return;
+            }
+            base.LoadFromMemory(instruction, variable, offset);
+        }
+
         public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
         {
             WordRegister.LoadIndirect(instruction, pointerRegister, offset);

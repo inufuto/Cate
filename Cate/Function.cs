@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("*@27 = 0")) {
+            if (instruction.ToString().Contains("@3 = DecideDirection_.26.directions_")) {
                 var aaa = 111;
             }
 #endif

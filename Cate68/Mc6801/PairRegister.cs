@@ -66,13 +66,15 @@ internal class PairRegister : Cate.WordRegister
     {
         instruction.WriteLine("\tld" + AsmName + "\t#" + value);
         instruction.AddChanged(this);
-        instruction.RemoveRegisterAssignment(D);
+        instruction.RemoveRegisterAssignment(this);
     }
 
     public override void LoadFromMemory(Instruction instruction, string label)
     {
 
         instruction.WriteLine("\tld" + AsmName + "\t" + label);
+        instruction.AddChanged(this);
+        instruction.RemoveRegisterAssignment(this);
     }
 
     public override void StoreToMemory(Instruction instruction, string label)
@@ -119,6 +121,7 @@ internal class PairRegister : Cate.WordRegister
         var label = "<" + ZeroPage.Word.Label;
         sourceRegister.StoreToMemory(instruction, label);
         LoadFromMemory(instruction, label);
+        instruction.SetRegisterCopy(this, sourceRegister);
     }
 
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
