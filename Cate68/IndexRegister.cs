@@ -72,7 +72,7 @@ internal class IndexRegister : Cate.WordRegister
             ViaRegister();
             return;
         }
-        using var pointerReservation = PointerOperation.ReserveRegister(instruction, PointerRegister.X);
+        //using var pointerReservation = PointerOperation.ReserveRegister(instruction, PointerRegister.X);
         ViaRegister();
         return;
 
@@ -124,6 +124,7 @@ internal class IndexRegister : Cate.WordRegister
 
     public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
     {
+        if (Equals(sourceRegister, this)) return;
         // Cannot copy because word register is only one
         throw new NotImplementedException();
     }
