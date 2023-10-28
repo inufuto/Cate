@@ -49,7 +49,11 @@ namespace Inu.Cate
         protected virtual void OperateIndirect(Instruction instruction, string operation, bool change, Variable pointer,
             int offset, int count)
         {
-            using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerOperation.RegistersToOffset(offset));
+            var candidates = PointerOperation.RegistersToOffset(offset);
+            if (!candidates.Any()) {
+                candidates = PointerOperation.Registers;
+            }
+            using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
             reservation.PointerRegister.LoadFromMemory(instruction, pointer, 0);
             OperateIndirect(instruction, operation, change, reservation.PointerRegister, offset, count);
         }
