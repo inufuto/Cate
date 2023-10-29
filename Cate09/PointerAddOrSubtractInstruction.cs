@@ -111,6 +111,10 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
             RemoveRegisterAssignment(r);
         }
 
+        if (DestinationOperand.Register is PointerRegister destinationRegister) {
+            ViaRegister(destinationRegister);
+            return true;
+        }
         if (LeftOperand is VariableOperand variableOperand) {
             var variableRegister = GetVariableRegister(variableOperand);
             if (variableRegister is PointerRegister pointerRegister && !RightOperand.Conflicts(pointerRegister)) {

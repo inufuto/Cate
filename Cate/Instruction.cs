@@ -80,9 +80,9 @@ public abstract class Instruction
     public readonly ISet<Instruction> PreviousInstructions = new HashSet<Instruction>();
     public readonly Function Function;
     public readonly IList<string> Codes = new List<string>();
-    private readonly List<string> codesToJump = new List<string>();
+    private readonly List<string> codesToJump = new();
     private readonly IList<RegisterReservation> registerReservations = new List<RegisterReservation>();
-    private readonly IList<RegisterReservation> operandRegisterReservations = new List<RegisterReservation>();
+    //private readonly IList<RegisterReservation> operandRegisterReservations = new List<RegisterReservation>();
     private readonly ISet<Register> changedRegisters = new HashSet<Register>();
     public readonly ISet<Variable> SavingVariables = new HashSet<Variable>();
     private readonly IDictionary<Register, RegisterAssignment> RegisterAssignments = new Dictionary<Register, RegisterAssignment>();
@@ -444,7 +444,7 @@ public abstract class Instruction
         };
         if (variableRegister == null) return;
         var reservation = ReserveRegister(variableRegister, operand);
-        operandRegisterReservations.Add(reservation);
+        //operandRegisterReservations.Add(reservation);
     }
 
     public RegisterReservation ReserveRegister(Register register)
@@ -532,7 +532,7 @@ public abstract class Instruction
             };
             if (operandVariable == null || !Equals(operandVariable.Register, reservation.Register)) continue;
             registerReservations.RemoveAt(i);
-            operandRegisterReservations.Remove(reservation);
+            //operandRegisterReservations.Remove(reservation);
             return true;
         }
         return false;
@@ -551,7 +551,7 @@ public abstract class Instruction
             };
             if (operandVariable == null || !Equals(register, reservation.Register)) continue;
             registerReservations.RemoveAt(i);
-            operandRegisterReservations.Remove(reservation);
+            //operandRegisterReservations.Remove(reservation);
             return true;
         }
         return false;
