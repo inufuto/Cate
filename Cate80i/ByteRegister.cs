@@ -283,14 +283,22 @@ namespace Inu.Cate.I8080
                 StoreIndirect(instruction, wordRegister, offset);
                 return;
             }
-            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                if (pointerRegister != null) {
-                    PointerRegister.Hl.CopyFrom(instruction, (Cate.PointerRegister)pointerRegister);
+            if (!Conflicts(PointerRegister.Hl)) {
+                using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+                    if (pointerRegister != null) {
+                        PointerRegister.Hl.CopyFrom(instruction, (Cate.PointerRegister)pointerRegister);
+                    }
+                    else {
+                        PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                    }
+                    StoreIndirect(instruction, PointerRegister.Hl, offset);
                 }
-                else {
-                    PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
-                }
-                StoreIndirect(instruction, PointerRegister.Hl, offset);
+            }
+            else {
+                var candidates = PointerRegister.Registers.Where(r => !r.Conflicts(this)).ToList();
+                using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
+                reservation.PointerRegister.LoadFromMemory(instruction, pointer, 0);
+                StoreIndirect(instruction, reservation.PointerRegister, offset);
             }
         }
 
