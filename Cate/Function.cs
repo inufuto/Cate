@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pMonster[2] = sprite")) {
+            if (instruction.ToString().Contains("pChars = Show_.48.FlashChars_")) {
                 var aaa = 111;
             }
 #endif

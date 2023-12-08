@@ -50,6 +50,7 @@ internal class IndexRegister : Cate.PointerRegister
     public override void LoadConstant(Instruction instruction, string value)
     {
         instruction.WriteLine("\tpre " + AsmName + "," + value);
+        instruction.RemoveRegisterAssignment(this);
     }
 
     public override void LoadFromMemory(Instruction instruction, string label)
