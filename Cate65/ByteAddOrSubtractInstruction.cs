@@ -27,7 +27,7 @@ namespace Inu.Cate.Mos6502
             ByteOperation.OperateByteBinomial(this, operation, true);
         }
 
-        private bool CanIncrementOrDecrement()
+        protected virtual bool CanIncrementOrDecrement()
         {
             if (LeftOperand is IndirectOperand)
                 return false;

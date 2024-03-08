@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace Inu.Cate.Mos6502
 {
     internal class Compiler : Cate.Compiler
     {
         public const string ZeroPageLabel = "@zp";
+
+        public new static Compiler Instance => (Compiler)Cate.Compiler.Instance;
 
         public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
 
@@ -98,6 +101,7 @@ namespace Inu.Cate.Mos6502
                 }
             }
         }
+
 
         private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
         {
@@ -304,5 +308,34 @@ namespace Inu.Cate.Mos6502
             Instance.AddExternalName(externalName);
         }
 
+        public virtual void LoadIndirect(Instruction instruction, ByteRegister byteRegister, PointerZeroPage zeroPage, int offset)
+        {
+            Debug.Assert(!Equals(byteRegister, ByteRegister.Y));
+            ByteRegister.Y.LoadConstant(instruction, offset);
+            instruction.WriteLine("\tld" + byteRegister.AsmName + "\t(" + zeroPage.Name + "),y");
+        }
+
+        public virtual void StoreIndirect(Instruction instruction, ByteRegister byteRegister, PointerZeroPage zeroPage, int offset)
+        {
+            Debug.Assert(!Equals(byteRegister, ByteRegister.Y));
+            ByteRegister.Y.LoadConstant(instruction, offset);
+            instruction.WriteLine("\tst" + byteRegister.AsmName + "\t(" + zeroPage.AsmName + "),y");
+        }
+
+        public virtual void OperateIndirect(Instruction instruction, string operation, PointerZeroPage zeroPage, int offset, int count)
+        {
+            ByteRegister.Y.LoadConstant(instruction, offset);
+            for (var i = 0; i < count; ++i) {
+                instruction.WriteLine("\t" + operation + "\t(" + zeroPage.Name + "),y");
+            }
+        }
+
+        public virtual void ClearByte(Instruction instruction, string label)
+        {
+            using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+            var register = reservation.ByteRegister;
+            register.LoadConstant(instruction, 0);
+            register.StoreToMemory(instruction, label);
+        }
     }
 }

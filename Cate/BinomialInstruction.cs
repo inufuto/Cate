@@ -65,7 +65,7 @@ namespace Inu.Cate
 
         protected virtual void OperateByte(string operation, int count)
         {
-            if (DestinationOperand.Equals(LeftOperand) && count == 1) {
+            if (DestinationOperand.Equals(LeftOperand) && count == 1 && IsOperatable(DestinationOperand)) {
                 ByteOperation.Operate(this, operation, true, DestinationOperand, count);
                 return;
             }
@@ -87,5 +87,7 @@ namespace Inu.Cate
             ViaRegister(reservation.ByteRegister);
             reservation.ByteRegister.Store(this, DestinationOperand);
         }
+
+        protected virtual bool IsOperatable(AssignableOperand operand) => true;
     }
 }

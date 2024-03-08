@@ -52,6 +52,16 @@ namespace Inu.Cate.Mos6502
 
         public override WordRegister? PairRegister => WordZeroPage.FromOffset(Offset);
 
+        public override void LoadConstant(Instruction instruction, int value)
+        {
+            if (value == 0) {
+                ByteOperation.ClearByte(instruction, AsmName);
+                instruction.AddChanged(this);
+                return;
+            }
+            base.LoadConstant(instruction, value);
+        }
+
         public override void LoadConstant(Instruction instruction, string value)
         {
             using (var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers)) {

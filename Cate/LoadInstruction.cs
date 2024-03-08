@@ -56,20 +56,29 @@ namespace Inu.Cate
                 return;
             }
 
-            if (SourceOperand is IntegerOperand integerOperand && DestinationOperand is IndirectOperand indirectOperand) {
-                var pointer = indirectOperand.Variable;
-                var offset = indirectOperand.Offset;
-                var register = GetVariableRegister(pointer, 0);
-                if (register is PointerRegister pointerRegister) {
-                    ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
-                    return;
-                }
-                var pointerRegisters = PointerOperation.RegistersToOffset(offset);
-                if (pointerRegisters.Any()) {
-                    using var reservation = PointerOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
-                    reservation.PointerRegister.LoadFromMemory(this, pointer, 0);
-                    ByteOperation.StoreConstantIndirect(this, reservation.PointerRegister, offset, integerOperand.IntegerValue);
-                    return;
+            if (SourceOperand is IntegerOperand integerOperand) {
+                switch (DestinationOperand) {
+                    case VariableOperand variableOperand when DestinationOperand.Register == null && integerOperand.IntegerValue == 0:
+                        ByteOperation.ClearByte(this, variableOperand.MemoryAddress());
+                        return;
+                    case IndirectOperand indirectOperand: {
+                            var pointer = indirectOperand.Variable;
+                            var offset = indirectOperand.Offset;
+                            var register = GetVariableRegister(pointer, 0);
+                            if (register is PointerRegister pointerRegister) {
+                                ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
+                                return;
+                            }
+                            var pointerRegisters = PointerOperation.RegistersToOffset(offset);
+                            if (pointerRegisters.Any()) {
+                                using var reservation = PointerOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
+                                reservation.PointerRegister.LoadFromMemory(this, pointer, 0);
+                                ByteOperation.StoreConstantIndirect(this, reservation.PointerRegister, offset, integerOperand.IntegerValue);
+                                return;
+                            }
+
+                            break;
+                        }
                 }
             }
 

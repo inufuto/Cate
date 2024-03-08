@@ -61,13 +61,13 @@ namespace Inu.Cate.Mos6502
             Debug.Assert(Equals(A));
             if (pointerRegister.IsOffsetInRange(offset)) {
                 Debug.Assert(offset is >= 0 and < 0x100);
-                if (pointerRegister is PointerZeroPage) {
-                    ViaZeroPage(pointerRegister);
+                if (pointerRegister is PointerZeroPage zeroPage) {
+                    ViaZeroPage(zeroPage);
                 }
                 else {
                     using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerZeroPage.Registers);
                     reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                    ViaZeroPage(reservation.PointerRegister);
+                    ViaZeroPage((PointerZeroPage)reservation.PointerRegister);
                 }
                 instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
@@ -83,11 +83,10 @@ namespace Inu.Cate.Mos6502
                 instruction.AddChanged(temporaryRegister);
             }
 
-            void ViaZeroPage(PointerRegister zeroPage)
+            void ViaZeroPage(PointerZeroPage zeroPage)
             {
                 using (ByteOperation.ReserveRegister(instruction, Y)) {
-                    Y.LoadConstant(instruction, offset);
-                    instruction.WriteLine("\tld" + Name + "\t(" + zeroPage.Name + "),y");
+                    Compiler.Instance.LoadIndirect(instruction, this, zeroPage, offset);
                 }
             }
         }
@@ -102,7 +101,7 @@ namespace Inu.Cate.Mos6502
                 else {
                     using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerZeroPage.Registers);
                     reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                    ViaZeroPage(reservation.PointerRegister);
+                    ViaZeroPage((PointerZeroPage)reservation.PointerRegister);
                 }
             }
             else {
@@ -112,10 +111,11 @@ namespace Inu.Cate.Mos6502
                 instruction.AddChanged(pointerRegister);
             }
 
-            void ViaZeroPage(PointerRegister zeroPage)
+            return;
+
+            void ViaZeroPage(PointerZeroPage zeroPage)
             {
-                Y.LoadConstant(instruction, offset);
-                instruction.WriteLine("\tst" + Name + "\t(" + zeroPage.AsmName + "),y");
+                Compiler.Instance.StoreIndirect(instruction, this, zeroPage, offset);
             }
         }
 
@@ -254,11 +254,33 @@ namespace Inu.Cate.Mos6502
             base.CopyFrom(instruction, register);
         }
 
+        public override void Operate(Instruction instruction, string operation, bool change, int count)
+        {
+            switch (operation) {
+                case "inc":
+                    operation = "in" + Name;
+                    break;
+                case "dec":
+                    operation = "de" + Name;
+                    break;
+                default:
+                    base.Operate(instruction, operation, change, count);
+                    return;
+            }
+            for (var i = 0; i < count; ++i) {
+                instruction.WriteLine("\t" + operation);
+            }
+            if (!change)
+                return;
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
+        }
+
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
             if (operation.StartsWith("cp")) {
                 Debug.Assert(!change);
-                if (operand is ConstantOperand || operand is VariableOperand) {
+                if (operand is ConstantOperand or VariableOperand) {
                     base.Operate(instruction, operation, change, operand);
                     return;
                 }
