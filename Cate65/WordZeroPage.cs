@@ -115,6 +115,10 @@ namespace Inu.Cate.Mos6502
 
         public override void Store(Instruction instruction, AssignableOperand operand)
         {
+            if (operand is VariableOperand variableOperand && Equals(variableOperand.Register, this) &&
+                variableOperand.Offset == 0) {
+                return;
+            }
             Debug.Assert(Low != null && High != null);
             Low.Store(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
             High.Store(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
