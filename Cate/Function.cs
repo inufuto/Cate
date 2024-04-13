@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("charOffset = *@13")) {
+            if (instruction.ToString().Contains("pDestination = pRow + 2")) {
                 var aaa = 111;
             }
 #endif

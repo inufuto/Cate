@@ -61,6 +61,9 @@ internal class PointerAddOrSubtractInstruction : AddOrSubtractInstruction
             for (var i = 0; i < count; ++i) {
                 WriteLine("\t" + operation + "\t" + pointerRegister.Name);
             }
+            if (!Equals(DestinationOperand.Register, pointerRegister)) {
+                AddChanged(pointerRegister);
+            }
             pointerRegister.Store(this, DestinationOperand);
         }
         if (DestinationOperand.Register is PointerRegister destinationRegister) {
