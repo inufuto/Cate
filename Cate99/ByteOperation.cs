@@ -113,6 +113,7 @@ namespace Inu.Cate.Tms99
                 instruction.WriteLine("\t" + operation + "\t" + r.Name + "," + value);
                 instruction.AddChanged(r);
                 instruction.RemoveRegisterAssignment(r);
+                instruction.ResultFlags |= Instruction.Flag.Z;
             }
 
             if (destinationOperand.Register is ByteRegister byteRegister) {

@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pDestination = pRow + 2")) {
+            if (instruction.ToString().Contains("__2 = x & 3")) {
                 var aaa = 111;
             }
 #endif
