@@ -206,12 +206,12 @@ namespace Inu.Cate.Mos6502
             instruction.WriteLine("\tpla");
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             writer.WriteLine("\tpha" + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             writer.WriteLine("\tpla" + comment);
         }
@@ -323,12 +323,12 @@ namespace Inu.Cate.Mos6502
             instruction.WriteLine("\tlda\t<ZB0");
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             // cannot save : don't assign to variable
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             // cannot save : don't assign to variable
         }

@@ -63,13 +63,13 @@ namespace Inu.Cate.Tms99
             return base.Matches(register);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             Save(writer, Index, comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             void WriteCode()
             {
@@ -77,7 +77,7 @@ namespace Inu.Cate.Tms99
                 WordRegister.Restore(writer, Index, comment);
             }
 
-            if (jump) {
+            if (instruction != null && instruction.IsJump()) {
                 SaveStatus(writer, tabCount);
                 WriteCode();
                 RestoreStatus(writer, tabCount);

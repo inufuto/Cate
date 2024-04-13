@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace Inu.Cate.Mos6502
 {
@@ -19,6 +18,7 @@ namespace Inu.Cate.Mos6502
         {
             //writer.WriteLine("\tinclude\t'Cate6502.inc'");
             writer.WriteLine("extrn " + ZeroPageLabel);
+            writer.WriteLine("extrn ZB0");
             base.WriteAssembly(writer);
         }
 

@@ -25,10 +25,10 @@ internal class IndexRegister : Cate.PointerRegister
     }
     private IndexRegister(int id, string name) : base(id, 2, name) { }
 
-    public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     { }
 
-    public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     { }
 
     public override void Save(Instruction instruction)

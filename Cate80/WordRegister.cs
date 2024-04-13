@@ -78,18 +78,13 @@ namespace Inu.Cate.Z80
             return Conflicts(register) || register is ByteRegister byteRegister && Contains(byteRegister);
         }
 
-        //public override bool Contains(Register register)
-        //{
-        //    return base.Contains(register) || Low!.Equals(register) || High!.Equals(register);
-        //}
-
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpush\t" + Name + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpop\t" + Name + comment);

@@ -58,42 +58,12 @@ namespace Inu.Cate.Mos6502
 
         public static Register First = new WordZeroPage(MinId);
 
-        //public override void Add(Instruction instruction, int offset)
-        //{
-        //    using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-        //        Debug.Assert(Low != null && High != null);
-        //        ByteRegister.A.CopyFrom(instruction, Low);
-        //        ByteRegister.A.Operate(instruction, "clc|adc", true, "#low " + offset);
-        //        Low.CopyFrom(instruction, ByteRegister.A);
-        //        ByteRegister.A.CopyFrom(instruction, High);
-        //        ByteRegister.A.Operate(instruction, "adc", true, "#high " + offset);
-        //        High.CopyFrom(instruction, ByteRegister.A);
-        //    }
-        //}
-
-        //public override bool IsOffsetInRange(int offset)
-        //{
-        //    return offset is >= 0 and < 0x100;
-        //}
-
         public override void LoadConstant(Instruction instruction, string value)
         {
             Debug.Assert(Low != null && High != null);
             Low.LoadConstant(instruction, "low " + value);
             High.LoadConstant(instruction, "high " + value);
         }
-
-        //public override bool IsPointer(int offset) => true;
-
-        //public override void Load(Instruction instruction, Operand operand)
-        //{
-        //    Debug.Assert(Low != null && High != null);
-        //    Low.Load(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
-        //    High.Load(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
-        //    //instruction.AddChanged(this);
-        //    instruction.SetVariableRegister(operand, this);
-        //}
-
 
 
         public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
@@ -173,11 +143,19 @@ namespace Inu.Cate.Mos6502
             High.Save(instruction);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
+            var registerAssigned = instruction != null && instruction.IsRegisterAssigned(ByteRegister.A);
+            if (registerAssigned) {
+                Cate.Compiler.Instance.AddExternalName("ZB0");
+                writer.WriteLine("\tsta\t<ZB0");
+            }
             Debug.Assert(Low != null && High != null);
-            Low.Save(writer, comment, jump, tabCount);
-            High.Save(writer, comment, jump, tabCount);
+            Low.Save(writer, comment, null, tabCount);
+            High.Save(writer, comment, null, tabCount);
+            if (registerAssigned) {
+                writer.WriteLine("\tlda\t<ZB0");
+            }
         }
 
         public override void Restore(Instruction instruction)
@@ -187,11 +165,19 @@ namespace Inu.Cate.Mos6502
             Low.Restore(instruction);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
+            var registerAssigned = instruction != null && instruction.IsRegisterAssigned(ByteRegister.A);
+            if (registerAssigned) {
+                Cate.Compiler.Instance.AddExternalName("ZB0");
+                writer.WriteLine("\tsta\t<ZB0");
+            }
             Debug.Assert(Low != null && High != null);
-            High.Restore(writer, comment, jump, tabCount);
-            Low.Restore(writer, comment, jump, tabCount);
+            High.Restore(writer, comment, null, tabCount);
+            Low.Restore(writer, comment, null, tabCount);
+            if (registerAssigned) {
+                writer.WriteLine("\tlda\t<ZB0");
+            }
         }
     }
 }

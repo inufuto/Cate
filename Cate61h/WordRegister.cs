@@ -16,13 +16,13 @@ internal class WordRegister : Cate.WordRegister
     public string HighByteName => Compiler.RegisterHead + (Id + 1);
 
 
-    public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
         Instruction.WriteTabs(writer, tabCount);
         writer.WriteLine("\tphsw " + HighByteName + (comment != "" ? " ;" + comment : ""));
     }
 
-    public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
         Instruction.WriteTabs(writer, tabCount);
         writer.WriteLine("\tppsw " + AsmName + (comment != "" ? " ;" + comment : ""));

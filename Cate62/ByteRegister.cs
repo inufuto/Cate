@@ -28,13 +28,13 @@ namespace Inu.Cate.Sc62015
 
         protected ByteRegister(string name) : base(Compiler.NewRegisterId(), name) { }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpushs " + Name + "\t" + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpops " + Name + "\t" + comment);

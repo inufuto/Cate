@@ -64,14 +64,14 @@ namespace Inu.Cate.Tms99
             return base.Matches(register);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
-            WordRegister.Save(writer, comment, jump, tabCount);
+            WordRegister.Save(writer, comment, instruction, tabCount);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
-            WordRegister.Restore(writer, comment, jump, tabCount);
+            WordRegister.Restore(writer, comment, instruction, tabCount);
         }
 
         public override void LoadConstant(Instruction instruction, string value)

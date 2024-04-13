@@ -53,11 +53,11 @@ namespace Inu.Cate.I8080
             return base.Matches(register);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Debug.Assert(Equals(A));
             Instruction.WriteTabs(writer, tabCount);
-            if (jump) {
+            if (instruction != null && instruction.IsJump()) {
                 writer.WriteLine("\tsta\t" + Compiler.TemporaryByte + comment);
             }
             else {
@@ -65,11 +65,11 @@ namespace Inu.Cate.I8080
             }
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Debug.Assert(Equals(A));
             Instruction.WriteTabs(writer, tabCount);
-            if (jump) {
+            if (instruction != null && instruction.IsJump()) {
                 writer.WriteLine("\tlda\t" + Compiler.TemporaryByte + comment);
             }
             else {

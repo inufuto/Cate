@@ -53,7 +53,7 @@ namespace Inu.Cate.Mc6809
             SaveRegisters(writer, registers, null, 0);
         }
 
-        public override void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
+        public override void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, Instruction? instruction, int tabCount)
         {
             var list = variables.ToList();
             var savingRegisterIds = SavingRegisters(list);
@@ -79,7 +79,7 @@ namespace Inu.Cate.Mc6809
             RestoreRegisters(writer, registers, null, 0);
         }
 
-        public override void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
+        public override void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, Instruction? instruction, int tabCount)
         {
             var savingRegisterIds = SavingRegisters(variables);
             var comment = "\t; " + Join(',', variables.Select(v => v.Name).ToArray());

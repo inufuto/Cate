@@ -270,11 +270,11 @@ namespace Inu.Cate.I8086
         {
             if ((Equals(register, ByteRegister.Ah) || Equals(register, WordRegister.Ax) || Equals(register, PointerRegister.Ax)) && byteCount == 1) {
                 writer.WriteLine("\tmov [@Temporary@Byte],al");
-                register.Restore(writer, null, false, 0);
+                register.Restore(writer, null, null, 0);
                 writer.WriteLine("\tmov al,[@Temporary@Byte]");
             }
             else {
-                register.Restore(writer, null, false, 0);
+                register.Restore(writer, null, null, 0);
             }
         }
 

@@ -29,13 +29,13 @@
         }
 
         public override string MV => "mvp";
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tmvp [--s]," + Name + "\t" + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tmvp " + Name + ",[s++]\t" + comment);

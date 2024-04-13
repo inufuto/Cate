@@ -170,13 +170,13 @@ public class Function : NamedValue
 
             if (prevInstruction == null || SavingChanged(prevInstruction, instruction)) {
                 if (instruction.SavingVariables.Count > 0) {
-                    compiler.SaveRegisters(writer, instruction.SavingVariables, instruction.IsJump(), tabCount++);
+                    compiler.SaveRegisters(writer, instruction.SavingVariables, instruction, tabCount++);
                 }
             }
             instruction.WriteAssembly(writer, tabCount);
             if (nextInstruction == null || SavingChanged(instruction, nextInstruction)) {
                 if (instruction.SavingVariables.Count > 0) {
-                    compiler.RestoreRegisters(writer, instruction.SavingVariables, instruction.IsJump(), --tabCount);
+                    compiler.RestoreRegisters(writer, instruction.SavingVariables, instruction, --tabCount);
                 }
             }
             instruction.WriteAssemblyAfterRestoring(writer, tabCount);
@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@2 = (word)leftCoord")) {
+            if (instruction.ToString().Contains("charOffset = *@13")) {
                 var aaa = 111;
             }
 #endif

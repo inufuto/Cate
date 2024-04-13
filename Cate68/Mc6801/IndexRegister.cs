@@ -50,13 +50,13 @@ internal class IndexRegister : Mc6800.IndexRegister
         instruction.WriteLine("\tpul" + AsmName);
     }
 
-    public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
         Instruction.WriteTabs(writer, tabCount);
         writer.WriteLine("\tpsh" + AsmName);
     }
 
-    public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
         Instruction.WriteTabs(writer, tabCount);
         writer.WriteLine("\tpul" + AsmName);

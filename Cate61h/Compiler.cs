@@ -14,7 +14,7 @@ internal class Compiler : Cate.Compiler
         SaveRegisters(writer, registers, 0, _ => "");
     }
 
-    public override void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
+    public override void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, Instruction? instruction, int tabCount)
     {
         var comments = RegisterComments(variables, out var registers);
         SaveRegisters(writer, registers, tabCount, register => comments[register]);
@@ -44,7 +44,7 @@ internal class Compiler : Cate.Compiler
             }
             else {
                 var register = list.Last();
-                register.Save(writer, toComment(register), false, tabCount);
+                register.Save(writer, toComment(register), null, tabCount);
             }
         }
     }
@@ -72,12 +72,12 @@ internal class Compiler : Cate.Compiler
             }
             else {
                 var register = list.First();
-                register.Restore(writer, toComment(register), false, tabCount);
+                register.Restore(writer, toComment(register), null, tabCount);
             }
         }
     }
 
-    public override void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
+    public override void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, Instruction? instruction, int tabCount)
     {
         var comments = RegisterComments(variables, out var registers);
         RestoreRegisters(writer, registers, tabCount, register => comments[register]);

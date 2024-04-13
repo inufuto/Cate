@@ -1569,16 +1569,17 @@ namespace Inu.Cate
         {
             var set = SavingRegisters(registers).ToImmutableSortedSet();
             foreach (var r in set) {
-                r.Save(writer, null, false, 0);
+                r.Save(writer, null, null, 0);
             }
         }
 
-        public virtual void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
+        public virtual void SaveRegisters(StreamWriter writer, IEnumerable<Variable> variables, Instruction? instruction,
+            int tabCount)
         {
             var dictionary = DistinctRegisters(variables);
             foreach (var (register, list) in dictionary.OrderBy(p => p.Key)) {
                 var comment = "\t; " + string.Join(',', list.Select(v => v.Name).ToArray());
-                register.Save(writer, comment, jump, tabCount);
+                register.Save(writer, comment, instruction, tabCount);
             }
         }
 
@@ -1591,15 +1592,16 @@ namespace Inu.Cate
 
         protected virtual void RestoreRegister(StreamWriter writer, Register register, int byteCount)
         {
-            register.Restore(writer, null, false, 0);
+            register.Restore(writer, null, null, 0);
         }
 
-        public virtual void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, bool jump, int tabCount)
+        public virtual void RestoreRegisters(StreamWriter writer, IEnumerable<Variable> variables, Instruction? instruction,
+            int tabCount)
         {
             var dictionary = DistinctRegisters(variables);
             foreach (var (register, list) in dictionary.OrderByDescending(p => p.Key)) {
                 var comment = "\t; " + string.Join(',', list.Select(v => v.Name).ToArray());
-                register.Restore(writer, comment, jump, tabCount);
+                register.Restore(writer, comment, instruction, tabCount);
             }
         }
 
