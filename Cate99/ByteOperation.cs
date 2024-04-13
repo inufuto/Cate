@@ -59,11 +59,6 @@ namespace Inu.Cate.Tms99
             temporaryRegister.StoreIndirect(instruction, pointerRegister, offset);
         }
 
-        public override void ClearByte(Instruction instruction, string label)
-        {
-            throw new System.NotImplementedException();
-        }
-
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister rightRegister)
         {
             throw new System.NotImplementedException();
