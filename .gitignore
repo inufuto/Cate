@@ -101,3 +101,8 @@ runtime/SC62015/c.bat
 *.json
 /Cate61h/.vs/ProjectEvaluation
 /Cate61h/Cate61h.csproj.user
+/Cate61s/.vs/Cate61s
+/Cate61s/bin
+/Cate61s/obj
+/runtime/SC61860/_objects.txt
+/runtime/SC61860/_sources.txt
