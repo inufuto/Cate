@@ -62,6 +62,9 @@ internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
             for (var i = 0; i < count; ++i) {
                 WriteLine("\t" + operation + "\t" + wordRegister.Name);
             }
+            if (!Equals(DestinationOperand.Register, wordRegister)) {
+                AddChanged(wordRegister);
+            }
             wordRegister.Store(this, DestinationOperand);
         }
         if (DestinationOperand.Register is WordRegister destinationRegister) {

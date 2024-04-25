@@ -106,13 +106,13 @@ namespace Inu.Cate.MuCom87
             instruction.WriteLine("\t" + operation.Split('|')[0] + "x\t" + pointerRegister.AsmName);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpush\tv" + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpop\tv" + comment);

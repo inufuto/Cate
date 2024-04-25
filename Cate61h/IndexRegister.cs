@@ -25,10 +25,10 @@ internal class IndexRegister : Cate.PointerRegister
     }
     private IndexRegister(int id, string name) : base(id, 2, name) { }
 
-    public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     { }
 
-    public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     { }
 
     public override void Save(Instruction instruction)
@@ -50,6 +50,7 @@ internal class IndexRegister : Cate.PointerRegister
     public override void LoadConstant(Instruction instruction, string value)
     {
         instruction.WriteLine("\tpre " + AsmName + "," + value);
+        instruction.RemoveRegisterAssignment(this);
     }
 
     public override void LoadFromMemory(Instruction instruction, string label)

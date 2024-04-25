@@ -24,21 +24,6 @@ namespace Inu.Cate.Mc6809
             Registers.Add(this);
         }
 
-        //public static Cate.ByteRegister TemporaryRegister(Instruction instruction, List<Cate.ByteRegister> registers)
-        //{
-        //    var register = registers.First(r => !instruction.IsRegisterReserved(r));
-        //    return register;
-        //}
-
-        //public static void Using(Instruction instruction, List<Cate.ByteRegister> candidates,
-        //    Action<Cate.ByteRegister> action)
-        //{
-        //    Cate.ByteRegister temporaryRegister = TemporaryRegister(instruction, candidates);
-        //    instruction.BeginRegister(temporaryRegister);
-        //    action(temporaryRegister);
-        //    instruction.EndRegister(temporaryRegister);
-        //}
-
         public override void LoadConstant(Instruction instruction, string value)
         {
             instruction.WriteLine("\tld" + Name + "\t#" + value);
@@ -197,13 +182,13 @@ namespace Inu.Cate.Mc6809
             return Conflicts(register) || register.Equals(WordRegister.D);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             // save together
             throw new NotImplementedException();
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             // save together
             throw new NotImplementedException();

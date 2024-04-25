@@ -52,6 +52,16 @@ namespace Inu.Cate.Mos6502
 
         public override WordRegister? PairRegister => WordZeroPage.FromOffset(Offset);
 
+        public override void LoadConstant(Instruction instruction, int value)
+        {
+            if (value == 0) {
+                ByteOperation.ClearByte(instruction, AsmName);
+                instruction.AddChanged(this);
+                return;
+            }
+            base.LoadConstant(instruction, value);
+        }
+
         public override void LoadConstant(Instruction instruction, string value)
         {
             using (var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers)) {
@@ -193,20 +203,36 @@ namespace Inu.Cate.Mos6502
             }
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
+            var registerAssigned = instruction != null && instruction.IsRegisterAssigned(ByteRegister.A);
+            if (registerAssigned) {
+                Cate.Compiler.Instance.AddExternalName("ZB0");
+                writer.WriteLine("\tsta\t<ZB0");
+            }
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tlda\t" + this + comment);
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpha");
+            if (registerAssigned) {
+                writer.WriteLine("\tlda\t<ZB0");
+            }
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
+            var registerAssigned = instruction != null && instruction.IsRegisterAssigned(ByteRegister.A);
+            if (registerAssigned) {
+                Cate.Compiler.Instance.AddExternalName("ZB0");
+                writer.WriteLine("\tsta\t<ZB0");
+            }
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpla");
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tsta\t" + this + comment);
+            if (registerAssigned) {
+                writer.WriteLine("\tlda\t<ZB0");
+            }
         }
     }
 }

@@ -20,16 +20,16 @@ namespace Inu.Cate.Mos6502
         public override Cate.ByteRegister? Low => low;
 
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
-            low.Save(writer, comment, jump, tabCount);
-            high.Save(writer, "", jump, tabCount);
+            low.Save(writer, comment, instruction, tabCount);
+            high.Save(writer, "", instruction, tabCount);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
-            high.Save(writer, comment, jump, tabCount);
-            low.Save(writer, "", jump, tabCount);
+            high.Save(writer, comment, instruction, tabCount);
+            low.Save(writer, "", instruction, tabCount);
         }
 
         //public override void Add(Instruction instruction, int offset)

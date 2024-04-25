@@ -40,16 +40,16 @@ namespace Inu.Cate.I8086
             return base.Conflicts(register);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Debug.Assert(PairRegister != null);
-            PairRegister.Save(writer, comment, jump, tabCount);
+            PairRegister.Save(writer, comment, instruction, tabCount);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Debug.Assert(PairRegister != null);
-            PairRegister.Restore(writer, comment, jump, tabCount);
+            PairRegister.Restore(writer, comment, instruction, tabCount);
         }
 
         public override void Save(Instruction instruction)

@@ -274,13 +274,13 @@ namespace Inu.Cate.I8086
             instruction.WriteLine("\t" + operation + this + "," + temporaryRegister);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpush " + this + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpop " + this + comment);

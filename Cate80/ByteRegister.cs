@@ -71,11 +71,11 @@ namespace Inu.Cate.Z80
             return base.Matches(register);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Debug.Assert(Equals(A));
             Instruction.WriteTabs(writer, tabCount);
-            if (jump) {
+            if (instruction != null && instruction.IsJump()) {
                 writer.WriteLine("\tld\t(@Temporary@Byte),a" + comment);
             }
             else {
@@ -83,36 +83,17 @@ namespace Inu.Cate.Z80
             }
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Debug.Assert(Equals(A));
             Instruction.WriteTabs(writer, tabCount);
-            if (jump) {
+            if (instruction != null && instruction.IsJump()) {
                 writer.WriteLine("\tld\ta,(@Temporary@Byte)" + comment);
             }
             else {
                 writer.WriteLine("\tpop\taf" + comment);
             }
         }
-
-        //public static void UsingAccumulator(Instruction instruction, Action action)
-        //{
-        //    Using(instruction, A, action);
-        //}
-
-        //public static void UsingAny(Instruction instruction, List<Cate.ByteRegister> candidates,
-        //    Action<Cate.ByteRegister> action)
-        //{
-        //    var temporaryRegister = TemporaryRegister(instruction, candidates);
-        //    instruction.ReserveRegister(temporaryRegister);
-        //    action(temporaryRegister);
-        //    instruction.CancelRegister(temporaryRegister);
-        //}
-
-        //public static void UsingAny(Instruction instruction, Action<Cate.ByteRegister> action)
-        //{
-        //    UsingAny(instruction, Registers, action);
-        //}
 
 
         public static Cate.ByteRegister TemporaryRegister(Instruction instruction, IEnumerable<Cate.ByteRegister> candidates)
@@ -121,39 +102,6 @@ namespace Inu.Cate.Z80
             Debug.Assert(register != null);
             return register;
         }
-
-        //public static void Using(Instruction instruction, Cate.ByteRegister register, Action action)
-        //{
-        //    void InvokeAction()
-        //    {
-        //        instruction.ReserveRegister(register);
-        //        action();
-        //        instruction.CancelRegister(register);
-        //    }
-        //    if (instruction.IsRegisterReserved(register)) {
-        //        var candidates = Registers.Where(r => !Equals(r, register)).ToList();
-        //        UsingAny(instruction, candidates, otherRegister =>
-        //        {
-        //            otherRegister.CopyFrom(instruction, register);
-        //            instruction.AddChanged(otherRegister);
-        //            action();
-        //            register.CopyFrom(instruction, otherRegister);
-        //        });
-        //        return;
-        //    }
-        //    InvokeAction();
-        //}
-
-        //public static void Using(Instruction instruction, ByteRegister register, Operand operand, Action action)
-        //{
-        //    if (Equals(operand.Register, register)) {
-        //        instruction.ReserveRegister(operand.Register);
-        //        action();
-        //        instruction.CancelRegister(operand.Register);
-        //        return;
-        //    }
-        //    Using(instruction, register, action);
-        //}
 
         public override void LoadConstant(Instruction instruction, string value)
         {

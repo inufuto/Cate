@@ -19,5 +19,16 @@
                 ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
             }
         }
+
+        protected override void Expand()
+        {
+            if (Equals(SourceOperand.Register, ByteRegister.A)) {
+                ByteRegister.A.Store(this, Compiler.LowByteOperand(DestinationOperand));
+                ByteRegister.A.LoadConstant(this, 0);
+                ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
+                return;
+            }
+            base.Expand();
+        }
     }
 }

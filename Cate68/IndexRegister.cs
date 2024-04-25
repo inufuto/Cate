@@ -215,13 +215,13 @@ internal class IndexRegister : Cate.WordRegister
     }
 
 
-    public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
         // cannot save : don't assign to variable
         throw new NotImplementedException();
     }
 
-    public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
         // cannot save : don't assign to variable
         throw new NotImplementedException();

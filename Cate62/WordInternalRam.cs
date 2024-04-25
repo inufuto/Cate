@@ -33,13 +33,13 @@
         public override Cate.ByteRegister? Low { get; }
         public override Cate.ByteRegister? High { get; }
         public override string MV => "mvw";
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tmvw [--s]," + Name + "\t" + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tmvw " + Name + ",[s++]\t" + comment);

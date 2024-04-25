@@ -4,7 +4,7 @@
     {
         protected AddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand) { }
 
-        protected bool IncrementOrDecrement()
+        protected virtual bool IncrementOrDecrement()
         {
             if (RightOperand is not IntegerOperand rightIntegerOperand)
                 return false;

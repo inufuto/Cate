@@ -34,14 +34,14 @@ namespace Inu.Cate.MuCom87
             return base.Conflicts(register);
         }
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Debug.Assert(Equals(A));
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpush\tv" + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Debug.Assert(Equals(A));
             Instruction.WriteTabs(writer, tabCount);

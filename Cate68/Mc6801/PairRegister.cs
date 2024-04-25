@@ -28,16 +28,16 @@ internal class PairRegister : Cate.WordRegister
         return base.Conflicts(register);
     }
 
-    public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
-        low.Save(writer, comment, jump, tabCount);
-        high.Save(writer, comment, jump, tabCount);
+        low.Save(writer, comment, instruction, tabCount);
+        high.Save(writer, comment, instruction, tabCount);
     }
 
-    public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+    public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
-        high.Restore(writer, comment, jump, tabCount);
-        low.Restore(writer, comment, jump, tabCount);
+        high.Restore(writer, comment, instruction, tabCount);
+        low.Restore(writer, comment, instruction, tabCount);
     }
 
     public override void Save(Instruction instruction)

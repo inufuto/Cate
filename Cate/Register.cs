@@ -50,9 +50,9 @@ namespace Inu.Cate
             return Equals(register, this);
         }
 
-        public abstract void Save(StreamWriter writer, string? comment, bool jump, int tabCount);
+        public abstract void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount);
 
-        public abstract void Restore(StreamWriter writer, string? comment, bool jump, int tabCount);
+        public abstract void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount);
         public abstract void Save(Instruction instruction);
         public abstract void Restore(Instruction instruction);
 

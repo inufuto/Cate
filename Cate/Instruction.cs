@@ -308,6 +308,11 @@ public abstract class Instruction
         }
     }
 
+    public bool IsRegisterAssigned(Register register)
+    {
+        return RegisterAssignments.Any(a => Equals(a.Key, register));
+    }
+
     public bool IsRegisterInVariableRange(Register? register, Variable? excludedVariable)
     {
         if (register == null)
@@ -720,4 +725,6 @@ public abstract class Instruction
         }
         return changedRegisters.Contains(register);
     }
+
+    
 }

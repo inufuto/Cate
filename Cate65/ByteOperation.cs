@@ -6,7 +6,7 @@ namespace Inu.Cate.Mos6502
 {
     internal class ByteOperation : Cate.ByteOperation
     {
-        public override List<Cate.ByteRegister> Accumulators => new List<Cate.ByteRegister>() { ByteRegister.A };
+        public override List<Cate.ByteRegister> Accumulators => new() { ByteRegister.A };
         public override List<Cate.ByteRegister> Registers => ByteRegister.Registers.Union(ByteZeroPage.Registers).ToList();
 
         protected override void OperateConstant(Instruction instruction, string operation, string value, int count)
@@ -34,10 +34,7 @@ namespace Inu.Cate.Mos6502
             }
             while (true) {
                 if (pointerRegister.IsOffsetInRange(offset)) {
-                    ByteRegister.Y.LoadConstant(instruction, offset);
-                    for (var i = 0; i < count; ++i) {
-                        instruction.WriteLine("\t" + operation + "\t(" + zeroPage.Name + "),y");
-                    }
+                    Mos6502.Compiler.Instance.OperateIndirect(instruction, operation, zeroPage, offset, count);
                     instruction.ResultFlags |= Instruction.Flag.Z;
                     return;
                 }
@@ -57,11 +54,7 @@ namespace Inu.Cate.Mos6502
 
         public override void ClearByte(Instruction instruction, string label)
         {
-            using var reservation = ReserveAnyRegister(instruction);
-            var register = reservation.ByteRegister;
-            register.LoadConstant(instruction, 0);
-            instruction.RemoveRegisterAssignment(register);
-            register.StoreToMemory(instruction, label);
+            Mos6502.Compiler.Instance.ClearByte(instruction, label);
         }
 
         public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister register)

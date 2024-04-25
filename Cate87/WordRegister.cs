@@ -35,13 +35,13 @@ namespace Inu.Cate.MuCom87
         }
 
 
-        public override void Save(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpush\t" + AsmName + comment);
         }
 
-        public override void Restore(StreamWriter writer, string? comment, bool jump, int tabCount)
+        public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
         {
             Instruction.WriteTabs(writer, tabCount);
             writer.WriteLine("\tpop\t" + AsmName + comment);
@@ -335,30 +335,6 @@ namespace Inu.Cate.MuCom87
         {
             throw new NotImplementedException();
         }
-
-        //public override void TemporaryOffset(Instruction instruction, int offset, Action action)
-        //{
-        //    if (Math.Abs(offset) <= 1) {
-        //        base.TemporaryOffset(instruction, offset, action);
-        //        return;
-        //    }
-        //    //if (instruction.SourceRegisterCount(this) > 1) {
-        //    var changed = instruction.IsChanged((this));
-        //    if (Math.Abs(offset) > 2) {
-        //        Save(instruction);
-        //        Add(instruction, offset);
-        //        action();
-        //        Restore(instruction);
-        //    }
-        //    else {
-        //        Add(instruction, offset);
-        //        action();
-        //        Add(instruction, -offset);
-        //    }
-        //    if (!changed) {
-        //        instruction.RemoveChanged((this));
-        //    }
-        //}
 
         public override void Save(Instruction instruction)
         {
