@@ -117,7 +117,21 @@ public abstract class Block
 
     public virtual void WriteAssembly(StreamWriter writer, ref int codeOffset, ref int dataOffset)
     {
-        var codeSegmentVariables = Variables.Values.Where(v => v.IsConstant()).ToList();
+        var codeSegmentVariables = new List<Variable>();
+        var dataSegmentVariables = new List<Variable>();
+        if (Compiler.Instance.ConstantData) {
+            dataSegmentVariables.AddRange(Variables.Values);
+        }
+        else {
+            foreach (var variable in Variables.Values) {
+                if (variable.IsConstant()) {
+                    codeSegmentVariables.Add(variable);
+                }
+                else {
+                    dataSegmentVariables.Add(variable);
+                }
+            }
+        }
         if (codeSegmentVariables.Any()) {
             writer.WriteLine("\tcseg");
             foreach (var variable in codeSegmentVariables) {
@@ -125,15 +139,12 @@ public abstract class Block
             }
             Compiler.Instance.MakeAlignment(writer, ref codeOffset);
         }
-        var dataSegmentVariables = Variables.Values.Where(v => !v.IsConstant()).ToList();
         if (!dataSegmentVariables.Any()) return;
         {
             var index = 0;
-            //var variables = dataSegmentVariables.Where(variable => variable.Parameter == null).ToList();
             if (dataSegmentVariables.Any()) {
                 writer.WriteLine("\tdseg");
             }
-
             foreach (var variable in dataSegmentVariables) {
                 WriteVariableAssembly(writer, variable, index++, ref dataOffset);
             }

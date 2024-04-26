@@ -29,9 +29,11 @@ namespace Inu.Cate
         private SwitchStatement? currentSwitchStatement;
         private BreakableStatement? currentBreakableStatement;
         private readonly ISet<string> externalNames = new SortedSet<string>();
+        public readonly bool ConstantData;
 
 
-        protected Compiler(ByteOperation byteOperation, WordOperation wordOperation, PointerOperation pointerOperation)
+        protected Compiler(ByteOperation byteOperation, WordOperation wordOperation, PointerOperation pointerOperation,
+            bool constantData = false)
         {
             Debug.Assert(Instance == null);
             ByteOperation = byteOperation;
@@ -40,7 +42,9 @@ namespace Inu.Cate
             Instance = this;
             currentBlock = globalBlock;
             ReservedWord.AddWords(Keyword.Words);
+            this.ConstantData = constantData;
         }
+
 
         private Variable AddStringVariable(int id)
         {

@@ -8,7 +8,7 @@ namespace Inu.Cate.I8086
 {
     internal class Compiler : Cate.Compiler
     {
-        public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation())
+        public Compiler(bool constantData) : base(new ByteOperation(), new WordOperation(), new PointerOperation(), constantData)
         { }
 
         private static Register SavingRegister(Register register)
@@ -257,14 +257,6 @@ namespace Inu.Cate.I8086
         }
 
         public override int Alignment => 2;
-
-        //public override void RemoveSavingRegister(ISet<Register> savedRegisterIds, int byteCount)
-        //{
-        //    //if (byteCount == 1 && savedRegisterIds.Contains(WordRegister.Ax)) {
-        //    //    savedRegisterIds.Remove(WordRegister.Ax);
-        //    //    savedRegisterIds.Add(ByteRegister.Ah);
-        //    //}
-        //}
 
         protected override void RestoreRegister(StreamWriter writer, Register register, int byteCount)
         {
