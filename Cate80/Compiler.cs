@@ -31,7 +31,7 @@ namespace Inu.Cate.Z80
             var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
                 .ThenBy(v => v.Usages.Count).ToList();
             foreach (var variable in rangeOrdered) {
-                if (variable.Type.ByteCount == 1 && !Conflict(variable.Intersections, ByteRegister.A) && CanAllocate(variable, ByteRegister.A)) {
+                if (variable.Type.ByteCount == 1 && !Conflict(variable.Intersections, ByteRegister.A) && RegisterAdaptability(variable, ByteRegister.A) != null) {
                     variable.Register = ByteRegister.A;
                     continue;
                 }
@@ -131,21 +131,33 @@ namespace Inu.Cate.Z80
 
         private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
         {
-            return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
+            T? maxRegister = null;
+            int? max = null;
+            foreach (var register in registers) {
+                if (Conflict(variable.Intersections, register)) continue;
+                var adaptability = RegisterAdaptability(variable, register);
+                if (adaptability != null && (max == null || adaptability > max)) {
+                    maxRegister = register;
+                    max = adaptability;
+                }
+            }
+            return maxRegister;
         }
 
-        private static bool CanAllocate(Variable variable, Register register)
+        private static int? RegisterAdaptability(Variable variable, Register register)
         {
             var function = variable.Block.Function;
             Debug.Assert(function != null);
             var first = variable.Usages.First().Key;
             var last = variable.Usages.Last().Key;
+            int sum = 0;
             for (var address = first; address <= last; ++address) {
                 var instruction = function.Instructions[address];
-                if (!instruction.CanAllocateRegister(variable, register))
-                    return false;
+                var adaptability = instruction.RegisterAdaptability(variable, register);
+                if (adaptability == null) return null;
+                sum += adaptability.Value;
             }
-            return true;
+            return sum;
         }
 
         private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register

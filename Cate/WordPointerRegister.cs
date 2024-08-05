@@ -89,10 +89,12 @@ namespace Inu.Cate
             var variableRegister = instruction.GetVariableRegister(variable, offset);
             if (variableRegister is WordRegister wordRegister) {
                 WordRegister.CopyFrom(instruction, wordRegister);
+                instruction.SetVariableRegister(variable, offset, this);
                 return;
             }
             if (variableRegister is PointerRegister pointerRegister) {
                 CopyFrom(instruction, pointerRegister);
+                instruction.SetVariableRegister(variable, offset, this);
                 return;
             }
             base.LoadFromMemory(instruction, variable, offset);

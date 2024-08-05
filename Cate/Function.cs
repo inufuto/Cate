@@ -25,14 +25,14 @@ public class Function : NamedValue
     }
 
     public readonly Visibility Visibility;
-    public readonly List<Parameter> Parameters = new List<Parameter>();
+    public readonly List<Parameter> Parameters = new();
     private FunctionBlock? functionBlock = null;
-    public readonly List<Instruction> Instructions = new List<Instruction>();
+    public readonly List<Instruction> Instructions = new();
     private int lastTemporaryVariableIndex = 0;
-    private readonly Dictionary<int, int> localVariableIds = new Dictionary<int, int>();
-    public readonly List<Anchor> Anchors = new List<Anchor>();
+    private readonly Dictionary<int, int> localVariableIds = new();
+    public readonly List<Anchor> Anchors = new();
     public readonly Anchor ExitAnchor;
-    public readonly Dictionary<int, NamedLabel> NamedLabels = new Dictionary<int, NamedLabel>();
+    public readonly Dictionary<int, NamedLabel> NamedLabels = new();
 
     public Function(Block block, int id, Visibility visibility, Type type) : base(block, id, type)
     {
@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("__2 = x & 3")) {
+            if (instruction.ToString().Contains("pMember[1] = *pCourse << 3")) {
                 var aaa = 111;
             }
 #endif

@@ -6,10 +6,10 @@ namespace Inu.Cate
 {
     public class IntegerType : ParameterizableType
     {
-        public static readonly IntegerType ByteType = new IntegerType(1, false);
-        public static readonly IntegerType SignedByteType = new IntegerType(1, true);
-        public static readonly IntegerType WordType = new IntegerType(2, false);
-        public static readonly IntegerType SignedWordType = new IntegerType(2, true);
+        public static readonly IntegerType ByteType = new(1, false);
+        public static readonly IntegerType SignedByteType = new(1, true);
+        public static readonly IntegerType WordType = new(2, false);
+        public static readonly IntegerType SignedWordType = new(2, true);
 
         public static IntegerType IntegerTypeOf(int value)
         {
@@ -102,8 +102,7 @@ namespace Inu.Cate
                 case '>':
                 case Keyword.LessEqual:
                 case Keyword.GreaterEqual: {
-                        var commonType = leftValue.Type.CombineType(rightValue.Type) as ParameterizableType;
-                        if (commonType == null)
+                        if (leftValue.Type.CombineType(rightValue.Type) is not ParameterizableType commonType)
                             break;
                         var leftConvertedValue = leftValue.ConvertTypeTo(commonType);
                         var rightConvertedValue = rightValue.ConvertTypeTo(commonType);
@@ -116,15 +115,12 @@ namespace Inu.Cate
 
         public override Value? MonomialResult(SourcePosition position, int operatorId, Value value)
         {
-            switch (operatorId) {
-                case '+':
-                    return value;
-                case '-':
-                case '~':
-                    return new Monomial(this, operatorId, value);
-                default:
-                    return base.MonomialResult(position, operatorId, value);
-            }
+            return operatorId switch
+            {
+                '+' => value,
+                '-' or '~' => new Monomial(this, operatorId, value),
+                _ => base.MonomialResult(position, operatorId, value)
+            };
         }
 
         public override Value? ConvertType(Value value, Type type)
@@ -139,7 +135,7 @@ namespace Inu.Cate
 
         public override Type? CombineType(Type type)
         {
-            if (!(type is IntegerType integerType))
+            if (type is not IntegerType integerType)
                 return base.CombineType(type);
             var signed = Signed && integerType.Signed;
             var byteCount = Math.Max(ByteCount, integerType.ByteCount);

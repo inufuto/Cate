@@ -149,15 +149,15 @@ namespace Inu.Cate
             register.Store(this, operand);
         }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
-            if (!(DestinationOperand is VariableOperand variableOperand) ||
+            if (DestinationOperand is not VariableOperand variableOperand ||
                 !variableOperand.Variable.SameStorage(variable))
-                return base.CanAllocateRegister(variable, register);
+                return base.RegisterAdaptability(variable, register);
             if (register is WordRegister wordRegister && !wordRegister.IsPair()) {
-                return false;
+                return null;
             }
-            return base.CanAllocateRegister(variable, register);
+            return base.RegisterAdaptability(variable, register);
         }
     }
 }

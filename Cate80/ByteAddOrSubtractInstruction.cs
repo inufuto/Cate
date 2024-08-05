@@ -13,15 +13,15 @@ namespace Inu.Cate.Z80
             Debug.Assert(destinationOperand.Type.ByteCount == 1);
         }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
             if (
                 Equals(register, ByteRegister.A) &&
                 !IsOperatorExchangeable() &&
                 RightOperand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable)
             )
-                return false;
-            return base.CanAllocateRegister(variable, register);
+                return null;
+            return base.RegisterAdaptability(variable, register);
         }
 
         public override void BuildAssembly()

@@ -18,21 +18,21 @@ namespace Inu.Cate.Z80
             Debug.Assert(rightOperand.Type is IntegerType);
         }
 
-        public override bool CanAllocateRegister(Variable variable, Register register1)
+        public override int? RegisterAdaptability(Variable variable, Register register1)
         {
             if (RightOperand is VariableOperand rightVariableOperand && rightVariableOperand.Variable.Equals(variable)) {
                 if (rightVariableOperand.Register is WordRegister wordRegister) {
                     if (Equals(wordRegister, WordRegister.De) || Equals(wordRegister, WordRegister.Bc))
-                        return false;
+                        return null;
                 }
             }
             if (LeftOperand is VariableOperand leftVariableOperand && leftVariableOperand.Variable.Equals(variable)) {
                 if (leftVariableOperand.Register is WordRegister wordRegister) {
                     if (Equals(wordRegister, WordRegister.De) || Equals(wordRegister, WordRegister.Bc))
-                        return false;
+                        return null;
                 }
             }
-            return base.CanAllocateRegister(variable, register1);
+            return base.RegisterAdaptability(variable, register1);
         }
 
         public override void BuildAssembly()

@@ -414,21 +414,8 @@ public abstract class Instruction
     }
 
 
-    public virtual bool CanAllocateRegister(Variable variable, Register register) => true;
+    public virtual int? RegisterAdaptability(Variable variable, Register register) => 0;
 
-
-    //public Register? PreviousRegisterId(Variable variable, int offset)
-    //{
-    //    var registerId = GetVariableRegister(variable, offset);
-    //    if (registerId != null)
-    //        return registerId;
-    //    var registerIds = PreviousInstructions.Select(i => i.GetVariableRegister(variable, offset))
-    //        .Distinct().ToList();
-    //    if (registerIds.Count == 1) {
-    //        registerId = registerIds.First()!;
-    //    }
-    //    return registerId;
-    //}
 
     public abstract void BuildAssembly();
 
@@ -448,8 +435,7 @@ public abstract class Instruction
             _ => null
         };
         if (variableRegister == null) return;
-        var reservation = ReserveRegister(variableRegister, operand);
-        //operandRegisterReservations.Add(reservation);
+        ReserveRegister(variableRegister, operand);
     }
 
     public RegisterReservation ReserveRegister(Register register)

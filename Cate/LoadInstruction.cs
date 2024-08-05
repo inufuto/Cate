@@ -59,7 +59,7 @@ namespace Inu.Cate
             if (SourceOperand is IntegerOperand integerOperand) {
                 switch (DestinationOperand) {
                     case VariableOperand variableOperand when DestinationOperand.Register == null && integerOperand.IntegerValue == 0:
-                        ByteOperation.ClearByte(this, variableOperand.MemoryAddress());
+                        ByteOperation.ClearByte(this, variableOperand);
                         return;
                     case IndirectOperand indirectOperand: {
                             var pointer = indirectOperand.Variable;

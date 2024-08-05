@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Emit;
 
 namespace Inu.Cate
 {
@@ -132,7 +133,7 @@ namespace Inu.Cate
 
         public RegisterReservation ReserveAnyRegister(Instruction instruction, List<ByteRegister> candidates, Operand sourceOperand)
         {
-            if (!(sourceOperand is VariableOperand variableOperand)) return ReserveAnyRegister(instruction, candidates);
+            if (sourceOperand is not VariableOperand variableOperand) return ReserveAnyRegister(instruction, candidates);
             var register = instruction.GetVariableRegister(variableOperand);
             if (register is not ByteRegister byteRegister || !candidates.Contains(byteRegister))
                 return ReserveAnyRegister(instruction, candidates);
@@ -177,12 +178,13 @@ namespace Inu.Cate
         {
             return ReserveAnyRegister(instruction, Registers, sourceOperand);
         }
-        //public RegisterReservation ReserveAnyRegister(Instruction instruction, AssignableOperand destinationOperand,
-        //    Operand sourceOperand)
-        //{
-        //    return ReserveAnyRegister(instruction, null, sourceOperand);
-        //}
 
+        public virtual void ClearByte(ByteLoadInstruction instruction, VariableOperand variableOperand)
+        {
+            using var reservation = ReserveAnyRegister(instruction, Registers);
+            reservation.ByteRegister.LoadConstant(instruction, 0);
+            reservation.ByteRegister.Store(instruction, variableOperand);
+        }
 
         public virtual void ClearByte(Instruction instruction, string label)
         {
@@ -230,5 +232,6 @@ namespace Inu.Cate
         //{
         //    return new Saving(register, instruction, this);
         //}
+      
     }
 }

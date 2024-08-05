@@ -44,13 +44,13 @@ namespace Inu.Cate.Z80
             base.BuildAssembly();
         }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
             if (register is WordRegister wordRegister) {
                 if (!wordRegister.IsPair())
-                    return false;
+                    return null;
             }
-            return base.CanAllocateRegister(variable, register);
+            return base.RegisterAdaptability(variable, register);
         }
 
         protected override void ShiftConstant(int count)

@@ -13,11 +13,10 @@ namespace Inu.Cate.Z80
         public static Cate.WordRegister FromId(int id)
         {
             var register = Registers.Find(r => r.Id == id);
-            var fromId = register;
-            if (fromId != null) {
-                return fromId;
+            if (register != null) {
+                return register;
             }
-            throw new ArgumentOutOfRangeException();
+            throw new ArgumentOutOfRangeException(nameof(id));
         }
 
         public readonly bool Addable;
@@ -33,38 +32,13 @@ namespace Inu.Cate.Z80
         public static readonly PairRegister Hl = new(11, ByteRegister.H, ByteRegister.L, true);
         public static readonly PairRegister De = new(12, ByteRegister.D, ByteRegister.E, false);
         public static readonly PairRegister Bc = new(13, ByteRegister.B, ByteRegister.C, false);
-        public static readonly WordRegister Ix = new WordRegister(21, "ix", true);
-        public static readonly WordRegister Iy = new WordRegister(22, "iy", true);
+        public static readonly WordRegister Ix = new(21, "ix", true);
+        public static readonly WordRegister Iy = new(22, "iy", true);
 
         public override bool IsPair() => Equals(this, Hl) || Equals(this, De) || Equals(this, Bc);
-        //public override bool IsAddable() => Equals(this, Hl) || Equals(this, Ix) || Equals(this, Iy);
-        //public override bool IsIndex() => Equals(this, Ix) || Equals(this, Iy);
-        //public override Cate.ByteRegister? Low => ByteRegister.FromName(Name.Substring(1, 1));
-        //public override Cate.ByteRegister? High => ByteRegister.FromName(Name.Substring(0, 1));
 
         public static List<Cate.WordRegister> PairRegisters = Registers.Where(r => r.IsPair()).ToList();
-        public static List<Cate.WordRegister> AddableRegisters = new List<Cate.WordRegister>() { Hl, Ix, Iy };
-        //public static List<Cate.WordRegister> IndexRegisters = Registers.Where(r => r.IsIndex()).ToList();
-        //public static List<Cate.WordRegister> RightOperandOrder = new List<Cate.WordRegister>() { De, Bc, Hl, Ix, Iy };
-        //public static List<Cate.WordRegister> OffsetRegisters = new List<Cate.WordRegister>() { De, Bc };
-
-
-        //public static List<Cate.WordRegister> PointerOrder(int offset)
-        //{
-        //    if (offset == 0 || offset < -128 || offset > 127)
-        //        return new List<Cate.WordRegister>() { Hl, Ix, Iy, De, Bc };
-        //    else
-        //        return new List<Cate.WordRegister>() { Ix, Iy, Hl, De, Bc };
-        //}
-        //public static List<Cate.WordRegister> Pointers(int offset)
-        //{
-        //    return PointerOrder(offset).Where(r => r.IsAddable()).ToList();
-        //}
-
-        //public override bool Contains(Cate.ByteRegister byteRegister)
-        //{
-        //    return Name.Contains(byteRegister.Name);
-        //}
+        public static List<Cate.WordRegister> AddableRegisters = new() { Hl, Ix, Iy };
 
         public override bool Conflicts(Register? register)
         {

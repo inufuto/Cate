@@ -8,15 +8,15 @@ namespace Inu.Cate.Z80
             Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
         { }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
             if (
                 Equals(register, ByteRegister.A) &&
                 !IsOperatorExchangeable() &&
                 RightOperand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable)
             )
-                return false;
-            return base.CanAllocateRegister(variable, register);
+                return null;
+            return base.RegisterAdaptability(variable, register);
         }
 
         protected override string Operation()

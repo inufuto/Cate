@@ -10,13 +10,12 @@ namespace Inu.Cate.Z80
             Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
         { }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
-            if (register is WordRegister wordRegister) {
-                if (!wordRegister.IsPair())
-                    return false;
-            }
-            return base.CanAllocateRegister(variable, register);
+            if (register is not WordRegister wordRegister) return base.RegisterAdaptability(variable, register);
+            if (!wordRegister.IsPair())
+                return null;
+            return base.RegisterAdaptability(variable, register);
         }
 
         public override void BuildAssembly()
