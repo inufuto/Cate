@@ -166,12 +166,12 @@ namespace Inu.Cate.Tms99
                     rightRegister.Store(instruction, rightOperand);
                 }
 
-                if (rightOperand is IndirectOperand { Variable: { Register: null } } indirectOperand) {
+                if (rightOperand is IndirectOperand { Variable: { Register: null } variable } indirectOperand) {
                     var offset = indirectOperand.Offset;
                     var candidates = PointerOperation.RegistersToOffset(offset);
                     using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
                     var pointerRegister = reservation.WordRegister;
-                    pointerRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
+                    pointerRegister.LoadFromMemory(instruction, variable, 0);
                     if (offset == 0) {
                         instruction.WriteLine("\t" + operation + "\t" + register.Name + ",*" + pointerRegister.Name);
                     }

@@ -16,12 +16,12 @@ namespace Inu.Cate.Tms99
             StoreParametersDirect();
         }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
             if (register.Conflicts(WordRegister.FromIndex(0)) && DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable == variable) {
-                return false;
+                return null;
             }
-            return base.CanAllocateRegister(variable, register);
+            return base.RegisterAdaptability(variable, register);
         }
     }
 }

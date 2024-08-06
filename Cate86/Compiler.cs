@@ -11,14 +11,14 @@ namespace Inu.Cate.I8086
         public Compiler(bool constantData) : base(new ByteOperation(), new WordOperation(), new PointerOperation(), constantData)
         { }
 
-        private static Register SavingRegister(Register register)
-        {
-            if (register is not ByteRegister byteRegister) {
-                return register;
-            }
-            Debug.Assert(byteRegister.PairRegister != null);
-            return byteRegister.PairRegister;
-        }
+        //private static Register SavingRegister(Register register)
+        //{
+        //    if (register is not ByteRegister byteRegister) {
+        //        return register;
+        //    }
+        //    Debug.Assert(byteRegister.PairRegister != null);
+        //    return byteRegister.PairRegister;
+        //}
 
 
         public override void AllocateRegisters(List<Variable> variables, Function function)
@@ -87,30 +87,30 @@ namespace Inu.Cate.I8086
             }
         }
 
-        private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
-        {
-            return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
-        }
+        //private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
+        //{
+        //    return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
+        //}
 
-        private static bool CanAllocate(Variable variable, Register register)
-        {
-            var function = variable.Block.Function;
-            Debug.Assert(function != null);
-            var first = variable.Usages.First().Key;
-            var last = variable.Usages.Last().Key;
-            for (var address = first; address <= last; ++address) {
-                var instruction = function.Instructions[address];
-                if (!instruction.CanAllocateRegister(variable, register))
-                    return false;
-            }
-            return true;
-        }
+        //private static bool CanAllocate(Variable variable, Register register)
+        //{
+        //    var function = variable.Block.Function;
+        //    Debug.Assert(function != null);
+        //    var first = variable.Usages.First().Key;
+        //    var last = variable.Usages.Last().Key;
+        //    for (var address = first; address <= last; ++address) {
+        //        var instruction = function.Instructions[address];
+        //        if (!instruction.CanAllocateRegister(variable, register))
+        //            return false;
+        //    }
+        //    return true;
+        //}
 
-        private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-        {
-            return variables.Any(v =>
-                v.Register != null && register.Conflicts(v.Register));
-        }
+        //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
+        //{
+        //    return variables.Any(v =>
+        //        v.Register != null && register.Conflicts(v.Register));
+        //}
 
 
         public override Register? ParameterRegister(int index, ParameterizableType type)
@@ -144,20 +144,16 @@ namespace Inu.Cate.I8086
         public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
             Operand leftOperand, Operand rightOperand)
         {
-            switch (operatorId) {
-                case '|':
-                case '^':
-                case '&':
-                    return new BitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                case '+':
-                case '-':
-                    return new AddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                case Keyword.ShiftLeft:
-                case Keyword.ShiftRight:
-                    return new ShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                default:
-                    throw new NotImplementedException();
-            }
+            return operatorId switch
+            {
+                '|' or '^' or '&' => new BitInstruction(function, operatorId, destinationOperand, leftOperand,
+                    rightOperand),
+                '+' or '-' => new AddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                    rightOperand),
+                Keyword.ShiftLeft or Keyword.ShiftRight => new ShiftInstruction(function, operatorId,
+                    destinationOperand, leftOperand, rightOperand),
+                _ => throw new NotImplementedException()
+            };
         }
 
         public override Cate.MonomialInstruction CreateMonomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,

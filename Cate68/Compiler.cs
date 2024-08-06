@@ -92,35 +92,27 @@ internal class Compiler : Cate.Compiler
         Operand leftOperand, Operand rightOperand)
     {
         if (destinationOperand.Type.ByteCount == 1) {
-            switch (operatorId) {
-                case '|':
-                case '^':
-                case '&':
-                    return new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                case '+':
-                case '-':
-                    return new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                case Keyword.ShiftLeft:
-                case Keyword.ShiftRight:
-                    return new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                default:
-                    throw new NotImplementedException();
-            }
+            return operatorId switch
+            {
+                '|' or '^' or '&' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand,
+                    rightOperand),
+                '+' or '-' => new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                    rightOperand),
+                Keyword.ShiftLeft or Keyword.ShiftRight => new ByteShiftInstruction(function, operatorId,
+                    destinationOperand, leftOperand, rightOperand),
+                _ => throw new NotImplementedException()
+            };
         }
-        switch (operatorId) {
-            case '|':
-            case '^':
-            case '&':
-                return new WordBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-            case '+':
-            case '-':
-                return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-            case Keyword.ShiftLeft:
-            case Keyword.ShiftRight:
-                return new WordShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-            default:
-                throw new NotImplementedException();
-        }
+        return operatorId switch
+        {
+            '|' or '^' or '&' => new WordBitInstruction(function, operatorId, destinationOperand, leftOperand,
+                rightOperand),
+            '+' or '-' => new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                rightOperand),
+            Keyword.ShiftLeft or Keyword.ShiftRight => new WordShiftInstruction(function, operatorId,
+                destinationOperand, leftOperand, rightOperand),
+            _ => throw new NotImplementedException()
+        };
     }
 
     public override MonomialInstruction CreateMonomialInstruction(Function function, int operatorId,
@@ -247,7 +239,7 @@ internal class Compiler : Cate.Compiler
 
     private static string AssemblyString(string label, int offset)
     {
-        StringBuilder s = new StringBuilder(label);
+        var s = new StringBuilder(label);
         if (offset == 0)
             return s.ToString();
         s.Append('+');

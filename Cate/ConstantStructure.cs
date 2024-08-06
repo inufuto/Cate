@@ -37,7 +37,7 @@ namespace Inu.Cate
                 if (i >= MemberValues.Length - 1) continue;
                 var offset = MemberValues[i].Member.Offset;
                 var nextOffset = MemberValues[i + 1].Member.Offset;
-                Compiler.Instance.WriteAlignment(writer, nextOffset - (offset + MemberValues[i].Member.Type.ByteCount));
+                Compiler.WriteAlignment(writer, nextOffset - (offset + MemberValues[i].Member.Type.ByteCount));
             }
         }
 

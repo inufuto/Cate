@@ -8,16 +8,16 @@ namespace Inu.Cate.I8080
 {
     internal class ByteRegister : Cate.ByteRegister
     {
-        public static readonly ByteRegister A = new ByteRegister(1, "a");
-        public static readonly ByteRegister D = new ByteRegister(2, "d");
-        public static readonly ByteRegister E = new ByteRegister(3, "e");
-        public static readonly ByteRegister B = new ByteRegister(4, "b");
-        public static readonly ByteRegister C = new ByteRegister(5, "c");
-        public static readonly ByteRegister H = new ByteRegister(6, "h");
-        public static readonly ByteRegister L = new ByteRegister(7, "l");
+        public static readonly ByteRegister A = new(1, "a");
+        public static readonly ByteRegister D = new(2, "d");
+        public static readonly ByteRegister E = new(3, "e");
+        public static readonly ByteRegister B = new(4, "b");
+        public static readonly ByteRegister C = new(5, "c");
+        public static readonly ByteRegister H = new(6, "h");
+        public static readonly ByteRegister L = new(7, "l");
 
-        public static List<Cate.ByteRegister> Registers = new List<Cate.ByteRegister> { A, D, E, B, C, H, L };
-        public static List<Cate.ByteRegister> Accumulators => new List<Cate.ByteRegister> { A };
+        public static List<Cate.ByteRegister> Registers = new() { A, D, E, B, C, H, L };
+        public static List<Cate.ByteRegister> Accumulators => new() { A };
 
         protected ByteRegister(int id, string name) : base(id, name) { }
 

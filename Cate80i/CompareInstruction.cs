@@ -8,13 +8,13 @@ namespace Inu.Cate.I8080
 
         public CompareInstruction(Function function, int operatorId, Operand leftOperand, Operand rightOperand, Anchor anchor) : base(function, operatorId, leftOperand, rightOperand, anchor) { }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
             if (Equals(register, ByteRegister.A) && RightOperand is VariableOperand variableOperand &&
                 variableOperand.Variable == variable) {
-                return false;
+                return null;
             }
-            return base.CanAllocateRegister(variable, register);
+            return base.RegisterAdaptability(variable, register);
         }
 
 

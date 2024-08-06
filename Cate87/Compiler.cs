@@ -101,30 +101,30 @@ namespace Inu.Cate.MuCom87
             }
         }
 
-        private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-        {
-            return variables.Any(v =>
-                v.Register != null && register.Conflicts(v.Register));
-        }
+        //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
+        //{
+        //    return variables.Any(v =>
+        //        v.Register != null && register.Conflicts(v.Register));
+        //}
 
-        private static bool CanAllocate(Variable variable, Register register)
-        {
-            var function = variable.Block.Function;
-            Debug.Assert(function != null);
-            var first = variable.Usages.First().Key;
-            var last = variable.Usages.Last().Key;
-            for (var address = first; address <= last; ++address) {
-                var instruction = function.Instructions[address];
-                if (!instruction.CanAllocateRegister(variable, register))
-                    return false;
-            }
-            return true;
-        }
+        //private static bool CanAllocate(Variable variable, Register register)
+        //{
+        //    var function = variable.Block.Function;
+        //    Debug.Assert(function != null);
+        //    var first = variable.Usages.First().Key;
+        //    var last = variable.Usages.Last().Key;
+        //    for (var address = first; address <= last; ++address) {
+        //        var instruction = function.Instructions[address];
+        //        if (!instruction.CanAllocateRegister(variable, register))
+        //            return false;
+        //    }
+        //    return true;
+        //}
 
-        private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
-        {
-            return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
-        }
+        //private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
+        //{
+        //    return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
+        //}
 
 
         public override Register? ParameterRegister(int index, ParameterizableType type)
@@ -153,19 +153,14 @@ namespace Inu.Cate.MuCom87
             Operand leftOperand, Operand rightOperand)
         {
             if (destinationOperand.Type.ByteCount == 1) {
-                switch (operatorId) {
-                    case '|':
-                    case '^':
-                    case '&':
-                    case '+':
-                    case '-':
-                        return new ByteBinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case Keyword.ShiftLeft:
-                    case Keyword.ShiftRight:
-                        return CreateByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    default:
-                        throw new NotImplementedException();
-                }
+                return operatorId switch
+                {
+                    '|' or '^' or '&' or '+' or '-' => new ByteBinomialInstruction(function, operatorId,
+                        destinationOperand, leftOperand, rightOperand),
+                    Keyword.ShiftLeft or Keyword.ShiftRight => CreateByteShiftInstruction(function, operatorId,
+                        destinationOperand, leftOperand, rightOperand),
+                    _ => throw new NotImplementedException()
+                };
             }
             switch (operatorId) {
                 case '+':

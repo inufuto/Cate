@@ -129,42 +129,10 @@ namespace Inu.Cate.Z80
             }
         }
 
-        private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
-        {
-            T? maxRegister = null;
-            int? max = null;
-            foreach (var register in registers) {
-                if (Conflict(variable.Intersections, register)) continue;
-                var adaptability = RegisterAdaptability(variable, register);
-                if (adaptability != null && (max == null || adaptability > max)) {
-                    maxRegister = register;
-                    max = adaptability;
-                }
-            }
-            return maxRegister;
-        }
+        
+       
 
-        private static int? RegisterAdaptability(Variable variable, Register register)
-        {
-            var function = variable.Block.Function;
-            Debug.Assert(function != null);
-            var first = variable.Usages.First().Key;
-            var last = variable.Usages.Last().Key;
-            int sum = 0;
-            for (var address = first; address <= last; ++address) {
-                var instruction = function.Instructions[address];
-                var adaptability = instruction.RegisterAdaptability(variable, register);
-                if (adaptability == null) return null;
-                sum += adaptability.Value;
-            }
-            return sum;
-        }
-
-        private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-        {
-            return variables.Any(v =>
-                v.Register != null && register.Conflicts(v.Register));
-        }
+        
 
         public override Register? ParameterRegister(int index, ParameterizableType type)
         {

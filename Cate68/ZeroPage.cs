@@ -4,12 +4,12 @@
     {
         public readonly string Label;
 
-        // zero page area names
+        // zero-page area names
         public static readonly ZeroPageByte Byte = new("@Temp@Byte");
         public static readonly ZeroPageWord Word = new("@Temp@Word");
         public static readonly ZeroPageByte WordHigh = Word.High;
         public static readonly ZeroPageByte WordLow = Word.Low;
-        public static readonly ZeroPageWord Word2 = new ZeroPageWord("@Temp@Word2");
+        public static readonly ZeroPageWord Word2 = new("@Temp@Word2");
         public static readonly ZeroPageByte Word2High = Word2.High;
         public static readonly ZeroPageByte Word2Low = Word2.Low;
 

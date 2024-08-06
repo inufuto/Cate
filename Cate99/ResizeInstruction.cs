@@ -53,9 +53,9 @@
             Reduce(reservation.WordRegister);
         }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
-            return true;
+            return 0;
         }
     }
 }
