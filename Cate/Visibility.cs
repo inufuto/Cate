@@ -1,10 +1,9 @@
 ﻿
-namespace Inu.Cate
+namespace Inu.Cate;
+
+public enum Visibility
 {
-    public enum Visibility
-    {
-        Private,
-        Public,
-        External
-    }
+    Private,
+    Public,
+    External
 }

@@ -1,25 +1,24 @@
 ﻿using System.IO;
 
-namespace Inu.Cate
+namespace Inu.Cate;
+
+interface ICode
 {
-    interface ICode
+    void WriteTo(StreamWriter writer);
+}
+
+class CodeString : ICode
+{
+    public string String { get; }
+
+    public CodeString(string s)
     {
-        void WriteTo(StreamWriter writer);
+        String = s;
     }
 
-    class CodeString : ICode
+    public override string ToString() => String;
+    public void WriteTo(StreamWriter writer)
     {
-        public string String { get; }
-
-        public CodeString(string s)
-        {
-            String = s;
-        }
-
-        public override string ToString() => String;
-        public void WriteTo(StreamWriter writer)
-        {
-            writer.WriteLine(String);
-        }
+        writer.WriteLine(String);
     }
 }

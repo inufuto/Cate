@@ -1,18 +1,17 @@
-﻿namespace Inu.Cate
+﻿namespace Inu.Cate;
+
+class ExpressionStatement : Statement
 {
-    class ExpressionStatement : Statement
+    private readonly Value value;
+
+    public ExpressionStatement(Value value)
     {
-        private readonly Value value;
-
-        public ExpressionStatement(Value value)
-        {
-            this.value = value;
-        }
+        this.value = value;
+    }
 
 
-        public override void BuildInstructions(Function function)
-        {
-            value.BuildInstructions(function);
-        }
+    public override void BuildInstructions(Function function)
+    {
+        value.BuildInstructions(function);
     }
 }

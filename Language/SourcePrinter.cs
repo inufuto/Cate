@@ -1,7 +1,6 @@
-﻿namespace Inu.Language
+﻿namespace Inu.Language;
+
+public abstract class SourcePrinter
 {
-    public abstract class SourcePrinter
-    {
-        public abstract void AddSourceLine(string sourceLine);
-    };
-}
+    public abstract void AddSourceLine(string sourceLine);
+};

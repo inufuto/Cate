@@ -14,11 +14,8 @@ public abstract class Instruction
         Z = 1,
     }
 
-    private abstract class RegisterAssignment
-    {
-    }
 
-    private class RegisterConstantAssignment : RegisterAssignment
+    private class RegisterConstantAssignment
     {
         public readonly Constant Constant;
 
@@ -36,7 +33,7 @@ public abstract class Instruction
     }
 
 
-    private class RegisterVariableAssignment : RegisterAssignment
+    private class RegisterVariableAssignment
     {
         public readonly Variable Variable;
         public readonly int Offset;
@@ -66,7 +63,7 @@ public abstract class Instruction
         }
     }
 
-    private class RegisterCopy : RegisterAssignment
+    private class RegisterCopy
     {
         public readonly Register SourceRegister;
 
@@ -85,7 +82,9 @@ public abstract class Instruction
     //private readonly IList<RegisterReservation> operandRegisterReservations = new List<RegisterReservation>();
     private readonly ISet<Register> changedRegisters = new HashSet<Register>();
     public readonly ISet<Variable> SavingVariables = new HashSet<Variable>();
-    private readonly IDictionary<Register, RegisterAssignment> RegisterAssignments = new Dictionary<Register, RegisterAssignment>();
+    private readonly Dictionary<Register, RegisterConstantAssignment> registerConstantAssignments = new();
+    private readonly Dictionary<Register, RegisterVariableAssignment> registerVariableAssignments = new();
+    private readonly Dictionary<Register, RegisterCopy> registerCopies = new();
     public Flag ResultFlags;
     public readonly IDictionary<WordRegister, int> RegisterOffsets = new Dictionary<WordRegister, int>();
 
@@ -144,12 +143,11 @@ public abstract class Instruction
             registers.Add(variable.Register);
         }
 
-        foreach (var (register, assignment) in RegisterAssignments) {
+        foreach (var (register, assignment) in registerVariableAssignments) {
             if (
-                assignment is RegisterVariableAssignment variableAssignment &&
-                variableAssignment.Variable.SameStorage(variable) &&
+                assignment.Variable.SameStorage(variable) &&
                 register.ByteCount == variable.FirstType!.ByteCount &&
-                variableAssignment.Offset == offset &&
+                assignment.Offset == offset &&
                 IsMatch(register)
             )
                 registers.Add(register);
@@ -183,10 +181,9 @@ public abstract class Instruction
         if (Equals(variable.Register, register) && offset == 0)
             return true;
         if (
-            RegisterAssignments.TryGetValue(register, out var assignment) &&
-            assignment is RegisterVariableAssignment variableAssignment
+            registerVariableAssignments.TryGetValue(register, out var assignment)
         ) {
-            return variableAssignment.Variable.SameStorage(variable) && variableAssignment.Offset == offset;
+            return assignment.Variable.SameStorage(variable) && assignment.Offset == offset;
         }
         return false;
     }
@@ -223,14 +220,14 @@ public abstract class Instruction
         var resultRegisterUsage = new RegisterVariableAssignment(variable, offset);
 
         if (register != null) {
-            RegisterAssignments[register] = resultRegisterUsage;
+            registerVariableAssignments[register] = resultRegisterUsage;
             if (register is WordRegister wordRegister) {
                 if (wordRegister.Low != null) {
-                    RegisterAssignments.Remove(wordRegister.Low);
+                    registerVariableAssignments.Remove(wordRegister.Low);
                     //RemoveRegisterAssignment(wordRegister.Low);
                 }
                 if (wordRegister.High != null) {
-                    RegisterAssignments.Remove(wordRegister.High);
+                    registerVariableAssignments.Remove(wordRegister.High);
                     //RemoveRegisterAssignment(wordRegister.High);
                 }
             }
@@ -239,25 +236,33 @@ public abstract class Instruction
 
     public void SetRegisterCopy(Register register, Register sourceRegister)
     {
-        RegisterAssignments[register] = new RegisterCopy(sourceRegister);
+        registerCopies[register] = new RegisterCopy(sourceRegister);
     }
 
     public bool IsRegisterCopy(Register register, Register sourceRegister)
     {
-        return RegisterAssignments.TryGetValue(register, out var registerAssignment) && registerAssignment is RegisterCopy registerCopy && registerCopy.SourceRegister.Equals(sourceRegister);
+        return registerCopies.TryGetValue(register, out var registerCopy) && registerCopy.SourceRegister.Equals(sourceRegister);
     }
 
 
     public void RemoveRegisterAssignment(Register register)
     {
-        RegisterAssignments.Remove(register);
-        foreach (var pair in RegisterAssignments) {
-            var key = pair.Key;
-            if (register.Conflicts(key)) {
-                RegisterAssignments.Remove(key);
-            }
-            if (pair.Value is RegisterCopy registerCopy && registerCopy.SourceRegister.Conflicts(register)) {
-                RegisterAssignments.Remove(key);
+        Remove(registerConstantAssignments);
+        Remove(registerVariableAssignments);
+        Remove(registerCopies);
+        return;
+
+        void Remove<T>(Dictionary<Register, T> dictionary)
+        {
+            dictionary.Remove(register);
+            foreach (var pair in dictionary) {
+                var key = pair.Key;
+                if (register.Conflicts(key)) {
+                    dictionary.Remove(key);
+                }
+                if (pair.Value is RegisterCopy registerCopy && registerCopy.SourceRegister.Conflicts(register)) {
+                    dictionary.Remove(key);
+                }
             }
         }
     }
@@ -272,23 +277,22 @@ public abstract class Instruction
 
     public void RemoveVariableRegister(Variable variable, int offset)
     {
-        foreach (var (key, assignment) in RegisterAssignments) {
-            if (assignment is not RegisterVariableAssignment variableAssignment) continue;
+        foreach (var (key, assignment) in registerVariableAssignments) {
             var remove = false;
-            if (variableAssignment.Variable.SameStorage(variable)) {
-                if (variableAssignment.Offset == offset) {
+            if (assignment.Variable.SameStorage(variable)) {
+                if (assignment.Offset == offset) {
                     remove = true;
                 }
-                else if (variable.Type.ByteCount > 1 && variableAssignment.Offset == offset + 1) {
+                else if (variable.Type.ByteCount > 1 && assignment.Offset == offset + 1) {
                     remove = true;
                 }
-                else if (variableAssignment.Variable.Type.ByteCount > 1 && offset == variableAssignment.Offset + 1) {
+                else if (assignment.Variable.Type.ByteCount > 1 && offset == assignment.Offset + 1) {
                     remove = true;
                 }
             }
             if (!remove)
                 continue;
-            RegisterAssignments.Remove(key);
+            registerVariableAssignments.Remove(key);
             break;
         }
     }
@@ -296,21 +300,23 @@ public abstract class Instruction
     public void RemoveStaticVariableAssignments()
     {
         var removedRegisters = new HashSet<Register>();
-        foreach (var (key, assignment) in RegisterAssignments) {
-            if (assignment is not RegisterVariableAssignment variableAssignment) continue;
-            var variable = variableAssignment.Variable;
+        foreach (var (key, assignment) in registerVariableAssignments) {
+            var variable = assignment.Variable;
             if (variable.Static) {
                 removedRegisters.Add(key);
             }
         }
         foreach (var assignment in removedRegisters) {
-            RegisterAssignments.Remove(assignment);
+            registerVariableAssignments.Remove(assignment);
         }
     }
 
     public bool IsRegisterAssigned(Register register)
     {
-        return RegisterAssignments.Any(a => Equals(a.Key, register));
+        return
+            registerConstantAssignments.Any(a => Equals(a.Key, register)) ||
+            registerVariableAssignments.Any(a => Equals(a.Key, register)) ||
+            registerCopies.Any(a => Equals(a.Key, register));
     }
 
     public bool IsRegisterInVariableRange(Register? register, Variable? excludedVariable)
@@ -334,80 +340,69 @@ public abstract class Instruction
     {
         var variableRegisters = new HashSet<Register>();
         var constantRegisters = new HashSet<Register>();
-        var registerCopies = new HashSet<Register>();
+        var copies = new HashSet<Register>();
         foreach (var previousInstruction in PreviousInstructions) {
-            foreach (var (register, assignment) in previousInstruction.RegisterAssignments) {
-                switch (assignment) {
-                    case RegisterVariableAssignment variableAssignment: {
-                            if (!previousInstruction.IsRegisterInVariableRange(register, variableAssignment.Variable)) {
-                                variableRegisters.Add(register);
-                            }
-                            break;
-                        }
-                    case RegisterConstantAssignment:
-                        if (!previousInstruction.IsRegisterInVariableRange(register, null)) {
-                            constantRegisters.Add(register);
-                        }
-                        break;
-                    case RegisterCopy registerCopy:
-                        if (!previousInstruction.IsRegisterInVariableRange(register, null)) {
-                            registerCopies.Add(register);
-                        }
-                        break;
+            foreach (var (register, _) in previousInstruction.registerConstantAssignments) {
+                if (!previousInstruction.IsRegisterInVariableRange(register, null)) {
+                    constantRegisters.Add(register);
+                }
+            }
+            foreach (var (register, assignment) in previousInstruction.registerVariableAssignments) {
+                if (!previousInstruction.IsRegisterInVariableRange(register, assignment.Variable)) {
+                    variableRegisters.Add(register);
+                }
+            }
+            foreach (var (register, assignment) in previousInstruction.registerCopies) {
+                if (!previousInstruction.IsRegisterInVariableRange(register, null)) {
+                    copies.Add(register);
                 }
             }
         }
         foreach (var register in variableRegisters) {
-            var usages = PreviousInstructions.Select(i => i.RegisterAssignments.TryGetValue(register, out var usage) ? usage : null).Distinct().ToList();
+            var usages = PreviousInstructions.Select(i => i.registerVariableAssignments.GetValueOrDefault(register)).Distinct().ToList();
             if (usages.Count != 1)
                 continue;
             {
                 var usage = usages[0];
                 if (usage != null) {
-                    RegisterAssignments[register] = usage;
+                    registerVariableAssignments[register] = usage;
                 }
             }
         }
         foreach (var register in constantRegisters) {
             Constant? value = null;
             foreach (var previousInstruction in PreviousInstructions) {
-                if (previousInstruction.RegisterAssignments.TryGetValue(register, out var assignment)) {
-                    if (assignment is RegisterConstantAssignment constantAssignment) {
-                        if (value == null) {
-                            value = constantAssignment.Constant;
-                        }
-                        else if (constantAssignment.Constant != value) {
-                            goto nextRegister;
-                        }
+                if (previousInstruction.registerConstantAssignments.TryGetValue(register, out var assignment)) {
+                    if (value == null) {
+                        value = assignment.Constant;
                     }
-                    else goto nextRegister;
+                    else if (assignment.Constant != value) {
+                        goto nextRegister;
+                    }
                 }
                 else goto nextRegister;
             }
             if (value != null) {
-                RegisterAssignments[register] = new RegisterConstantAssignment(value);
+                registerConstantAssignments[register] = new RegisterConstantAssignment(value);
             }
         nextRegister:;
         }
 
-        foreach (var register in registerCopies) {
+        foreach (var register in copies) {
             Register? sourceRegister = null;
             foreach (var previousInstruction in PreviousInstructions) {
-                if (previousInstruction.RegisterAssignments.TryGetValue(register, out var assignment)) {
-                    if (assignment is RegisterCopy registerCopy) {
-                        if (sourceRegister == null) {
-                            sourceRegister = registerCopy.SourceRegister;
-                        }
-                        else if (!Equals(registerCopy.SourceRegister, sourceRegister)) {
-                            goto nextRegister;
-                        }
+                if (previousInstruction.registerCopies.TryGetValue(register, out var registerCopy)) {
+                    if (sourceRegister == null) {
+                        sourceRegister = registerCopy.SourceRegister;
                     }
-                    else goto nextRegister;
+                    else if (!Equals(registerCopy.SourceRegister, sourceRegister)) {
+                        goto nextRegister;
+                    }
                 }
                 else goto nextRegister;
             }
             if (sourceRegister != null) {
-                RegisterAssignments[register] = new RegisterCopy(sourceRegister);
+                registerCopies[register] = new RegisterCopy(sourceRegister);
             }
         nextRegister:;
         }
@@ -594,7 +589,7 @@ public abstract class Instruction
         SavingVariables.Add(variable);
         if (variable.Register == null)
             return;
-        RegisterAssignments.Remove(variable.Register);
+        RemoveRegisterAssignment(variable.Register);
     }
 
     public abstract bool IsSourceOperand(Variable variable);
@@ -612,13 +607,13 @@ public abstract class Instruction
 
     public bool IsConstantAssigned(Register register, int value)
     {
-        return RegisterAssignments.TryGetValue(register, out var assignment) && assignment is RegisterConstantAssignment { Constant: ConstantInteger integer } && integer.IntegerValue == value;
+        return registerConstantAssignments.TryGetValue(register, out var assignment) && assignment is { Constant: ConstantInteger integer } && integer.IntegerValue == value;
     }
 
     public void SetRegisterConstant(Register register, int value)
     {
         RemoveRegisterAssignment(register);
-        RegisterAssignments[register] = new RegisterConstantAssignment(value);
+        registerConstantAssignments[register] = new RegisterConstantAssignment(value);
     }
 
     public bool IsConstantAssigned(Register register, PointerOperand pointerOperand)
@@ -630,8 +625,8 @@ public abstract class Instruction
 
     public bool IsConstantAssigned(Register register, Variable variable, int offset)
     {
-        if (!RegisterAssignments.TryGetValue(register, out var assignment)) return false;
-        if (assignment is not RegisterConstantAssignment { Constant: ConstantPointer constantPointer }) return false;
+        if (!registerConstantAssignments.TryGetValue(register, out var assignment)) return false;
+        if (assignment is not { Constant: ConstantPointer constantPointer }) return false;
         return constantPointer.Variable == variable && constantPointer.Offset == offset;
     }
 
@@ -645,17 +640,17 @@ public abstract class Instruction
 
     public void SetRegisterConstant(Register register, PointerType type, Variable variable, int offset)
     {
-        RegisterAssignments[register] =
+        registerConstantAssignments[register] =
             new RegisterConstantAssignment(new ConstantPointer(type, variable, offset));
     }
 
-    public int GetRegisterOffset(WordRegister register)
-    {
-        if (RegisterOffsets.TryGetValue(register, out var offset)) {
-            return offset;
-        }
-        return 0;
-    }
+    //public int GetRegisterOffset(WordRegister register)
+    //{
+    //    if (RegisterOffsets.TryGetValue(register, out var offset)) {
+    //        return offset;
+    //    }
+    //    return 0;
+    //}
 
     public void SetRegisterOffset(WordRegister register, int offset)
     {
@@ -712,5 +707,5 @@ public abstract class Instruction
         return changedRegisters.Contains(register);
     }
 
-    
+
 }

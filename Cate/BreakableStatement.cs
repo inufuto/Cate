@@ -1,12 +1,11 @@
-﻿namespace Inu.Cate
-{
-    abstract class BreakableStatement : Statement
-    {
-        public readonly Anchor BreakAnchor;
+﻿namespace Inu.Cate;
 
-        protected BreakableStatement(Function function)
-        {
-            BreakAnchor = function.CreateAnchor();
-        }
+abstract class BreakableStatement : Statement
+{
+    public readonly Anchor BreakAnchor;
+
+    protected BreakableStatement(Function function)
+    {
+        BreakAnchor = function.CreateAnchor();
     }
 }

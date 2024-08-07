@@ -4,109 +4,108 @@ using System.Diagnostics;
 using System.IO;
 using Inu.Language;
 
-namespace Inu.Cate
+namespace Inu.Cate;
+
+public class ConstantInteger : Constant
 {
-    public class ConstantInteger : Constant
+    public readonly int IntegerValue;
+
+    public ConstantInteger(IntegerType type, int integerValue) : base(type)
     {
-        public readonly int IntegerValue;
+        IntegerValue = integerValue;
+    }
+    public ConstantInteger(int integerValue) : this(IntegerType.IntegerTypeOf(integerValue), integerValue)
+    { }
 
-        public ConstantInteger(IntegerType type, int integerValue) : base(type)
+    public new IntegerType Type => (IntegerType)base.Type;
+
+    public override bool Equals(object? obj)
+    {
+        return obj is ConstantInteger constantInteger && IntegerValue == constantInteger.IntegerValue;
+    }
+
+    public override int GetHashCode()
+    {
+        return IntegerValue.GetHashCode();
+    }
+
+    private static readonly Dictionary<int, Func<int, int, int>> BinaryOperations =
+        new Dictionary<int, Func<int, int, int>>
         {
-            IntegerValue = integerValue;
-        }
-        public ConstantInteger(int integerValue) : this(IntegerType.IntegerTypeOf(integerValue), integerValue)
-        { }
-
-        public new IntegerType Type => (IntegerType)base.Type;
-
-        public override bool Equals(object? obj)
-        {
-            return obj is ConstantInteger constantInteger && IntegerValue == constantInteger.IntegerValue;
-        }
-
-        public override int GetHashCode()
-        {
-            return IntegerValue.GetHashCode();
-        }
-
-        private static readonly Dictionary<int, Func<int, int, int>> BinaryOperations =
-            new Dictionary<int, Func<int, int, int>>
-            {
-                { '|', (left, right) => left | right },
-                { '^', (left, right) => left ^ right },
-                { '&', (left, right) =>  left & right },
-                { Keyword.ShiftLeft, (left, right) =>  left << right },
-                { Keyword.ShiftRight, (left, right) => left >> right },
-                { '+', (left, right) => left + right },
-                { '-', (left, right) => left - right },
-                { '*', (left, right) => left* right },
-                { '/', (left, right) => left / right },
-                { '%', (left, right) => left % right },
-            };
-        public override Value? BinomialResult(SourcePosition position, int operatorId, Value rightValue)
-        {
-            if (!(rightValue is ConstantInteger rightConstant)) {
-                return base.BinomialResult(position, operatorId, rightValue);
-            }
-
-            if (!BinaryOperations.TryGetValue(operatorId, out var operation))
-                throw new InvalidOperatorError(position, operatorId);
-            var result = operation(IntegerValue, rightConstant.IntegerValue);
-            Debug.Assert(Compiler.Instance != null);
-            return new ConstantInteger(result);
-        }
-
-        private static readonly Dictionary<int, Func<int, int>> UnaryOperations = new Dictionary<int, Func<int, int>>() {
-            { '+', (value)=> value},
-            { '-', (value)=> -value },
-            { '~', (value)=> ~value  },
+            { '|', (left, right) => left | right },
+            { '^', (left, right) => left ^ right },
+            { '&', (left, right) =>  left & right },
+            { Keyword.ShiftLeft, (left, right) =>  left << right },
+            { Keyword.ShiftRight, (left, right) => left >> right },
+            { '+', (left, right) => left + right },
+            { '-', (left, right) => left - right },
+            { '*', (left, right) => left* right },
+            { '/', (left, right) => left / right },
+            { '%', (left, right) => left % right },
         };
-
-
-        public override Value? MonomialResult(SourcePosition position, int operatorId)
-        {
-            if (!UnaryOperations.TryGetValue(operatorId, out var operation)) {
-                throw new InvalidOperatorError(position, operatorId);
-            }
-            var result = operation(IntegerValue);
-            return new ConstantInteger(result);
+    public override Value? BinomialResult(SourcePosition position, int operatorId, Value rightValue)
+    {
+        if (!(rightValue is ConstantInteger rightConstant)) {
+            return base.BinomialResult(position, operatorId, rightValue);
         }
 
-        public override Value? ConvertTypeTo(Type type)
-        {
-            if (type is IntegerType integerType) {
-                return Type.Equals(integerType) ? this : new ConstantInteger(integerType, IntegerValue);
-            }
-            return base.ConvertTypeTo(type); ;
-        }
+        if (!BinaryOperations.TryGetValue(operatorId, out var operation))
+            throw new InvalidOperatorError(position, operatorId);
+        var result = operation(IntegerValue, rightConstant.IntegerValue);
+        Debug.Assert(Compiler.Instance != null);
+        return new ConstantInteger(result);
+    }
 
-        public override Value? CastTo(Type type)
-        {
-            if (type is PointerType pointerType) {
-                return new CastedConstantPointer(pointerType, IntegerValue);
-            }
-            return base.CastTo(type);
-        }
+    private static readonly Dictionary<int, Func<int, int>> UnaryOperations = new Dictionary<int, Func<int, int>>() {
+        { '+', (value)=> value},
+        { '-', (value)=> -value },
+        { '~', (value)=> ~value  },
+    };
 
 
-        public override void WriteAssembly(StreamWriter writer)
-        {
-            switch (Type.ByteCount) {
-                case 1:
-                    writer.WriteLine("\tdefb " + IntegerValue);
-                    break;
-                case 2:
-                    writer.WriteLine("\tdefw " + IntegerValue);
-                    break;
-                case 3:
-                    writer.WriteLine("\tdefp " + IntegerValue);
-                    break;
-            }
+    public override Value? MonomialResult(SourcePosition position, int operatorId)
+    {
+        if (!UnaryOperations.TryGetValue(operatorId, out var operation)) {
+            throw new InvalidOperatorError(position, operatorId);
         }
+        var result = operation(IntegerValue);
+        return new ConstantInteger(result);
+    }
 
-        public override Operand ToOperand()
-        {
-            return new IntegerOperand(Type, IntegerValue);
+    public override Value? ConvertTypeTo(Type type)
+    {
+        if (type is IntegerType integerType) {
+            return Type.Equals(integerType) ? this : new ConstantInteger(integerType, IntegerValue);
         }
+        return base.ConvertTypeTo(type); ;
+    }
+
+    public override Value? CastTo(Type type)
+    {
+        if (type is PointerType pointerType) {
+            return new CastedConstantPointer(pointerType, IntegerValue);
+        }
+        return base.CastTo(type);
+    }
+
+
+    public override void WriteAssembly(StreamWriter writer)
+    {
+        switch (Type.ByteCount) {
+            case 1:
+                writer.WriteLine("\tdefb " + IntegerValue);
+                break;
+            case 2:
+                writer.WriteLine("\tdefw " + IntegerValue);
+                break;
+            case 3:
+                writer.WriteLine("\tdefp " + IntegerValue);
+                break;
+        }
+    }
+
+    public override Operand ToOperand()
+    {
+        return new IntegerOperand(Type, IntegerValue);
     }
 }

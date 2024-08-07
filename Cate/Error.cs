@@ -1,58 +1,57 @@
 ﻿using System;
 using Inu.Language;
 
-namespace Inu.Cate
+namespace Inu.Cate;
+
+internal class Error : Exception
 {
-    internal class Error : Exception
+    public Error(SourcePosition position, string message) : base(message)
     {
-        public Error(SourcePosition position, string message) : base(message)
-        {
-            Position = position;
-        }
-
-        public readonly SourcePosition Position;
+        Position = position;
     }
 
-    internal class SyntaxError : Error
-    {
-        public SyntaxError(Token token) : base(token.Position, "Syntax error: " + token)
-        { }
-    }
+    public readonly SourcePosition Position;
+}
 
-    internal class UndefinedIdentifierError : Error
-    {
-        public UndefinedIdentifierError(Token identifier) : base(identifier.Position,
-            "Undefined: " + identifier) { }
-    }
+internal class SyntaxError : Error
+{
+    public SyntaxError(Token token) : base(token.Position, "Syntax error: " + token)
+    { }
+}
 
-    internal class MultipleIdentifierError : Error
-    {
-        public MultipleIdentifierError(Token identifier) : base(identifier.Position,
-            "Multiple identifier: " + identifier) { }
-    }
+internal class UndefinedIdentifierError : Error
+{
+    public UndefinedIdentifierError(Token identifier) : base(identifier.Position,
+        "Undefined: " + identifier) { }
+}
 
-    internal class TypeMismatchError : Error
-    {
-        public TypeMismatchError(Token token) : base(token.Position, "Type mismatch") { }
-    }
+internal class MultipleIdentifierError : Error
+{
+    public MultipleIdentifierError(Token identifier) : base(identifier.Position,
+        "Multiple identifier: " + identifier) { }
+}
 
-    internal class InvalidOperatorError : Error
-    {
-        public InvalidOperatorError(SourcePosition position, int operatorId) : base(position,
-            "Invalid operator: " + ReservedWord.FromId(operatorId)) { }
+internal class TypeMismatchError : Error
+{
+    public TypeMismatchError(Token token) : base(token.Position, "Type mismatch") { }
+}
 
-        public InvalidOperatorError(ReservedWord operatorToken) : this(operatorToken.Position, operatorToken.Id) { }
-    }
+internal class InvalidOperatorError : Error
+{
+    public InvalidOperatorError(SourcePosition position, int operatorId) : base(position,
+        "Invalid operator: " + ReservedWord.FromId(operatorId)) { }
 
-    internal class MustBeConstantError : Error
-    {
-        public MustBeConstantError(SourcePosition position) : base(position, "Must be a constant.")
-        { }
-    }
+    public InvalidOperatorError(ReservedWord operatorToken) : this(operatorToken.Position, operatorToken.Id) { }
+}
 
-    internal class MustBeBooleanError : Error
-    {
-        public MustBeBooleanError(SourcePosition position) : base(position, "Must be a boolean expression.")
-        { }
-    }
+internal class MustBeConstantError : Error
+{
+    public MustBeConstantError(SourcePosition position) : base(position, "Must be a constant.")
+    { }
+}
+
+internal class MustBeBooleanError : Error
+{
+    public MustBeBooleanError(SourcePosition position) : base(position, "Must be a boolean expression.")
+    { }
 }

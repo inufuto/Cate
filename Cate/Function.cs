@@ -284,7 +284,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("StartFighterBullet_(@7)")) {
+            if (instruction.ToString().Contains("Score = Score + pts")) {
                 var aaa = 111;
             }
 #endif

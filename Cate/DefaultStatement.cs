@@ -1,22 +1,21 @@
 ﻿using System.Diagnostics;
 
-namespace Inu.Cate
+namespace Inu.Cate;
+
+class DefaultStatement : Statement
 {
-    class DefaultStatement : Statement
+    public readonly Anchor Anchor;
+    public Statement? Statement;
+
+    public DefaultStatement(Function function)
     {
-        public readonly Anchor Anchor;
-        public Statement? Statement;
+        Anchor = function.CreateAnchor();
+    }
 
-        public DefaultStatement(Function function)
-        {
-            Anchor = function.CreateAnchor();
-        }
-
-        public override void BuildInstructions(Function function)
-        {
-            Anchor.Address = function.NextAddress;
-            Debug.Assert(Statement != null);
-            Statement.BuildInstructions(function);
-        }
+    public override void BuildInstructions(Function function)
+    {
+        Anchor.Address = function.NextAddress;
+        Debug.Assert(Statement != null);
+        Statement.BuildInstructions(function);
     }
 }

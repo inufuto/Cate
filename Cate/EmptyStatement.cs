@@ -1,7 +1,6 @@
-﻿namespace Inu.Cate
+﻿namespace Inu.Cate;
+
+class EmptyStatement : Statement
 {
-    class EmptyStatement : Statement
-    {
-        public override void BuildInstructions(Function function) { }
-    }
+    public override void BuildInstructions(Function function) { }
 }
