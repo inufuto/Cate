@@ -131,6 +131,16 @@ internal class Compiler : Cate.Compiler
 
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
+        //if (index >= WordZeroPage.Count) return null;
+        //switch (type.ByteCount) {
+        //    case 1:
+        //        return ByteZeroPage.FromOffset(index * 2);
+        //    case 2:
+        //        var wordRegister = WordZeroPage.FromOffset(index);
+        //        if (type is PointerType && wordRegister != null)
+        //            return wordRegister.ToPointer();
+        //        return wordRegister;
+        //}
         return null;
     }
 
