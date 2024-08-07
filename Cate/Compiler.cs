@@ -187,24 +187,24 @@ public abstract class Compiler
 
         if (CurrentToken is not Identifier identifier) throw new SyntaxError(CurrentToken);
         NextToken();
-        StructureType? baseStructureType=null;
-        if (CurrentToken.IsReservedWord(':'))
-        {
+        StructureType? baseStructureType = null;
+        if (CurrentToken.IsReservedWord(':')) {
             NextToken();
             if (CurrentToken is not Identifier baseIdentifier) throw new SyntaxError(CurrentToken);
             var baseType = currentBlock.FindNamedType(baseIdentifier.Id);
-            if (baseType is not StructureType)
-            {
+            if (baseType is not StructureType structureType) {
                 throw new TypeMismatchError(baseIdentifier);
             }
             NextToken();
-            baseStructureType = (StructureType)baseType;
+            baseStructureType = structureType;
         }
         var type = new StructureType(baseStructureType);
         currentBlock.AddType(identifier, type);
 
         if (ParseReservedWord('{')) {
             do {
+                if (type.BaseType != null && CurrentToken.IsReservedWord('}')) continue;
+
                 var token = CurrentToken;
                 var memberType = ParseType() ?? throw new SyntaxError(token);
                 do {
@@ -265,7 +265,7 @@ public abstract class Compiler
                     goto cancel;
                 }
                 Constant? constantValue = null;
-                Constant? variableValue = null;
+                Value? variableValue = null;
                 if (constant && visibility != Visibility.External) {
                     if (!CurrentToken.IsReservedWord('=')) {
                         throw new Error(CurrentToken.Position, "Constant storage must be initialized.");
@@ -286,7 +286,7 @@ public abstract class Compiler
                         }
                         NextToken();
                         var valueToken = CurrentToken;
-                        variableValue = type.ParseConstant(this);
+                        variableValue = ParseExpression();
                         if (variableValue == null) {
                             throw new Error(valueToken.Position, "Missing initial value.");
                         }

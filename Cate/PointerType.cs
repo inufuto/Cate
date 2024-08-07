@@ -40,29 +40,38 @@ public class PointerType : ParameterizableType
         switch (operatorId) {
             case '+':
             case '-': {
-                Value offset;
-                if (rightValue is ConstantInteger constantInteger) {
-                    if (constantInteger.IntegerValue == 0) {
-                        return leftValue;
+                    Value offset;
+                    if (rightValue is ConstantInteger constantInteger) {
+                        if (constantInteger.IntegerValue == 0) {
+                            return leftValue;
+                        }
+                        offset = new ConstantInteger(IntegerType.SignedWordType, constantInteger.IntegerValue * ElementType.ByteCount);
                     }
-                    offset = new ConstantInteger(IntegerType.SignedWordType, constantInteger.IntegerValue * ElementType.ByteCount);
+                    else {
+                        var convertedValue = rightValue.ConvertTypeTo(IntegerType.SignedWordType);
+                        if (convertedValue == null) return null;
+                        offset = ElementType.ByteCount == 1 ? convertedValue : new Multiplication(convertedValue, ElementType.ByteCount);
+                    }
+                    return new Binomial(this, operatorId, leftValue, offset);
                 }
-                else {
-                    var convertedValue = rightValue.ConvertTypeTo(IntegerType.SignedWordType);
-                    if (convertedValue == null) return null;
-                    offset = ElementType.ByteCount == 1 ? convertedValue : new Multiplication(convertedValue, ElementType.ByteCount);
-                }
-                return new Binomial(this, operatorId, leftValue, offset);
-            }
             case Keyword.Equal:
             case Keyword.NotEqual:
             case '<':
             case '>':
             case Keyword.LessEqual:
             case Keyword.GreaterEqual: {
-                return new Comparison(operatorId, leftValue, rightValue);
-            }
+                    return new Comparison(operatorId, leftValue, rightValue);
+                }
         }
         return base.BinomialResult(position, operatorId, leftValue, rightValue);
+    }
+
+    public override Value? ConvertType(Value value, Type type)
+    {
+        var convertType = base.ConvertType(value, type);
+        if (convertType == null && ElementType is StructureType elementsStructureType && type is PointerType pointerType && pointerType.ElementType is StructureType targetType) {
+            return elementsStructureType.ConvertPointer(value, targetType);
+        }
+        return convertType;
     }
 }

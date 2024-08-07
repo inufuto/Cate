@@ -30,17 +30,20 @@ public class StructureType : Type
         }
     }
 
+    public readonly StructureType? BaseType;
     public readonly List<Member> Members = new();
     private int lastOffset = 0;
 
     public StructureType(StructureType? baseType)
     {
+        BaseType = baseType;
         if (baseType != null) {
             foreach (var member in baseType.Members) {
                 Members.Add(member);
             }
         }
     }
+
 
     public override int ByteCount => lastOffset;
 
@@ -98,5 +101,16 @@ public class StructureType : Type
             return memberValue; ;
         }
         throw new UndefinedIdentifierError(identifier);
+    }
+
+    public Value? ConvertPointer(Value value, Type targetType)
+    {
+        if (targetType.Equals(this)) {
+            return value;
+        }
+        if (BaseType != null) {
+            return BaseType.ConvertPointer(value, targetType);
+        }
+        return null;
     }
 }
