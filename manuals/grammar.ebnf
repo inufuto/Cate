@@ -2,7 +2,7 @@ module ::= (constant-definition | type-definition | variable-declaration | funct
 
 constant-definition ::= "constexpr" parameterizable-type identifier "=" constant-expression ("," identifier "=" constant-expression)*  ";"
 
-type-definition ::= "struct" identifier ("{" (type identifier ("," identifier)* ";")* "}") ";"
+type-definition ::= "struct" identifier ( ":" identifier )+ ("{" (type identifier ("," identifier)* ";")* "}") ";"
 
 variable-declaration ::= ( | "static" | "extern") ( | "const") type identifier ( | "=" constant-value) ("," identifier ( | "=" constant-value))* ";"
 
@@ -16,7 +16,7 @@ primitive-type ::= ("byte" | "sbyte" | "word" | "sword" | "bool")
 
 statement ::= (";" | composite-statement | if-statement | while-statement | do-statement | for-statement | repeat-statement | switch-statement | case-statement | default-statement | break-statement | continue-statement | goto-statement | return-statement | labeled-statement | expression ";")
 
-composite-statement ::= "{" (constant-definition | type-definition | variable-declaration)* (statement)* "}"
+composite-statement ::= "{" ((constant-definition | type-definition | variable-declaration)* statement)* "}"
 
 labeled-statement ::= identifier ":" statement
 

@@ -10,21 +10,21 @@ namespace Inu.Cate.Mos6502
         public CompareInstruction(Function function, int operatorId, Operand leftOperand, Operand rightOperand, Anchor anchor) : base(function, operatorId, leftOperand, rightOperand, anchor)
         { }
 
-        public override bool CanAllocateRegister(Variable variable, Register register)
+        public override int? RegisterAdaptability(Variable variable, Register register)
         {
             {
                 if (register is IndexRegister && LeftOperand is VariableOperand variableOperand &&
                     variableOperand.Variable == variable) {
-                    return false;
+                    return null;
                 }
             }
             {
                 if (Equals(register, ByteRegister.A) && RightOperand is VariableOperand variableOperand &&
-                        variableOperand.Variable == variable) {
-                    return false;
+                    variableOperand.Variable == variable) {
+                    return null;
                 }
             }
-            return base.CanAllocateRegister(variable, register);
+            return base.RegisterAdaptability(variable, register);
         }
 
 

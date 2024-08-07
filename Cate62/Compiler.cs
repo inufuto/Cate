@@ -46,9 +46,9 @@ namespace Inu.Cate.Sc62015
                 var variableType = variable.Type;
                 var register = variableType.ByteCount switch
                 {
-                    1 => AllocatableRegister(variable, ByteOperation.Registers),
-                    2 => AllocatableRegister(variable, WordOperation.Registers),
-                    3 => AllocatableRegister(variable, PointerOperation.Registers),
+                    1 => AllocatableRegister(variable, ByteOperation.Registers,function),
+                    2 => AllocatableRegister(variable, WordOperation.Registers, function),
+                    3 => AllocatableRegister(variable, PointerOperation.Registers, function),
                     _ => null
                 };
                 if (register != null) {
@@ -57,16 +57,16 @@ namespace Inu.Cate.Sc62015
             }
         }
 
-        private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers) where T : Register
-        {
-            return (from register in registers let conflict = Conflict(variable.Intersections, register) where !conflict select register).FirstOrDefault();
-        }
+        //private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers) where T : Register
+        //{
+        //    return (from register in registers let conflict = Conflict(variable.Intersections, register) where !conflict select register).FirstOrDefault();
+        //}
 
-        private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-        {
-            return variables.Any(v =>
-                v.Register != null && register.Conflicts(v.Register));
-        }
+        //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
+        //{
+        //    return variables.Any(v =>
+        //        v.Register != null && register.Conflicts(v.Register));
+        //}
 
         public override Register? ParameterRegister(int index, ParameterizableType type)
         {
@@ -77,14 +77,14 @@ namespace Inu.Cate.Sc62015
                     1 => ByteRegister.A,
                     2 => WordRegister.BA,
                     3 => PointerRegister.X,
-                    _ => throw new ArgumentOutOfRangeException()
+                    _ => throw new ArgumentOutOfRangeException(nameof(type))
                 },
                 1 => type.ByteCount switch
                 {
                     1 => ByteRegister.IL,
                     2 => WordRegister.I,
                     3 => PointerRegister.Y,
-                    _ => throw new ArgumentOutOfRangeException()
+                    _ => throw new ArgumentOutOfRangeException(nameof(type))
                 },
                 _ => null
             };

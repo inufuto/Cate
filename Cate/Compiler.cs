@@ -145,7 +145,7 @@ public abstract class Compiler
                 match =
                     ParseConstantDefinition() ||
                     ParseTypeDefinition() ||
-                    ParseVariableDeclaration() ||
+                    ParseVariableDeclaration(null) ||
                     ParseFunctionDefinition();
                 if (!match) {
                     ShowError(new SyntaxError(CurrentToken));
@@ -185,10 +185,22 @@ public abstract class Compiler
     {
         if (!ParseReservedWord(Keyword.Struct)) { return false; }
 
-        if (CurrentToken is not Identifier identifier)
-            throw new SyntaxError(CurrentToken);
+        if (CurrentToken is not Identifier identifier) throw new SyntaxError(CurrentToken);
         NextToken();
-        var type = new StructureType();
+        StructureType? baseStructureType=null;
+        if (CurrentToken.IsReservedWord(':'))
+        {
+            NextToken();
+            if (CurrentToken is not Identifier baseIdentifier) throw new SyntaxError(CurrentToken);
+            var baseType = currentBlock.FindNamedType(baseIdentifier.Id);
+            if (baseType is not StructureType)
+            {
+                throw new TypeMismatchError(baseIdentifier);
+            }
+            NextToken();
+            baseStructureType = (StructureType)baseType;
+        }
+        var type = new StructureType(baseStructureType);
         currentBlock.AddType(identifier, type);
 
         if (ParseReservedWord('{')) {
@@ -214,7 +226,7 @@ public abstract class Compiler
 
     }
 
-    private bool ParseVariableDeclaration()
+    private bool ParseVariableDeclaration(CompositeStatement? compositeStatement)
     {
         var mark = tokenIndex;
         {
@@ -252,26 +264,44 @@ public abstract class Compiler
                 if (!(CurrentToken.IsReservedWord(';') || CurrentToken.IsReservedWord(',') || CurrentToken.IsReservedWord('='))) {
                     goto cancel;
                 }
-                Constant? value = null;
+                Constant? constantValue = null;
+                Constant? variableValue = null;
                 if (constant && visibility != Visibility.External) {
                     if (!CurrentToken.IsReservedWord('=')) {
                         throw new Error(CurrentToken.Position, "Constant storage must be initialized.");
                     }
                     NextToken();
-                    value = type.ParseConstant(this);
-                    if (value == null) {
+                    constantValue = type.ParseConstant(this);
+                    if (constantValue == null) {
                         throw new Error(CurrentToken.Position, "Missing initial value.");
                     }
-                    if (type is ArrayType arrayType && value is ConstantArray constantArray && arrayType.ElementCount == null) {
+                    if (type is ArrayType arrayType && constantValue is ConstantArray constantArray && arrayType.ElementCount == null) {
                         type = new ArrayType(arrayType.ElementType, constantArray.Type.ElementCount);
                     }
                 }
                 else {
                     if (CurrentToken.IsReservedWord('=')) {
-                        throw new Error(CurrentToken.Position, "Not constant.");
+                        if (compositeStatement == null) {
+                            throw new Error(CurrentToken.Position, "Not constant.");
+                        }
+                        NextToken();
+                        var valueToken = CurrentToken;
+                        variableValue = type.ParseConstant(this);
+                        if (variableValue == null) {
+                            throw new Error(valueToken.Position, "Missing initial value.");
+                        }
+                        if (type is ArrayType) {
+                            throw new Error(valueToken.Position, "Array variable cannot be initialized.");
+                        }
                     }
                 }
-                currentBlock.AddVariable((Identifier)identifier, type, visibility, @static, value);
+                var variable = currentBlock.AddVariable((Identifier)identifier, type, visibility, @static, constantValue);
+                if (variableValue != null) {
+                    var assignment = new Assignment(new VariableValue(variable), variableValue);
+                    var statement = new ExpressionStatement(assignment);
+                    Debug.Assert(compositeStatement != null);
+                    compositeStatement.Statements.Add(statement);
+                }
             } while (ParseReservedWord(','));
             AcceptReservedWord(';');
             return true;
@@ -539,21 +569,14 @@ public abstract class Compiler
         currentBlock = block;
 
         try {
-            var match = true;
-            while (match) {
-                try {
-                    match =
-                        ParseConstantDefinition() ||
-                        ParseTypeDefinition() ||
-                        ParseVariableDeclaration();
-                }
-                catch (Error e) {
-                    ShowError(e);
-                }
-            }
             var compositeStatement = new CompositeStatement(block);
             while (!ParseReservedWord('}')) {
                 try {
+                    while (
+                        ParseConstantDefinition() ||
+                        ParseTypeDefinition() ||
+                        ParseVariableDeclaration(compositeStatement)
+                    ) { }
                     var statement = ParseStatement();
                     compositeStatement.Statements.Add(statement);
                 }

@@ -9,9 +9,9 @@ public abstract class Block
 {
     public const char LabelSeparator = '.';
     public readonly Block? Parent;
-    private readonly Dictionary<int, NamedType> namedTypes = new Dictionary<int, NamedType>();
-    private readonly Dictionary<int, NamedConstant> constants = new Dictionary<int, NamedConstant>();
-    public readonly Dictionary<int, Variable> Variables = new Dictionary<int, Variable>();
+    private readonly Dictionary<int, NamedType> namedTypes = new();
+    private readonly Dictionary<int, NamedConstant> constants = new();
+    public readonly Dictionary<int, Variable> Variables = new();
 
     protected Block(Block? parent)
     {
@@ -75,7 +75,7 @@ public abstract class Block
         Constant? value)
     {
         var namedValue = FindNamedValue(identifier.Id);
-        if (namedValue != null && (!(namedValue is Variable variable) || !variable.Type.Equals(type) ||
+        if (namedValue != null && (namedValue is not Variable variable || !variable.Type.Equals(type) ||
                                    (variable.Visibility != Visibility.External))) {
             throw new MultipleIdentifierError(identifier);
         }
@@ -163,7 +163,7 @@ public abstract class Block
 
 public class GlobalBlock : Block
 {
-    private readonly List<Function> functions = new List<Function>();
+    private readonly List<Function> functions = new();
 
     public GlobalBlock() : base(null) { }
     public override string Label => "";
@@ -173,24 +173,22 @@ public class GlobalBlock : Block
     {
         var namedValue = FindNamedValue(function.Id);
         if (namedValue != null) {
-            if (!(namedValue is Function foundFunction)) {
+            if (namedValue is not Function foundFunction) {
                 throw new MultipleIdentifierError(identifier);
             }
-            if (foundFunction != null) {
-                if (foundFunction.IsSameSignature(function)) {
-                    if (foundFunction.Visibility != Visibility.External) {
-                        if (function.Visibility == Visibility.External) {
-                            return foundFunction;
-                        }
-
-                        throw new MultipleIdentifierError(identifier);
+            if (foundFunction.IsSameSignature(function)) {
+                if (foundFunction.Visibility != Visibility.External) {
+                    if (function.Visibility == Visibility.External) {
+                        return foundFunction;
                     }
-                }
-                else {
+
                     throw new MultipleIdentifierError(identifier);
                 }
-                functions.Remove(foundFunction);
             }
+            else {
+                throw new MultipleIdentifierError(identifier);
+            }
+            functions.Remove(foundFunction);
         }
         {
             functions.Add(function);
@@ -218,7 +216,7 @@ public class GlobalBlock : Block
 
 public class LocalBlock : Block
 {
-    public readonly List<LocalBlock> Children = new List<LocalBlock>();
+    public readonly List<LocalBlock> Children = new();
     private static int lastId = 0;
     private readonly int id;
 

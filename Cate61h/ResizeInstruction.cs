@@ -56,6 +56,6 @@
             wordRegister.Store(this, DestinationOperand);
         }
 
-        public override bool CanAllocateRegister(Variable variable, Register register) => true;
+        public override int? RegisterAdaptability(Variable variable, Register register) => 0;
     }
 }

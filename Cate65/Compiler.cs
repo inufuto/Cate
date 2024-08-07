@@ -103,10 +103,10 @@ namespace Inu.Cate.Mos6502
         }
 
 
-        private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
-        {
-            return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
-        }
+        //private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
+        //{
+        //    return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
+        //}
 
         private static bool CanAllocate(Variable variable, Register register)
         {
@@ -116,18 +116,18 @@ namespace Inu.Cate.Mos6502
             var last = variable.Usages.Last().Key;
             for (var address = first; address <= last; ++address) {
                 var instruction = function.Instructions[address];
-                if (!instruction.CanAllocateRegister(variable, register)) {
+                if (instruction.RegisterAdaptability(variable, register) == null) {
                     return false;
                 }
             }
             return true;
         }
 
-        private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-        {
-            return variables.Any(v =>
-                v.Register != null && register.Conflicts(v.Register));
-        }
+        //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
+        //{
+        //    return variables.Any(v =>
+        //        v.Register != null && register.Conflicts(v.Register));
+        //}
 
         public override Register? ParameterRegister(int index, ParameterizableType type)
         {
@@ -158,35 +158,27 @@ namespace Inu.Cate.Mos6502
             AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand)
         {
             if (destinationOperand.Type.ByteCount == 1) {
-                switch (operatorId) {
-                    case '|':
-                    case '^':
-                    case '&':
-                        return new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case '+':
-                    case '-':
-                        return new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    case Keyword.ShiftLeft:
-                    case Keyword.ShiftRight:
-                        return new ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                    default:
-                        throw new NotImplementedException();
-                }
+                return operatorId switch
+                {
+                    '|' or '^' or '&' => new ByteBitInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand),
+                    '+' or '-' => new ByteAddOrSubtractInstruction(function, operatorId, destinationOperand,
+                        leftOperand, rightOperand),
+                    Keyword.ShiftLeft or Keyword.ShiftRight => new ByteShiftInstruction(function, operatorId,
+                        destinationOperand, leftOperand, rightOperand),
+                    _ => throw new NotImplementedException()
+                };
             }
-            switch (operatorId) {
-                case '|':
-                case '^':
-                case '&':
-                    return new WordBinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                case '+':
-                case '-':
-                    return new WordBinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                case Keyword.ShiftLeft:
-                case Keyword.ShiftRight:
-                    return new WordShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                default:
-                    throw new NotImplementedException();
-            }
+            return operatorId switch
+            {
+                '|' or '^' or '&' => new WordBinomialInstruction(function, operatorId, destinationOperand, leftOperand,
+                    rightOperand),
+                '+' or '-' => new WordBinomialInstruction(function, operatorId, destinationOperand, leftOperand,
+                    rightOperand),
+                Keyword.ShiftLeft or Keyword.ShiftRight => new WordShiftInstruction(function, operatorId,
+                    destinationOperand, leftOperand, rightOperand),
+                _ => throw new NotImplementedException()
+            };
         }
 
         public override Cate.MonomialInstruction CreateMonomialInstruction(Function function, int operatorId,

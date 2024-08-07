@@ -176,16 +176,16 @@ namespace Inu.Cate.Mc6809
             }
         }
 
-        private static Cate.Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Cate.Register
-        {
-            return (from register in registers let conflict = Conflict(variable.Intersections, register) where !conflict select register).FirstOrDefault();
-        }
+        //private static Cate.Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Cate.Register
+        //{
+        //    return (from register in registers let conflict = Conflict(variable.Intersections, register) where !conflict select register).FirstOrDefault();
+        //}
 
-        private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Cate.Register
-        {
-            return variables.Any(v =>
-                v.Register != null && register.Conflicts(v.Register));
-        }
+        //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Cate.Register
+        //{
+        //    return variables.Any(v =>
+        //        v.Register != null && register.Conflicts(v.Register));
+        //}
 
 
         public override Register? ParameterRegister(int index, ParameterizableType type)

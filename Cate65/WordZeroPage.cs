@@ -41,11 +41,6 @@ namespace Inu.Cate.Mos6502
             return id is >= MinId and < MinId + Count;
         }
 
-        private static RegisterReservation ReserveA(Instruction instruction)
-        {
-            return ByteOperation.ReserveRegister(instruction, ByteRegister.A);
-        }
-
 
         public WordZeroPage(int id) : base(id, IdToName(id))
         { }

@@ -30,8 +30,18 @@ namespace Inu.Cate
             }
         }
 
-        public readonly List<Member> Members = new List<Member>();
+        public readonly List<Member> Members = new();
         private int lastOffset = 0;
+
+        public StructureType(StructureType? baseType)
+        {
+            if (baseType != null) {
+                foreach (var member in baseType.Members) {
+                    Members.Add(member);
+                }
+            }
+        }
+
         public override int ByteCount => lastOffset;
 
 

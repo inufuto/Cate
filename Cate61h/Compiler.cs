@@ -199,26 +199,26 @@ internal class Compiler : Cate.Compiler
         }
     }
 
-    private static Cate.Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Cate.Register
-    {
-        foreach (var register in registers) {
-            if (!IsAllocatable(function, variable, register)) continue;
-            var conflict = Conflict(variable.Intersections, register);
-            if (!conflict) return register;
-        }
-        return null;
-    }
+    //private static Cate.Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Cate.Register
+    //{
+    //    foreach (var register in registers) {
+    //        if (!IsAllocatable(function, variable, register)) continue;
+    //        var conflict = Conflict(variable.Intersections, register);
+    //        if (!conflict) return register;
+    //    }
+    //    return null;
+    //}
 
-    private static bool IsAllocatable<T>(Function function, Variable variable, T register) where T : Register
-    {
-        return function.Instructions.All(i => i.CanAllocateRegister(variable, register));
-    }
+    //private static bool IsAllocatable<T>(Function function, Variable variable, T register) where T : Register
+    //{
+    //    return function.Instructions.All(i => i.CanAllocateRegister(variable, register));
+    //}
 
-    private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-    {
-        return variables.Any(v =>
-            v.Register != null && register.Conflicts(v.Register));
-    }
+    //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
+    //{
+    //    return variables.Any(v =>
+    //        v.Register != null && register.Conflicts(v.Register));
+    //}
 
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
