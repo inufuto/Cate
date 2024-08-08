@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Inu.Language;
+using static Inu.Cate.StructureType;
 
 namespace Inu.Cate;
 
@@ -41,6 +42,7 @@ public class StructureType : Type
             foreach (var member in baseType.Members) {
                 Members.Add(member);
             }
+            lastOffset += baseType.lastOffset;
         }
     }
 

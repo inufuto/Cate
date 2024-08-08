@@ -192,6 +192,9 @@ public abstract class Compiler
             NextToken();
             if (CurrentToken is not Identifier baseIdentifier) throw new SyntaxError(CurrentToken);
             var baseType = currentBlock.FindNamedType(baseIdentifier.Id);
+            if (baseType == null) {
+                throw new UndefinedIdentifierError(baseIdentifier);
+            }
             if (baseType is not StructureType structureType) {
                 throw new TypeMismatchError(baseIdentifier);
             }
@@ -577,6 +580,7 @@ public abstract class Compiler
                         ParseTypeDefinition() ||
                         ParseVariableDeclaration(compositeStatement)
                     ) { }
+                    if (CurrentToken.IsReservedWord('}')) continue;
                     var statement = ParseStatement();
                     compositeStatement.Statements.Add(statement);
                 }
