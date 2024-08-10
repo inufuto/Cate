@@ -148,6 +148,7 @@ public abstract class ByteRegister : Register
                 }
                 else {
                     StoreToMemory(instruction, variable, offset);
+                    instruction.SetVariableRegister(variable, offset, this);
                 }
                 instruction.SetVariableRegister(variableOperand, this);
                 return;
