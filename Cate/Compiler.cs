@@ -296,6 +296,7 @@ public abstract class Compiler
                         if (type is ArrayType) {
                             throw new Error(valueToken.Position, "Array variable cannot be initialized.");
                         }
+                        variableValue = variableValue.ConvertTypeTo(type) ?? throw new TypeMismatchError(valueToken);
                     }
                 }
                 var variable = currentBlock.AddVariable((Identifier)identifier, type, visibility, @static, constantValue);
