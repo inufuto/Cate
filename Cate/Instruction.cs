@@ -220,6 +220,7 @@ public abstract class Instruction
         var resultRegisterUsage = new RegisterVariableAssignment(variable, offset);
 
         if (register != null) {
+            RemoveVariableRegister(variable, offset);
             registerVariableAssignments[register] = resultRegisterUsage;
             if (register is WordRegister wordRegister) {
                 if (wordRegister.Low != null) {
