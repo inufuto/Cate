@@ -32,6 +32,7 @@ internal abstract class ByteRegister : Cate.ByteRegister
     public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
     {
         instruction.WriteLine("\tld" + Name + "\t" + variable.MemoryAddress(offset));
+        instruction.RemoveRegisterAssignment(this);
         instruction.SetVariableRegister(variable, offset, this);
         instruction.AddChanged(this);
         instruction.ResultFlags |= Instruction.Flag.Z;
