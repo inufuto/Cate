@@ -4,6 +4,8 @@ namespace Inu.Cate.Wdc65c02;
 
 internal class Compiler : Inu.Cate.Mos6502.Compiler
 {
+    public Compiler(bool parameterRegister) : base(parameterRegister) { }
+
     public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
         Operand leftOperand, Operand rightOperand)
     {

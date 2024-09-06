@@ -206,8 +206,6 @@ public class Function : NamedValue
 
     public void WriteParameterLabel(StreamWriter writer, int index, Parameter? parameter)
     {
-        //if (index >= Parameters.Count) return;
-        //var parameter = Parameters[index];
         if (parameter == null)
             return;
         if (parameter.Register == null) {
@@ -217,8 +215,6 @@ public class Function : NamedValue
                 writer.WriteLine("\tpublic\t" + parameterLabel);
             }
         }
-        //   && parameter.Variable.Static
-        //parameter.Variable?.WriteAssembly(writer);
     }
 
 
@@ -284,7 +280,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@30 = (sword)horizontalDirectionIndex")) {
+            if (instruction.ToString().Contains("column = @1")) {
                 var aaa = 111;
             }
 #endif

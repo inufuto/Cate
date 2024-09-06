@@ -9,10 +9,15 @@ namespace Inu.Cate.Mos6502;
 internal class Compiler : Cate.Compiler
 {
     public const string ZeroPageLabel = "@zp";
+    private readonly bool parameterRegister;
 
     public new static Compiler Instance => (Compiler)Cate.Compiler.Instance;
 
-    public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
+    public Compiler(bool parameterRegister) : base(new ByteOperation(), new WordOperation(),
+        new PointerOperation())
+    {
+        this.parameterRegister = parameterRegister;
+    }
 
     protected override void WriteAssembly(StreamWriter writer)
     {
@@ -44,11 +49,11 @@ internal class Compiler : Cate.Compiler
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
-        var shortRange = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null && v.Range <= 1).OrderBy(v => v.Usages.Count).ToList();
+        var shortRange = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null, Range: <= 1 }).OrderBy(v => v.Usages.Count).ToList();
         foreach (var variable in shortRange.Where(variable => variable.Type.ByteCount == 1 && !Conflict(variable.Intersections, ByteRegister.A) && CanAllocate(variable, ByteRegister.A))) {
             variable.Register = ByteRegister.A;
         }
-        var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
+        var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count);
         foreach (var variable in rangeOrdered.Where(v => v.Range <= 1)) {
             if (variable.Type.ByteCount != 1 || Conflict(variable.Intersections, ByteRegister.X) ||
@@ -74,9 +79,9 @@ internal class Compiler : Cate.Compiler
         }
 
         foreach (var variable in variables.Where(v => v.Register == null && !v.Static)) {
-            if (variable.Parameter?.Register == null)
-                continue;
+            if (variable.Parameter?.Register == null) continue;
             var register = variable.Parameter.Register;
+            if (register is not (ByteZeroPage or WordZeroPage or PointerZeroPage)) continue;
             if (register is ByteRegister byteRegister && !Conflict(variable.Intersections, byteRegister)) {
                 variable.Register = byteRegister;
             }
@@ -102,12 +107,6 @@ internal class Compiler : Cate.Compiler
         }
     }
 
-
-    //private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
-    //{
-    //    return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
-    //}
-
     private static bool CanAllocate(Variable variable, Register register)
     {
         var function = variable.Block.Function;
@@ -123,24 +122,18 @@ internal class Compiler : Cate.Compiler
         return true;
     }
 
-    //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-    //{
-    //    return variables.Any(v =>
-    //        v.Register != null && register.Conflicts(v.Register));
-    //}
-
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
-        //if (index >= WordZeroPage.Count) return null;
-        //switch (type.ByteCount) {
-        //    case 1:
-        //        return ByteZeroPage.FromOffset(index * 2);
-        //    case 2:
-        //        var wordRegister = WordZeroPage.FromOffset(index);
-        //        if (type is PointerType && wordRegister != null)
-        //            return wordRegister.ToPointer();
-        //        return wordRegister;
-        //}
+        if (!parameterRegister) return null;
+        if (index == 0) {
+            return type.ByteCount switch
+            {
+                1 => ByteRegister.Y,
+                2 when type is PointerType => PairPointerRegister.Xy,
+                2 => PairWordRegister.Xy,
+                _ => null
+            };
+        }
         return null;
     }
 

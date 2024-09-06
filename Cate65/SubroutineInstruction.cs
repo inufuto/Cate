@@ -48,26 +48,4 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
             _ => base.Candidates(operand)
         };
     }
-
-    //public static Register? ParameterRegister(int index, ParameterizableType type)
-    //{
-    //    //if (index == 0) {
-    //    //    return type.ByteCount == 1 ? ByteZeroPage.First : WordZeroPage.First;
-    //    //}
-    //    //if (index == 0) {
-    //    //    return type.ByteCount == 1 ? (Register)ByteRegister.Y : PairRegister.Xy;
-    //    //}
-    //    return null;
-    //}
-
-
-    //public static Register? ReturnRegister(ParameterizableType type)
-    //{
-    //    return type.ByteCount switch
-    //    {
-    //        1 => ByteRegister.Y,
-    //        2 => (type is PointerType ? PairPointerRegister.Xy : PairWordRegister.Xy),
-    //        _ => null
-    //    };
-    //}
 }
