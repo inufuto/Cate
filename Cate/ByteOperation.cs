@@ -207,7 +207,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
                 r.Load(instruction, instruction.LeftOperand);
                 r.Operate(instruction, operation, change, instruction.RightOperand);
             }
-
+            instruction.AddChanged(r);
             instruction.RemoveRegisterAssignment(r);
         }
 
