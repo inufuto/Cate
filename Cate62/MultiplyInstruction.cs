@@ -43,7 +43,8 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
         {
             void ViaRegister(Register re)
             {
-                using var additionReservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers);
+                var candidates = WordRegister.Registers.Where(r=>!Equals(r, re)).ToList();
+                using var additionReservation = WordOperation.ReserveAnyRegister(this, candidates);
                 var additionRegister = additionReservation.WordRegister;
                 additionRegister.Load(this, LeftOperand);
                 re.LoadConstant(this, "0");
