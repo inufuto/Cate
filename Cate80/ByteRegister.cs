@@ -341,6 +341,7 @@ internal class ByteRegister : Cate.ByteRegister
                     var register = instruction.GetVariableRegister(pointer, 0);
                     if (register is PointerRegister pointerRegister) {
                         OperateAccumulatorIndirect(instruction, operation, pointerRegister, offset);
+                        instruction.RemoveRegisterAssignment(this);
                         return;
                     }
                 }

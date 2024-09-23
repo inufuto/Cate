@@ -280,7 +280,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@3 = @4 * 6")) {
+            if (instruction.ToString().Contains("w = 32 - *pFort")) {
                 var aaa = 111;
             }
 #endif
