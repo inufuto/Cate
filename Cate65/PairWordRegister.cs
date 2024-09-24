@@ -47,8 +47,8 @@ internal class PairWordRegister : Cate.WordRegister
 
     public override void LoadConstant(Instruction instruction, string value)
     {
-        low.LoadConstant(instruction, "low " + value);
-        high.LoadConstant(instruction, "high " + value);
+        low.LoadConstant(instruction, "low(" + value + ")");
+        high.LoadConstant(instruction, "high(" + value + ")");
     }
 
     public override void LoadFromMemory(Instruction instruction, string label)
