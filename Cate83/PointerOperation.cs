@@ -1,20 +1,13 @@
-﻿using System.Collections.Generic;
+﻿namespace Inu.Cate.Sm83;
 
-namespace Inu.Cate.Z80;
-
-internal class PointerOperation : Cate.PointerOperation
+internal class PointerOperation:Cate.PointerOperation
 {
     public override List<Cate.PointerRegister> Registers => PointerRegister.Registers;
 
     public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset, int value)
     {
-        if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
-            instruction.WriteLine("\tld\t(" + pointerRegister + "+" + offset + "),low(" + value + ")");
-            instruction.WriteLine("\tld\t(" + pointerRegister + "+" + offset + "+1),high(" + value + ")");
-            return;
-        }
         if (offset == 0) {
-            if (PointerRegister.IsAddable(pointerRegister)) {
+            if (Equals(pointerRegister, PointerRegister.Hl)) {
                 instruction.WriteLine("\tld\t(" + pointerRegister + "),low(" + value + ")");
                 instruction.WriteLine("\tinc\t" + pointerRegister.AsmName);
                 instruction.WriteLine("\tld\t(" + pointerRegister + "),high(" + value + ")");

@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
+﻿using System.Diagnostics;
 
-namespace Inu.Cate.I8080;
+namespace Inu.Cate.Sm83;
 
-internal class Compiler : Cate.Compiler
+internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation(), new PointerOperation())
 {
     public const string TemporaryByte = "@Temporary@Byte";
-
-    public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
 
     protected override void WriteAssembly(StreamWriter writer)
     {
@@ -20,23 +14,13 @@ internal class Compiler : Cate.Compiler
 
     public override void AddSavingRegister(ISet<Register> registers, Register register)
     {
-        if (register is ByteRegister { PairRegister: { } } byteRegister) {
+        if (register is ByteRegister { PairRegister: not null } byteRegister) {
             base.AddSavingRegister(registers, byteRegister.PairRegister);
         }
         else {
             base.AddSavingRegister(registers, register);
         }
     }
-
-    //private static Register SavingRegister(Register register)
-    //{
-    //    if (Equals(register, ByteRegister.A))
-    //        return register;
-    //    if (register is not ByteRegister byteRegister)
-    //        return register;
-    //    Debug.Assert(byteRegister.PairRegister != null);
-    //    return byteRegister.PairRegister;
-    //}
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
@@ -51,7 +35,8 @@ internal class Compiler : Cate.Compiler
                 }
                 else {
                     if (variableType is PointerType) {
-                        var registers = new List<PointerRegister>() { PointerRegister.Hl, PointerRegister.De, PointerRegister.Bc };
+                        var registers = new List<PointerRegister>()
+                            { PointerRegister.Hl, PointerRegister.De, PointerRegister.Bc };
                         register = AllocatableRegister(variable, registers, function);
                     }
                     else {
@@ -59,16 +44,19 @@ internal class Compiler : Cate.Compiler
                         register = AllocatableRegister(variable, registers, function);
                     }
                 }
+
                 if (register == null)
                     continue;
                 variable.Register = register;
             }
         }
 
-        var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
+        var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null)
+            .OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
         AllocateOrdered(rangeOrdered);
-        var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
+        var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null)
+            .OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         AllocateOrdered(usageOrdered);
 
         foreach (var variable in variables.Where(v => v.Register == null && !v.Static)) {
@@ -99,30 +87,6 @@ internal class Compiler : Cate.Compiler
         }
     }
 
-    //private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
-    //{
-    //    return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
-    //}
-
-    //private static bool CanAllocate(Variable variable, Register register)
-    //{
-    //    var function = variable.Block.Function;
-    //    Debug.Assert(function != null);
-    //    var first = variable.Usages.First().Key;
-    //    var last = variable.Usages.Last().Key;
-    //    for (var address = first; address <= last; ++address) {
-    //        var instruction = function.Instructions[address];
-    //        if (!instruction.CanAllocateRegister(variable, register))
-    //            return false;
-    //    }
-    //    return true;
-    //}
-
-    //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-    //{
-    //    return variables.Any(v =>
-    //        v.Register != null && register.Conflicts(v.Register));
-    //}
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
         return SubroutineInstruction.ParameterRegister(index, type);
@@ -133,19 +97,20 @@ internal class Compiler : Cate.Compiler
         return SubroutineInstruction.ReturnRegister(type);
     }
 
-    protected override LoadInstruction CreateByteLoadInstruction(Function function, AssignableOperand destinationOperand,
-        Operand sourceOperand)
-    {
-        return new ByteLoadInstruction(function, destinationOperand, sourceOperand);
-    }
-
     protected override LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand,
         Operand sourceOperand)
     {
         return new WordLoadInstruction(function, destinationOperand, sourceOperand);
     }
 
-    public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
+    protected override LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
+        Operand sourceOperand)
+    {
+        return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
+    }
+
+    public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
+        AssignableOperand destinationOperand,
         Operand leftOperand, Operand rightOperand)
     {
         if (destinationOperand.Type.ByteCount == 1) {
@@ -160,22 +125,29 @@ internal class Compiler : Cate.Compiler
                 _ => throw new NotImplementedException()
             };
         }
+
         switch (operatorId) {
             case '+':
                 if (destinationOperand.Type is PointerType)
-                    return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                    return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand);
+                return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                    rightOperand);
             case '-': {
-                if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
-                    var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
+                    if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
+                        var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
+                        if (destinationOperand.Type is PointerType)
+                            return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand,
+                                operand);
+                        return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                    }
+
                     if (destinationOperand.Type is PointerType)
-                        return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
-                    return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                        return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                            rightOperand);
+                    return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
+                        rightOperand);
                 }
-                if (destinationOperand.Type is PointerType)
-                    return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-            }
             case '|':
             case '^':
             case '&':
@@ -188,7 +160,8 @@ internal class Compiler : Cate.Compiler
         }
     }
 
-    public override MonomialInstruction CreateMonomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
+    public override MonomialInstruction CreateMonomialInstruction(Function function, int operatorId,
+        AssignableOperand destinationOperand,
         Operand sourceOperand)
     {
         return destinationOperand.Type.ByteCount switch
@@ -199,47 +172,44 @@ internal class Compiler : Cate.Compiler
         };
     }
 
-    public override Cate.ResizeInstruction CreateResizeInstruction(Function function, AssignableOperand destinationOperand,
+    public override ResizeInstruction CreateResizeInstruction(Function function, AssignableOperand destinationOperand,
         IntegerType destinationType, Operand sourceOperand, IntegerType sourceType)
     {
         return new ResizeInstruction(function, destinationOperand, destinationType, sourceOperand, sourceType);
     }
 
-    public override Cate.CompareInstruction CreateCompareInstruction(Function function, int operatorId,
-        Operand leftOperand,
-        Operand rightOperand,
-        Anchor anchor)
+    public override CompareInstruction CreateCompareInstruction(Function function, int operatorId, Operand leftOperand,
+        Operand rightOperand, Anchor anchor)
     {
         return new CompareInstruction(function, operatorId, leftOperand, rightOperand, anchor);
     }
 
-    public override Cate.JumpInstruction CreateJumpInstruction(Function function, Anchor anchor)
+    public override JumpInstruction CreateJumpInstruction(Function function, Anchor anchor)
     {
         return new JumpInstruction(function, anchor);
     }
 
-    public override Cate.SubroutineInstruction CreateSubroutineInstruction(Function function, Function targetFunction,
+    public override SubroutineInstruction CreateSubroutineInstruction(Function function, Function targetFunction,
         AssignableOperand? destinationOperand, List<Operand> sourceOperands)
     {
         return new SubroutineInstruction(function, targetFunction, destinationOperand, sourceOperands);
     }
 
-    public override Cate.ReturnInstruction CreateReturnInstruction(Function function, Operand? sourceOperand,
-        Anchor anchor)
+    public override ReturnInstruction CreateReturnInstruction(Function function, Operand? sourceOperand, Anchor anchor)
     {
         return new ReturnInstruction(function, sourceOperand, anchor);
     }
 
-    public override Cate.DecrementJumpInstruction CreateDecrementJumpInstruction(Function function,
-        AssignableOperand operand,
-        Anchor anchor)
+    public override DecrementJumpInstruction CreateDecrementJumpInstruction(Function function,
+        AssignableOperand operand, Anchor anchor)
     {
         return new DecrementJumpInstruction(function, operand, anchor);
     }
 
     public override ReadOnlySpan<char> EndOfFunction => "\tret";
 
-    public override Cate.MultiplyInstruction CreateMultiplyInstruction(Function function, AssignableOperand destinationOperand,
+    public override MultiplyInstruction CreateMultiplyInstruction(Function function,
+        AssignableOperand destinationOperand,
         Operand leftOperand, int rightValue)
     {
         return new MultiplyInstruction(function, destinationOperand, leftOperand, rightValue);
@@ -308,6 +278,5 @@ internal class Compiler : Cate.Compiler
     {
         instruction.WriteLine("\tcall\t" + functionName);
         Instance.AddExternalName(functionName);
-
     }
 }

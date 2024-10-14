@@ -1,6 +1,6 @@
 ﻿using Inu.Language;
 
-namespace Inu.Cate.I8080;
+namespace Inu.Cate.Sm83;
 
 internal class Program
 {

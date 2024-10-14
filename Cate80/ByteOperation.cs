@@ -110,7 +110,7 @@ internal class ByteOperation : Cate.ByteOperation
             });
             return;
         }
-        List<Cate.PointerRegister> candidates = new List<Cate.PointerRegister>(PointerRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList());
+        var candidates = new List<Cate.PointerRegister>(PointerRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList());
         using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
         reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
         StoreConstantIndirect(instruction, reservation.PointerRegister, offset, value);

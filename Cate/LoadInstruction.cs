@@ -62,23 +62,23 @@ public class ByteLoadInstruction : LoadInstruction
                     ByteOperation.ClearByte(this, variableOperand);
                     return;
                 case IndirectOperand indirectOperand: {
-                    var pointer = indirectOperand.Variable;
-                    var offset = indirectOperand.Offset;
-                    var register = GetVariableRegister(pointer, 0);
-                    if (register is PointerRegister pointerRegister) {
-                        ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
-                        return;
-                    }
-                    var pointerRegisters = PointerOperation.RegistersToOffset(offset);
-                    if (pointerRegisters.Any()) {
-                        using var reservation = PointerOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
-                        reservation.PointerRegister.LoadFromMemory(this, pointer, 0);
-                        ByteOperation.StoreConstantIndirect(this, reservation.PointerRegister, offset, integerOperand.IntegerValue);
-                        return;
-                    }
+                        var pointer = indirectOperand.Variable;
+                        var offset = indirectOperand.Offset;
+                        var register = GetVariableRegister(pointer, 0);
+                        if (register is PointerRegister pointerRegister) {
+                            ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
+                            return;
+                        }
+                        var pointerRegisters = PointerOperation.RegistersToOffset(offset);
+                        if (pointerRegisters.Any()) {
+                            using var reservation = PointerOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
+                            reservation.PointerRegister.LoadFromMemory(this, pointer, 0);
+                            ByteOperation.StoreConstantIndirect(this, reservation.PointerRegister, offset, integerOperand.IntegerValue);
+                            return;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
         }
 
@@ -109,15 +109,37 @@ public class WordLoadInstruction : LoadInstruction
             return;
         }
 
+        if (SourceOperand is IntegerOperand integerOperand && DestinationOperand is IndirectOperand indirectOperand) {
+            var pointer = indirectOperand.Variable;
+            var offset = indirectOperand.Offset;
+            var register = GetVariableRegister(pointer, 0);
+            if (register is PointerRegister pointerRegister) {
+                WordOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
+                return;
+            }
+
+            var pointerRegisters = PointerOperation.RegistersToOffset(offset);
+            if (pointerRegisters.Any()) {
+                using var reservation = PointerOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
+                reservation.PointerRegister.LoadFromMemory(this, pointer, 0);
+                ByteOperation.StoreConstantIndirect(this, reservation.PointerRegister, offset,
+                    integerOperand.IntegerValue);
+                return;
+            }
+        }
+
         if (DestinationOperand.Register is WordRegister wordRegister) {
             wordRegister.Load(this, SourceOperand);
             return;
         }
-        using var reservation = WordOperation.ReserveAnyRegister(this, SourceOperand);
-        reservation.WordRegister.Load(this, SourceOperand);
-        reservation.WordRegister.Store(this, DestinationOperand);
+        {
+            using var reservation = WordOperation.ReserveAnyRegister(this, SourceOperand);
+            reservation.WordRegister.Load(this, SourceOperand);
+            reservation.WordRegister.Store(this, DestinationOperand);
+        }
     }
 }
+
 public class PointerLoadInstruction : LoadInstruction
 {
     public PointerLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
