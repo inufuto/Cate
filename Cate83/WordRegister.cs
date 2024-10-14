@@ -57,7 +57,9 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
 
     public override void LoadFromMemory(Instruction instruction, string label)
     {
-        instruction.WriteLine("\tld\t" + Name + ",(" + label + ")");
+        Debug.Assert(Low != null && High != null);
+        Low.LoadFromMemory(instruction, label);
+        High.LoadFromMemory(instruction, label + "+1");
         instruction.RemoveRegisterAssignment(this);
         instruction.AddChanged(this);
     }

@@ -27,15 +27,6 @@ internal class WordAddOrSubtractInstruction(
             return;
 
         if (OperatorId == '+' && !Equals(RightOperand.Register, WordRegister.Hl)) {
-            void OperateHl(Cate.WordRegister rightRegister)
-            {
-                WordRegister.Hl.Load(this, LeftOperand);
-                WriteLine("\tadd\thl," + rightRegister);
-                AddChanged(WordRegister.Hl);
-                RemoveRegisterAssignment(WordRegister.Hl);
-                WordRegister.Hl.Store(this, DestinationOperand);
-            }
-
             if (RightOperand.Register is WordRegister rightWordRegister && (Equals(rightWordRegister, WordRegister.De) || Equals(rightWordRegister, WordRegister.Bc))) {
                 OperateHl(rightWordRegister);
                 return;
@@ -56,6 +47,15 @@ internal class WordAddOrSubtractInstruction(
                 }
             }
             return;
+
+            void OperateHl(Cate.WordRegister rightRegister)
+            {
+                WordRegister.Hl.Load(this, LeftOperand);
+                WriteLine("\tadd\thl," + rightRegister);
+                AddChanged(WordRegister.Hl);
+                RemoveRegisterAssignment(WordRegister.Hl);
+                WordRegister.Hl.Store(this, DestinationOperand);
+            }
         }
 
         string lowOperation, highOperation;
