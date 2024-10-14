@@ -110,3 +110,4 @@ runtime/SC62015/c.bat
 /Cate83/bin
 /Cate83/obj
 /Cate83/Properties/PublishProfiles
+*.bat
