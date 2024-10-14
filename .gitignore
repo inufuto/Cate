@@ -111,3 +111,5 @@ runtime/SC62015/c.bat
 /Cate83/obj
 /Cate83/Properties/PublishProfiles
 *.bat
+/Cate61s/.vs/ProjectEvaluation
+/Cate83/.vs/ProjectEvaluation
