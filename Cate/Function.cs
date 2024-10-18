@@ -280,7 +280,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("Score = Score + ")) {
+            if (instruction.ToString().Contains("pActor[1] = pActor[1] + 1")) {
                 var aaa = 111;
             }
 #endif

@@ -41,7 +41,14 @@ internal class CompareInstruction(
             const string operation = "cp";
             if (LeftOperand is VariableOperand variableOperand) {
                 if (VariableRegisterMatches(variableOperand, ByteRegister.A)) {
-                    ByteRegister.A.Operate(this, operation, false, RightOperand);
+                    if (RightOperand is IndirectOperand indirectOperand && indirectOperand.Offset != 0) {
+                        using var reservation = ByteOperation.ReserveAnyRegister(this, ByteOperation.RegistersOtherThan(ByteRegister.A));
+                        reservation.ByteRegister.LoadIndirect(this, indirectOperand.Variable, indirectOperand.Offset);
+                        WriteLine("\tcp\ta," + reservation.ByteRegister.Name);
+                    }
+                    else {
+                        ByteRegister.A.Operate(this, operation, false, RightOperand);
+                    }
                     goto jump;
                 }
             }
