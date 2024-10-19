@@ -1,25 +1,25 @@
 cseg
 cate.CompareAcSigned: public cate.CompareAcSigned
-    push de
-        ld d,a
+    push bc
+        ld b,a
             bit 7,a
             if nz
-                bit 7,e
+                bit 7,c
                 if nz
-                    cp a,e
+                    cp a,c
                 else
                     xor a,a
                     cp a,1
                 endif
             else
-                bit 7,e
+                bit 7,c
                 if z
-                    cp a,e
+                    cp a,c
                 else
                     ld a,1
                     cp a,0
                 endif
             endif
-        ld a,d
-    pop de
+        ld a,b
+    pop bc
 ret

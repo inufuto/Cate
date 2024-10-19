@@ -58,8 +58,12 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
     public override void LoadFromMemory(Instruction instruction, string label)
     {
         Debug.Assert(Low != null && High != null);
-        Low.LoadFromMemory(instruction, label);
-        High.LoadFromMemory(instruction, label + "+1");
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+            ByteRegister.A.LoadFromMemory(instruction, label + "+0");
+            Low.CopyFrom(instruction, ByteRegister.A);
+            ByteRegister.A.LoadFromMemory(instruction, label + "+1");
+            High.CopyFrom(instruction, ByteRegister.A);
+        }
         instruction.RemoveRegisterAssignment(this);
         instruction.AddChanged(this);
     }
@@ -68,7 +72,7 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
     {
         Debug.Assert(Low != null && High != null);
         Low.StoreToMemory(instruction, label);
-        High.StoreToMemory(instruction, label+"+1");
+        High.StoreToMemory(instruction, label + "+1");
     }
 
     public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
