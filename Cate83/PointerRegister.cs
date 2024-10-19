@@ -92,4 +92,22 @@ internal class PointerRegister : WordPointerRegister
     {
         throw new NotImplementedException();
     }
+
+    public override void TemporaryOffset(Instruction instruction, int offset, Action action)
+    {
+        if (Math.Abs(offset) <= 1) {
+            base.TemporaryOffset(instruction, offset, action);
+            return;
+        }
+        var changed = instruction.IsChanged(this);
+        if (!changed) {
+            Save(instruction);
+        }
+        Add(instruction, offset);
+        action();
+        if (!changed) {
+            Restore(instruction);
+            instruction.RemoveChanged(this);
+        }
+    }
 }

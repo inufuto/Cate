@@ -29,11 +29,22 @@ internal class CompareInstruction(
         }
 
         if (Signed) {
-            using (ByteOperation.ReserveRegister(this, ByteRegister.C, RightOperand)) {
-                ByteRegister.C.Load(this, RightOperand);
-                using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
-                    ByteRegister.A.Load(this, LeftOperand);
-                    Compiler.CallExternal(this, "cate.CompareAcSigned");
+            if (IsRegisterReserved(ByteRegister.C)) {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.E, RightOperand)) {
+                    ByteRegister.E.Load(this, RightOperand);
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
+                        ByteRegister.A.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, "cate.CompareAeSigned");
+                    }
+                }
+            }
+            else {
+                using (ByteOperation.ReserveRegister(this, ByteRegister.C, RightOperand)) {
+                    ByteRegister.C.Load(this, RightOperand);
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
+                        ByteRegister.A.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, "cate.CompareAcSigned");
+                    }
                 }
             }
         }

@@ -47,7 +47,7 @@ internal class ByteAddOrSubtractInstruction(
             var byteRegister = reservation.ByteRegister;
             byteRegister.CopyFrom(this, ByteRegister.A);
             ByteRegister.A.Load(this, LeftOperand);
-            WriteLine("\t" + operation + byteRegister);
+            WriteLine("\t" + operation + "\ta," + byteRegister);
             ByteRegister.A.Store(this, DestinationOperand);
             AddChanged(ByteRegister.A);
             return;
@@ -59,7 +59,7 @@ internal class ByteAddOrSubtractInstruction(
             AddChanged(ByteRegister.A);
         }
     }
-    
+
 
     protected override int Threshold()
     {
