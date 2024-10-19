@@ -58,11 +58,21 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
     public override void LoadFromMemory(Instruction instruction, string label)
     {
         Debug.Assert(Low != null && High != null);
-        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-            ByteRegister.A.LoadFromMemory(instruction, label + "+0");
-            Low.CopyFrom(instruction, ByteRegister.A);
-            ByteRegister.A.LoadFromMemory(instruction, label + "+1");
-            High.CopyFrom(instruction, ByteRegister.A);
+        if (Equals(Hl)) {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+                ByteRegister.A.LoadFromMemory(instruction, label + "+0");
+                Low.CopyFrom(instruction, ByteRegister.A);
+                ByteRegister.A.LoadFromMemory(instruction, label + "+1");
+                High.CopyFrom(instruction, ByteRegister.A);
+            }
+        }
+        else {
+            using (WordOperation.ReserveRegister(instruction, Hl)) {
+                Hl.LoadConstant(instruction, label);
+                instruction.WriteLine("\tld\t" + Low.AsmName + ",(hl)");
+                instruction.WriteLine("\tinc\thl");
+                instruction.WriteLine("\tld\t" + High.AsmName + ",(hl)");
+            }
         }
         instruction.RemoveRegisterAssignment(this);
         instruction.AddChanged(this);
