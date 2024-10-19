@@ -1,4 +1,6 @@
-﻿namespace Inu.Cate.Sm83;
+﻿using Microsoft.Win32;
+
+namespace Inu.Cate.Sm83;
 
 internal class CompareInstruction(
     Function function,
@@ -22,10 +24,62 @@ internal class CompareInstruction(
     protected override void CompareByte()
     {
         var operandZero = false;
-        if (RightOperand is IntegerOperand { IntegerValue: 0 } && OperatorId is Keyword.Equal or Keyword.NotEqual) {
-            CompareByteZero();
-            operandZero = true;
-            goto jump;
+        if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
+            if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
+                CompareByteZero();
+                operandZero = true;
+                goto jump;
+            }
+            if (Signed) {
+                switch (OperatorId) {
+                    case '<':
+                        ViaRegister(register =>
+                        {
+                            WriteLine("\tbit\t7," + register.AsmName);
+                            WriteJumpLine("\tjr\tnz," + Anchor);
+                        });
+                        return;
+                    case Keyword.GreaterEqual:
+                        ViaRegister(register =>
+                        {
+                            WriteLine("\tbit\t7," + register.AsmName);
+                            WriteJumpLine("\tjr\tz," + Anchor);
+                        });
+                        return;
+                    case '>':
+                        ViaA(() =>
+                        {
+                            WriteLine("\tor\ta,a");
+                            WriteLine("\tjr\tz," + Anchor + "_F" + subLabelIndex);
+                            WriteLine("\tbit\t7,a");
+                            WriteJumpLine("\tjr\tz," + Anchor);
+                            WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
+                            ++subLabelIndex;
+                        });
+                        return;
+                    case Keyword.LessEqual:
+                        ViaA(() =>
+                        {
+                            WriteLine("\tor\ta,a");
+                            WriteLine("\tjr\tz," + Anchor);
+                            WriteLine("\tbit\t7,a");
+                            WriteJumpLine("\tjr\tnz," + Anchor);
+                        });
+                        return;
+                }
+                void ViaRegister(Action<Cate.ByteRegister> action)
+                {
+                    using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
+                    reservation.ByteRegister.Load(this, leftOperand);
+                    action(reservation.ByteRegister);
+                }
+                void ViaA(Action action)
+                {
+                    using var reservation = ByteOperation.ReserveRegister(this, ByteRegister.A);
+                    ByteRegister.A.Load(this, leftOperand);
+                    action();
+                }
+            }
         }
 
         if (Signed) {
