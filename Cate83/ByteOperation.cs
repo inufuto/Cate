@@ -105,7 +105,7 @@ internal class ByteOperation : Cate.ByteOperation
     {
         ByteOperation.ReserveRegister(instruction, ByteRegister.A);
         instruction.RemoveRegisterAssignment(ByteRegister.A);
-        instruction.WriteLine("\txor\ta");
+        instruction.WriteLine("\txor\ta,a");
         instruction.WriteLine("\tld\t(" + label + "),a");
         instruction.AddChanged(ByteRegister.A);
     }

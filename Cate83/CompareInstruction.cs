@@ -46,26 +46,24 @@ internal class CompareInstruction(
                             WriteJumpLine("\tjr\tz," + Anchor);
                         });
                         return;
-                    case '>':
-                        ViaA(() =>
-                        {
-                            WriteLine("\tor\ta,a");
-                            WriteLine("\tjr\tz," + Anchor + "_F" + subLabelIndex);
-                            WriteLine("\tbit\t7,a");
-                            WriteJumpLine("\tjr\tz," + Anchor);
-                            WriteJumpLine(Anchor + "_F" + subLabelIndex + ":");
-                            ++subLabelIndex;
-                        });
-                        return;
-                    case Keyword.LessEqual:
-                        ViaA(() =>
-                        {
-                            WriteLine("\tor\ta,a");
-                            WriteLine("\tjr\tz," + Anchor);
-                            WriteLine("\tbit\t7,a");
-                            WriteJumpLine("\tjr\tnz," + Anchor);
-                        });
-                        return;
+                    //case '>':
+                    //    ViaA(() =>
+                    //    {
+                    //        WriteLine("\tdec\ta");
+                    //        WriteLine("\tbit\t7,a");
+                    //        WriteJumpLine("\tjr\tz," + Anchor);
+                    //    });
+                    //    AddChanged(ByteRegister.A);
+                    //    return;
+                    //case Keyword.LessEqual:
+                    //    ViaA(() =>
+                    //    {
+                    //        WriteLine("\tdec\ta");
+                    //        WriteLine("\tbit\t7,a");
+                    //        WriteJumpLine("\tjr\tnz," + Anchor);
+                    //    });
+                    //    AddChanged(ByteRegister.A);
+                    //    return;
                 }
                 void ViaRegister(Action<Cate.ByteRegister> action)
                 {
