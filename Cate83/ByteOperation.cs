@@ -30,7 +30,7 @@ internal class ByteOperation : Cate.ByteOperation
             ByteRegister.A.LoadFromMemory(instruction, address);
             OperateA();
         }
-        end:
+    end:
         ;
         return;
 
@@ -41,28 +41,26 @@ internal class ByteOperation : Cate.ByteOperation
         }
     }
 
-    protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister,
-        int offset, int count)
+    protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset, int count)
     {
-        if (offset == 0) {
-            var operand = "(" + pointerRegister + ")";
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+        if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (offset == 0) {
+                var operand = "(" + pointerRegister + ")";
                 for (var i = 0; i < count; ++i) {
                     instruction.WriteLine("\t" + operation + operand);
                 }
                 return;
             }
-            using (ReserveRegister(instruction, ByteRegister.A)) {
-                ByteRegister.A.LoadFromMemory(instruction, operand);
-                ByteRegister.A.Operate(instruction, operation, change, count);
-                ByteRegister.A.StoreToMemory(instruction, operand);
-            }
+            pointerRegister.TemporaryOffset(instruction, offset, () =>
+            {
+                OperateIndirect(instruction, operation, change, pointerRegister, 0, count);
+            });
             return;
         }
-        pointerRegister.TemporaryOffset(instruction, offset, () =>
-        {
-            OperateIndirect(instruction, operation, change, pointerRegister, 0, count);
-        });
+        using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+            PointerRegister.Hl.CopyFrom(instruction, pointerRegister);
+            OperateIndirect(instruction, operation, change, PointerRegister.Hl, offset, count);
+        }
     }
 
     protected override void OperateIndirect(Instruction instruction, string operation, bool change, Variable pointer, int offset, int count)
