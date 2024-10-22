@@ -46,24 +46,24 @@ internal class CompareInstruction(
                             WriteJumpLine("\tjr\tz," + Anchor);
                         });
                         return;
-                    //case '>':
-                    //    ViaA(() =>
-                    //    {
-                    //        WriteLine("\tdec\ta");
-                    //        WriteLine("\tbit\t7,a");
-                    //        WriteJumpLine("\tjr\tz," + Anchor);
-                    //    });
-                    //    AddChanged(ByteRegister.A);
-                    //    return;
-                    //case Keyword.LessEqual:
-                    //    ViaA(() =>
-                    //    {
-                    //        WriteLine("\tdec\ta");
-                    //        WriteLine("\tbit\t7,a");
-                    //        WriteJumpLine("\tjr\tnz," + Anchor);
-                    //    });
-                    //    AddChanged(ByteRegister.A);
-                    //    return;
+                        //case '>':
+                        //    ViaA(() =>
+                        //    {
+                        //        WriteLine("\tdec\ta");
+                        //        WriteLine("\tbit\t7,a");
+                        //        WriteJumpLine("\tjr\tz," + Anchor);
+                        //    });
+                        //    AddChanged(ByteRegister.A);
+                        //    return;
+                        //case Keyword.LessEqual:
+                        //    ViaA(() =>
+                        //    {
+                        //        WriteLine("\tdec\ta");
+                        //        WriteLine("\tbit\t7,a");
+                        //        WriteJumpLine("\tjr\tnz," + Anchor);
+                        //    });
+                        //    AddChanged(ByteRegister.A);
+                        //    return;
                 }
                 void ViaRegister(Action<Cate.ByteRegister> action)
                 {
@@ -115,10 +115,22 @@ internal class CompareInstruction(
                     goto jump;
                 }
             }
-
-            using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
-                ByteRegister.A.Load(this, LeftOperand);
-                ByteRegister.A.Operate(this, operation, false, RightOperand);
+            {
+                if (RightOperand is IndirectOperand indirectOperand && indirectOperand.Offset != 0) {
+                    using var reservation =
+                        ByteOperation.ReserveAnyRegister(this, ByteOperation.RegistersOtherThan(ByteRegister.A));
+                    reservation.ByteRegister.LoadIndirect(this, indirectOperand.Variable, indirectOperand.Offset);
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                        ByteRegister.A.Load(this, LeftOperand);
+                        WriteLine("\tcp\ta," + reservation.ByteRegister.Name);
+                    }
+                }
+                else {
+                    using (ByteOperation.ReserveRegister(this, ByteRegister.A, LeftOperand)) {
+                        ByteRegister.A.Load(this, LeftOperand);
+                        ByteRegister.A.Operate(this, operation, false, RightOperand);
+                    }
+                }
             }
         }
     jump:

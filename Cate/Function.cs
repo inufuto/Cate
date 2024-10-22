@@ -280,7 +280,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if xOffset <= 0 goto Fire@Anchor72")) {
+            if (instruction.ToString().Contains("*pEnemy = AddX_(*pEnemy,*pDirection)")) {
                 var aaa = 111;
             }
 #endif

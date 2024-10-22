@@ -85,6 +85,10 @@ public abstract class Register : IComparable<Register>
 
     public virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
     {
+        if (pointer.Register is PointerRegister pointerRegister) {
+            LoadIndirect(instruction, pointerRegister, offset);
+            return;
+        }
         var allCandidates = PointerOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
         var unReserved = allCandidates.Where(r => !instruction.IsRegisterReserved(r)).ToList();
         var candidates = unReserved.Where(r => r.IsOffsetInRange(offset)).ToList();
