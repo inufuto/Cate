@@ -62,4 +62,11 @@ public abstract class WordOperation : RegisterOperation<WordRegister>
     }
 
     public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
+
+    public virtual void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset, int value)
+    {
+        using var reservation = ReserveAnyRegister(instruction, Registers);
+        reservation.WordRegister.LoadConstant(instruction, value);
+        reservation.WordRegister.StoreIndirect(instruction, pointerRegister, offset);
+    }
 }

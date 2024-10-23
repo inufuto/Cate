@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -66,7 +67,7 @@ public abstract class SubroutineInstruction : Instruction
             if (!Equals(RegisterReservation.Register, Parameter.Register)) {
                 Debug.Assert(Parameter.Register != null);
 #if DEBUG
-                    instruction.WriteLine("\t;[Close] " + Parameter.Register + " <- " + RegisterReservation.Register);
+                instruction.WriteLine("\t;[Close] " + Parameter.Register + " <- " + RegisterReservation.Register);
 #endif
                 switch (Parameter.Register) {
                     case ByteRegister byteRegister:
@@ -365,7 +366,7 @@ public abstract class SubroutineInstruction : Instruction
     private void Load(Register register, Operand operand)
     {
 #if DEBUG
-            WriteLine("\t; " + register + " <- {" + operand + "}");
+        WriteLine("\t; " + register + " <- {" + operand + "}");
 #endif
         switch (register) {
             case ByteRegister byteRegister:
@@ -474,14 +475,6 @@ public abstract class SubroutineInstruction : Instruction
             var parameter = assignment.Parameter;
             var last = index >= count - 1;
 
-            void StoreByte(ByteRegister register)
-            {
-                register.StoreIndirect(this, pointerRegister, 0);
-                if (!last) {
-                    pointerRegister.Add(this, 1);
-                }
-            }
-
             var operand = assignment.Operand;
             if (index == 0) {
                 pointerRegister.LoadConstant(this, TargetFunction.ParameterLabel(parameter));
@@ -490,8 +483,7 @@ public abstract class SubroutineInstruction : Instruction
             if (parameter.Type.ByteCount == 1) {
                 switch (operand) {
                     case IntegerOperand integerOperand:
-                        ByteOperation.StoreConstantIndirect(this, pointerRegister, 0,
-                            integerOperand.IntegerValue);
+                        ByteOperation.StoreConstantIndirect(this, pointerRegister, 0, integerOperand.IntegerValue);
                         if (!last) {
                             pointerRegister.Add(this, 1);
                         }
@@ -518,6 +510,17 @@ public abstract class SubroutineInstruction : Instruction
                 }
             }
             else {
+                if (operand is IntegerOperand integerOperand) {
+                    if (operand.Type is PointerType) {
+                        PointerOperation.StoreConstantIndirect(this, pointerRegister, 0, integerOperand.IntegerValue);
+                    }
+                    else {
+                        WordOperation.StoreConstantIndirect(this, pointerRegister, 0, integerOperand.IntegerValue);
+                    }
+                    if (!last) {
+                        pointerRegister.Add(this, operand.Type.ByteCount);
+                    }
+                }
                 if (operand.Register is WordRegister wordRegister && wordRegister.IsPair()) {
                     wordRegister.Load(this, operand);
                     StoreViaPointer(pointerRegister, wordRegister, last);
@@ -538,6 +541,15 @@ public abstract class SubroutineInstruction : Instruction
             //CancelOperandRegister(operand);
             assignment.SetDone(this, null);
             ++index;
+            continue;
+
+            void StoreByte(ByteRegister register)
+            {
+                register.StoreIndirect(this, pointerRegister, 0);
+                if (!last) {
+                    pointerRegister.Add(this, 1);
+                }
+            }
         }
     }
 

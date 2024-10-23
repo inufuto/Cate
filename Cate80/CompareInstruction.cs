@@ -21,7 +21,7 @@ internal class CompareInstruction : Cate.CompareInstruction
     protected override void CompareByte()
     {
         var operandZero = false;
-        if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
+        if (RightOperand is IntegerOperand { IntegerValue: 0 } && OperatorId is Keyword.Equal or Keyword.NotEqual) {
             CompareByteZero();
             operandZero = true;
             goto jump;

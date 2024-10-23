@@ -280,7 +280,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("PrintC_(Vram_+2,48,0)")) {
+            if (instruction.ToString().Contains("*pEnemy = AddX_(*pEnemy,*pDirection)")) {
                 var aaa = 111;
             }
 #endif

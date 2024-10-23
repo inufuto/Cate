@@ -46,8 +46,7 @@ internal class ByteOperation : Cate.ByteOperation
         ;
     }
 
-    protected override void OperateIndirect(Instruction instruction, string operation, bool change,
-        Cate.PointerRegister pointerRegister, int offset, int count)
+    protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset, int count)
     {
         if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
             for (var i = 0; i < count; ++i) {
@@ -110,7 +109,7 @@ internal class ByteOperation : Cate.ByteOperation
             });
             return;
         }
-        List<Cate.PointerRegister> candidates = new List<Cate.PointerRegister>(PointerRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList());
+        var candidates = new List<Cate.PointerRegister>(PointerRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList());
         using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
         reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
         StoreConstantIndirect(instruction, reservation.PointerRegister, offset, value);

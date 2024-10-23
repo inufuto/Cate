@@ -57,4 +57,11 @@ public abstract class PointerOperation : RegisterOperation<PointerRegister>
             return ReserveRegister(instruction, pointerRegister, sourceOperand);
         }
     }
+
+    public virtual void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset, int value)
+    {
+        using var reservation = ReserveAnyRegister(instruction, Registers);
+        reservation.PointerRegister.LoadConstant(instruction, value);
+        reservation.PointerRegister.StoreIndirect(instruction, pointerRegister, offset);
+    }
 }
