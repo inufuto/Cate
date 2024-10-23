@@ -74,7 +74,7 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
             instruction.WriteLine("\tpush\taf");
             return;
         }
-        throw new NotImplementedException();
+        instruction.WriteLine("\tpush\t" + PairRegister);
     }
 
     public override void Restore(Instruction instruction)
@@ -83,7 +83,7 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
             instruction.WriteLine("\tpop\taf");
             return;
         }
-        throw new NotImplementedException();
+        instruction.WriteLine("\tpop\t" + PairRegister);
     }
 
     public override void LoadConstant(Instruction instruction, string value)
