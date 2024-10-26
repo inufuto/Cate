@@ -71,12 +71,6 @@ internal class CompareInstruction(
                     reservation.ByteRegister.Load(this, LeftOperand);
                     action(reservation.ByteRegister);
                 }
-                void ViaA(Action action)
-                {
-                    using var reservation = ByteOperation.ReserveRegister(this, ByteRegister.A);
-                    ByteRegister.A.Load(this, LeftOperand);
-                    action();
-                }
             }
         }
 
