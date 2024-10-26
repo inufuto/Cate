@@ -123,26 +123,6 @@ internal class WordRegister : Cate.WordRegister
         instruction.RemoveRegisterAssignment(this);
     }
 
-    //public static void UsingAny(Instruction instruction, List<Cate.WordRegister> candidates,
-    //    Action<Cate.WordRegister> action)
-    //{
-    //    var temporaryRegister = TemporaryRegister(instruction, candidates);
-    //    instruction.ReserveRegister(temporaryRegister);
-    //    action(temporaryRegister);
-    //    instruction.CancelRegister(temporaryRegister);
-    //}
-
-    //public static void UsingAny(Instruction instruction, List<Cate.WordRegister> candidates, Operand operand, Action<Cate.WordRegister> action)
-    //{
-    //    if (operand.Register is WordRegister register) {
-    //        if (candidates.Contains(register)) {
-    //            action(register);
-    //            return;
-    //        }
-    //    }
-    //    UsingAny(instruction, candidates, action);
-    //}
-
 
     public static Cate.WordRegister TemporaryRegister(Instruction instruction, IEnumerable<Cate.WordRegister> registers)
     {
@@ -150,22 +130,6 @@ internal class WordRegister : Cate.WordRegister
         Debug.Assert(register != null);
         return register;
     }
-
-    //public override bool IsOffsetInRange(int offset)
-    //{
-    //    if (offset == 0) return true;
-    //    if (IsIndex())
-    //        return offset >= -128 && offset <= 127;
-    //    throw new NotImplementedException();
-    //}
-
-    //public override bool IsPointer(int offset)
-    //{
-    //    if (offset == 0) return true;
-    //    if (IsIndex())
-    //        return offset >= -128 && offset <= 127;
-    //    return false;
-    //}
 
     public override void LoadConstant(Instruction instruction, string value)
     {
@@ -176,7 +140,7 @@ internal class WordRegister : Cate.WordRegister
 
     public override void LoadFromMemory(Instruction instruction, string label)
     {
-        instruction.WriteLine("\tld\t" + Name + ",(" + label+")");
+        instruction.WriteLine("\tld\t" + Name + ",(" + label + ")");
         instruction.RemoveRegisterAssignment(this);
         instruction.AddChanged(this);
     }
@@ -186,59 +150,6 @@ internal class WordRegister : Cate.WordRegister
         //instruction.RemoveVariableRegisterId(Id);
         instruction.WriteLine("\tld\t(" + label + ")," + Name);
     }
-
-
-    //public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
-    //{
-    //    instruction.WriteLine("\tld\t" + this + ",(" + variable.MemoryAddress(offset) + ")");
-    //    instruction.SetVariableRegister(variable, offset, this);
-    //    instruction.AddChanged(this);
-    //}
-
-    //public override void StoreToMemory(Instruction instruction, Variable variable, int offset)
-    //{
-    //    var destinationAddress = variable.MemoryAddress(offset);
-    //    instruction.WriteLine("\tld\t(" + destinationAddress + ")," + this);
-    //    instruction.SetVariableRegister(variable, offset, this);
-    //}
-
-
-
-    //public override void Store(Instruction instruction, AssignableOperand destinationOperand)
-    //{
-    //    switch (destinationOperand) {
-    //        case VariableOperand destinationVariableOperand: {
-    //                var destinationVariable = destinationVariableOperand.Variable;
-    //                var destinationOffset = destinationVariableOperand.Offset;
-    //                if (destinationVariable.Register is WordRegister destinationRegister) {
-    //                    Debug.Assert(destinationOffset == 0);
-    //                    if (!Equals(destinationRegister, this)) {
-    //                        destinationRegister.CopyFrom(instruction, this);
-    //                    }
-    //                    instruction.SetVariableRegister(destinationVariable, destinationOffset, destinationRegister);
-    //                    return;
-    //                }
-    //                StoreToMemory(instruction, destinationVariable, destinationOffset);
-    //                return;
-    //            }
-    //        case IndirectOperand destinationIndirectOperand: {
-    //                var destinationPointer = destinationIndirectOperand.Variable;
-    //                var destinationOffset = destinationIndirectOperand.Offset;
-    //                if (destinationPointer.Register is WordRegister destinationPointerRegister) {
-    //                    StoreIndirect(instruction,
-    //                         destinationPointerRegister, destinationOffset);
-    //                    return;
-    //                }
-    //                using var reservation = WordOperation.ReserveAnyRegister(instruction, Pointers(destinationOffset));
-    //                StoreIndirect(instruction, reservation.WordRegister, destinationOffset);
-    //                return;
-    //            }
-    //    }
-    //    throw new NotImplementedException();
-    //}
-
-
-
 
 
     public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)

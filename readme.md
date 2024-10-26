@@ -18,3 +18,4 @@ This repository contains following Visual Studio Solutions:
 |Cate86.sln|for 8086|
 |Cate62.sln|for SC62015|
 |Cate61h.sln|for HD61700|
+|Cate83.sln|for SM83|

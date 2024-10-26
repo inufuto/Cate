@@ -106,9 +106,10 @@ runtime/SC62015/c.bat
 /Cate61s/obj
 /runtime/SC61860/_objects.txt
 /runtime/SC61860/_sources.txt
-/Cate61s/.vs/ProjectEvaluation
-/Cate83/.vs
+/Cate83/.vs/Cate83
 /Cate83/bin
 /Cate83/obj
-/runtime/SM83/m.bat
 /Cate83/Properties/PublishProfiles
+*.bat
+/Cate61s/.vs/ProjectEvaluation
+/Cate83/.vs/ProjectEvaluation
