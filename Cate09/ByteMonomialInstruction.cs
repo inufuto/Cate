@@ -16,17 +16,6 @@ namespace Inu.Cate.Mc6809
                 _ => throw new NotImplementedException()
             };
 
-            if (DestinationOperand.SameStorage(SourceOperand)) {
-                ByteOperation.Operate(this, operation, true, DestinationOperand);
-                return;
-            }
-
-            void ViaRegister(Cate.ByteRegister r)
-            {
-                r.Load(this, SourceOperand);
-                r.Operate(this, operation, true, 1);
-            }
-
             if (DestinationOperand.Register is ByteRegister byteRegister) {
                 ViaRegister(byteRegister);
                 return;
@@ -36,6 +25,13 @@ namespace Inu.Cate.Mc6809
             var register = reservation.ByteRegister;
             ViaRegister(register);
             register.Store(this, DestinationOperand);
+            return;
+
+            void ViaRegister(Cate.ByteRegister r)
+            {
+                r.Load(this, SourceOperand);
+                r.Operate(this, operation, true, 1);
+            }
         }
     }
 }

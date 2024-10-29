@@ -1,19 +1,19 @@
-﻿using System;
+﻿namespace Inu.Cate.Sm85;
 
-namespace Inu.Cate.Mc6809;
-
-internal class ByteAddOrSubtractInstruction : AddOrSubtractInstruction
+internal class ByteAddOrSubtractInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : AddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
-    public ByteAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
-    { }
-
     public override void BuildAssembly()
     {
         if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
             ExchangeOperands();
         }
-        if (IncrementOrDecrement())
-            return;
+        if (IncrementOrDecrement()) return;
 
         var operation = OperatorId switch
         {

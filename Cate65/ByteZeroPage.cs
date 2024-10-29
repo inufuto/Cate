@@ -31,7 +31,7 @@ internal class ByteZeroPage : Cate.ByteRegister
     private static string IdToName(int id)
     {
         var offset = IdToOffset(id);
-        return "<" + Compiler.ZeroPageLabel + "+" + offset.ToString();
+        return "<" + Compiler.ZeroPageLabel + "+" + offset;
     }
 
     private static int IdToOffset(int id)

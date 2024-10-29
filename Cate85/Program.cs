@@ -1,6 +1,7 @@
-﻿using Inu.Language;
+﻿using Inu.Cate.Sm85;
+using Inu.Language;
 
-namespace Inu.Cate.Tms99;
+namespace Cate85;
 
 internal class Program
 {

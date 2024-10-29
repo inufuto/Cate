@@ -195,6 +195,20 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
 
     public void OperateByteBinomial(BinomialInstruction instruction, string operation, bool change)
     {
+        if (instruction.DestinationOperand.Register is ByteRegister byteRegister && Accumulators.Contains(byteRegister) && !Equals(instruction.RightOperand.Register, byteRegister)) {
+            ViaRegister(byteRegister);
+            return;
+        }
+
+        var candidates = Accumulators.Where(r => !r.Conflicts(instruction.RightOperand.Register)).ToList();
+        if (candidates.Count == 0) {
+            candidates = Accumulators;
+        }
+        using var reservation = instruction.ByteOperation.ReserveAnyRegister(instruction, candidates, instruction.LeftOperand);
+        ViaRegister(reservation.ByteRegister);
+        reservation.ByteRegister.Store(instruction, instruction.DestinationOperand);
+        return;
+
         void ViaRegister(ByteRegister r)
         {
             if (instruction.RightOperand.Register is ByteRegister rightRegister && Equals(rightRegister, r)) {
@@ -210,19 +224,6 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
             instruction.AddChanged(r);
             instruction.RemoveRegisterAssignment(r);
         }
-
-        if (instruction.DestinationOperand.Register is ByteRegister byteRegister && Accumulators.Contains(byteRegister) && !Equals(instruction.RightOperand.Register, byteRegister)) {
-            ViaRegister(byteRegister);
-            return;
-        }
-
-        var candidates = Accumulators.Where(r => !r.Conflicts(instruction.RightOperand.Register)).ToList();
-        if (candidates.Count == 0) {
-            candidates = Accumulators;
-        }
-        using var reservation = instruction.ByteOperation.ReserveAnyRegister(instruction, candidates, instruction.LeftOperand);
-        ViaRegister(reservation.ByteRegister);
-        reservation.ByteRegister.Store(instruction, instruction.DestinationOperand);
     }
 
     public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);
