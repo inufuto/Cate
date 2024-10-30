@@ -280,7 +280,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("__16 = __17 + DecideDirection_.27.directions_")) {
+            if (instruction.ToString().Contains("if --__3 != 0 goto DrawUfos__Anchor68")) {
                 var aaa = 111;
             }
 #endif

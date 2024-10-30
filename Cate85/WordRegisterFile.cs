@@ -27,7 +27,7 @@ internal class WordRegisterFile(int id) : AbstractWordRegister(id, IdToName(id))
     private static int IdToOffset(int id)
     {
         Debug.Assert(IsIdInRange(id));
-        return (id - MinId) * 2;
+        return ByteRegisterFile.Count + (id - MinId) * 2;
     }
 
     private static bool IsIdInRange(int id)
@@ -61,15 +61,5 @@ internal class WordRegisterFile(int id) : AbstractWordRegister(id, IdToName(id))
         using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
         reservation.WordRegister.CopyFrom(instruction, this);
         reservation.WordRegister.StoreIndirect(instruction, pointerRegister, offset);
-    }
-
-    public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-    {
-        using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
-        reservation.WordRegister.CopyFrom(instruction, this);
-        reservation.WordRegister.Operate(instruction, operation, change, operand);
-        if (change) {
-            CopyFrom(instruction, this);
-        }
     }
 }

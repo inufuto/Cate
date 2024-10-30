@@ -46,6 +46,23 @@ internal abstract class AbstractByteRegister(int id, string name) : Cate.ByteReg
         instruction.RemoveRegisterAssignment(this);
     }
 
+    public override void Operate(Instruction instruction, string operation, bool change, int count)
+    {
+        for (var i = 0; i < count; ++i) {
+            instruction.WriteLine("\t" + operation + "\t" + this);
+        }
+        if (change) {
+            instruction.RemoveRegisterAssignment(this);
+            instruction.AddChanged(this);
+        }
+        instruction.ResultFlags |= Instruction.Flag.Z;
+    }
+
+    public override void Operate(Instruction instruction, string operation, bool change, string operand)
+    {
+        throw new NotImplementedException();
+    }
+
     public override void LoadConstant(Instruction instruction, string value)
     {
         instruction.WriteLine("\tmov\t" + this + "," + value);

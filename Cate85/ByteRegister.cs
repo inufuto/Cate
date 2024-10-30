@@ -82,18 +82,6 @@ internal class ByteRegister(int address) : AbstractByteRegister(MinId + address,
 
     public override Cate.WordRegister? PairRegister => WordRegister.FromAddress(Address & 0xfe);
 
-    public override void Operate(Instruction instruction, string operation, bool change, int count)
-    {
-        for (var i = 0; i < count; ++i) {
-            instruction.WriteLine("\t" + operation + "\t" + this);
-        }
-        if (change) {
-            instruction.RemoveRegisterAssignment(this);
-            instruction.AddChanged(this);
-        }
-        instruction.ResultFlags |= Instruction.Flag.Z;
-    }
-
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
     {
         switch (operand) {
@@ -107,7 +95,6 @@ internal class ByteRegister(int address) : AbstractByteRegister(MinId + address,
                 else {
                     instruction.WriteLine("\t" + operation + "\t" + this + ",@" + variableOperand.MemoryAddress());
                 }
-
                 break;
             case IndirectOperand indirectOperand: {
                     var variableRegister = indirectOperand.Variable.Register;
@@ -145,10 +132,5 @@ internal class ByteRegister(int address) : AbstractByteRegister(MinId + address,
             instruction.AddChanged(this);
         }
         instruction.ResultFlags |= Instruction.Flag.Z;
-    }
-
-    public override void Operate(Instruction instruction, string operation, bool change, string operand)
-    {
-        throw new NotImplementedException();
     }
 }

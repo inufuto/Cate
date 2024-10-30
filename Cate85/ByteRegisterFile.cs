@@ -6,7 +6,7 @@ internal class ByteRegisterFile(int id) : AbstractByteRegister(id, IdToName(id))
 {
     private static List<Cate.ByteRegister>? registers;
     public const int MinId = 1000;
-    public const int Count = 16 - 2;
+    public const int Count = 16;
 
     public static IEnumerable<Cate.ByteRegister> Registers
     {
@@ -67,33 +67,26 @@ internal class ByteRegisterFile(int id) : AbstractByteRegister(id, IdToName(id))
         reservation.ByteRegister.StoreIndirect(instruction, pointerRegister, offset);
     }
 
-    public override void Operate(Instruction instruction, string operation, bool change, int count)
-    {
-        using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
-        reservation.ByteRegister.CopyFrom(instruction, this);
-        reservation.ByteRegister.Operate(instruction, operation, change, count);
-        if (change) {
-            CopyFrom(instruction, reservation.ByteRegister);
-        }
-    }
-
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
     {
-        using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
-        reservation.ByteRegister.CopyFrom(instruction, this);
-        reservation.ByteRegister.Operate(instruction, operation, change, operand);
-        if (change) {
-            CopyFrom(instruction, reservation.ByteRegister);
+        if (operand is IntegerOperand integerOperand) {
+            instruction.WriteLine("\t" + operation + "\t" + this + "," + integerOperand.IntegerValue);
         }
-    }
-
-    public override void Operate(Instruction instruction, string operation, bool change, string operand)
-    {
-        using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
-        reservation.ByteRegister.CopyFrom(instruction, this);
-        reservation.ByteRegister.Operate(instruction, operation, change, operand);
-        if (change) {
-            CopyFrom(instruction, reservation.ByteRegister);
+        else if (operand is VariableOperand { Variable.Register: not null, Offset: 0 } variableOperand) {
+            instruction.WriteLine("\t" + operation + "\t" + this + "," + variableOperand.Variable.Register);
         }
+        else if (operand is IndirectOperand { Register: not null, Offset: 0 } indirectOperand) {
+            instruction.WriteLine("\t" + operation + "\t" + this + ",@" + indirectOperand.Register);
+        }
+        else {
+            using var reservation = ByteOperation.ReserveAnyRegister(instruction, operand);
+            reservation.ByteRegister.Load(instruction, operand);
+            instruction.WriteLine("\t" + operation + "\t" + this + "," + reservation.ByteRegister);
+        }
+        if (change) {
+            instruction.RemoveRegisterAssignment(this);
+            instruction.AddChanged(this);
+        }
+        instruction.ResultFlags |= Instruction.Flag.Z;
     }
 }

@@ -39,6 +39,7 @@ internal class PointerAddOrSubtractInstruction(
             Debug.Assert(pointerRegister.WordRegister != null);
             pointerRegister.Load(this, LeftOperand);
             pointerRegister.WordRegister.Operate(this, operation, true, RightOperand);
+            pointerRegister.Store(this, DestinationOperand);
             RemoveRegisterAssignment(pointerRegister);
             AddChanged(pointerRegister);
         }

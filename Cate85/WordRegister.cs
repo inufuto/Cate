@@ -88,20 +88,4 @@ internal class WordRegister(int address) : AbstractWordRegister(MinId + address,
             return [Low, High];
         }
     }
-
-    public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-    {
-        if (operand is IntegerOperand integerOperand) {
-            instruction.WriteLine("\t" + operation + "\t" + this + "," + integerOperand.IntegerValue);
-        }
-        else {
-            using var reservation = WordOperation.ReserveAnyRegister(instruction, operand);
-            reservation.WordRegister.Load(instruction, operand);
-            instruction.WriteLine("\t" + operation + "\t" + this + "," + reservation.WordRegister);
-        }
-        if (change) {
-            instruction.RemoveRegisterAssignment(this);
-            instruction.AddChanged(this);
-        }
-    }
 }
