@@ -1,4 +1,6 @@
-﻿namespace Inu.Cate.Sm85;
+﻿using System.Diagnostics;
+
+namespace Inu.Cate.Sm85;
 
 internal class CompareInstruction(
     Function function,
@@ -33,24 +35,33 @@ internal class CompareInstruction(
         var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
         var wordRegister = reservation.WordRegister;
         wordRegister.Load(this, LeftOperand);
-        if (RightOperand is IntegerOperand integerOperand) {
-            if (integerOperand.IntegerValue == 0) {
-                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
-                    if (!CanOmitOperation(Flag.Z)) {
-                        WriteLine("\torw\t" + wordRegister + "," + wordRegister);
-                    }
-                    Jump();
-                    return;
+        if (CompareWord(wordRegister)) return;
+        Jump();
+    }
+
+    private bool CompareWord(Cate.WordRegister leftRegister)
+    {
+        if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
+            if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
+                if (!CanOmitOperation(Flag.Z)) {
+                    WriteLine("\torw\t" + leftRegister + "," + leftRegister);
                 }
+                Jump();
+                return true;
             }
         }
-        wordRegister.Operate(this, "cmpw", false, RightOperand);
-        Jump();
+        leftRegister.Operate(this, "cmpw", false, RightOperand);
+        return false;
     }
 
     protected override void ComparePointer()
     {
-        throw new NotImplementedException();
+        var reservation = PointerOperation.ReserveAnyRegister(this, LeftOperand);
+        var pointerRegister = reservation.PointerRegister;
+        pointerRegister.Load(this, LeftOperand);
+        Debug.Assert(pointerRegister.WordRegister != null);
+        if (CompareWord(pointerRegister.WordRegister)) return;
+        Jump();
     }
 
     private void Jump()

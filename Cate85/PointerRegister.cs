@@ -37,7 +37,11 @@ internal class PointerRegister(AbstractWordRegister wordRegister) : WordPointerR
         return new PointerRegister((AbstractWordRegister)Sm85.WordRegister.FromAddress(address));
     }
 
-    public override bool IsOffsetInRange(int offset) => true;
+    public override bool IsOffsetInRange(int offset)
+    {
+        if (offset == 0) return true;
+        return WordRegister is not WordRegister { Address: 0 };
+    }
 
     public override void Add(Instruction instruction, int offset)
     {
