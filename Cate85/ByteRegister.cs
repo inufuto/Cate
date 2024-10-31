@@ -102,8 +102,8 @@ internal class ByteRegister(int address) : AbstractByteRegister(MinId + address,
                         ViaRegister(pointerRegister, indirectOperand.Offset);
                     }
                     else {
-                        using var reservation = PointerOperation.ReserveAnyRegister(instruction, operand);
-                        reservation.PointerRegister.Load(instruction, operand);
+                        using var reservation = PointerOperation.ReserveAnyRegister(instruction,PointerRegister.Registers.Where(r=>!Equals(r, PointerRegister.FromAddress(0))).ToList(), operand);
+                        reservation.PointerRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
                         ViaRegister(reservation.PointerRegister, indirectOperand.Offset);
                     }
                     break;
