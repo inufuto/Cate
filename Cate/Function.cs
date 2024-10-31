@@ -280,7 +280,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if i >= pStage[12] goto InitItems")) {
+            if (instruction.ToString().Contains("pVVram = 57344")) {
                 var aaa = 111;
             }
 #endif

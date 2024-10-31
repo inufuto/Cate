@@ -115,7 +115,8 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
     public virtual void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset,
         int value)
     {
-        using var reservation = ReserveAnyRegister(instruction, Registers);
+        var candidates = Registers.Where(r=>!r.Conflicts(pointerRegister)).ToList();
+        using var reservation = ReserveAnyRegister(instruction, candidates);
         reservation.ByteRegister.LoadConstant(instruction, value);
         reservation.ByteRegister.StoreIndirect(instruction, pointerRegister, offset);
     }
