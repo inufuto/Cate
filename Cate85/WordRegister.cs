@@ -61,6 +61,14 @@ internal class WordRegister(int address) : AbstractWordRegister(MinId + address,
             instruction.WriteLine("\tmovw\t" + this + ",@" + pointerRegister);
         }
         else {
+            Debug.Assert(pointerRegister.WordRegister != null);
+            if (((WordRegister)pointerRegister.WordRegister).Address == 0) {
+                var candidates = PointerRegister.TemporaryRegisters.Where(r => !Equals(r.WordRegister, this)).ToList();
+                using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
+                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
+                LoadIndirect(instruction, reservation.PointerRegister, offset);
+                return;
+            }
             instruction.WriteLine("\tmovw\t" + this + "," + offset + "(" + pointerRegister + ")");
         }
         instruction.AddChanged(this);

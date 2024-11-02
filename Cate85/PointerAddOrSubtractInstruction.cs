@@ -31,7 +31,6 @@ internal class PointerAddOrSubtractInstruction(
         }
         using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers, LeftOperand);
         ViaRegister(reservation.PointerRegister);
-        reservation.PointerRegister.Store(this, DestinationOperand);
         return;
 
         void ViaRegister(Cate.PointerRegister pointerRegister)

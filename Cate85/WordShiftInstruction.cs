@@ -65,15 +65,40 @@ internal class WordShiftInstruction(
         };
         var valueRegister = WordRegister.FromAddress(0);
         var counterRegister = ByteRegister.FromAddress(3);
-        using (WordOperation.ReserveRegister(this, valueRegister, LeftOperand)) {
-            valueRegister.Load(this, LeftOperand);
-            using (ByteOperation.ReserveRegister(this, counterRegister)) {
-                counterRegister.Load(this, counterOperand);
-                Compiler.CallExternal(this, functionName);
+        if (counterOperand.Register == null || !counterOperand.Register.Conflicts(valueRegister)) {
+            using (WordOperation.ReserveRegister(this, valueRegister, LeftOperand)) {
+                valueRegister.Load(this, LeftOperand);
+                using (ByteOperation.ReserveRegister(this, counterRegister)) {
+                    counterRegister.Load(this, counterOperand);
+                    Compiler.CallExternal(this, functionName);
+                }
+                AddChanged(valueRegister);
+                RemoveRegisterAssignment(valueRegister);
+                valueRegister.Store(this, DestinationOperand);
             }
-            AddChanged(valueRegister);
-            RemoveRegisterAssignment(valueRegister);
-            valueRegister.Store(this, DestinationOperand);
         }
+        else {
+            if (DestinationOperand.Register != null && DestinationOperand.Register.Conflicts(counterRegister)) {
+                ViaCounter();
+            }
+            else {
+                using (ByteOperation.ReserveRegister(this, counterRegister)) {
+                    ViaCounter();
+                }
+            }
+
+            void ViaCounter()
+            {
+                counterRegister.Load(this, counterOperand);
+                using (WordOperation.ReserveRegister(this, valueRegister, LeftOperand)) {
+                    valueRegister.Load(this, LeftOperand);
+                    Compiler.CallExternal(this, functionName);
+                    AddChanged(valueRegister);
+                    RemoveRegisterAssignment(valueRegister);
+                    valueRegister.Store(this, DestinationOperand);
+                }
+            }
+        }
+
     }
 }
