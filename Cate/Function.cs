@@ -280,7 +280,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("__14 = mask >> 8")) {
+            if (instruction.ToString().Contains("__6 = 3 << shift")) {
                 var aaa = 111;
             }
 #endif

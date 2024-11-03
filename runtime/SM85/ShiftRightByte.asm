@@ -1,11 +1,11 @@
 cseg
 cate.ShiftRightByte: public cate.ShiftRightByte
-; r0,r1
-    push r1
-        or r1,r1
+; r1,r3
+    push r3
+        or r3,r3
         do | while nz
-            srl r0
-            dec r1
+            srl r1
+            dec r3
         wend
-    pop r1
+    pop r3
 ret

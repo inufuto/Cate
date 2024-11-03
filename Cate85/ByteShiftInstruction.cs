@@ -18,15 +18,26 @@ internal class ByteShiftInstruction(
                 : "cate.ShiftRightByte",
             _ => throw new NotImplementedException()
         };
-        var counterRegister = ByteRegister.FromAddress(0);
-        var operandRegisters = ByteRegister.FromAddress(1);
+        var counterRegister = ByteRegister.FromAddress(3);
+        var valueRegister = ByteRegister.FromAddress(1);
         using (ByteOperation.ReserveRegister(this, counterRegister, RightOperand)) {
             counterRegister.Load(this, RightOperand);
-            using (ByteOperation.ReserveRegister(this, operandRegisters)) {
-                operandRegisters.Load(this, LeftOperand);
-                Compiler.CallExternal(this, functionName);
-                operandRegisters.Store(this, DestinationOperand);
+            if (DestinationOperand.Register != null && DestinationOperand.Register.Equals(valueRegister)) {
+                Call();
             }
+            else {
+                using (ByteOperation.ReserveRegister(this, valueRegister, LeftOperand)) {
+                    Call();
+                }
+            }
+        }
+        return;
+
+        void Call()
+        {
+            valueRegister.Load(this, LeftOperand);
+            Compiler.CallExternal(this, functionName);
+            valueRegister.Store(this, DestinationOperand);
         }
     }
 
@@ -39,5 +50,17 @@ internal class ByteShiftInstruction(
             Keyword.ShiftRight => "srl",
             _ => throw new NotImplementedException()
         };
+    }
+
+    public override int? RegisterAdaptability(Variable variable, Register register)
+    {
+        {
+            if (RightOperand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable)) {
+                if (register.Conflicts(ByteRegister.FromAddress(3))) {
+                    return 1;
+                }
+            }
+        }
+        return base.RegisterAdaptability(variable, register);
     }
 }
