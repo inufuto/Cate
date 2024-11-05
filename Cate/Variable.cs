@@ -155,11 +155,8 @@ public class Variable : NamedValue
 
     public void AddUsage(int address, Usage usage)
     {
-        if (usages.ContainsKey(address)) {
+        if (!usages.TryAdd(address, usage)) {
             usages[address] |= usage;
-        }
-        else {
-            usages[address] = usage;
         }
     }
 

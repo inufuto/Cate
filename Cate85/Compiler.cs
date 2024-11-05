@@ -190,9 +190,9 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                         }
                         break;
                     }
-                case PointerRegister pointerRegister when !Conflict(variable.Intersections, pointerRegister):
-                    variable.Register = pointerRegister;
-                    break;
+                //case PointerRegister pointerRegister when !Conflict(variable.Intersections, pointerRegister):
+                //    variable.Register = pointerRegister;
+                //    break;
                 case PointerRegister _: {
                         register = AllocatableRegister(variable, PointerOperation.Registers, function);
                         if (register != null) {

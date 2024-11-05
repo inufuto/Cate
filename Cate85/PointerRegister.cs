@@ -45,7 +45,9 @@ internal class PointerRegister(AbstractWordRegister wordRegister) : WordPointerR
 
     public override void Add(Instruction instruction, int offset)
     {
-        throw new NotImplementedException();
+        instruction.WriteLine("\taddw\t" + AsmName + "," + offset);
+        instruction.AddChanged(this);
+        instruction.RemoveRegisterAssignment(this);
     }
 
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)

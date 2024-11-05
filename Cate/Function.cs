@@ -233,7 +233,6 @@ public class Function : NamedValue
                 instruction.PreviousInstructions.Add(Instructions[originAddress]);
             }
         }
-
         Debug.Assert(functionBlock != null);
         foreach (var variable in functionBlock.AllVariables.Where(v => !v.IsTemporary())) {
             if (variable.Usages.IsEmpty)
@@ -280,7 +279,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("x = ManX + pPrevDirection[1]")) {
+            if (instruction.ToString().Contains("__4 = *pMovable | pMovable[1]")) {
                 var aaa = 111;
             }
 #endif
