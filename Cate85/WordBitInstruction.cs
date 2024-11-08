@@ -19,6 +19,9 @@ internal class WordBitInstruction(
         };
 
         if (DestinationOperand.Register is WordRegister wordRegister) {
+            if (RightOperand.Register == wordRegister) {
+                ExchangeOperands();
+            }
             ViaRegister(wordRegister);
             return;
         }
