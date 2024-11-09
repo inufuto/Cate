@@ -113,3 +113,8 @@ runtime/SC62015/c.bat
 *.bat
 /Cate61s/.vs/ProjectEvaluation
 /Cate83/.vs/ProjectEvaluation
+/Cate85/.vs
+/Cate85/bin
+/Cate85/obj
+/Cate85/obj/Debug/net8.0/ref/Cate85.dll
+/Cate85/Properties/PublishProfiles
