@@ -78,8 +78,8 @@ internal class WordShiftInstruction : Cate.WordShiftInstruction
         {
             Keyword.ShiftLeft => "cate.ShiftLeftWord",
             Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
-                ? "cate.ShiftRightWord"
-                : "cate.ShiftRightSignedWord",
+                ? "cate.ShiftRightSignedWord"
+                : "cate.ShiftRightWord",
             _ => throw new NotImplementedException()
         };
         using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {

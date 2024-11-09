@@ -2,7 +2,7 @@
 
 namespace Inu.Cate.Wdc65c02;
 
-internal class Compiler : Inu.Cate.Mos6502.Compiler
+internal class Compiler : Mos6502.Compiler
 {
     public Compiler(bool parameterRegister) : base(parameterRegister) { }
 

@@ -90,8 +90,8 @@ namespace Inu.Cate.Mc6809
             {
                 Keyword.ShiftLeft => "cate.ShiftLeftWord",
                 Keyword.ShiftRight => ((IntegerType)LeftOperand.Type).Signed
-                    ? "cate.ShiftRightWord"
-                    : "cate.ShiftRightSignedWord",
+                    ? "cate.ShiftRightSignedWord"
+                    : "cate.ShiftRightWord",
                 _ => throw new NotImplementedException()
             };
             using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
