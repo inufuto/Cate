@@ -1685,8 +1685,8 @@ public abstract class Compiler
 
     public virtual int Alignment => 1;
     public virtual IntegerType CounterType => IntegerType.ByteType;
-    public virtual string ParameterPrefix => "__";
-    public virtual string LabelPrefix => "__";
+    public virtual string ParameterPrefix => "@";
+    public virtual string LabelPrefix => "@";
     public virtual string PointerConstantDirective => "defw";
     public virtual int PointerByteCount => 2;
 

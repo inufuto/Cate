@@ -395,4 +395,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         instruction.WriteLine("\tcall\t" + functionName);
         Instance.AddExternalName(functionName);
     }
+
+    public override string ParameterPrefix => "__";
+    public override string LabelPrefix => "__";
 }
