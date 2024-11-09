@@ -4,19 +4,18 @@ using System.Diagnostics;
 
 namespace Inu.Cate.Z80;
 
-internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
+internal class WordAddOrSubtractInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : AddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
     private static readonly List<Cate.WordRegister> RightCandidates = new()
         {WordRegister.De, WordRegister.Bc};
 
     protected override int Threshold() => 4;
-
-    public WordAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
-        Operand leftOperand, Operand rightOperand)
-        : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
-    {
-        Debug.Assert(rightOperand.Type is IntegerType);
-    }
 
     public override int? RegisterAdaptability(Variable variable, Register register1)
     {
@@ -70,6 +69,11 @@ internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
                 break;
             default:
                 throw new NotImplementedException();
+        }
+
+        if (LeftOperand.Register != null && LeftOperand.Register.Equals(WordRegister.Hl)) {
+            action(WordRegister.Hl);
+            return;
         }
         if (DestinationOperand.Register is WordRegister destinationRegister && candidates.Contains(destinationRegister)) {
             action(destinationRegister);

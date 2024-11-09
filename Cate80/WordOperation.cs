@@ -6,7 +6,7 @@ internal class WordOperation : Cate.WordOperation
 {
     public override List<Cate.WordRegister> Registers => WordRegister.Registers;
 
-    public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset, int value)
+    public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
     {
         if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
             instruction.WriteLine("\tld\t(" + pointerRegister + "+" + offset + "),low(" + value+")");
@@ -14,7 +14,7 @@ internal class WordOperation : Cate.WordOperation
             return;
         }
         if (offset == 0) {
-            if (PointerRegister.IsAddable(pointerRegister)) {
+            if (pointerRegister is IndexRegister) {
                 instruction.WriteLine("\tld\t(" + pointerRegister + "),low(" + value+")");
                 instruction.WriteLine("\tinc\t" + pointerRegister.AsmName);
                 instruction.WriteLine("\tld\t(" + pointerRegister + "),high(" + value + ")");

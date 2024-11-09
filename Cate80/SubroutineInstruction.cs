@@ -26,7 +26,7 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
 
     }
 
-    protected override void StoreViaPointer(Cate.PointerRegister pointerRegister, Cate.WordRegister register, bool last)
+    protected override void StoreViaPointer(Cate.WordRegister pointerRegister, Cate.WordRegister register, bool last)
     {
         if (register is PairRegister pairRegister) {
             Debug.Assert(pairRegister.Low != null);
@@ -56,8 +56,8 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
                 1 => ByteRegister.A,
                 _ => type switch
                 {
-                    PointerType { ElementType: StructureType _ } => PointerRegister.Ix,
-                    PointerType => PointerRegister.Hl,
+                    PointerType { ElementType: StructureType _ } => WordRegister.Ix,
+                    PointerType => WordRegister.Hl,
                     _ => WordRegister.Hl
                 }
             },
@@ -66,8 +66,8 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
                 1 => ByteRegister.E,
                 _ => type switch
                 {
-                    PointerType { ElementType: StructureType _ } => PointerRegister.Iy,
-                    PointerType => PointerRegister.De,
+                    PointerType { ElementType: StructureType _ } => WordRegister.Iy,
+                    PointerType => WordRegister.De,
                     _ => WordRegister.De
                 }
             },
@@ -76,7 +76,7 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
                 1 => ByteRegister.C,
                 _ => type switch
                 {
-                    PointerType => PointerRegister.Bc,
+                    PointerType => WordRegister.Bc,
                     _ => WordRegister.Bc
                 }
             },
@@ -89,7 +89,7 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
         return type.ByteCount switch
         {
             1 => ByteRegister.A,
-            2 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
+            2 => WordRegister.Hl,
             _ => null
         };
     }

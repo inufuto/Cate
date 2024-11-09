@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Inu.Cate.Z80;
 
-internal class WordRegister : Cate.WordRegister
+internal abstract class WordRegister : Cate.WordRegister
 {
     public static List<Cate.WordRegister> Registers = new();
 
@@ -32,8 +32,8 @@ internal class WordRegister : Cate.WordRegister
     public static readonly PairRegister Hl = new(11, ByteRegister.H, ByteRegister.L, true);
     public static readonly PairRegister De = new(12, ByteRegister.D, ByteRegister.E, false);
     public static readonly PairRegister Bc = new(13, ByteRegister.B, ByteRegister.C, false);
-    public static readonly WordRegister Ix = new(21, "ix", true);
-    public static readonly WordRegister Iy = new(22, "iy", true);
+    public static readonly IndexRegister Ix = new(21, "ix", true);
+    public static readonly IndexRegister Iy = new(22, "iy", true);
 
     public override bool IsPair() => Equals(this, Hl) || Equals(this, De) || Equals(this, Bc);
 
@@ -64,7 +64,7 @@ internal class WordRegister : Cate.WordRegister
         writer.WriteLine("\tpop\t" + Name + comment);
     }
 
-    public void Add(Instruction instruction, int offset)
+    public override void Add(Instruction instruction, int offset)
     {
         if (offset == 0) { return; }
 
@@ -152,7 +152,7 @@ internal class WordRegister : Cate.WordRegister
     }
 
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (!IsPair()) {
             var candidates = PairRegisters.Where(r => !r.Conflicts(pointerRegister)).ToList();
@@ -168,43 +168,43 @@ internal class WordRegister : Cate.WordRegister
             return;
         }
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 if (Equals(this, Hl)) {
                     var candidates = ByteRegister.Registers.Where(r => !this.Contains(r)).ToList();
                     using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);
                     var byteRegister = reservation.ByteRegister;
-                    byteRegister.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
+                    byteRegister.LoadIndirect(instruction, (WordRegister)pointerRegister, 0);
                     instruction.WriteLine("\tinc\t" + pointerRegister);
-                    High.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
+                    High.LoadIndirect(instruction, (WordRegister)pointerRegister, 0);
                     if (!Conflicts(pointerRegister)) {
                         instruction.WriteLine("\tdec\t" + pointerRegister);
                     }
                     Low.CopyFrom(instruction, byteRegister);
                     return;
                 }
-                Low.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
+                Low.LoadIndirect(instruction, (WordRegister)pointerRegister, 0);
                 instruction.WriteLine("\tinc\t" + pointerRegister);
-                High.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
+                High.LoadIndirect(instruction, (WordRegister)pointerRegister, 0);
                 instruction.WriteLine("\tdec\t" + pointerRegister);
                 return;
             }
             using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-                ByteRegister.A.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
+                ByteRegister.A.LoadIndirect(instruction, (WordRegister)pointerRegister, 0);
                 Low.CopyFrom(instruction, ByteRegister.A);
                 instruction.WriteLine("\tinc\t" + pointerRegister);
-                ByteRegister.A.LoadIndirect(instruction, (PointerRegister)pointerRegister, 0);
+                ByteRegister.A.LoadIndirect(instruction, (WordRegister)pointerRegister, 0);
                 High.CopyFrom(instruction, ByteRegister.A);
                 instruction.WriteLine("\tdec\t" + pointerRegister);
             }
             return;
         }
-        using (var reservation = PointerOperation.ReserveRegister(instruction, pointerRegister)) {
+        using (var reservation = WordOperation.ReserveRegister(instruction, pointerRegister)) {
             pointerRegister.Add(instruction, offset);
             LoadIndirect(instruction, pointerRegister, 0);
         }
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (!IsPair()) {
             var candidates = PairRegisters.Where(r => !r.Conflicts(pointerRegister)).ToList();
@@ -220,7 +220,7 @@ internal class WordRegister : Cate.WordRegister
             return;
         }
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 Low.StoreIndirect(instruction, pointerRegister, 0);
                 instruction.WriteLine("\tinc\t" + pointerRegister);
                 High.StoreIndirect(instruction, pointerRegister, 0);
@@ -237,7 +237,7 @@ internal class WordRegister : Cate.WordRegister
             }
             return;
         }
-        using (PointerOperation.ReserveRegister(instruction, pointerRegister)) {
+        using (WordOperation.ReserveRegister(instruction, pointerRegister)) {
             pointerRegister.Add(instruction, offset);
             StoreIndirect(instruction, pointerRegister, 0);
         }
@@ -278,6 +278,11 @@ internal class WordRegister : Cate.WordRegister
     {
         instruction.WriteLine("\tpop\t" + Name);
     }
+
+    public static List<Cate.WordRegister> PointerOrder(int offset)
+    {
+        return offset is 0 or < -128 or > 127 ? new List<Cate.WordRegister> { Hl, Ix, Iy, De, Bc } : new List<Cate.WordRegister> { Ix, Iy, Hl, De, Bc };
+    }
 }
 
 internal class PairRegister : WordRegister
@@ -289,5 +294,21 @@ internal class PairRegister : WordRegister
     {
         Low = lowRegister;
         High = highRegister;
+    }
+
+    public override bool IsOffsetInRange(int offset)
+    {
+        return offset == 0;
+    }
+}
+
+
+internal class IndexRegister : WordRegister
+{
+    protected internal IndexRegister(int id, string name, bool addable) : base(id, name, addable) { }
+
+    public override bool IsOffsetInRange(int offset)
+    {
+        return offset is >= -128 and <= 127;
     }
 }

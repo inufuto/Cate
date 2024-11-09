@@ -8,7 +8,7 @@ namespace Inu.Cate.Z80;
 
 internal class Compiler : Cate.Compiler
 {
-    public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
+    public Compiler() : base(new ByteOperation(), new WordOperation()) { }
 
     protected override void WriteAssembly(StreamWriter writer)
     {
@@ -40,16 +40,16 @@ internal class Compiler : Cate.Compiler
 
             if (variable.Type is PointerType pointerType) {
                 if (pointerType.ElementType is StructureType) {
-                    if (!Conflict(variable.Intersections, PointerRegister.Ix)) {
-                        variable.Register = PointerRegister.Ix;
+                    if (!Conflict(variable.Intersections, WordRegister.Ix)) {
+                        variable.Register = WordRegister.Ix;
                     }
-                    else if (!Conflict(variable.Intersections, PointerRegister.Iy)) {
-                        variable.Register = PointerRegister.Iy;
+                    else if (!Conflict(variable.Intersections, WordRegister.Iy)) {
+                        variable.Register = WordRegister.Iy;
                     }
                 }
                 else {
-                    if (!Conflict(variable.Intersections, PointerRegister.Hl)) {
-                        variable.Register = PointerRegister.Hl;
+                    if (!Conflict(variable.Intersections, WordRegister.Hl)) {
+                        variable.Register = WordRegister.Hl;
                     }
                 }
             }
@@ -68,7 +68,7 @@ internal class Compiler : Cate.Compiler
             }
             else {
                 if (variableType is PointerType pointerType) {
-                    var registers = pointerType.ElementType is StructureType ? new List<PointerRegister>() { PointerRegister.Ix, PointerRegister.Iy, PointerRegister.Hl, PointerRegister.De, PointerRegister.Bc, } : new List<PointerRegister>() { PointerRegister.Hl, PointerRegister.De, PointerRegister.Bc, PointerRegister.Ix, PointerRegister.Iy };
+                    var registers = pointerType.ElementType is StructureType ? new List<WordRegister>() { WordRegister.Ix, WordRegister.Iy, WordRegister.Hl, WordRegister.De, WordRegister.Bc, } : new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc, WordRegister.Ix, WordRegister.Iy };
                     register = AllocatableRegister(variable, registers, function);
                 }
                 else {
@@ -96,7 +96,14 @@ internal class Compiler : Cate.Compiler
             }
             else if (register is WordRegister wordRegister) {
                 if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, wordRegister)) {
-                    register = AllocatableRegister(variable, WordRegister.Registers, function);
+                    List<Cate.WordRegister> candidates;
+                    if (variable.Type is PointerType pointerType) {
+                        candidates = WordRegister.PointerOrder(pointerType.ElementType is StructureType ? 10 : 0);
+                    }
+                    else {
+                        candidates = WordRegister.Registers;
+                    }
+                    register = AllocatableRegister(variable, candidates, function);
                     if (register != null) {
                         variable.Register = register;
                     }
@@ -106,33 +113,33 @@ internal class Compiler : Cate.Compiler
                     break;
                 }
             }
-            else if (register is PointerRegister pointerRegister) {
-                if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, pointerRegister)) {
-                    List<Cate.PointerRegister> candidates;
-                    if (variable.Type is PointerType pointerType) {
-                        candidates = PointerRegister.PointerOrder(pointerType.ElementType is StructureType ? 10 : 0);
-                    }
-                    else {
-                        throw new NotImplementedException();
-                        //candidates = PointerRegister.Registers;
-                    }
-                    register = AllocatableRegister(variable, candidates, function);
-                    if (register != null) {
-                        variable.Register = register;
-                    }
-                }
-                else {
-                    variable.Register = pointerRegister;
-                    break;
-                }
-            }
+            //else if (register is WordRegister pointerRegister) {
+            //    if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, pointerRegister)) {
+            //        List<Cate.WordRegister> candidates;
+            //        if (variable.Type is PointerType pointerType) {
+            //            candidates = WordRegister.PointerOrder(pointerType.ElementType is StructureType ? 10 : 0);
+            //        }
+            //        else {
+            //            throw new NotImplementedException();
+            //            //candidates = PointerRegister.Registers;
+            //        }
+            //        register = AllocatableRegister(variable, candidates, function);
+            //        if (register != null) {
+            //            variable.Register = register;
+            //        }
+            //    }
+            //    else {
+            //        variable.Register = pointerRegister;
+            //        break;
+            //    }
+            //}
         }
     }
 
-        
-       
 
-        
+
+
+
 
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
@@ -167,20 +174,14 @@ internal class Compiler : Cate.Compiler
         }
         switch (operatorId) {
             case '+':
-                if (destinationOperand.Type is PointerType)
-                    return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                 return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
             case '-': {
-                if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
-                    var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
-                    if (destinationOperand.Type is PointerType)
-                        return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
-                    return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                    if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
+                        var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
+                        return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                    }
+                    return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                 }
-                if (destinationOperand.Type is PointerType)
-                    return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-            }
             case '|':
             case '^':
             case '&':
