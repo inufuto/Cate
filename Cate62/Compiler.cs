@@ -25,7 +25,7 @@ namespace Inu.Cate.Sc62015
             return ++registerId;
         }
 
-        public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
+        public Compiler() : base(new ByteOperation(), new WordOperation()) { }
 
         protected override void WriteAssembly(StreamWriter writer)
         {
@@ -46,9 +46,9 @@ namespace Inu.Cate.Sc62015
                 var variableType = variable.Type;
                 var register = variableType.ByteCount switch
                 {
-                    1 => AllocatableRegister(variable, ByteOperation.Registers,function),
-                    2 => AllocatableRegister(variable, WordOperation.Registers, function),
-                    3 => AllocatableRegister(variable, PointerOperation.Registers, function),
+                    1 => AllocatableRegister(variable, ByteOperation.Registers, function),
+                    2 => AllocatableRegister(variable, WordRegister.Registers.Union(WordInternalRam.Registers), function),
+                    3 => AllocatableRegister(variable, PointerRegister.Registers.Union(PointerInternalRam.Registers), function),
                     _ => null
                 };
                 if (register != null) {
@@ -139,6 +139,7 @@ namespace Inu.Cate.Sc62015
 
                     break;
                 case 2:
+                case 3:
                     switch (operatorId) {
                         case '+':
                             return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
@@ -161,23 +162,6 @@ namespace Inu.Cate.Sc62015
                         case Keyword.ShiftRight:
                             return new WordShiftInstruction(function, operatorId, destinationOperand, leftOperand,
                                 rightOperand);
-                    }
-
-                    break;
-                case 3:
-                    switch (operatorId) {
-                        case '+':
-                            return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
-                                rightOperand);
-                        case '-': {
-                                if (rightOperand is IntegerOperand { IntegerValue: < 0 } integerOperand) {
-                                    return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand,
-                                        new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue));
-                                }
-
-                                return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
-                                    rightOperand);
-                            }
                     }
                     break;
             }

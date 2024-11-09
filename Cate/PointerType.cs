@@ -13,7 +13,8 @@ public class PointerType : ParameterizableType
 
     public override bool Equals(object? obj)
     {
-        return obj is PointerType pointerType && (ElementType.Equals(pointerType.ElementType) || pointerType.ElementType is VoidType);
+        if (obj is not PointerType pointerType) return false;
+        return ElementType.Equals(pointerType.ElementType) || pointerType.ElementType is VoidType;
     }
 
     public override int GetHashCode()

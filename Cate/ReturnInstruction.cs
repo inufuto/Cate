@@ -56,10 +56,6 @@ public abstract class ReturnInstruction : Instruction
                 wordRegister.Load(this, SourceOperand);
                 RemoveChanged(wordRegister);
                 break;
-            case PointerRegister pointerRegister:
-                pointerRegister.Load(this, SourceOperand);
-                RemoveChanged(pointerRegister);
-                break;
         }
     }
 }

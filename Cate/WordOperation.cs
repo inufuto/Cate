@@ -38,7 +38,12 @@ public abstract class WordOperation : RegisterOperation<WordRegister>
 
     public RegisterReservation ReserveAnyRegister(Instruction instruction, Operand sourceOperand)
     {
-        return ReserveAnyRegister(instruction, Registers, sourceOperand);
+        return ReserveAnyRegister(instruction, RegistersForType(sourceOperand.Type), sourceOperand);
+    }
+
+    private List<WordRegister> RegistersForType(Type type)
+    {
+        return Registers.Where(r => r.ByteCount == type.ByteCount).ToList();
     }
 
     public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates)
@@ -63,10 +68,15 @@ public abstract class WordOperation : RegisterOperation<WordRegister>
 
     public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
 
-    public virtual void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset, int value)
+    public virtual void StoreConstantIndirect(Instruction instruction, WordRegister pointerRegister, int offset, int value)
     {
         using var reservation = ReserveAnyRegister(instruction, Registers);
         reservation.WordRegister.LoadConstant(instruction, value);
         reservation.WordRegister.StoreIndirect(instruction, pointerRegister, offset);
+    }
+
+    public virtual List<WordRegister> RegistersToOffset(int offset)
+    {
+        return Registers.Where(r => r.IsOffsetInRange(offset)).ToList(); ;
     }
 }

@@ -12,20 +12,9 @@ public abstract class ByteRegister : Register
 
     public override bool Conflicts(Register? register)
     {
-        switch (register) {
-            case WordRegister wordRegister:
-                if (wordRegister.Contains(this))
-                    return true;
-                break;
-            case WordPointerRegister pointerRegister:
-                if (pointerRegister.WordRegister.Contains(this)) {
-                    return true;
-                }
-                break;
-            //case ByteRegister byteRegister:
-            //    if (PairRegister != null && PairRegister.Contains(byteRegister))
-            //        return true;
-            //    break;
+        if (register is WordRegister wordRegister) {
+            if (wordRegister.Contains(this))
+                return true;
         }
         return base.Conflicts(register);
     }
@@ -63,59 +52,55 @@ public abstract class ByteRegister : Register
                 instruction.RemoveRegisterAssignment(this);
                 return;
             case VariableOperand variableOperand: {
-                var register = instruction.GetVariableRegister(variableOperand);
-                if (register is ByteRegister byteRegister) {
-                    if (Equals(byteRegister, this)) {
-                        //instruction.RemoveRegisterAssignment(this);
-                    }
-                    else if (byteRegister.ByteCount == 1) {
-                        CopyFrom(instruction, byteRegister);
-                        instruction.AddChanged((this));
+                    var register = instruction.GetVariableRegister(variableOperand);
+                    if (register is ByteRegister byteRegister) {
+                        if (Equals(byteRegister, this)) {
+                            //instruction.RemoveRegisterAssignment(this);
+                        }
+                        else if (byteRegister.ByteCount == 1) {
+                            CopyFrom(instruction, byteRegister);
+                            instruction.AddChanged((this));
+                        }
+                        else {
+                            LoadFromMemory(instruction, variableOperand.Variable, variableOperand.Offset);
+                            instruction.AddChanged(this);
+                        }
                     }
                     else {
                         LoadFromMemory(instruction, variableOperand.Variable, variableOperand.Offset);
                         instruction.AddChanged(this);
+                        instruction.RemoveRegisterAssignment(this);
                     }
+                    instruction.SetVariableRegister(variableOperand, this);
+                    instruction.CancelOperandRegister(variableOperand);
+                    return;
                 }
-                else {
-                    LoadFromMemory(instruction, variableOperand.Variable, variableOperand.Offset);
-                    instruction.AddChanged(this);
-                    instruction.RemoveRegisterAssignment(this);
-                }
-                instruction.SetVariableRegister(variableOperand, this);
-                instruction.CancelOperandRegister(variableOperand);
-                return;
-            }
             case IndirectOperand sourceIndirectOperand: {
-                var pointer = sourceIndirectOperand.Variable;
-                var offset = sourceIndirectOperand.Offset;
-                var register = pointer.Register ?? instruction.GetVariableRegister(pointer, 0);
-                if (register is WordRegister wordRegister)
-                {
-                    register = wordRegister.ToPointer();
-                }
-                if (register is PointerRegister pointerRegister) {
-                    if (pointerRegister.IsOffsetInRange(0)) {
-                        LoadIndirect(instruction, pointerRegister, offset);
-                        instruction.AddChanged(this);
-                        instruction.CancelOperandRegister(sourceIndirectOperand);
-                        return;
+                    var pointer = sourceIndirectOperand.Variable;
+                    var offset = sourceIndirectOperand.Offset;
+                    var register = pointer.Register ?? instruction.GetVariableRegister(pointer, 0);
+                    if (register is WordRegister pointerRegister) {
+                        if (pointerRegister.IsOffsetInRange(0)) {
+                            LoadIndirect(instruction, pointerRegister, offset);
+                            instruction.AddChanged(this);
+                            instruction.CancelOperandRegister(sourceIndirectOperand);
+                            return;
+                        }
+                        var candidates = WordOperation.Registers.Where(r => r.IsOffsetInRange(offset)).ToList();
+                        if (candidates.Any()) {
+                            var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+                            LoadIndirect(instruction, reservation.WordRegister, offset);
+                            instruction.AddChanged(this);
+                            instruction.CancelOperandRegister(sourceIndirectOperand);
+                            return;
+                        }
                     }
-                    var candidates = PointerOperation.Registers.Where(r => r.IsOffsetInRange(offset)).ToList();
-                    if (candidates.Any()) {
-                        var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-                        reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                        LoadIndirect(instruction, reservation.PointerRegister, offset);
-                        instruction.AddChanged(this);
-                        instruction.CancelOperandRegister(sourceIndirectOperand);
-                        return;
-                    }
+                    LoadIndirect(instruction, pointer, offset);
+                    instruction.AddChanged(this);
+                    instruction.CancelOperandRegister(sourceIndirectOperand);
+                    return;
                 }
-                LoadIndirect(instruction, pointer, offset);
-                instruction.AddChanged(this);
-                instruction.CancelOperandRegister(sourceIndirectOperand);
-                return;
-            }
             case ByteRegisterOperand byteRegisterOperand:
                 byteRegisterOperand.CopyTo(instruction, this);
                 return;
@@ -133,32 +118,32 @@ public abstract class ByteRegister : Register
                 StoreToMemory(instruction, stringOperand.StringValue);
                 return;
             case VariableOperand variableOperand: {
-                var variable = variableOperand.Variable;
-                var offset = variableOperand.Offset;
-                var variableRegister = variable.Register;
-                if (variableRegister is ByteRegister register) {
-                    Debug.Assert(offset == 0);
-                    //var register = Compiler.Instance.ByteOperation.RegisterFromId(variable.Register.Value);
-                    if (Equals(register, this)) {
+                    var variable = variableOperand.Variable;
+                    var offset = variableOperand.Offset;
+                    var variableRegister = variable.Register;
+                    if (variableRegister is ByteRegister register) {
+                        Debug.Assert(offset == 0);
+                        //var register = Compiler.Instance.ByteOperation.RegisterFromId(variable.Register.Value);
+                        if (Equals(register, this)) {
+                        }
+                        else {
+                            register.CopyFrom(instruction, this);
+                            instruction.AddChanged(register);
+                        }
                     }
                     else {
-                        register.CopyFrom(instruction, this);
-                        instruction.AddChanged(register);
+                        StoreToMemory(instruction, variable, offset);
+                        instruction.SetVariableRegister(variable, offset, this);
                     }
+                    instruction.SetVariableRegister(variableOperand, this);
+                    return;
                 }
-                else {
-                    StoreToMemory(instruction, variable, offset);
-                    instruction.SetVariableRegister(variable, offset, this);
-                }
-                instruction.SetVariableRegister(variableOperand, this);
-                return;
-            }
             case IndirectOperand destinationIndirectOperand: {
-                var pointer = destinationIndirectOperand.Variable;
-                var offset = destinationIndirectOperand.Offset;
-                StoreIndirect(instruction, pointer, offset);
-                return;
-            }
+                    var pointer = destinationIndirectOperand.Variable;
+                    var offset = destinationIndirectOperand.Offset;
+                    StoreIndirect(instruction, pointer, offset);
+                    return;
+                }
             case ByteRegisterOperand byteRegisterOperand:
                 byteRegisterOperand.CopyFrom(instruction, this);
                 return;

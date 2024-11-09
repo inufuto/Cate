@@ -9,21 +9,30 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
     public override void BuildAssembly()
     {
         if (RightValue == 0) {
-            void ViaRegister(Register r)
-            {
-                r.LoadConstant(this, "0");
-            }
-
             if (DestinationOperand.Register is PointerRegister pointerRegister) {
                 ViaRegister(pointerRegister);
                 return;
             }
-            using var reservation = PointerOperation.ReserveAnyRegister(this, PointerRegister.Registers, LeftOperand);
-            ViaRegister(reservation.PointerRegister);
+            using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+            ViaRegister(reservation.WordRegister);
             reservation.WordRegister.Store(this, DestinationOperand);
             return;
+
+            void ViaRegister(Register r)
+            {
+                r.LoadConstant(this, "0");
+            }
         }
         if (BitCount == 1) {
+            if (DestinationOperand.Register is WordRegister wordRegister) {
+                ViaRegister(wordRegister);
+                return;
+            }
+            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
+            ViaRegister(reservation.WordRegister);
+            reservation.WordRegister.Store(this, DestinationOperand);
+            return;
+
             void ViaRegister(Cate.WordRegister r)
             {
                 r.Load(this, LeftOperand);
@@ -31,19 +40,11 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
                 AddChanged(r);
                 RemoveRegisterAssignment(r);
             }
-            if (DestinationOperand.Register is WordRegister wordRegister) {
-                ViaRegister(wordRegister);
-                return;
-            }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
-            ViaRegister(reservation.WordRegister);
-            reservation.PointerRegister.Store(this, DestinationOperand);
-            return;
         }
         {
             void ViaRegister(Register re)
             {
-                var candidates = WordRegister.Registers.Where(r=>!Equals(r, re)).ToList();
+                var candidates = WordRegister.Registers.Where(r => !Equals(r, re)).ToList();
                 using var additionReservation = WordOperation.ReserveAnyRegister(this, candidates);
                 var additionRegister = additionReservation.WordRegister;
                 additionRegister.Load(this, LeftOperand);
