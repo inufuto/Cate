@@ -6,10 +6,10 @@ namespace Inu.Cate.I8080
     {
         public override List<Cate.WordRegister> Registers => WordRegister.Registers;
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset, int value)
+        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
         {
             if (offset == 0) {
-                if (Equals(pointerRegister, PointerRegister.Hl)) {
+                if (Equals(pointerRegister, WordRegister.Hl)) {
                     instruction.WriteLine("\tmvi\tm,low(" + value + ")");
                     instruction.WriteLine("\tinx\t" + pointerRegister.AsmName);
                     instruction.WriteLine("\tmvi\tm,high(" + value + ")");
@@ -17,7 +17,7 @@ namespace Inu.Cate.I8080
                     return;
                 }
             }
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 pointerRegister.TemporaryOffset(instruction, offset, () =>
                 {
                     StoreConstantIndirect(instruction, pointerRegister, 0, value);

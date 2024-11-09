@@ -9,7 +9,7 @@ namespace Inu.Cate.I8080
             return type.ByteCount switch
             {
                 1 => ByteRegister.A,
-                2 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
+                2 => type is PointerType ? WordRegister.Hl : WordRegister.Hl,
                 _ => null
             };
         }
@@ -19,11 +19,11 @@ namespace Inu.Cate.I8080
             return index switch
             {
                 0 when type.ByteCount == 1 => ByteRegister.A,
-                0 => type is PointerType ? PointerRegister.Hl : WordRegister.Hl,
+                0 => WordRegister.Hl,
                 1 when type.ByteCount == 1 => ByteRegister.E,
-                1 => type is PointerType ? PointerRegister.De : WordRegister.De,
+                1 => WordRegister.De,
                 2 when type.ByteCount == 1 => ByteRegister.C,
-                2 => type is PointerType ? PointerRegister.Bc : WordRegister.Bc,
+                2 => WordRegister.Bc,
                 _ => null
             };
         }

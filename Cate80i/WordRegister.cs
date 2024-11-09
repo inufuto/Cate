@@ -63,82 +63,6 @@ namespace Inu.Cate.I8080
             instruction.WriteLine("\tpop\t" + Name);
         }
 
-        //public override void Add(Instruction instruction, int offset)
-        //{
-        //    if (offset == 0) {
-        //        return;
-        //    }
-
-        //    const int threshold = 4;
-        //    var count = offset & 0xffff;
-        //    if (count <= threshold) {
-        //        Loop("inx");
-        //        instruction.AddChanged(this);
-        //        instruction.RemoveRegisterAssignment(this);
-        //        return;
-        //    }
-
-        //    if (count >= 0x10000 - threshold) {
-        //        count = 0x10000 - count;
-        //        Loop("dcx");
-        //        instruction.AddChanged(this);
-        //        instruction.RemoveRegisterAssignment(this);
-        //        return;
-        //    }
-
-        //    void Loop(string operation)
-        //    {
-        //        for (var i = 0; i < count; ++i) {
-        //            instruction.WriteLine("\t" + operation + "\t" + Name);
-        //        }
-        //    }
-
-        //    if (Equals(this, Hl)) {
-        //        void ViaRegister(Cate.WordRegister temporaryRegister)
-        //        {
-        //            temporaryRegister.LoadConstant(instruction, offset);
-        //            instruction.WriteLine("\tdad\t" + temporaryRegister);
-        //        }
-
-        //        var candidates = new List<Cate.WordRegister>() { De, Bc };
-        //        if (candidates.Any(r => !instruction.IsRegisterReserved(r))) {
-        //            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
-        //            ViaRegister(reservation.WordRegister);
-        //        }
-        //        else {
-        //            instruction.WriteLine("\tpush\t" + De);
-        //            ViaRegister(De);
-        //            instruction.WriteLine("\tpop\t" + De);
-        //        }
-        //    }
-        //    else {
-        //        Debug.Assert(IsPair());
-        //        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-        //            Debug.Assert(Low != null && High != null);
-        //            ByteRegister.A.CopyFrom(instruction, Low);
-        //            instruction.WriteLine("\tadi\tlow " + offset);
-        //            Low.CopyFrom(instruction, ByteRegister.A);
-        //            ByteRegister.A.CopyFrom(instruction, High);
-        //            instruction.WriteLine("\taci\thigh " + offset);
-        //            High.CopyFrom(instruction, ByteRegister.A);
-        //        }
-        //    }
-
-        //    instruction.AddChanged(this);
-        //    instruction.RemoveRegisterAssignment(this);
-        //}
-
-        //public override bool IsAddable() => Equals(this, Hl);
-
-        //public override bool IsOffsetInRange(int offset)
-        //{
-        //    return offset == 0;
-        //}
-
-        //public override bool IsPointer(int offset)
-        //{
-        //    return offset == 0;
-        //}
 
         public override void LoadConstant(Instruction instruction, string value)
         {
@@ -176,68 +100,6 @@ namespace Inu.Cate.I8080
             }
         }
 
-        //public override void Load(Instruction instruction, Operand sourceOperand)
-        //{
-        //    switch (sourceOperand) {
-        //        case IntegerOperand sourceIntegerOperand:
-        //            var value = sourceIntegerOperand.IntegerValue;
-        //            if (instruction.IsConstantAssigned(this, value)) return;
-        //            LoadConstant(instruction, value.ToString());
-        //            instruction.SetRegisterConstant(this, value);
-        //            return;
-        //        case PointerOperand sourcePointerOperand:
-        //            if (instruction.IsConstantAssigned(this, sourcePointerOperand)) return;
-        //            instruction.WriteLine("\tlxi\t" + this + "," + sourcePointerOperand.MemoryAddress());
-        //            instruction.SetRegisterConstant(this, sourcePointerOperand);
-        //            instruction.AddChanged(this);
-        //            return;
-        //        case VariableOperand sourceVariableOperand: {
-        //                var sourceVariable = sourceVariableOperand.Variable;
-        //                var sourceOffset = sourceVariableOperand.Offset;
-        //                var variableRegister = instruction.GetVariableRegister(sourceVariableOperand);
-        //                if (variableRegister is WordRegister sourceRegister) {
-        //                    Debug.Assert(sourceOffset == 0);
-        //                    if (!Equals(sourceRegister, this)) {
-        //                        CopyFrom(instruction, sourceRegister);
-        //                        instruction.CancelOperandRegister(sourceVariableOperand);
-        //                    }
-        //                    return;
-        //                }
-        //                LoadFromMemory(instruction, sourceVariable, sourceOffset);
-        //                instruction.CancelOperandRegister(sourceVariableOperand);
-        //                return;
-        //            }
-        //        case IndirectOperand sourceIndirectOperand: {
-        //                var pointer = sourceIndirectOperand.Variable;
-        //                var offset = sourceIndirectOperand.Offset;
-        //                var pointerRegister = instruction.GetVariableRegister(pointer, 0);
-        //                if (pointerRegister is WordRegister pointerWordRegister && !Equals(pointerWordRegister, this)) {
-        //                    LoadIndirect(instruction, pointerWordRegister, offset);
-        //                    instruction.CancelOperandRegister(sourceIndirectOperand);
-        //                    return;
-        //                }
-
-        //                if (Equals(this, Hl)) {
-        //                    using var reservation = WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
-        //                    var temporaryRegister = reservation.WordRegister;
-        //                    Hl.LoadFromMemory(instruction, pointer, 0);
-        //                    temporaryRegister.LoadIndirect(instruction, Hl, offset);
-        //                    Hl.CopyFrom(instruction, temporaryRegister);
-        //                    instruction.CancelOperandRegister(sourceIndirectOperand);
-        //                    return;
-        //                }
-        //                using (WordOperation.ReserveRegister(instruction, Hl)) {
-        //                    Hl.LoadFromMemory(instruction, pointer, 0);
-        //                    LoadIndirect(instruction, Hl, offset);
-        //                    instruction.CancelOperandRegister(sourceIndirectOperand);
-        //                }
-        //                return;
-        //            }
-        //    }
-
-        //    throw new NotImplementedException();
-        //}
-
         public override void Store(Instruction instruction, AssignableOperand destinationOperand)
         {
             switch (destinationOperand) {
@@ -262,7 +124,7 @@ namespace Inu.Cate.I8080
                         var pointer = destinationIndirectOperand.Variable;
                         var offset = destinationIndirectOperand.Offset;
                         var register = instruction.GetVariableRegister(pointer, 0);
-                        if (register is PointerRegister pointerRegister) {
+                        if (register is WordRegister pointerRegister) {
                             StoreIndirect(instruction, pointerRegister, offset);
                             return;
                         }
@@ -272,15 +134,15 @@ namespace Inu.Cate.I8080
                             using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
                             var temporaryRegister = reservation.WordRegister;
                             temporaryRegister.CopyFrom(instruction, this);
-                            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                                PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
-                                temporaryRegister.StoreIndirect(instruction, PointerRegister.Hl, offset);
+                            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                                WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                                temporaryRegister.StoreIndirect(instruction, WordRegister.Hl, offset);
                             }
                             return;
                         }
-                        using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                            PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
-                            StoreIndirect(instruction, PointerRegister.Hl, offset);
+                        using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                            WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                            StoreIndirect(instruction, WordRegister.Hl, offset);
                         }
                         return;
                     }
@@ -304,11 +166,11 @@ namespace Inu.Cate.I8080
             instruction.AddChanged(this);
         }
 
-        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             Debug.Assert(Low != null && High != null);
             if (offset == 0) {
-                if (Equals(pointerRegister, PointerRegister.Hl)) {
+                if (Equals(pointerRegister, WordRegister.Hl)) {
                     if (Equals(this, Hl)) {
                         using var reservation =
                             WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
@@ -349,7 +211,7 @@ namespace Inu.Cate.I8080
             }
             pointerRegister.Add(instruction, offset);
             LoadIndirect(instruction, pointerRegister, 0);
-            if (!Equals(pointerRegister.WordRegister, this)) {
+            if (!Equals(pointerRegister, this)) {
                 pointerRegister.Add(instruction, -offset);
             }
         }
@@ -360,7 +222,7 @@ namespace Inu.Cate.I8080
                 using var reservation = WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
                 var temporaryRegister = reservation.WordRegister;
                 Hl.LoadFromMemory(instruction, pointer, 0);
-                temporaryRegister.LoadIndirect(instruction, PointerRegister.Hl, offset);
+                temporaryRegister.LoadIndirect(instruction, WordRegister.Hl, offset);
                 Hl.CopyFrom(instruction, temporaryRegister);
                 return;
             }
@@ -368,11 +230,11 @@ namespace Inu.Cate.I8080
         }
 
 
-        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             Debug.Assert(Low != null && High != null);
             if (offset == 0) {
-                if (Equals(pointerRegister, PointerRegister.Hl)) {
+                if (Equals(pointerRegister, WordRegister.Hl)) {
                     if (Equals(this, Hl)) {
                         using var reservation = WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
                         var wordRegister = reservation.WordRegister;
@@ -398,7 +260,7 @@ namespace Inu.Cate.I8080
                 return;
             }
 
-            void AddAndStore(Cate.PointerRegister wordRegister)
+            void AddAndStore(Cate.WordRegister wordRegister)
             {
                 wordRegister.Add(instruction, offset);
                 StoreIndirect(instruction, wordRegister, 0);
@@ -408,9 +270,9 @@ namespace Inu.Cate.I8080
                 AddAndStore(pointerRegister);
             }
             else {
-                var candidates = PointerRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList();
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-                var temporaryRegister = reservation.PointerRegister;
+                var candidates = WordRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList();
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                var temporaryRegister = reservation.WordRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 AddAndStore(temporaryRegister);
             }
@@ -431,6 +293,93 @@ namespace Inu.Cate.I8080
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
         {
             throw new NotImplementedException();
+        }
+
+        public override void TemporaryOffset(Instruction instruction, int offset, Action action)
+        {
+            if (Math.Abs(offset) <= 1) {
+                base.TemporaryOffset(instruction, offset, action);
+                return;
+            }
+            var changed = instruction.IsChanged(this);
+            if (!changed) {
+                Save(instruction);
+            }
+            Add(instruction, offset);
+            action();
+            if (!changed) {
+                Restore(instruction);
+                instruction.RemoveChanged(this);
+            }
+        }
+
+        public override bool IsOffsetInRange(int offset)
+        {
+            return offset == 0;
+        }
+
+        public override void Add(Instruction instruction, int offset)
+        {
+            if (offset == 0) {
+                return;
+            }
+
+            const int threshold = 4;
+            var count = offset & 0xffff;
+            if (count <= threshold) {
+                Loop("inx");
+                instruction.AddChanged(this);
+                instruction.RemoveRegisterAssignment(this);
+                return;
+            }
+
+            if (count >= 0x10000 - threshold) {
+                count = 0x10000 - count;
+                Loop("dcx");
+                instruction.AddChanged(this);
+                instruction.RemoveRegisterAssignment(this);
+                return;
+            }
+
+            void Loop(string operation)
+            {
+                for (var i = 0; i < count; ++i) {
+                    instruction.WriteLine("\t" + operation + "\t" + Name);
+                }
+            }
+
+            if (Equals(this, Hl)) {
+                void ViaRegister(Cate.WordRegister temporaryRegister)
+                {
+                    temporaryRegister.LoadConstant(instruction, offset);
+                    instruction.WriteLine("\tdad\t" + temporaryRegister);
+                }
+
+                var candidates = new List<Cate.WordRegister>() { I8080.WordRegister.De, I8080.WordRegister.Bc };
+                if (candidates.Any(r => !instruction.IsRegisterReserved(r))) {
+                    using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                    ViaRegister(reservation.WordRegister);
+                }
+                else {
+                    instruction.WriteLine("\tpush\t" + De);
+                    ViaRegister(I8080.WordRegister.De);
+                    instruction.WriteLine("\tpop\t" + De);
+                }
+            }
+            else {
+                using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+                    Debug.Assert(Low != null && High != null);
+                    ByteRegister.A.CopyFrom(instruction, Low);
+                    instruction.WriteLine("\tadi\tlow " + offset);
+                    Low.CopyFrom(instruction, ByteRegister.A);
+                    ByteRegister.A.CopyFrom(instruction, High);
+                    instruction.WriteLine("\taci\thigh " + offset);
+                    High.CopyFrom(instruction, ByteRegister.A);
+                }
+            }
+
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
         }
     }
 }
