@@ -52,6 +52,15 @@ internal class ByteOperation : Cate.ByteOperation
         register.StoreIndirect(instruction, pointerRegister, offset);
     }
 
+    public override void ClearByte(Cate.ByteLoadInstruction instruction, VariableOperand variableOperand)
+    {
+        if (variableOperand.Register == null) {
+            ClearByte(instruction, variableOperand.MemoryAddress());
+            return;
+        }
+        base.ClearByte(instruction, variableOperand);
+    }
+
     public override void ClearByte(Instruction instruction, string label)
     {
         Mos6502.Compiler.Instance.ClearByte(instruction, label);

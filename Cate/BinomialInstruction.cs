@@ -19,7 +19,7 @@ public abstract class BinomialInstruction : Instruction
         DestinationOperand = destinationOperand;
         LeftOperand = leftOperand;
         RightOperand = rightOperand;
-
+        
         DestinationOperand.AddUsage(function.NextAddress, Variable.Usage.Write);
         LeftOperand.AddUsage(function.NextAddress, Variable.Usage.Read);
         RightOperand.AddUsage(function.NextAddress, Variable.Usage.Read);

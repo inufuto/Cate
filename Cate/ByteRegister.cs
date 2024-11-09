@@ -18,7 +18,7 @@ public abstract class ByteRegister : Register
                     return true;
                 break;
             case WordPointerRegister pointerRegister:
-                if (pointerRegister.WordRegister != null && pointerRegister.WordRegister.Contains(this)) {
+                if (pointerRegister.WordRegister.Contains(this)) {
                     return true;
                 }
                 break;

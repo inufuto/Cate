@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -152,32 +151,51 @@ public abstract class SubroutineInstruction : Instruction
 
     public override void BuildAssembly()
     {
+        var returnRegister = Compiler.Instance.ReturnRegister((ParameterizableType)TargetFunction.Type);
+        RegisterReservation? alternative = null;
         {
             var reservations = FillParameters();
             ResultFlags = 0;
             Call();
             foreach (var reservation in reservations) {
+                if (reservation.Register.Conflicts(returnRegister)) {
+                    switch (reservation.Register) {
+                        case ByteRegister:
+                            alternative = ByteOperation.ReserveAnyRegister(this);
+                            alternative.ByteRegister.CopyFrom(this, reservation.ByteRegister);
+                            returnRegister = alternative.ByteRegister;
+                            break;
+                        case WordRegister:
+                            alternative = WordOperation.ReserveAnyRegister(this);
+                            alternative.WordRegister.CopyFrom(this, reservation.WordRegister);
+                            returnRegister = alternative.WordRegister;
+                            break;
+                        case PointerRegister:
+                            alternative = PointerOperation.ReserveAnyRegister(this);
+                            alternative.PointerRegister.CopyFrom(this, reservation.PointerRegister);
+                            returnRegister = alternative.PointerRegister;
+                            break;
+                    }
+                }
                 reservation.Dispose();
             }
         }
         RemoveStaticVariableAssignments();
 
-        var returnRegister = Compiler.Instance.ReturnRegister((ParameterizableType)TargetFunction.Type);
         if (returnRegister != null) {
             AddChanged(returnRegister);
         }
-        if (DestinationOperand == null)
-            return;
 
-        void StoreResult(Register rr)
-        {
-            RemoveRegisterAssignment(rr);
-            var resultSaved = !IsRegisterReserved(rr);
+        if (DestinationOperand != null) {
+            Debug.Assert(returnRegister != null);
+            RemoveRegisterAssignment(returnRegister);
+            var resultSaved = !IsRegisterReserved(returnRegister);
             if (resultSaved) {
-                ReserveRegister(rr);
+                ReserveRegister(returnRegister);
             }
-            RemoveRegisterAssignment(rr);
-            switch (rr) {
+
+            RemoveRegisterAssignment(returnRegister);
+            switch (returnRegister) {
                 case ByteRegister byteRegister:
                     byteRegister.Store(this, DestinationOperand);
                     break;
@@ -190,8 +208,7 @@ public abstract class SubroutineInstruction : Instruction
             }
         }
 
-        Debug.Assert(returnRegister != null);
-        StoreResult(returnRegister);
+        alternative?.Dispose();
     }
 
 

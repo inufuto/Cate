@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection.Emit;
 
 namespace Inu.Cate;
 
@@ -71,38 +70,38 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
                 OperateConstant(instruction, operation, stringOperand.StringValue, count);
                 return;
             case VariableOperand variableOperand: {
-                var variable = variableOperand.Variable;
-                var offset = variableOperand.Offset;
-                var register = variable.Register;
-                if (register is ByteRegister byteRegister) {
-                    Debug.Assert(operation.Replace("\t", "").Replace(" ", "").Length <= 3);
-                    byteRegister.Operate(instruction, operation, change, count);
+                    var variable = variableOperand.Variable;
+                    var offset = variableOperand.Offset;
+                    var register = variable.Register;
+                    if (register is ByteRegister byteRegister) {
+                        Debug.Assert(operation.Replace("\t", "").Replace(" ", "").Length <= 3);
+                        byteRegister.Operate(instruction, operation, change, count);
+                        instruction.ResultFlags |= Instruction.Flag.Z;
+                        return;
+                    }
+                    OperateMemory(instruction, operation, change, variable, offset, count);
+                    return;
+                }
+            case IndirectOperand indirectOperand: {
+                    var pointer = indirectOperand.Variable;
+                    var offset = indirectOperand.Offset;
+                    var variableRegister = instruction.GetVariableRegister(indirectOperand.Variable, 0);
+                    if (variableRegister is WordRegister wRegister) {
+                        variableRegister = wRegister.ToPointer();
+                    }
+                    if (variableRegister is PointerRegister pointerRegister) {
+                        //var pointerRegister = Compiler.Instance.WordOperation.RegisterFromId(pointer.Register.Value);
+                        OperateIndirect(instruction, operation, change, pointerRegister, offset, count);
+                        return;
+                    }
+                    OperateIndirect(instruction, operation, change, pointer, offset, count);
+                    return;
+                }
+            case ByteRegisterOperand byteRegisterOperand: {
+                    byteRegisterOperand.Register.Operate(instruction, operation, change, count);
                     instruction.ResultFlags |= Instruction.Flag.Z;
                     return;
                 }
-                OperateMemory(instruction, operation, change, variable, offset, count);
-                return;
-            }
-            case IndirectOperand indirectOperand: {
-                var pointer = indirectOperand.Variable;
-                var offset = indirectOperand.Offset;
-                var variableRegister = instruction.GetVariableRegister(indirectOperand.Variable, 0);
-                if (variableRegister is WordRegister wRegister) {
-                    variableRegister = wRegister.ToPointer();
-                }
-                if (variableRegister is PointerRegister pointerRegister) {
-                    //var pointerRegister = Compiler.Instance.WordOperation.RegisterFromId(pointer.Register.Value);
-                    OperateIndirect(instruction, operation, change, pointerRegister, offset, count);
-                    return;
-                }
-                OperateIndirect(instruction, operation, change, pointer, offset, count);
-                return;
-            }
-            case ByteRegisterOperand byteRegisterOperand: {
-                byteRegisterOperand.Register.Operate(instruction, operation, change, count);
-                instruction.ResultFlags |= Instruction.Flag.Z;
-                return;
-            }
         }
         throw new NotImplementedException();
     }
@@ -115,7 +114,8 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
     public virtual void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset,
         int value)
     {
-        using var reservation = ReserveAnyRegister(instruction, Registers);
+        var candidates = Registers.Where(r => !r.Conflicts(pointerRegister)).ToList();
+        using var reservation = ReserveAnyRegister(instruction, candidates);
         reservation.ByteRegister.LoadConstant(instruction, value);
         reservation.ByteRegister.StoreIndirect(instruction, pointerRegister, offset);
     }
@@ -195,6 +195,30 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
 
     public void OperateByteBinomial(BinomialInstruction instruction, string operation, bool change)
     {
+        if (
+            instruction.DestinationOperand.Register is ByteRegister byteRegister &&
+            Accumulators.Contains(byteRegister) &&
+            !(
+                Equals(instruction.RightOperand.Register, byteRegister) ||
+                (
+                    instruction.RightOperand is IndirectOperand { Variable.Register: not null } indirectOperand &&
+                    indirectOperand.Variable.Register.Conflicts(byteRegister)
+                )
+            )
+        ) {
+            ViaRegister(byteRegister);
+            return;
+        }
+
+        var candidates = Accumulators.Where(r => !r.Conflicts(instruction.RightOperand.Register)).ToList();
+        if (candidates.Count == 0) {
+            candidates = Accumulators;
+        }
+        using var reservation = instruction.ByteOperation.ReserveAnyRegister(instruction, candidates, instruction.LeftOperand);
+        ViaRegister(reservation.ByteRegister);
+        reservation.ByteRegister.Store(instruction, instruction.DestinationOperand);
+        return;
+
         void ViaRegister(ByteRegister r)
         {
             if (instruction.RightOperand.Register is ByteRegister rightRegister && Equals(rightRegister, r)) {
@@ -210,19 +234,6 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
             instruction.AddChanged(r);
             instruction.RemoveRegisterAssignment(r);
         }
-
-        if (instruction.DestinationOperand.Register is ByteRegister byteRegister && Accumulators.Contains(byteRegister) && !Equals(instruction.RightOperand.Register, byteRegister)) {
-            ViaRegister(byteRegister);
-            return;
-        }
-
-        var candidates = Accumulators.Where(r => !r.Conflicts(instruction.RightOperand.Register)).ToList();
-        if (candidates.Count == 0) {
-            candidates = Accumulators;
-        }
-        using var reservation = instruction.ByteOperation.ReserveAnyRegister(instruction, candidates, instruction.LeftOperand);
-        ViaRegister(reservation.ByteRegister);
-        reservation.ByteRegister.Store(instruction, instruction.DestinationOperand);
     }
 
     public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);
@@ -232,5 +243,5 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
     //{
     //    return new Saving(register, instruction, this);
     //}
-      
+
 }

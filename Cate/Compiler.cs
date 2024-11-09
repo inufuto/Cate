@@ -1515,7 +1515,7 @@ public abstract class Compiler
 
     protected ISet<Register> SavingRegisters(Register register)
     {
-        return SavingRegisters(new List<Register>() { register });
+        return SavingRegisters(new List<Register> { register });
     }
 
     public ISet<Register> SavingRegisters(IEnumerable<Register> registers)

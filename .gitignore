@@ -113,7 +113,11 @@ runtime/SC62015/c.bat
 *.bat
 /Cate61s/.vs/ProjectEvaluation
 /Cate83/.vs/ProjectEvaluation
-/Cate85/.vs
-/Cate85/bin
+/Cate85/.vs/Cate85/FileContentIndex
 /Cate85/obj
+/Cate85/.vs/Cate85/DesignTimeBuild
+/Cate85/bin
 /Cate85/Properties/PublishProfiles
+/Cate85/.vs/ProjectEvaluation/cate85.metadata.v9.bin
+/Cate85/.vs/ProjectEvaluation/cate85.projects.v9.bin
+/Cate85/.vs/ProjectEvaluation/cate85.strings.v9.bin
