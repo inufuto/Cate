@@ -105,7 +105,7 @@ internal class ByteRegister : Cate.ByteRegister
         StoreToMemory(instruction, variable.MemoryAddress(offset));
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
             if (pointerRegister.Conflicts(this)) {
@@ -118,7 +118,7 @@ internal class ByteRegister : Cate.ByteRegister
             }
         }
         else {
-            void ForRegister(Cate.PointerRegister register1)
+            void ForRegister(Cate.WordRegister register1)
             {
                 Clear(instruction);
                 instruction.WriteLine("\tmovb\t@" + offset + "(" + register1.Name + ")," + Name);
@@ -128,9 +128,9 @@ internal class ByteRegister : Cate.ByteRegister
                 ForRegister(pointerRegister);
             }
             else {
-                var candidates = PointerOperation.RegistersToOffset(offset).Where(r => !r.Conflicts(this)).ToList();
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-                var temporaryRegister = reservation.PointerRegister;
+                var candidates = WordOperation.RegistersToOffset(offset).Where(r => !r.Conflicts(this)).ToList();
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                var temporaryRegister = reservation.WordRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 ForRegister(temporaryRegister);
             }
@@ -138,13 +138,13 @@ internal class ByteRegister : Cate.ByteRegister
         instruction.RemoveRegisterAssignment(this);
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
             instruction.WriteLine("\tmovb\t" + Name + ",*" + pointerRegister);
         }
         else {
-            void ForRegister(Cate.PointerRegister register)
+            void ForRegister(Cate.WordRegister register)
             {
                 instruction.WriteLine("\tmovb\t" + Name + ",@" + offset + "(" + register.Name + ")");
             }
@@ -152,8 +152,8 @@ internal class ByteRegister : Cate.ByteRegister
                 ForRegister(pointerRegister);
             }
             else {
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerOperation.RegistersToOffset(offset));
-                var temporaryRegister = reservation.PointerRegister;
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.RegistersToOffset(offset));
+                var temporaryRegister = reservation.WordRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 ForRegister(temporaryRegister);
             }

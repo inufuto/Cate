@@ -2,27 +2,44 @@
 
 namespace Inu.Cate.Tms99;
 
-internal class WordAddOrSubtractInstruction : AddOrSubtractInstruction
+internal class WordAddOrSubtractInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : AddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
-    public WordAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand) { }
-
     public override void BuildAssembly()
     {
-        if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
-            ExchangeOperands();
+        if (IsOperatorExchangeable()) {
+            if (RightOperand.Register != null && LeftOperand.Register == null) {
+                ExchangeOperands();
+            }
+            //else if (LeftOperand.Type is not PointerType) {
+            //    ExchangeOperands();
+            //}
         }
         if (IncrementOrDecrement()) return;
 
         ResultFlags |= Flag.Z;
-        if (RightOperand is IntegerOperand integerOperand)
-        {
+        if (RightOperand is IntegerOperand integerOperand) {
             var value = OperatorId switch
             {
                 '+' => integerOperand.IntegerValue,
                 '-' => -integerOperand.IntegerValue,
                 _ => throw new NotImplementedException()
             };
-
+            Tms99.WordOperation.OperateConstant(this, "ai", DestinationOperand, LeftOperand, value);
+            return;
+        }
+        if (RightOperand is PointerOperand pointerOperand) {
+            var value = OperatorId switch
+            {
+                '+' => pointerOperand.MemoryAddress(),
+                '-' => "-" + pointerOperand.MemoryAddress(),
+                _ => throw new NotImplementedException()
+            };
             Tms99.WordOperation.OperateConstant(this, "ai", DestinationOperand, LeftOperand, value);
             return;
         }

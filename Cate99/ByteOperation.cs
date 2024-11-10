@@ -36,7 +36,7 @@ namespace Inu.Cate.Tms99
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
-        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset,
+        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
             int count)
         {
             using (var reservation = ReserveAnyRegister(instruction)) {
@@ -50,7 +50,7 @@ namespace Inu.Cate.Tms99
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset, int value)
+        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
         {
             var candidates = Registers.Where(r => !r.Conflicts(pointerRegister)).ToList();
             using var reservation = ReserveAnyRegister(instruction, candidates);
@@ -168,8 +168,8 @@ namespace Inu.Cate.Tms99
 
                 if (rightOperand is IndirectOperand { Variable: { Register: null } variable } indirectOperand) {
                     var offset = indirectOperand.Offset;
-                    var candidates = PointerOperation.RegistersToOffset(offset);
-                    using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
+                    var candidates = WordOperation.RegistersToOffset(offset);
+                    using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
                     var pointerRegister = reservation.WordRegister;
                     pointerRegister.LoadFromMemory(instruction, variable, 0);
                     if (offset == 0) {
