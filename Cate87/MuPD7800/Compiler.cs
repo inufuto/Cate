@@ -2,7 +2,7 @@
 {
     internal class Compiler : MuCom87.Compiler
     {
-        public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
+        public Compiler() : base(new ByteOperation(), new WordOperation()) { }
 
         protected override MuCom87.ByteShiftInstruction CreateByteShiftInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
             Operand leftOperand, Operand rightOperand)

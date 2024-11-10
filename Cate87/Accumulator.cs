@@ -9,14 +9,14 @@ namespace Inu.Cate.MuCom87
         protected internal Accumulator(int id) : base(id, "a") { }
 
 
-        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister)
+        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister)
         {
             instruction.WriteLine("\tldax\t" + pointerRegister.AsmName);
             instruction.AddChanged(A);
             instruction.RemoveRegisterAssignment(A);
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister)
+        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister)
         {
             instruction.WriteLine("\tstax\t" + pointerRegister.AsmName);
         }
@@ -67,15 +67,15 @@ namespace Inu.Cate.MuCom87
                         var offset = indirectOperand.Offset;
                         {
                             var register = instruction.GetVariableRegister(pointer, 0);
-                            if (register is PointerRegister pointerRegister) {
+                            if (register is WordRegister pointerRegister) {
                                 OperateIndirect(instruction, operation, pointerRegister, offset);
                                 return;
                             }
                         }
                         {
-                            using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.Registers);
+                            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
 
-                            var pointerRegister = reservation.PointerRegister;
+                            var pointerRegister = reservation.WordRegister;
                             pointerRegister.LoadFromMemory(instruction, pointer, 0);
                             OperateIndirect(instruction, operation, pointerRegister, offset);
                         }
@@ -90,7 +90,7 @@ namespace Inu.Cate.MuCom87
             instruction.WriteLine("\t" + operation + "a," + operand);
         }
 
-        private static void OperateIndirect(Instruction instruction, string operation, Cate.PointerRegister pointerRegister, int offset)
+        private static void OperateIndirect(Instruction instruction, string operation, Cate.WordRegister pointerRegister, int offset)
         {
             if (pointerRegister.IsOffsetInRange(offset)) {
                 OperateIndirect(instruction, operation, pointerRegister);
@@ -101,7 +101,7 @@ namespace Inu.Cate.MuCom87
                 () => { OperateIndirect(instruction, operation, pointerRegister); });
         }
 
-        private static void OperateIndirect(Instruction instruction, string operation, Cate.PointerRegister pointerRegister)
+        private static void OperateIndirect(Instruction instruction, string operation, Cate.WordRegister pointerRegister)
         {
             instruction.WriteLine("\t" + operation.Split('|')[0] + "x\t" + pointerRegister.AsmName);
         }
