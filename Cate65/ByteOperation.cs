@@ -27,9 +27,9 @@ internal class ByteOperation : Cate.ByteOperation
     }
 
     protected override void OperateIndirect(Instruction instruction, string operation, bool change,
-        PointerRegister pointerRegister, int offset, int count)
+        WordRegister pointerRegister, int offset, int count)
     {
-        if (pointerRegister is not PointerZeroPage zeroPage) {
+        if (pointerRegister is not WordZeroPage zeroPage) {
             throw new NotImplementedException();
         }
         while (true) {
@@ -43,7 +43,7 @@ internal class ByteOperation : Cate.ByteOperation
         }
     }
 
-    public override void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset,
+    public override void StoreConstantIndirect(Instruction instruction, WordRegister pointerRegister, int offset,
         int value)
     {
         using var reservation = ReserveAnyRegister(instruction);

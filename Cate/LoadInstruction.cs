@@ -138,35 +138,3 @@ public class WordLoadInstruction : LoadInstruction
         }
     }
 }
-
-public class PointerLoadInstruction : LoadInstruction
-{
-    public PointerLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
-
-    public override void BuildAssembly()
-    {
-        if (
-            DestinationOperand.SameStorage(SourceOperand) &&
-            DestinationOperand.Type.ByteCount == SourceOperand.Type.ByteCount
-        ) {
-            return;
-        }
-
-        if (DestinationOperand.Register is WordRegister pointerRegister) {
-            pointerRegister.Load(this, SourceOperand);
-            SetVariableRegister(DestinationOperand, pointerRegister);
-            return;
-        }
-
-        if (SourceOperand is VariableOperand variableOperand) {
-            var variableRegister = GetVariableRegister(variableOperand);
-            if (variableRegister is WordRegister sourceRegister) {
-                sourceRegister.Store(this, DestinationOperand);
-                return;
-            }
-        }
-        using var reservation = WordOperation.ReserveAnyRegister(this, SourceOperand);
-        reservation.WordRegister.Load(this, SourceOperand);
-        reservation.WordRegister.Store(this, DestinationOperand);
-    }
-}

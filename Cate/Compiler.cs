@@ -1566,11 +1566,9 @@ public abstract class Compiler
     public LoadInstruction CreateLoadInstruction(Function function, AssignableOperand destinationOperand,
         Operand sourceOperand)
     {
-        return destinationOperand.Type.ByteCount switch
-        {
-            1 => CreateByteLoadInstruction(function, destinationOperand, sourceOperand),
-            _ => destinationOperand.Type is PointerType ? CreatePointerLoadInstruction(function, destinationOperand, sourceOperand) : CreateWordLoadInstruction(function, destinationOperand, sourceOperand)
-        };
+        return destinationOperand.Type.ByteCount == 1
+            ? CreateByteLoadInstruction(function, destinationOperand, sourceOperand)
+            : CreateWordLoadInstruction(function, destinationOperand, sourceOperand);
     }
 
 
@@ -1585,13 +1583,6 @@ public abstract class Compiler
     {
         return new WordLoadInstruction(function, destinationOperand, sourceOperand);
     }
-
-    protected virtual LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
-        Operand sourceOperand)
-    {
-        return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
-    }
-
 
     public abstract BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
         AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand);

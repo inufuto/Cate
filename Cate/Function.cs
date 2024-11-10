@@ -279,7 +279,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pVram = pVram + 33")) {
+            if (instruction.ToString().Contains("return @3")) {
                 var aaa = 111;
             }
 #endif
