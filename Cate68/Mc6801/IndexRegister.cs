@@ -9,7 +9,7 @@ internal class IndexRegister : Mc6800.IndexRegister
 
     private protected IndexRegister(int id, string name) : base(id, name) { }
 
-    //public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    //public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     //{
     //    using (WordOperation.ReserveRegister(instruction, PairRegister.D)) {
     //        PairRegister.D.LoadIndirect(instruction, pointerRegister, offset);
@@ -19,11 +19,11 @@ internal class IndexRegister : Mc6800.IndexRegister
 
     public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
     {
-        PointerRegister.X.LoadFromMemory(instruction, pointer, 0);
-        LoadIndirect(instruction, PointerRegister.X, offset);
+        IndexRegister.X.LoadFromMemory(instruction, pointer, 0);
+        LoadIndirect(instruction, IndexRegister.X, offset);
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         using (WordOperation.ReserveRegister(instruction, PairRegister.D)) {
             PairRegister.D.CopyFrom(instruction, this);

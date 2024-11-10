@@ -410,13 +410,13 @@ public abstract class SubroutineInstruction : Instruction
                 }
             }
             else {
-                StoreWord(operand, label);
+                StoreWord(operand, label, parameter.Type);
             }
             assignment.SetDone(this, null);
         }
     }
 
-    protected virtual void StoreWord(Operand operand, string label)
+    protected virtual void StoreWord(Operand operand, string label, ParameterizableType type)
     {
         if (operand is VariableOperand variableOperand) {
             var variableRegister = GetVariableRegister(variableOperand);
@@ -426,7 +426,7 @@ public abstract class SubroutineInstruction : Instruction
                 return;
             }
         }
-        using var reservation = WordOperation.ReserveAnyRegister(this);
+        using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.RegistersForType(type));
         reservation.WordRegister.Load(this, operand);
         reservation.WordRegister.StoreToMemory(this, label);
     }

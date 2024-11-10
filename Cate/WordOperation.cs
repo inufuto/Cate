@@ -41,7 +41,7 @@ public abstract class WordOperation : RegisterOperation<WordRegister>
         return ReserveAnyRegister(instruction, RegistersForType(sourceOperand.Type), sourceOperand);
     }
 
-    private List<WordRegister> RegistersForType(Type type)
+    public virtual List<WordRegister> RegistersForType(Type type)
     {
         return Registers.Where(r => r.ByteCount == type.ByteCount).ToList();
     }

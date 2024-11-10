@@ -90,6 +90,7 @@ public abstract class ByteRegister : Register
                         if (candidates.Any()) {
                             var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
                             reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+                            instruction.SetVariableRegister(pointer, offset, reservation.WordRegister);
                             LoadIndirect(instruction, reservation.WordRegister, offset);
                             instruction.AddChanged(this);
                             instruction.CancelOperandRegister(sourceIndirectOperand);

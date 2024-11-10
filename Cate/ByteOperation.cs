@@ -86,7 +86,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
                     var pointer = indirectOperand.Variable;
                     var offset = indirectOperand.Offset;
                     var variableRegister = instruction.GetVariableRegister(indirectOperand.Variable, 0);
-                    if (variableRegister is WordRegister pointerRegister) {
+                    if (variableRegister is WordRegister pointerRegister && pointerRegister.IsOffsetInRange(0)) {
                         OperateIndirect(instruction, operation, change, pointerRegister, offset, count);
                         return;
                     }

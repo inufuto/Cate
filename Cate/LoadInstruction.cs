@@ -65,7 +65,7 @@ public class ByteLoadInstruction : LoadInstruction
                         var pointer = indirectOperand.Variable;
                         var offset = indirectOperand.Offset;
                         var register = GetVariableRegister(pointer, 0);
-                        if (register is WordRegister pointerRegister) {
+                        if (register is WordRegister pointerRegister && pointerRegister.IsOffsetInRange(0)) {
                             ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
                             return;
                         }
