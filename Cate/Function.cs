@@ -279,7 +279,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@11 = CanMove_(Man_,pManDirection[1],pManDirection[2])")) {
+            if (instruction.ToString().Contains("@7 = @8 + Show_.50.ScrollPositions_")) {
                 var aaa = 111;
             }
 #endif

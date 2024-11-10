@@ -13,9 +13,9 @@ internal class ByteOperation : Cate.ByteOperation
             OperateA();
             goto end;
         }
-        if (!instruction.IsRegisterReserved(PointerRegister.Hl)) {
-            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                PointerRegister.Hl.LoadConstant(instruction, address);
+        if (!instruction.IsRegisterReserved(WordRegister.Hl)) {
+            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                WordRegister.Hl.LoadConstant(instruction, address);
                 for (var i = 0; i < count; ++i) {
                     instruction.WriteLine("\t" + operation + "(hl)");
                 }
@@ -41,9 +41,9 @@ internal class ByteOperation : Cate.ByteOperation
         }
     }
 
-    protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset, int count)
+    protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset, int count)
     {
-        if (Equals(pointerRegister, PointerRegister.Hl)) {
+        if (Equals(pointerRegister, WordRegister.Hl)) {
             if (offset == 0) {
                 var operand = "(" + pointerRegister + ")";
                 for (var i = 0; i < count; ++i) {
@@ -57,28 +57,28 @@ internal class ByteOperation : Cate.ByteOperation
             });
             return;
         }
-        using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-            PointerRegister.Hl.CopyFrom(instruction, pointerRegister);
-            OperateIndirect(instruction, operation, change, PointerRegister.Hl, offset, count);
+        using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+            WordRegister.Hl.CopyFrom(instruction, pointerRegister);
+            OperateIndirect(instruction, operation, change, WordRegister.Hl, offset, count);
         }
     }
 
     protected override void OperateIndirect(Instruction instruction, string operation, bool change, Variable pointer, int offset, int count)
     {
-        if (Equals(pointer.Register, PointerRegister.Hl)) {
-            OperateIndirect(instruction, operation, change, PointerRegister.Hl, offset, count);
+        if (Equals(pointer.Register, WordRegister.Hl)) {
+            OperateIndirect(instruction, operation, change, WordRegister.Hl, offset, count);
             return;
         }
-        using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-            PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
-            OperateIndirect(instruction, operation, change, PointerRegister.Hl, offset, count);
+        using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+            WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+            OperateIndirect(instruction, operation, change, WordRegister.Hl, offset, count);
         }
     }
 
-    public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset, int value)
+    public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
     {
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 instruction.WriteLine("\tld\t(" + pointerRegister + ")," + value);
                 return;
             }
@@ -88,17 +88,17 @@ internal class ByteOperation : Cate.ByteOperation
             }
             return;
         }
-        if (Equals(pointerRegister, PointerRegister.Hl)) {
+        if (Equals(pointerRegister, WordRegister.Hl)) {
             pointerRegister.TemporaryOffset(instruction, offset, () =>
             {
                 StoreConstantIndirect(instruction, pointerRegister, 0, value);
             });
             return;
         }
-        var candidates = new List<Cate.PointerRegister>(PointerRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList());
-        using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-        reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-        StoreConstantIndirect(instruction, reservation.PointerRegister, offset, value);
+        var candidates = new List<Cate.WordRegister>(WordRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList());
+        using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+        reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+        StoreConstantIndirect(instruction, reservation.WordRegister, offset, value);
     }
 
     public override void ClearByte(Instruction instruction, string label)

@@ -160,32 +160,6 @@ internal class CompareInstruction(
         }
     }
 
-    protected override void ComparePointer()
-    {
-        if (Equals(RightOperand.Register, PointerRegister.De)) {
-            CompareDe();
-        }
-        else {
-            using var reservation = PointerOperation.ReserveRegister(this, PointerRegister.De, RightOperand);
-            PointerRegister.De.Load(this, RightOperand);
-            CompareDe();
-        }
-        Jump(false);
-        return;
-
-        void CompareDe()
-        {
-            if (Equals(LeftOperand.Register, PointerRegister.Hl)) {
-                CompareHlDe();
-            }
-            else {
-                using var reservation = PointerOperation.ReserveRegister(this, PointerRegister.Hl);
-                PointerRegister.Hl.Load(this, LeftOperand);
-                CompareHlDe();
-            }
-        }
-    }
-
     private void Jump(bool operandZero)
     {
         switch (OperatorId) {
