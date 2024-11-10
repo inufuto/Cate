@@ -127,14 +127,24 @@ public class WordLoadInstruction : LoadInstruction
             }
         }
 
-        if (DestinationOperand.Register is WordRegister wordRegister) {
-            wordRegister.Load(this, SourceOperand);
+        if (DestinationOperand.Register is WordRegister destinationRegister) {
+            ViaRegister(destinationRegister);
+            return;
+        }
+        if (SourceOperand.Register is WordRegister leftRegister) {
+            ViaRegister(leftRegister);
             return;
         }
         {
             using var reservation = WordOperation.ReserveAnyRegister(this, SourceOperand);
-            reservation.WordRegister.Load(this, SourceOperand);
-            reservation.WordRegister.Store(this, DestinationOperand);
+            ViaRegister(reservation.WordRegister);
+        }
+        return;
+
+        void ViaRegister(WordRegister register)
+        {
+            register.Load(this, SourceOperand);
+            register.Store(this, DestinationOperand);
         }
     }
 }

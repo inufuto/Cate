@@ -27,8 +27,7 @@ namespace Inu.Cate.I8086
                     1 => ByteRegister.Al,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => PointerRegister.Bx,
-                        PointerType=>PointerRegister.Ax,
+                        PointerType { ElementType: StructureType _ } => WordRegister.Bx,
                         _ => WordRegister.Ax
                     }
                 },
@@ -37,8 +36,7 @@ namespace Inu.Cate.I8086
                     1 => ByteRegister.Dl,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => PointerRegister.Si,
-                        PointerType => PointerRegister.Dx,
+                        PointerType { ElementType: StructureType _ } => WordRegister.Si,
                         _ => WordRegister.Dx
                     }
                 },
@@ -47,8 +45,7 @@ namespace Inu.Cate.I8086
                     1 => ByteRegister.Cl,
                     _ => type switch
                     {
-                        PointerType { ElementType: StructureType _ } => PointerRegister.Di,
-                        PointerType => PointerRegister.Cx,
+                        PointerType { ElementType: StructureType _ } => WordRegister.Di,
                         _ => WordRegister.Cx
                     }
                 },
@@ -61,7 +58,7 @@ namespace Inu.Cate.I8086
             return type.ByteCount switch
             {
                 1 => ByteRegister.Al,
-                2 => type is PointerType ? PointerRegister.Ax : WordRegister.Ax,
+                2 => WordRegister.Ax,
                 _ => null
             };
         }
