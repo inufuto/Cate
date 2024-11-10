@@ -43,6 +43,12 @@ internal class WordRegister(int address) : AbstractWordRegister(MinId + address,
         base.LoadConstant(instruction, value);
     }
 
+    public override bool IsOffsetInRange(int offset)
+    {
+        if (offset == 0) return true;
+        return Address != 0;
+    }
+
     public override void LoadFromMemory(Instruction instruction, string label)
     {
         instruction.WriteLine("\tmovw\t" + this + ",@" + label);
@@ -55,18 +61,17 @@ internal class WordRegister(int address) : AbstractWordRegister(MinId + address,
         instruction.WriteLine("\tmovw\t@" + label + "," + this);
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
             instruction.WriteLine("\tmovw\t" + this + ",@" + pointerRegister);
         }
         else {
-            Debug.Assert(pointerRegister.WordRegister != null);
-            if (((WordRegister)pointerRegister.WordRegister).Address == 0) {
-                var candidates = PointerRegister.TemporaryRegisters.Where(r => !Equals(r.WordRegister, this)).ToList();
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                LoadIndirect(instruction, reservation.PointerRegister, offset);
+            if (((WordRegister)pointerRegister).Address == 0) {
+                var candidates = WordRegister.TemporaryRegisters.Where(r => !Equals(r, this)).ToList();
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+                LoadIndirect(instruction, reservation.WordRegister, offset);
                 return;
             }
             instruction.WriteLine("\tmovw\t" + this + "," + offset + "(" + pointerRegister + ")");
@@ -75,7 +80,7 @@ internal class WordRegister(int address) : AbstractWordRegister(MinId + address,
         instruction.RemoveRegisterAssignment(this);
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
             instruction.WriteLine("\tmovw\t" + "@" + pointerRegister + "," + this);
@@ -94,6 +99,18 @@ internal class WordRegister(int address) : AbstractWordRegister(MinId + address,
             Debug.Assert(Low != null);
             Debug.Assert(High != null);
             return [Low, High];
+        }
+    }
+
+    public static List<Cate.WordRegister> TemporaryRegisters
+    {
+        get
+        {
+            var temporaryRegisters = new List<Cate.WordRegister>();
+            for (var address = 8; address < 16; address += 2) {
+                temporaryRegisters.Add(new WordRegister(address));
+            }
+            return temporaryRegisters;
         }
     }
 }

@@ -54,16 +54,6 @@ internal class CompareInstruction(
         return false;
     }
 
-    protected override void ComparePointer()
-    {
-        var reservation = PointerOperation.ReserveAnyRegister(this, LeftOperand);
-        var pointerRegister = reservation.PointerRegister;
-        pointerRegister.Load(this, LeftOperand);
-        Debug.Assert(pointerRegister.WordRegister != null);
-        if (CompareWord(pointerRegister.WordRegister)) return;
-        Jump();
-    }
-
     private void Jump()
     {
         switch (OperatorId) {

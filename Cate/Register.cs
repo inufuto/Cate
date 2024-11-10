@@ -107,7 +107,7 @@ public abstract class Register : IComparable<Register>
     {
         var register = instruction.GetVariableRegister(pointer, 0, r => r is WordRegister p && p.IsOffsetInRange(offset)) ??
                        instruction.GetVariableRegister(pointer, 0, r => (r is WordRegister p && p.IsOffsetInRange(0)) || r is WordRegister);
-        if (register is WordRegister pointerRegister && (Equals(pointerRegister, pointer.Register) || pointerRegister.IsOffsetInRange(offset))) {
+        if (register is WordRegister pointerRegister ) {
             StoreIndirect(instruction, pointerRegister, offset);
             return;
         }
