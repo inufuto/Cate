@@ -11,36 +11,75 @@ namespace Inu.Cate.Mc6809
 
         public override void BuildAssembly()
         {
-            if (LeftOperand is ConstantOperand && RightOperand is not ConstantOperand && IsOperatorExchangeable()) {
-                ExchangeOperands();
-            }
-            else if (!Equals(LeftOperand.Register, WordRegister.D) && Equals(RightOperand.Register, WordRegister.D)) {
-                ExchangeOperands();
+            if (IsOperatorExchangeable()) {
+                if (LeftOperand is ConstantOperand && RightOperand is not ConstantOperand) {
+                    ExchangeOperands();
+                }
+                else if (LeftOperand.Register == null && RightOperand.Register != null) {
+                    ExchangeOperands();
+                }
+                else if (LeftOperand.Type is not PointerType && RightOperand.Type is PointerType) {
+                    ExchangeOperands();
+                }
             }
 
             if (AddConstant())
                 return;
 
-            var operation = OperatorId switch
-            {
-                '+' => "add",
-                '-' => "sub",
-                _ => throw new NotImplementedException()
-            };
-
-            void AddD()
-            {
-                WordRegister.D.Load(this, LeftOperand);
-                WordRegister.D.Operate(this, operation, true, RightOperand);
-                WordRegister.D.Store(this, DestinationOperand);
-                ResultFlags |= Flag.Z;
-            }
-            if (Equals(LeftOperand.Register, WordRegister.D) && Equals(DestinationOperand.Register, WordRegister.D)) {
-                AddD();
+            if (DestinationOperand.Register is WordRegister wordRegister) {
+                ViaRegister(wordRegister);
                 return;
             }
-            using (WordOperation.ReserveRegister(this, WordRegister.D)) {
-                AddD();
+
+            using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+            ViaRegister(reservation.WordRegister);
+            return;
+
+            void ViaRegister(Cate.WordRegister register)
+            {
+                register.Load(this, LeftOperand);
+                if (register.Equals(WordRegister.D)) {
+                    var operation = OperatorId switch
+                    {
+                        '+' => "add",
+                        '-' => "sub",
+                        _ => throw new NotImplementedException()
+                    };
+                    register.Operate(this, operation, true, RightOperand);
+                }
+                else {
+                    if (Equals(RightOperand.Register, WordRegister.D)) {
+                        AddXd(register);
+                    }
+                    else {
+                        using (WordOperation.ReserveRegister(this, WordRegister.D)) {
+                            WordRegister.D.Load(this, RightOperand);
+                            AddXd(register);
+                        }
+                    }
+                }
+                register.Store(this, DestinationOperand);
+                ResultFlags |= Flag.Z;
+            }
+
+            //if (Equals(LeftOperand.Register, WordRegister.D) && Equals(DestinationOperand.Register, WordRegister.D)) {
+            //    AddD();
+            //    return;
+            //}
+            //using (WordOperation.ReserveRegister(this, WordRegister.D)) {
+            //    AddD();
+            //}
+
+            //void AddD()
+            //{
+            //    WordRegister.D.Load(this, LeftOperand);
+            //    WordRegister.D.Operate(this, operation, true, RightOperand);
+            //    WordRegister.D.Store(this, DestinationOperand);
+            //    ResultFlags |= Flag.Z;
+            //}
+            void AddXd(Cate.WordRegister register)
+            {
+                WriteLine("\tlea" + register.AsmName + "\td," + register.AsmName);
             }
         }
 
@@ -54,7 +93,6 @@ namespace Inu.Cate.Mc6809
                 if (OperatorId == '-') {
                     value = -value;
                 }
-
                 {
                     return AddConstant(value.ToString());
                 }

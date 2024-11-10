@@ -61,21 +61,19 @@ internal class ByteRegister : Cate.ByteRegister
         instruction.WriteLine("\tst" + Name + "\t" + variable.MemoryAddress(offset));
         instruction.SetVariableRegister(variable, offset, this);
     }
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
-        Debug.Assert(!Equals(pointerRegister, PointerRegister.D));
-        Debug.Assert(pointerRegister.WordRegister != null);
-        instruction.WriteLine("\tld" + this + "\t" + WordRegister.OffsetOperand(pointerRegister.WordRegister, offset));
+        Debug.Assert(!Equals(pointerRegister, WordRegister.D));
+        instruction.WriteLine("\tld" + this + "\t" + WordRegister.OffsetOperand(pointerRegister, offset));
         instruction.ResultFlags |= Instruction.Flag.Z;
         instruction.RemoveRegisterAssignment(this);
         instruction.AddChanged(this);
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
-        Debug.Assert(!Equals(pointerRegister, PointerRegister.D));
-        Debug.Assert(pointerRegister.WordRegister != null);
-        instruction.WriteLine("\tst" + this + "\t" + WordRegister.OffsetOperand(pointerRegister.WordRegister, offset));
+        Debug.Assert(!Equals(pointerRegister, WordRegister.D));
+        instruction.WriteLine("\tst" + this + "\t" + WordRegister.OffsetOperand(pointerRegister, offset));
     }
 
     public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
@@ -149,7 +147,7 @@ internal class ByteRegister : Cate.ByteRegister
             goto end;
         }
         Cate.Compiler.Instance.ByteOperation.Operate(instruction, operation + Name, change, operand);
-        end:
+    end:
         if (!change)
             return;
         instruction.RemoveRegisterAssignment(this);
@@ -169,9 +167,6 @@ internal class ByteRegister : Cate.ByteRegister
     public override bool Conflicts(Cate.Register? register)
     {
         if (register is WordRegister wordRegister && wordRegister.Contains(this)) {
-            return true;
-        }
-        if (register is PointerRegister pointerRegister && pointerRegister.Contains(this)) {
             return true;
         }
         return Equals(this, register);
