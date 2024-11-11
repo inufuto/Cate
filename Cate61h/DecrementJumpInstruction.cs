@@ -11,8 +11,8 @@ internal class DecrementJumpInstruction : Cate.DecrementJumpInstruction
                 WriteLine("\tsb " + register.AsmName + "," + ByteRegister.IntValue(1));
                 break;
             case VariableOperand variableOperand: {
-                using var reservation = PointerOperation.ReserveAnyRegister(this, IndexRegister.Registers(true), Operand);
-                var pointerRegister = reservation.PointerRegister;
+                using var reservation = WordOperation.ReserveAnyRegister(this, IndexRegister.Registers(true), Operand);
+                var pointerRegister = reservation.WordRegister;
                 pointerRegister.LoadConstant(this, variableOperand.MemoryAddress());
                 WriteLine("\tsb (" + pointerRegister.AsmName + IndexRegister.OffsetValue(0) + "),$30");
                 break;

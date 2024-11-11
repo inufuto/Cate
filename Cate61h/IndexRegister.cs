@@ -1,16 +1,13 @@
-﻿using System.Collections.Generic;
+﻿namespace Inu.Cate.Hd61700;
 
-namespace Inu.Cate.Hd61700;
-
-internal class IndexRegister : Cate.PointerRegister
+internal class IndexRegister : Cate.WordRegister
 {
     public static readonly IndexRegister Ix = new(100, "ix");
     public static readonly IndexRegister Iz = new(102, "iz");
 
-    public static List<PointerRegister> Registers(bool constant)
+    public static List<Cate.WordRegister> Registers(bool constant)
     {
-            var list = constant ? new List<PointerRegister>() { Ix, Iz } : new List<PointerRegister>() { Iz, Ix };
-            return list;
+        return constant ? [Ix, Iz] : [Iz, Ix];
     }
 
     public static string OffsetValue(int offset)
@@ -82,7 +79,7 @@ internal class IndexRegister : Cate.PointerRegister
         instruction.WriteLine("\tgre " + AsmName + "," + wordRegister.AsmName);
     }
 
-    public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         using var reservation = WordOperation.ReserveAnyRegister(instruction);
         var wordRegister = reservation.WordRegister;
@@ -90,15 +87,13 @@ internal class IndexRegister : Cate.PointerRegister
         FromWordRegister(instruction, wordRegister);
     }
 
-    public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         using var reservation = WordOperation.ReserveAnyRegister(instruction);
         var wordRegister = reservation.WordRegister;
         ToWordRegister(instruction, wordRegister);
         wordRegister.StoreIndirect(instruction, pointerRegister, offset);
     }
-
-    public override Cate.WordRegister? WordRegister => null;
 
     public override bool IsOffsetInRange(int offset)
     {
@@ -116,18 +111,19 @@ internal class IndexRegister : Cate.PointerRegister
         instruction.WriteLine("\tadw " + wrl.AsmName + "," + wrr.AsmName);
     }
 
-    public override void CopyFrom(Instruction instruction, PointerRegister sourceRegister)
+    public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
     {
-        if (sourceRegister.WordRegister != null) {
-            FromWordRegister(instruction, sourceRegister.WordRegister);
-        }
-        else if (sourceRegister is IndexRegister sourceIndexRegister) {
+        if (sourceRegister is IndexRegister sourceIndexRegister) {
             using var reservation = WordOperation.ReserveAnyRegister(instruction);
             var wordRegister = reservation.WordRegister;
             sourceIndexRegister.ToWordRegister(instruction, wordRegister);
             FromWordRegister(instruction, wordRegister);
         }
+        else if (sourceRegister is WordRegister wordRegister) {
+            FromWordRegister(instruction, wordRegister);
+        }
         else {
+
             throw new NotImplementedException();
         }
     }

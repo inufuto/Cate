@@ -12,12 +12,12 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
                 r.LoadConstant(this, 0);
             }
 
-            if (DestinationOperand.Register is PointerRegister pointerRegister) {
+            if (DestinationOperand.Register is WordRegister pointerRegister) {
                 ViaRegister(pointerRegister);
                 return;
             }
-            using var reservation = PointerOperation.ReserveAnyRegister(this, WordPointerRegister.Registers, LeftOperand);
-            ViaRegister(reservation.PointerRegister);
+            using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+            ViaRegister(reservation.WordRegister);
             reservation.WordRegister.Store(this, DestinationOperand);
             return;
         }
@@ -35,7 +35,7 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
             }
             using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
             ViaRegister(reservation.WordRegister);
-            reservation.PointerRegister.Store(this, DestinationOperand);
+            reservation.WordRegister.Store(this, DestinationOperand);
             return;
         }
         {

@@ -69,31 +69,6 @@ internal class CompareInstruction : Cate.CompareInstruction
         });
     }
 
-    protected override void ComparePointer()
-    {
-        Compare(() =>
-        {
-            using var lrr = PointerOperation.ReserveAnyRegister(this, LeftOperand);
-            var leftRegister = lrr.PointerRegister;
-            leftRegister.Load(this, LeftOperand);
-            using var rrr = PointerOperation.ReserveAnyRegister(this, RightOperand);
-            var rightRegister = rrr.PointerRegister;
-            rightRegister.Load(this, RightOperand);
-            WriteLine("\tsbcw " + leftRegister + "," + rightRegister);
-        }, () =>
-        {
-            var leftRegister = WordPointerRegister.Registers[0];
-            using (PointerOperation.ReserveRegister(this, leftRegister)) {
-                leftRegister.Load(this, LeftOperand);
-                var rightRegister = WordPointerRegister.Registers[1];
-                using (PointerOperation.ReserveRegister(this, rightRegister)) {
-                    rightRegister.Load(this, RightOperand);
-                    Compiler.CallExternal(this, "cate.CompareSignedWord");
-                }
-            }
-        });
-    }
-
     private void Compare(Action compareUnsigned, Action compareSigned)
     {
         {
