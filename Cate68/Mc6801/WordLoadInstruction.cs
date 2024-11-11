@@ -9,7 +9,7 @@ internal class WordLoadInstruction : Cate.LoadInstruction
         if (SourceOperand.SameStorage(DestinationOperand))
             return;
 
-        if (SourceOperand is IndirectOperand || DestinationOperand is IndirectOperand) {
+        if (DestinationOperand is IndirectOperand) {
             ViaRegister(PairRegister.D);
             return;
         }

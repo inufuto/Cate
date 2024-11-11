@@ -62,8 +62,9 @@ public class StructureType : Type
 
     public override bool Equals(object? obj)
     {
-        return obj is StructureType structType && (Members.Count == structType.Members.Count &&
-                                                   !Members.Where((t, i) => !t.Equals(structType.Members[i])).Any());
+        if (obj is not StructureType structType) return false;
+        return Members.Count == structType.Members.Count &&
+               !Members.Where((t, i) => !t.Equals(structType.Members[i])).Any();
     }
 
     public override int GetHashCode()

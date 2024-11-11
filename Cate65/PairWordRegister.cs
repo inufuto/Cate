@@ -63,11 +63,11 @@ internal class PairWordRegister : Cate.WordRegister
         high.StoreToMemory(instruction, label + "+1");
     }
 
-    public override void Store(Instruction instruction, AssignableOperand operand)
-    {
-        low.Store(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
-        high.Store(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
-    }
+    //public override void Store(Instruction instruction, AssignableOperand operand)
+    //{
+    //    low.Store(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
+    //    high.Store(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
+    //}
 
     public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
     {
@@ -75,13 +75,13 @@ internal class PairWordRegister : Cate.WordRegister
         high.LoadFromMemory(instruction, variable, offset + 1);
     }
 
-    public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         low.LoadIndirect(instruction, pointerRegister, offset);
         high.LoadIndirect(instruction, pointerRegister, offset + 1);
     }
 
-    public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         low.StoreIndirect(instruction, pointerRegister, offset);
         high.StoreIndirect(instruction, pointerRegister, offset + 1);
@@ -99,6 +99,24 @@ internal class PairWordRegister : Cate.WordRegister
     {
         // Must be operated in bytes
         throw new NotImplementedException();
+    }
+
+    public override bool IsOffsetInRange(int offset)
+    {
+        return offset is >= 0 and < 0x100;
+    }
+
+    public override void Add(Instruction instruction, int offset)
+    {
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+            Debug.Assert(Low != null && High != null);
+            ByteRegister.A.CopyFrom(instruction, Low);
+            ByteRegister.A.Operate(instruction, "clc|adc", true, "#low " + offset);
+            Low.CopyFrom(instruction, ByteRegister.A);
+            ByteRegister.A.CopyFrom(instruction, High);
+            ByteRegister.A.Operate(instruction, "adc", true, "#high " + offset);
+            High.CopyFrom(instruction, ByteRegister.A);
+        }
     }
 
     public override void Save(Instruction instruction)

@@ -1,13 +1,16 @@
 ﻿using System.Diagnostics;
-using System.Drawing;
 
 namespace Inu.Cate.Hd61700;
 
-internal class Compiler : Cate.Compiler
+internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation())
 {
     internal const string RegisterHead = "$";
 
-    public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
+    public override void AddSavingRegister(ISet<Register> registers, Register register)
+    {
+        if (register is IndexRegister) return;
+        base.AddSavingRegister(registers, register);
+    }
 
     public override void SaveRegisters(StreamWriter writer, ISet<Register> registers)
     {
@@ -34,8 +37,6 @@ internal class Compiler : Cate.Compiler
                 {
                     ByteRegister byteRegister => byteRegister.AsmName,
                     WordRegister wordRegister => wordRegister.HighByteName,
-                    WordPointerRegister wordPointerRegister =>
-                        ((WordRegister)wordPointerRegister.WordRegister).HighByteName,
                     _ => throw new NotImplementedException()
                 };
                 var count = list.Count * register.ByteCount;
@@ -130,9 +131,6 @@ internal class Compiler : Cate.Compiler
             if (variableType.ByteCount == 1) {
                 register = AllocatableRegister(variable, ByteRegister.Registers, function);
             }
-            else if (variableType is PointerType) {
-                register = AllocatableRegister(variable, WordPointerRegister.Registers, function);
-            }
             else {
                 register = AllocatableRegister(variable, WordRegister.Registers, function);
             }
@@ -144,17 +142,11 @@ internal class Compiler : Cate.Compiler
         var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         foreach (var variable in usageOrdered) {
             var variableType = variable.Type;
-            Register? register;
-            if (variableType.ByteCount == 1) {
-                register = AllocatableRegister(variable, ByteRegister.Registers, function);
-            }
-            else if (variableType is PointerType) {
-                var registers = variableType is PointerType { ElementType: StructureType _ } ? PointerOperation.Registers : WordPointerRegister.Registers;
-                register = AllocatableRegister(variable, registers, function);
-            }
-            else {
-                register = AllocatableRegister(variable, WordRegister.Registers, function);
-            }
+            var register = variableType.ByteCount switch
+            {
+                1 => AllocatableRegister(variable, ByteRegister.Registers, function),
+                _ => AllocatableRegister(variable, WordRegister.Registers, function)
+            };
             if (register == null)
                 continue;
             variable.Register = register;
@@ -185,47 +177,16 @@ internal class Compiler : Cate.Compiler
                         }
                         break;
                     }
-                case PointerRegister pointerRegister when !Conflict(variable.Intersections, pointerRegister):
-                    variable.Register = pointerRegister;
-                    break;
-                case PointerRegister _: {
-                        register = AllocatableRegister(variable, WordPointerRegister.Registers, function);
-                        if (register != null) {
-                            variable.Register = register;
-                        }
-                        break;
-                    }
             }
         }
     }
 
-    //private static Cate.Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Cate.Register
-    //{
-    //    foreach (var register in registers) {
-    //        if (!IsAllocatable(function, variable, register)) continue;
-    //        var conflict = Conflict(variable.Intersections, register);
-    //        if (!conflict) return register;
-    //    }
-    //    return null;
-    //}
-
-    //private static bool IsAllocatable<T>(Function function, Variable variable, T register) where T : Register
-    //{
-    //    return function.Instructions.All(i => i.CanAllocateRegister(variable, register));
-    //}
-
-    //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-    //{
-    //    return variables.Any(v =>
-    //        v.Register != null && register.Conflicts(v.Register));
-    //}
 
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
         return type.ByteCount switch
         {
             1 => ByteRegister.FromIndex(index),
-            2 when type is PointerType => WordPointerRegister.FromIndex(index),
             2 => WordRegister.FromIndex(index),
             _ => throw new NotImplementedException()
         };
@@ -237,13 +198,12 @@ internal class Compiler : Cate.Compiler
         {
             0 => null,
             1 => ByteRegister.FromIndex(0),
-            2 when type is PointerType => WordPointerRegister.FromIndex(0),
             2 => WordRegister.FromIndex(0),
             _ => throw new NotImplementedException()
         };
     }
 
-    public override Cate.BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
+    public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
         Operand leftOperand, Operand rightOperand)
     {
         return destinationOperand.Type.ByteCount switch
@@ -256,8 +216,6 @@ internal class Compiler : Cate.Compiler
                     rightOperand),
                 _ => new ByteBinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand),
             },
-            2 when destinationOperand.Type is PointerType => new PointerAddOrSubtractInstruction(function, operatorId,
-                destinationOperand, leftOperand, rightOperand),
             2 => operatorId switch
             {
                 Keyword.ShiftLeft => new WordShiftInstruction(function, operatorId, destinationOperand, leftOperand,

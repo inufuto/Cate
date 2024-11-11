@@ -94,13 +94,13 @@ internal class ByteRegister : Cate.ByteRegister
         instruction.WriteLine("\tmov\t" + label + "," + Name);
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (pointerRegister.Contains(this)) {
-            using var reservation = PointerOperation.ReserveAnyRegister(instruction);
-            reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-            instruction.AddChanged(reservation.PointerRegister);
-            LoadIndirect(instruction, reservation.PointerRegister, offset);
+            using var reservation = WordOperation.ReserveAnyRegister(instruction);
+            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+            instruction.AddChanged(reservation.WordRegister);
+            LoadIndirect(instruction, reservation.WordRegister, offset);
             return;
         }
         if (pointerRegister.IsOffsetInRange(offset)) {
@@ -110,7 +110,7 @@ internal class ByteRegister : Cate.ByteRegister
         pointerRegister.TemporaryOffset(instruction, offset, () => { LoadIndirect(instruction, pointerRegister); });
     }
 
-    public virtual void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister)
+    public virtual void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister)
     {
         using (ByteOperation.ReserveRegister(instruction, A)) {
             A.LoadIndirect(instruction, pointerRegister);
@@ -118,7 +118,7 @@ internal class ByteRegister : Cate.ByteRegister
         }
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (pointerRegister.IsOffsetInRange(offset)) {
             StoreIndirect(instruction, pointerRegister);
@@ -130,7 +130,7 @@ internal class ByteRegister : Cate.ByteRegister
         });
     }
 
-    public virtual void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister)
+    public virtual void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister)
     {
         using (ByteOperation.ReserveRegister(instruction, A)) {
             A.CopyFrom(instruction, this);

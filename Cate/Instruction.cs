@@ -104,7 +104,6 @@ public abstract class Instruction
     public Compiler Compiler => Compiler.Instance;
     public ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
     public WordOperation WordOperation => Compiler.Instance.WordOperation;
-    public PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
 
     public virtual bool IsJump() => false;
 
@@ -472,34 +471,12 @@ public abstract class Instruction
 
         return register switch
         {
-            ByteRegister byteRegister => registerReservations.Any(reservation =>
-            {
-                return reservation.Register switch
-                {
-                    WordRegister wordRegister => wordRegister.Contains(byteRegister),
-                    PointerRegister pointerRegister => pointerRegister.WordRegister != null &&
-                                                       pointerRegister.WordRegister.Contains(byteRegister),
-                    _ => false
-                };
-            }),
+            ByteRegister byteRegister => registerReservations.Any(reservation => reservation.Register is WordRegister wordRegister && wordRegister.Contains(byteRegister)),
             WordRegister wordRegister => registerReservations.Any(reservation =>
             {
-                return reservation.Register switch
-                {
-                    ByteRegister byteRegister => wordRegister.Contains(byteRegister),
-                    PointerRegister pointerRegister => Equals(pointerRegister.WordRegister, wordRegister),
-                    _ => false
-                };
-            }),
-            PointerRegister pointerRegister => registerReservations.Any(reservation =>
-            {
-                return reservation.Register switch
-                {
-                    ByteRegister byteRegister => pointerRegister.WordRegister != null &&
-                                                 pointerRegister.WordRegister.Contains(byteRegister),
-                    WordRegister wordRegister => Equals(pointerRegister.WordRegister, wordRegister),
-                    _ => false
-                };
+                if (reservation.Register is ByteRegister byteRegister)
+                    return wordRegister.Contains(byteRegister);
+                return false;
             }),
             _ => false
         };
@@ -689,14 +666,7 @@ public abstract class Instruction
             changedRegisters.Remove(wordRegister.Low);
             changedRegisters.Remove(wordRegister.High);
         }
-        if (register is PointerRegister { WordRegister: { } } pointerRegister && pointerRegister.WordRegister.IsPair()) {
-            Debug.Assert(pointerRegister.WordRegister is { Low: { }, High: { } });
-            changedRegisters.Remove(pointerRegister.WordRegister.Low);
-            changedRegisters.Remove(pointerRegister.WordRegister.High);
-        }
-        //else {
         changedRegisters.Remove(register);
-        //}
     }
 
     public bool IsChanged(Register register)

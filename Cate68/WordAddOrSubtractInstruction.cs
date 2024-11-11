@@ -26,7 +26,7 @@ namespace Inu.Cate.Mc6800
             {
                 load = () =>
                 {
-                    PointerRegister.X.Load(this, LeftOperand);
+                    IndexRegister.X.Load(this, LeftOperand);
                 };
             }
             else
@@ -39,7 +39,7 @@ namespace Inu.Cate.Mc6800
             if (DestinationOperand.Type is PointerType) {
                 save = () =>
                 {
-                    PointerRegister.X.Store(this, DestinationOperand);
+                    IndexRegister.X.Store(this, DestinationOperand);
                 };
             }
             else {
@@ -109,11 +109,11 @@ namespace Inu.Cate.Mc6800
             if (LeftOperand.Type is PointerType) {
                 load = () =>
                 {
-                    PointerRegister.X.Load(this, LeftOperand);
+                    IndexRegister.X.Load(this, LeftOperand);
                 };
                 save = () =>
                 {
-                    PointerRegister.X.Store(this, DestinationOperand);
+                    IndexRegister.X.Store(this, DestinationOperand);
                 };
             }
             else {

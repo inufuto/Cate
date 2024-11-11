@@ -12,8 +12,17 @@ namespace Inu.Cate.Sc62015
                 ExchangeOperands();
             }
             else {
-                if (RightOperand.Register is WordRegister) {
-                    if (IsOperatorExchangeable()) {
+                if (IsOperatorExchangeable()) {
+                    if (DestinationOperand.Type is PointerType) {
+                        if (LeftOperand.Type is not PointerType) {
+                            ExchangeOperands();
+                        }
+                    }
+                    else if (
+                        LeftOperand.Register is not (WordRegister or PointerRegister) &&
+                        DestinationOperand.Register is not (WordRegister or PointerRegister) &&
+                        RightOperand.Register is WordRegister or PointerRegister
+                    ) {
                         ExchangeOperands();
                     }
                 }
@@ -29,11 +38,30 @@ namespace Inu.Cate.Sc62015
                 _ => throw new NotImplementedException()
             };
 
+            {
+                if (DestinationOperand.Register is WordRegister wordRegister and not WordInternalRam && !wordRegister.Conflicts(RightOperand.Register)) {
+                    using (WordOperation.ReserveRegister(this, wordRegister, LeftOperand)) {
+                        ViaRegister(wordRegister);
+                    }
+                }
+                else if (DestinationOperand.Register is PointerRegister pointerRegister and not PointerInternalRam && !pointerRegister.Conflicts(RightOperand.Register)) {
+                    using (WordOperation.ReserveRegister(this, pointerRegister, LeftOperand)) {
+                        ViaRegister(pointerRegister);
+                    }
+                }
+                else {
+                    var candidates = LeftOperand.Type.ByteCount == 3 ? PointerRegister.Registers : WordRegister.Registers;
+                    using var reservation = WordOperation.ReserveAnyRegister(this, candidates, LeftOperand);
+                    ViaRegister(reservation.WordRegister);
+                }
+            }
+            return;
+
             void ViaRegister(Cate.WordRegister leftRegister)
             {
                 leftRegister.Load(this, LeftOperand);
                 if (RightOperand is ConstantOperand) {
-                    using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, RightOperand);
+                    using var reservation = WordOperation.ReserveAnyRegister(this, RightOperand);
                     reservation.WordRegister.Load(this, RightOperand);
                     WriteLine("\t" + operation + " " + leftRegister.AsmName + "," + reservation.WordRegister.AsmName);
                 }
@@ -41,17 +69,6 @@ namespace Inu.Cate.Sc62015
                     leftRegister.Operate(this, operation, true, RightOperand);
                 }
                 leftRegister.Store(this, DestinationOperand);
-            }
-            {
-                if (DestinationOperand.Register is WordRegister destinationRegister and not WordInternalRam) {
-                    using (WordOperation.ReserveRegister(this, destinationRegister, LeftOperand)) {
-                        ViaRegister(destinationRegister);
-                    }
-                }
-                else {
-                    using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
-                    ViaRegister(reservation.WordRegister);
-                }
             }
         }
 
@@ -69,12 +86,19 @@ namespace Inu.Cate.Sc62015
 
         private void IncrementOrDecrement(string operation, int count)
         {
-            if (DestinationOperand.Register is WordRegister destinationRegister && destinationRegister is not WordInternalRam) {
-                destinationRegister.Load(this, LeftOperand);
-                IncrementOrDecrement(this, operation, destinationRegister, count);
+            if (DestinationOperand.Register is WordRegister wordRegister and not WordInternalRam) {
+                wordRegister.Load(this, LeftOperand);
+                IncrementOrDecrement(this, operation, wordRegister, count);
                 return;
             }
-            using var reservation = WordOperation.ReserveAnyRegister(this, WordRegister.Registers, LeftOperand);
+            if (DestinationOperand.Register is PointerRegister pointerRegister and not PointerInternalRam) {
+                pointerRegister.Load(this, LeftOperand);
+                IncrementOrDecrement(this, operation, pointerRegister, count);
+                return;
+            }
+
+            var candidates = LeftOperand.Type.ByteCount == 3 ? PointerRegister.Registers : WordRegister.Registers;
+            using var reservation = WordOperation.ReserveAnyRegister(this, candidates, LeftOperand);
             reservation.WordRegister.Load(this, LeftOperand);
             IncrementOrDecrement(this, operation, reservation.WordRegister, count);
             reservation.WordRegister.Store(this, DestinationOperand);

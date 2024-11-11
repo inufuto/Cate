@@ -95,7 +95,7 @@ internal class ByteZeroPage : Cate.ByteRegister
         instruction.SetVariableRegister(variable, offset, this);
     }
 
-    public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.A };
         using (var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates)) {
@@ -107,7 +107,7 @@ internal class ByteZeroPage : Cate.ByteRegister
         instruction.RemoveRegisterAssignment(this);
     }
 
-    public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.A };
         using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);

@@ -32,7 +32,7 @@ internal class WordAddOrSubtractInstruction(
                 return;
             }
 
-            var candidates = new List<Cate.WordRegister>() { WordRegister.Bc, WordRegister.De };
+            var candidates = new List<Cate.WordRegister>() { WordRegister.De, WordRegister.Bc };
             using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
             {
                 var rightRegister = reservation.WordRegister;
@@ -81,7 +81,7 @@ internal class WordAddOrSubtractInstruction(
         }
     }
 
-    protected override int Threshold() => 4;
+    protected override int Threshold() => 8;
 
     protected override void Increment(int count)
     {

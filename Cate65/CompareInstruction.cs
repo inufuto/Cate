@@ -282,9 +282,4 @@ internal class CompareInstruction : Cate.CompareInstruction
         // Register value is not guaranteed due to branching
         RemoveRegisterAssignment(ByteRegister.A);
     }
-
-    protected override void ComparePointer()
-    {
-        CompareWord();
-    }
 }

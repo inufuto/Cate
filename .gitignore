@@ -121,8 +121,14 @@ runtime/SC62015/c.bat
 /Cate85/.vs/ProjectEvaluation/cate85.metadata.v9.bin
 /Cate85/.vs/ProjectEvaluation/cate85.projects.v9.bin
 /Cate85/.vs/ProjectEvaluation/cate85.strings.v9.bin
+/Cate80/bin
+/Language/bin/Debug/net8.0/Language.dll
+/Language/bin/Debug/net8.0/Language.pdb
+/Language/bin/Release/net8.0/Language.dll
+/Language/bin/Release/net8.0/Language.pdb
 /Cate/bin
 /Cate61h/bin
+/Cate85/.vs/Cate85/v17/.futdcache.v2
 /Cate62/bin/Release/net8.0
-/Cate80/bin
-/Language/bin
+/Language/bin/Release/net8.0/publish
+/Cate85/.vs

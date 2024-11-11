@@ -85,11 +85,11 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
         High.StoreToMemory(instruction, label + "+1");
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Low != null && High != null);
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 if (Equals(this, Hl)) {
                     using var reservation =
                         WordOperation.ReserveAnyRegister(instruction, [Bc, De]);
@@ -130,16 +130,16 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
         }
         pointerRegister.Add(instruction, offset);
         LoadIndirect(instruction, pointerRegister, 0);
-        if (!Equals(pointerRegister.WordRegister, this)) {
+        if (!Equals(pointerRegister, this)) {
             pointerRegister.Add(instruction, -offset);
         }
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Low != null && High != null);
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 if (Equals(this, Hl)) {
                     using var reservation = WordOperation.ReserveAnyRegister(instruction, [Bc, De]);
                     var wordRegister = reservation.WordRegister;
@@ -169,16 +169,16 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
             AddAndStore(pointerRegister);
         }
         else {
-            var candidates = PointerRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList();
-            using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-            var temporaryRegister = reservation.PointerRegister;
+            var candidates = WordRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList();
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+            var temporaryRegister = reservation.WordRegister;
             temporaryRegister.CopyFrom(instruction, pointerRegister);
             AddAndStore(temporaryRegister);
         }
 
         return;
 
-        void AddAndStore(Cate.PointerRegister wordRegister)
+        void AddAndStore(Cate.WordRegister wordRegister)
         {
             wordRegister.Add(instruction, offset);
             StoreIndirect(instruction, wordRegister, 0);
@@ -200,5 +200,90 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
     {
         throw new NotImplementedException();
+    }
+
+    public override void TemporaryOffset(Instruction instruction, int offset, Action action)
+    {
+        if (Math.Abs(offset) <= 1) {
+            base.TemporaryOffset(instruction, offset, action);
+            return;
+        }
+        var changed = instruction.IsChanged(this);
+        if (!changed) {
+            Save(instruction);
+        }
+        Add(instruction, offset);
+        action();
+        if (!changed) {
+            Restore(instruction);
+            instruction.RemoveChanged(this);
+        }
+    }
+
+    public override bool IsOffsetInRange(int offset) => offset == 0;
+
+    public override void Add(Instruction instruction, int offset)
+    {
+        if (offset == 0) {
+            return;
+        }
+
+        const int threshold = 4;
+        var count = offset & 0xffff;
+        if (count <= threshold) {
+            Loop("inc");
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
+            return;
+        }
+
+        if (count >= 0x10000 - threshold) {
+            count = 0x10000 - count;
+            Loop("dec");
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
+            return;
+        }
+
+        if (Equals(this, Hl)) {
+            void ViaRegister(Cate.WordRegister temporaryRegister)
+            {
+                temporaryRegister.LoadConstant(instruction, offset);
+                instruction.WriteLine("\tadd\thl," + temporaryRegister);
+            }
+
+            var candidates = new List<Cate.WordRegister>() { Sm83.WordRegister.De, Sm83.WordRegister.Bc };
+            if (candidates.Any(r => !instruction.IsRegisterReserved(r))) {
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                ViaRegister(reservation.WordRegister);
+            }
+            else {
+                instruction.WriteLine("\tpush\tde");
+                ViaRegister(Sm83.WordRegister.De);
+                instruction.WriteLine("\tpop\tde");
+            }
+        }
+        else {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+                Debug.Assert(Low != null && High != null);
+                ByteRegister.A.CopyFrom(instruction, Low);
+                instruction.WriteLine("\tadd\ta,low " + offset);
+                Low.CopyFrom(instruction, ByteRegister.A);
+                ByteRegister.A.CopyFrom(instruction, High);
+                instruction.WriteLine("\tadc\ta,high " + offset);
+                High.CopyFrom(instruction, ByteRegister.A);
+            }
+        }
+
+        instruction.AddChanged(this);
+        instruction.RemoveRegisterAssignment(this);
+        return;
+
+        void Loop(string operation)
+        {
+            for (var i = 0; i < count; ++i) {
+                instruction.WriteLine("\t" + operation + "\t" + Name);
+            }
+        }
     }
 }

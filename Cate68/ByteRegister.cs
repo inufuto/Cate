@@ -35,7 +35,7 @@ namespace Inu.Cate.Mc6800
             if (value == 0) {
                 instruction.WriteLine("\tclr" + Name);
                 instruction.AddChanged(this);
-                instruction.SetRegisterConstant(this,value);
+                instruction.SetRegisterConstant(this, value);
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
             }
@@ -56,13 +56,13 @@ namespace Inu.Cate.Mc6800
             instruction.SetVariableRegister(variable, offset, this);
         }
 
-        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
+        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
             int offset)
         {
-            Debug.Assert(Equals(pointerRegister, PointerRegister.X));
+            Debug.Assert(Equals(pointerRegister, IndexRegister.X));
             while (true) {
                 if (pointerRegister.IsOffsetInRange(offset)) {
-                    instruction.WriteLine("\tlda" + this + "\t" + offset + ",x");
+                    instruction.WriteLine("\tlda" + this + "\t" + offset + "," + pointerRegister);
                     instruction.ResultFlags |= Instruction.Flag.Z;
                     instruction.RemoveRegisterAssignment(this);
                     instruction.AddChanged(this);
@@ -73,9 +73,9 @@ namespace Inu.Cate.Mc6800
             }
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
-            Debug.Assert(Equals(pointerRegister, PointerRegister.X));
+            Debug.Assert(Equals(pointerRegister, IndexRegister.X));
             while (true) {
                 if (pointerRegister.IsOffsetInRange(offset)) {
                     instruction.WriteLine("\tsta" + this + "\t" + offset + "," + pointerRegister);
@@ -133,7 +133,7 @@ namespace Inu.Cate.Mc6800
             }
             Cate.Compiler.Instance.ByteOperation.Operate(instruction, operation + Name, change, operand);
 
-            end:
+        end:
             if (!change)
                 return;
             instruction.AddChanged(this);

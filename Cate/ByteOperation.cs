@@ -38,7 +38,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
     }
 
     protected virtual void OperateIndirect(Instruction instruction, string operation, bool change,
-        PointerRegister pointerRegister, int offset, int count)
+        WordRegister pointerRegister, int offset, int count)
     {
         using var reservation = ReserveAnyRegister(instruction, Registers);
         reservation.ByteRegister.LoadIndirect(instruction, pointerRegister, offset);
@@ -49,13 +49,13 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
     protected virtual void OperateIndirect(Instruction instruction, string operation, bool change, Variable pointer,
         int offset, int count)
     {
-        var candidates = PointerOperation.RegistersToOffset(offset);
+        var candidates = WordOperation.RegistersToOffset(offset);
         if (!candidates.Any()) {
-            candidates = PointerOperation.Registers;
+            candidates = WordOperation.Registers;
         }
-        using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-        reservation.PointerRegister.LoadFromMemory(instruction, pointer, 0);
-        OperateIndirect(instruction, operation, change, reservation.PointerRegister, offset, count);
+        using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+        reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
+        OperateIndirect(instruction, operation, change, reservation.WordRegister, offset, count);
     }
 
 
@@ -86,11 +86,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
                     var pointer = indirectOperand.Variable;
                     var offset = indirectOperand.Offset;
                     var variableRegister = instruction.GetVariableRegister(indirectOperand.Variable, 0);
-                    if (variableRegister is WordRegister wRegister) {
-                        variableRegister = wRegister.ToPointer();
-                    }
-                    if (variableRegister is PointerRegister pointerRegister) {
-                        //var pointerRegister = Compiler.Instance.WordOperation.RegisterFromId(pointer.Register.Value);
+                    if (variableRegister is WordRegister pointerRegister && pointerRegister.IsOffsetInRange(0)) {
                         OperateIndirect(instruction, operation, change, pointerRegister, offset, count);
                         return;
                     }
@@ -111,7 +107,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
         Operate(instruction, operation, change, operand, 1);
     }
 
-    public virtual void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset,
+    public virtual void StoreConstantIndirect(Instruction instruction, WordRegister pointerRegister, int offset,
         int value)
     {
         var candidates = Registers.Where(r => !r.Conflicts(pointerRegister)).ToList();

@@ -2,18 +2,14 @@
 
 namespace Inu.Cate;
 
-public class PointerType : ParameterizableType
+public class PointerType(Type elementType) : ParameterizableType
 {
-    public readonly Type ElementType;
-
-    public PointerType(Type elementType)
-    {
-        ElementType = elementType;
-    }
+    public readonly Type ElementType = elementType;
 
     public override bool Equals(object? obj)
     {
-        return obj is PointerType pointerType && (ElementType.Equals(pointerType.ElementType) || pointerType.ElementType is VoidType);
+        if (obj is not PointerType pointerType) return false;
+        return ElementType.Equals(pointerType.ElementType) || pointerType.ElementType is VoidType;
     }
 
     public override int GetHashCode()

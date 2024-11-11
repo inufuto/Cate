@@ -2,7 +2,7 @@
 {
     internal class ByteOperation : MuCom87.ByteOperation
     {
-        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
+        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
             int offset, int value)
         {
             if (offset == 0) {

@@ -84,12 +84,12 @@ internal class PairRegister : Cate.WordRegister
         instruction.WriteLine("\tst" + AsmName + "\t" + label);
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Equals(this, D));
-        Debug.Assert(Equals(pointerRegister, PointerRegister.X));
+        Debug.Assert(Equals(pointerRegister, IndexRegister.X));
         while (true) {
-            if (PointerRegister.X.IsOffsetInRange(offset)) {
+            if (IndexRegister.X.IsOffsetInRange(offset)) {
                 instruction.WriteLine("\tld" + AsmName + "\t" + offset + ",x");
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 instruction.RemoveRegisterAssignment(this);
@@ -100,12 +100,12 @@ internal class PairRegister : Cate.WordRegister
         }
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Equals(this, D));
-        Debug.Assert(Equals(pointerRegister, PointerRegister.X));
+        Debug.Assert(Equals(pointerRegister, IndexRegister.X));
         while (true) {
-            if (PointerRegister.X.IsOffsetInRange(offset)) {
+            if (IndexRegister.X.IsOffsetInRange(offset)) {
                 instruction.WriteLine("\tst" + AsmName + "\t" + offset + ",x");
                 return;
             }
@@ -146,6 +146,18 @@ internal class PairRegister : Cate.WordRegister
                 return;
         }
         throw new NotImplementedException();
+    }
+
+    public override bool IsOffsetInRange(int offset) => false;
+
+    public override void Add(Instruction instruction, int offset)
+    {
+        if (offset > 0) {
+            instruction.WriteLine("\taddd\t#" + offset);
+        }
+        else {
+            instruction.WriteLine("\tsubd\t#" + -offset);
+        }
     }
 
     private void OperateConstant(Instruction instruction, string operation, bool change, int value)

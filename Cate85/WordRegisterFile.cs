@@ -49,17 +49,22 @@ internal class WordRegisterFile(int id) : AbstractWordRegister(id, IdToName(id))
         reservation.WordRegister.StoreToMemory(instruction, label);
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
         reservation.WordRegister.LoadIndirect(instruction, pointerRegister, offset);
         CopyFrom(instruction, reservation.WordRegister);
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
         reservation.WordRegister.CopyFrom(instruction, this);
         reservation.WordRegister.StoreIndirect(instruction, pointerRegister, offset);
+    }
+
+    public override bool IsOffsetInRange(int offset)
+    {
+        return offset == 0;
     }
 }

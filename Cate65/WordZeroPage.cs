@@ -74,8 +74,8 @@ internal class WordZeroPage : Cate.WordRegister
         Debug.Assert(Low != null && High != null);
         Low.LoadFromMemory(instruction, label + "+0");
         High.LoadFromMemory(instruction, label + "+1");
-        //instruction.AddChanged(this);
-        //instruction.RemoveVariableRegister(this);
+        instruction.AddChanged(this);
+        instruction.RemoveRegisterAssignment(this);
     }
 
     public override void Store(Instruction instruction, AssignableOperand operand)
@@ -84,9 +84,17 @@ internal class WordZeroPage : Cate.WordRegister
             variableOperand.Offset == 0) {
             return;
         }
-        Debug.Assert(Low != null && High != null);
-        Low.Store(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
-        High.Store(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
+
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A))
+        {
+            Debug.Assert(Low != null && High != null);
+            ByteRegister.A.CopyFrom(instruction, Low);
+            ByteRegister.A.Store(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
+            ByteRegister.A.CopyFrom(instruction, High);
+            ByteRegister.A.Store(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
+        }
+        //Low.Store(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
+        //High.Store(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
         instruction.SetVariableRegister(operand, this);
     }
 
@@ -97,16 +105,21 @@ internal class WordZeroPage : Cate.WordRegister
         High.StoreToMemory(instruction, label + "+1");
     }
 
-    public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Low != null && High != null);
-        Low.LoadIndirect(instruction, pointerRegister, offset);
-        High.LoadIndirect(instruction, pointerRegister, offset + 1);
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A))
+        {
+            ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset);
+            Low.CopyFrom(instruction, ByteRegister.A);
+            ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset+1);
+            High.CopyFrom(instruction, ByteRegister.A);
+        }
         //instruction.AddChanged(this);
         //instruction.RemoveVariableRegister(this);
     }
 
-    public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Low != null && High != null);
         Low.StoreIndirect(instruction, pointerRegister, offset);
@@ -129,6 +142,24 @@ internal class WordZeroPage : Cate.WordRegister
     {
         // Must be operated in bytes
         throw new NotImplementedException();
+    }
+
+    public override bool IsOffsetInRange(int offset)
+    {
+        return offset is >= 0 and < 0x100;
+    }
+
+    public override void Add(Instruction instruction, int offset)
+    {
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+            Debug.Assert(Low != null && High != null);
+            ByteRegister.A.CopyFrom(instruction, Low);
+            ByteRegister.A.Operate(instruction, "clc|adc", true, "#low " + offset);
+            Low.CopyFrom(instruction, ByteRegister.A);
+            ByteRegister.A.CopyFrom(instruction, High);
+            ByteRegister.A.Operate(instruction, "adc", true, "#high " + offset);
+            High.CopyFrom(instruction, ByteRegister.A);
+        }
     }
 
     public override void Save(Instruction instruction)

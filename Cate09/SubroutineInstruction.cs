@@ -11,8 +11,8 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
         return index switch
         {
-            0 => type.ByteCount == 1 ? ByteRegister.A : type is PointerType ? PointerRegister.X : WordRegister.X,
-            1 => type.ByteCount == 1 ? ByteRegister.B : type is PointerType ? PointerRegister.Y : WordRegister.Y,
+            0 => type.ByteCount == 1 ? ByteRegister.A : WordRegister.X,
+            1 => type.ByteCount == 1 ? ByteRegister.B : WordRegister.Y,
             _ => null
         };
     }
@@ -38,7 +38,7 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
         return type.ByteCount switch
         {
             1 => ByteRegister.A,
-            2 => type is PointerType ? PointerRegister.D : WordRegister.D,
+            2 => WordRegister.D,
             _ => null
         };
     }

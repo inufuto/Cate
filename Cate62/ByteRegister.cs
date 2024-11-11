@@ -82,7 +82,31 @@ namespace Inu.Cate.Sc62015
             instruction.SetVariableRegister(variable, offset, this);
         }
 
-        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, Cate.WordRegister wordRegister, int offset)
+        {
+            if (wordRegister is PointerRegister pointerRegister) {
+                LoadIndirect(instruction, pointerRegister, offset);
+            }
+            else {
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegister.Registers);
+                reservation.WordRegister.CopyFrom(instruction, wordRegister);
+                LoadIndirect(instruction, (PointerRegister)reservation.WordRegister, offset);
+            }
+        }
+
+        public override void StoreIndirect(Instruction instruction, Cate.WordRegister wordRegister, int offset)
+        {
+            if (wordRegister is PointerRegister pointerRegister) {
+                StoreIndirect(instruction, pointerRegister, offset);
+            }
+            else {
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerRegister.Registers);
+                reservation.WordRegister.CopyFrom(instruction, wordRegister);
+                StoreIndirect(instruction, (PointerRegister)reservation.WordRegister, offset);
+            }
+        }
+
+        private void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             Debug.Assert(pointerRegister.IsOffsetInRange(offset));
             instruction.WriteLine("\tmv " + AsmName + ",[" + pointerRegister.AsmName + Compiler.OffsetToString(offset) + "]");
@@ -90,7 +114,7 @@ namespace Inu.Cate.Sc62015
             instruction.RemoveRegisterAssignment(this);
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+        private void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
         {
             if (pointerRegister.IsOffsetInRange(offset)) {
                 instruction.WriteLine("\tmv [" + pointerRegister.AsmName + Compiler.OffsetToString(offset) + "]," + AsmName);

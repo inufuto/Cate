@@ -10,7 +10,7 @@ internal class Compiler : Cate.Compiler
 {
     public const string TemporaryByte = "@Temporary@Byte";
 
-    public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
+    public Compiler() : base(new ByteOperation(), new WordOperation()) { }
 
     protected override void WriteAssembly(StreamWriter writer)
     {
@@ -28,43 +28,9 @@ internal class Compiler : Cate.Compiler
         }
     }
 
-    //private static Register SavingRegister(Register register)
-    //{
-    //    if (Equals(register, ByteRegister.A))
-    //        return register;
-    //    if (register is not ByteRegister byteRegister)
-    //        return register;
-    //    Debug.Assert(byteRegister.PairRegister != null);
-    //    return byteRegister.PairRegister;
-    //}
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
-        void AllocateOrdered(List<Variable> ordered)
-        {
-            foreach (var variable in ordered) {
-                var variableType = variable.Type;
-                Register? register;
-                if (variableType.ByteCount == 1) {
-                    var registers = ByteRegister.Registers;
-                    register = AllocatableRegister(variable, registers, function);
-                }
-                else {
-                    if (variableType is PointerType) {
-                        var registers = new List<PointerRegister>() { PointerRegister.Hl, PointerRegister.De, PointerRegister.Bc };
-                        register = AllocatableRegister(variable, registers, function);
-                    }
-                    else {
-                        var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
-                        register = AllocatableRegister(variable, registers, function);
-                    }
-                }
-                if (register == null)
-                    continue;
-                variable.Register = register;
-            }
-        }
-
         var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
         AllocateOrdered(rangeOrdered);
@@ -90,39 +56,31 @@ internal class Compiler : Cate.Compiler
                     variable.Register = register;
                 }
             }
-            else if (register is PointerRegister) {
-                register = AllocatableRegister(variable, PointerRegister.Registers, function);
-                if (register != null) {
-                    variable.Register = register;
+        }
+
+        return;
+
+        void AllocateOrdered(List<Variable> ordered)
+        {
+            foreach (var variable in ordered) {
+                var variableType = variable.Type;
+                Register? register;
+                if (variableType.ByteCount == 1) {
+                    var registers = ByteRegister.Registers;
+                    register = AllocatableRegister(variable, registers, function);
                 }
+                else {
+                    var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
+                    register = AllocatableRegister(variable, registers, function);
+                }
+                if (register == null)
+                    continue;
+                variable.Register = register;
             }
         }
     }
 
-    //private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
-    //{
-    //    return registers.FirstOrDefault(register => !Conflict(variable.Intersections, register) && CanAllocate(variable, register));
-    //}
-
-    //private static bool CanAllocate(Variable variable, Register register)
-    //{
-    //    var function = variable.Block.Function;
-    //    Debug.Assert(function != null);
-    //    var first = variable.Usages.First().Key;
-    //    var last = variable.Usages.Last().Key;
-    //    for (var address = first; address <= last; ++address) {
-    //        var instruction = function.Instructions[address];
-    //        if (!instruction.CanAllocateRegister(variable, register))
-    //            return false;
-    //    }
-    //    return true;
-    //}
-
-    //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-    //{
-    //    return variables.Any(v =>
-    //        v.Register != null && register.Conflicts(v.Register));
-    //}
+    
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
         return SubroutineInstruction.ParameterRegister(index, type);
@@ -162,20 +120,14 @@ internal class Compiler : Cate.Compiler
         }
         switch (operatorId) {
             case '+':
-                if (destinationOperand.Type is PointerType)
-                    return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                 return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
             case '-': {
-                if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
-                    var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
-                    if (destinationOperand.Type is PointerType)
-                        return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
-                    return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                    if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
+                        var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
+                        return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                    }
+                    return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                 }
-                if (destinationOperand.Type is PointerType)
-                    return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-                return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
-            }
             case '|':
             case '^':
             case '&':
@@ -264,10 +216,6 @@ internal class Compiler : Cate.Compiler
                     case Cate.WordRegister wordRegister:
                         Debug.Assert(wordRegister.Low != null);
                         return new ByteRegisterOperand(newType, wordRegister.Low);
-                    case Cate.PointerRegister pointerRegister:
-                        Debug.Assert(pointerRegister.WordRegister != null);
-                        Debug.Assert(pointerRegister.WordRegister.Low != null);
-                        return new ByteRegisterOperand(newType, pointerRegister.WordRegister.Low);
                     default:
                         return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset);
                 }
@@ -290,10 +238,6 @@ internal class Compiler : Cate.Compiler
                     case Cate.WordRegister wordRegister:
                         Debug.Assert(wordRegister.High != null);
                         return new ByteRegisterOperand(newType, wordRegister.High);
-                    case Cate.PointerRegister pointerRegister:
-                        Debug.Assert(pointerRegister.WordRegister != null);
-                        Debug.Assert(pointerRegister.WordRegister.High != null);
-                        return new ByteRegisterOperand(newType, pointerRegister.WordRegister.High);
                     default:
                         return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset + 1);
                 }

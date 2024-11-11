@@ -16,71 +16,6 @@
 
         protected override void CompareByte()
         {
-            void CompareConstant(Register register, string rightValue)
-            {
-                WriteLine("\tcmp " + register.AsmName + "," + rightValue);
-            }
-
-            void Compare()
-            {
-                if (RightOperand is ConstantOperand rightConstantOperand) {
-                    var rightValue = rightConstantOperand.MemoryAddress();
-
-                    if (LeftOperand is VariableOperand leftVariableOperand) {
-                        var leftRegister = GetVariableRegister(leftVariableOperand);
-                        if (leftRegister != null) {
-                            if (Equals(leftRegister, ByteRegister.A) || leftRegister is ByteInternalRam) {
-                                CompareConstant((ByteRegister)leftRegister, rightValue);
-                            }
-                            else {
-                                using var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.AccumulatorAndInternalRam, LeftOperand);
-                                var temporaryRegister = reservation.ByteRegister;
-                                temporaryRegister.Load(this, LeftOperand);
-                                CompareConstant(temporaryRegister, rightValue);
-                            }
-                        }
-                        else {
-                            WriteLine("\tcmp [" + leftVariableOperand.MemoryAddress() + "]," + rightValue);
-                        }
-                    }
-                    else {
-                        using var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.AccumulatorAndInternalRam, LeftOperand);
-                        var leftRegister = reservation.ByteRegister;
-                        leftRegister.Load(this, LeftOperand);
-                        CompareConstant((ByteRegister)leftRegister, rightValue);
-                    }
-                }
-                else {
-                    using var leftReservation = ByteOperation.ReserveAnyRegister(this, ByteInternalRam.Registers, LeftOperand);
-                    var leftRegister = leftReservation.ByteRegister;
-                    leftRegister.Load(this, LeftOperand);
-                    using var rightReservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.AccumulatorAndInternalRam, RightOperand);
-                    var rightRegister = rightReservation.ByteRegister;
-                    rightRegister.Load(this, RightOperand);
-                    WriteLine("\tcmp " + leftRegister.AsmName + "," + rightRegister.AsmName);
-                }
-            }
-
-            void CompareZero()
-            {
-                if (CanOmitOperation(Flag.Z)) return;
-                using var reservation = ByteOperation.ReserveAnyRegister(this, ByteInternalRam.Registers, LeftOperand);
-                var leftRegister = reservation.ByteRegister;
-                leftRegister.Load(this, LeftOperand);
-                WriteLine("\tor " + leftRegister.AsmName + "," + leftRegister.AsmName);
-            }
-
-            void CompareSigned()
-            {
-                using (ByteOperation.ReserveRegister(this, ByteInternalRam.DH)) {
-                    ByteInternalRam.DH.Load(this, RightOperand);
-                    using (ByteOperation.ReserveRegister(this, ByteInternalRam.DL)) {
-                        ByteInternalRam.DL.Load(this, LeftOperand);
-                        Compiler.CallExternal(this, "cate.CompareSignedByte");
-                    }
-                }
-            }
-
             switch (OperatorId) {
                 case Keyword.Equal:
                     if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
@@ -147,57 +82,77 @@
                 default:
                     throw new NotImplementedException();
             }
-        }
 
-        protected override void CompareWord()
-        {
+            return;
+
+            void CompareConstant(Register register, string rightValue)
+            {
+                WriteLine("\tcmp " + register.AsmName + "," + rightValue);
+            }
+
             void Compare()
             {
-                void CompareL(Register leftRegister)
-                {
-                    void CompareR(Register rightRegister)
-                    {
-                        WriteLine("\tcmpw " + leftRegister.AsmName + "," + rightRegister.AsmName);
-                    }
+                if (RightOperand is ConstantOperand rightConstantOperand) {
+                    var rightValue = rightConstantOperand.MemoryAddress();
 
-                    if (RightOperand is VariableOperand rightVariableOperand) {
-                        var rightRegister = GetVariableRegister(rightVariableOperand);
-                        if (rightRegister != null) {
-                            CompareR(rightRegister);
-                            return;
+                    if (LeftOperand is VariableOperand leftVariableOperand) {
+                        var leftRegister = GetVariableRegister(leftVariableOperand);
+                        if (leftRegister != null) {
+                            if (Equals(leftRegister, ByteRegister.A) || leftRegister is ByteInternalRam) {
+                                CompareConstant((ByteRegister)leftRegister, rightValue);
+                            }
+                            else {
+                                using var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.AccumulatorAndInternalRam, LeftOperand);
+                                var temporaryRegister = reservation.ByteRegister;
+                                temporaryRegister.Load(this, LeftOperand);
+                                CompareConstant(temporaryRegister, rightValue);
+                            }
                         }
-                    }
-                    using var rightReservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers, RightOperand);
-                    rightReservation.WordRegister.Load(this, RightOperand);
-                    CompareR(rightReservation.WordRegister);
-                }
-
-                if (LeftOperand is VariableOperand leftVariableOperand) {
-                    var leftRegister = GetVariableRegister(leftVariableOperand);
-                    if (leftRegister is WordInternalRam wordInternalRam) {
-                        using (WordOperation.ReserveRegister(this, wordInternalRam)) {
-                            CompareL(wordInternalRam);
+                        else {
+                            WriteLine("\tcmp [" + leftVariableOperand.MemoryAddress() + "]," + rightValue);
                         }
                     }
                     else {
-                        using var leftReservation = WordOperation.ReserveAnyRegister(this, WordInternalRam.Registers, LeftOperand);
-                        leftReservation.WordRegister.Load(this, LeftOperand);
-                        CompareL(leftReservation.WordRegister);
+                        using var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.AccumulatorAndInternalRam, LeftOperand);
+                        var leftRegister = reservation.ByteRegister;
+                        leftRegister.Load(this, LeftOperand);
+                        CompareConstant((ByteRegister)leftRegister, rightValue);
                     }
                 }
+                else {
+                    using var leftReservation = ByteOperation.ReserveAnyRegister(this, ByteInternalRam.Registers, LeftOperand);
+                    var leftRegister = leftReservation.ByteRegister;
+                    leftRegister.Load(this, LeftOperand);
+                    using var rightReservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.AccumulatorAndInternalRam, RightOperand);
+                    var rightRegister = rightReservation.ByteRegister;
+                    rightRegister.Load(this, RightOperand);
+                    WriteLine("\tcmp " + leftRegister.AsmName + "," + rightRegister.AsmName);
+                }
+            }
+
+            void CompareZero()
+            {
+                if (CanOmitOperation(Flag.Z)) return;
+                using var reservation = ByteOperation.ReserveAnyRegister(this, ByteInternalRam.Registers, LeftOperand);
+                var leftRegister = reservation.ByteRegister;
+                leftRegister.Load(this, LeftOperand);
+                WriteLine("\tor " + leftRegister.AsmName + "," + leftRegister.AsmName);
             }
 
             void CompareSigned()
             {
-                using (WordOperation.ReserveRegister(this, WordInternalRam.CX)) {
-                    WordInternalRam.CX.Load(this, RightOperand);
-                    using (WordOperation.ReserveRegister(this, WordInternalRam.DX)) {
-                        WordInternalRam.DX.Load(this, LeftOperand);
-                        Compiler.CallExternal(this, "cate.CompareSignedWord");
+                using (ByteOperation.ReserveRegister(this, ByteInternalRam.DH)) {
+                    ByteInternalRam.DH.Load(this, RightOperand);
+                    using (ByteOperation.ReserveRegister(this, ByteInternalRam.DL)) {
+                        ByteInternalRam.DL.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, "cate.CompareSignedByte");
                     }
                 }
             }
+        }
 
+        protected override void CompareWord()
+        {
             switch (OperatorId) {
                 case Keyword.Equal:
                     Compare();
@@ -244,19 +199,41 @@
                 default:
                     throw new NotImplementedException();
             }
-        }
 
-        protected override void ComparePointer()
-        {
+            return;
+
+            void CompareSigned()
+            {
+                using (WordOperation.ReserveRegister(this, WordInternalRam.CX)) {
+                    WordInternalRam.CX.Load(this, RightOperand);
+                    using (WordOperation.ReserveRegister(this, WordInternalRam.DX)) {
+                        WordInternalRam.DX.Load(this, LeftOperand);
+                        Compiler.CallExternal(this, "cate.CompareSignedWord");
+                    }
+                }
+            }
+
             void Compare()
             {
+                if (LeftOperand is VariableOperand leftVariableOperand) {
+                    var leftRegister = GetVariableRegister(leftVariableOperand);
+                    if (leftRegister is WordInternalRam wordInternalRam) {
+                        using (WordOperation.ReserveRegister(this, wordInternalRam)) {
+                            CompareL(wordInternalRam);
+                        }
+                    }
+                    else {
+                        var candidates = RightOperand.Type.ByteCount == 2 ? WordInternalRam.Registers : PointerInternalRam.Registers;
+                        using var leftReservation = WordOperation.ReserveAnyRegister(this,candidates, LeftOperand);
+                        leftReservation.WordRegister.Load(this, LeftOperand);
+                        CompareL(leftReservation.WordRegister);
+                    }
+                }
+
+                return;
+
                 void CompareL(Register leftRegister)
                 {
-                    void CompareR(Register rightRegister)
-                    {
-                        WriteLine("\tcmpp " + leftRegister.AsmName + "," + rightRegister.AsmName);
-                    }
-
                     if (RightOperand is VariableOperand rightVariableOperand) {
                         var rightRegister = GetVariableRegister(rightVariableOperand);
                         if (rightRegister != null) {
@@ -264,51 +241,19 @@
                             return;
                         }
                     }
-                    using var rightReservation = PointerOperation.ReserveAnyRegister(this, PointerOperation.Registers, RightOperand);
-                    rightReservation.PointerRegister.Load(this, RightOperand);
-                    CompareR(rightReservation.PointerRegister);
-                }
 
-                if (LeftOperand is VariableOperand leftVariableOperand) {
-                    var leftRegister = GetVariableRegister(leftVariableOperand);
-                    if (leftRegister is PointerInternalRam leftInternalRam) {
-                        CompareL(leftInternalRam);
-                    }
-                    else {
-                        using var leftReservation = PointerOperation.ReserveAnyRegister(this, PointerInternalRam.Registers, LeftOperand);
-                        leftReservation.PointerRegister.Load(this, LeftOperand);
-                        CompareL(leftReservation.PointerRegister);
+                    var candidates = RightOperand.Type.ByteCount == 2 ? WordRegister.Registers : PointerRegister.Registers;
+                    using var rightReservation = WordOperation.ReserveAnyRegister(this, candidates, RightOperand);
+                    rightReservation.WordRegister.Load(this, RightOperand);
+                    CompareR(rightReservation.WordRegister);
+                    return;
+
+                    void CompareR(Register rightRegister)
+                    {
+                        var cmp = leftRegister.ByteCount == 2 ? "cmpw" : "cmpp";
+                        WriteLine("\t" + cmp + " " + leftRegister.AsmName + "," + rightRegister.AsmName);
                     }
                 }
-            }
-
-            switch (OperatorId) {
-                case Keyword.Equal:
-                    Compare();
-                    JumpEqual();
-                    break;
-                case Keyword.NotEqual:
-                    Compare();
-                    JumpNotEqual();
-                    break;
-                case '<':
-                    Compare();
-                    JumpLess();
-                    break;
-                case '>':
-                    Compare();
-                    JumpGreater();
-                    break;
-                case Keyword.LessEqual:
-                    Compare();
-                    JumpLessEqual();
-                    break;
-                case Keyword.GreaterEqual:
-                    Compare();
-                    JumpGreaterEqual();
-                    break;
-                default:
-                    throw new NotImplementedException();
             }
         }
 

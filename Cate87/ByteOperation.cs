@@ -40,7 +40,7 @@ namespace Inu.Cate.MuCom87
             }
         }
 
-        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset,
+        protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
             int count)
         {
             using (ReserveRegister(instruction, ByteRegister.A)) {
@@ -50,21 +50,13 @@ namespace Inu.Cate.MuCom87
             }
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
+        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
             int offset, int value)
         {
-            switch (pointerRegister) {
-                case PointerRegister wordRegister when offset == 0:
-                    //TODO
-                    break;
-                case PointerRegister wordRegister:
-                    wordRegister.TemporaryOffset(instruction, offset, () =>
-                    {
-                        StoreConstantIndirect(instruction, wordRegister, 0, value);
-                    });
-                    return;
+            using (ReserveRegister(instruction, ByteRegister.A)) {
+                ByteRegister.A.LoadConstant(instruction, value);
+                ByteRegister.A.StoreIndirect(instruction, pointerRegister, offset);
             }
-            throw new NotImplementedException();
         }
 
         public override void ClearByte(Instruction instruction, string label)

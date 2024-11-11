@@ -2,11 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Inu.Cate.Hd61700</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="IndexRegister.cs~RF7b5a4606.TMP" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Cate\Cate.csproj" />

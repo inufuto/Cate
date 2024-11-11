@@ -46,6 +46,9 @@ internal abstract class AbstractWordRegister(int id, string name) : Cate.WordReg
         if (operand is IntegerOperand integerOperand) {
             instruction.WriteLine("\t" + operation + "\t" + this + "," + integerOperand.IntegerValue);
         }
+        else if (operand is PointerOperand pointerOperand) {
+            instruction.WriteLine("\t" + operation + "\t" + this + "," + pointerOperand.MemoryAddress());
+        }
         else {
             using var reservation = WordOperation.ReserveAnyRegister(instruction, operand);
             reservation.WordRegister.Load(instruction, operand);
@@ -55,5 +58,12 @@ internal abstract class AbstractWordRegister(int id, string name) : Cate.WordReg
             instruction.RemoveRegisterAssignment(this);
             instruction.AddChanged(this);
         }
+    }
+
+    public override void Add(Instruction instruction, int offset)
+    {
+        instruction.WriteLine("\taddw\t" + AsmName + "," + offset);
+        instruction.AddChanged(this);
+        instruction.RemoveRegisterAssignment(this);
     }
 }
