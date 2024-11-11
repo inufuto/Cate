@@ -1,9 +1,8 @@
 ﻿namespace Inu.Cate.Hd61700;
 
-internal class DecrementJumpInstruction : Cate.DecrementJumpInstruction
+internal class DecrementJumpInstruction(Function function, AssignableOperand operand, Anchor anchor)
+    : Cate.DecrementJumpInstruction(function, operand, anchor)
 {
-    public DecrementJumpInstruction(Function function, AssignableOperand operand, Anchor anchor) : base(function, operand, anchor) { }
-
     public override void BuildAssembly()
     {
         switch (Operand) {
@@ -11,10 +10,9 @@ internal class DecrementJumpInstruction : Cate.DecrementJumpInstruction
                 WriteLine("\tsb " + register.AsmName + "," + ByteRegister.IntValue(1));
                 break;
             case VariableOperand variableOperand: {
-                using var reservation = WordOperation.ReserveAnyRegister(this, IndexRegister.Registers(true), Operand);
-                var pointerRegister = reservation.WordRegister;
-                pointerRegister.LoadConstant(this, variableOperand.MemoryAddress());
-                WriteLine("\tsb (" + pointerRegister.AsmName + IndexRegister.OffsetValue(0) + "),$30");
+                var indexRegister = IndexRegister.Ix;
+                indexRegister.LoadConstant(this, variableOperand.MemoryAddress());
+                WriteLine("\tsb (" + indexRegister.AsmName + IndexRegister.OffsetValue(0) + "),$30");
                 break;
             }
             case IndirectOperand indirectOperand: {

@@ -50,92 +50,83 @@ internal class ByteRegister : Cate.ByteRegister
 
     public override void LoadFromMemory(Instruction instruction, string label)
     {
-        using var reservation = WordOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(true));
-        var pointerRegister = reservation.WordRegister;
-        pointerRegister.LoadConstant(instruction, label);
-        LoadIndirect(instruction, pointerRegister, 0);
+        var indexRegister = IndexRegister.Ix;
+        indexRegister.LoadConstant(instruction, label);
+        LoadIndirect(instruction, indexRegister, 0);
     }
 
     public override void StoreToMemory(Instruction instruction, string label)
     {
-        using var reservation = WordOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(true));
-        var pointerRegister = reservation.WordRegister;
-        pointerRegister.LoadConstant(instruction, label);
-        StoreIndirect(instruction, pointerRegister, 0);
+        var indexRegister = IndexRegister.Ix;
+        indexRegister.LoadConstant(instruction, label);
+        StoreIndirect(instruction, indexRegister, 0);
     }
+
 
     public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
     {
-        using (var reservation = WordOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(true))) {
-            var indexRegister = (IndexRegister)reservation.WordRegister;
-            indexRegister.LoadConstant(instruction, variable, offset);
-            instruction.SetRegisterConstant(indexRegister, new PointerType(variable.Type), variable, offset);
-            LoadIndirect(instruction, indexRegister, 0);
-        }
+        var indexRegister = IndexRegister.Ix;
+        indexRegister.LoadConstant(instruction, variable, offset);
+        instruction.SetRegisterConstant(indexRegister, new PointerType(variable.Type), variable, offset);
+        LoadIndirect(instruction, indexRegister, 0);
         instruction.SetVariableRegister(variable, offset, this);
         instruction.AddChanged(this);
     }
 
     public override void StoreToMemory(Instruction instruction, Variable variable, int offset)
     {
-        using (var reservation = WordOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(true))) {
-            var indexRegister = (IndexRegister)reservation.WordRegister;
-            indexRegister.LoadConstant(instruction, variable, offset);
-            StoreIndirect(instruction, indexRegister, 0);
-        }
-
+        var indexRegister = IndexRegister.Ix;
+        indexRegister.LoadConstant(instruction, variable, offset);
+        StoreIndirect(instruction, indexRegister, 0);
         instruction.SetVariableRegister(variable, offset, this);
     }
 
     public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
-        if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
-            instruction.WriteLine("\tld " + AsmName + ",(" + pointerRegister.AsmName + IndexRegister.OffsetValue(offset) + ")");
+        if (offset == 0) {
+            instruction.WriteLine("\tld " + AsmName + ",(" + pointerRegister.AsmName + ")");
+            instruction.RemoveRegisterAssignment(this);
+            instruction.AddChanged(this);
+        }
+        else if (Compiler.IsOffsetInRange(offset)) {
+            var indexRegister = IndexRegister.Iz;
+            indexRegister.FromWordRegister(instruction, pointerRegister);
+            LoadIndirect(instruction, indexRegister, offset);
         }
         else {
-            if (offset == 0) {
-                instruction.WriteLine("\tld " + AsmName + ",(" + pointerRegister.AsmName + ")");
-                instruction.RemoveRegisterAssignment(this);
-                instruction.AddChanged(this);
-            }
-            else if (Compiler.IsOffsetInRange(offset)) {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(false));
-                var indexRegister = reservation.WordRegister;
-                indexRegister.CopyFrom(instruction, pointerRegister);
-                LoadIndirect(instruction, indexRegister, offset);
-            }
-            else {
-                pointerRegister.TemporaryOffset(instruction, offset, () =>
-                {
-                    LoadIndirect(instruction, pointerRegister, 0);
-                });
-            }
+            pointerRegister.TemporaryOffset(instruction, offset, () =>
+            {
+                LoadIndirect(instruction, pointerRegister, 0);
+            });
         }
+    }
+
+    private void LoadIndirect(Instruction instruction, IndexRegister indexRegister, int offset)
+    {
+        instruction.WriteLine("\tld " + AsmName + ",(" + indexRegister.AsmName + IndexRegister.OffsetValue(offset) + ")");
     }
 
 
     public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
-        if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
-            instruction.WriteLine("\tst " + AsmName + ",(" + pointerRegister.AsmName + IndexRegister.OffsetValue(offset) + ")");
+        if (offset == 0) {
+            instruction.WriteLine("\tst " + AsmName + ",(" + pointerRegister.AsmName + ")");
+        }
+        else if (Compiler.IsOffsetInRange(offset)) {
+            var indexRegister = IndexRegister.Iz;
+            indexRegister.FromWordRegister(instruction, pointerRegister);
+            StoreIndirect(instruction, indexRegister, offset);
         }
         else {
-            if (offset == 0) {
-                instruction.WriteLine("\tst " + AsmName + ",(" + pointerRegister.AsmName + ")");
-            }
-            else if (Compiler.IsOffsetInRange(offset)) {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(false));
-                var indexRegister = reservation.WordRegister;
-                indexRegister.CopyFrom(instruction, pointerRegister);
-                StoreIndirect(instruction, indexRegister, offset);
-            }
-            else {
-                pointerRegister.TemporaryOffset(instruction, offset, () =>
-                {
-                    StoreIndirect(instruction, pointerRegister, 0);
-                });
-            }
+            pointerRegister.TemporaryOffset(instruction, offset, () =>
+            {
+                StoreIndirect(instruction, pointerRegister, 0);
+            });
         }
+    }
+    private void StoreIndirect(Instruction instruction, IndexRegister indexRegister, int offset)
+    {
+        instruction.WriteLine("\tst " + AsmName + ",(" + indexRegister.AsmName + IndexRegister.OffsetValue(offset) + ")");
     }
 
     public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)

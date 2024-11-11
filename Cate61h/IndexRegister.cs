@@ -1,11 +1,11 @@
 ﻿namespace Inu.Cate.Hd61700;
 
-internal class IndexRegister : Cate.WordRegister
+internal class IndexRegister : Register
 {
     public static readonly IndexRegister Ix = new(100, "ix");
     public static readonly IndexRegister Iz = new(102, "iz");
 
-    public static List<Cate.WordRegister> Registers(bool constant)
+    public static List<IndexRegister> Registers(bool constant)
     {
         return constant ? [Ix, Iz] : [Iz, Ix];
     }
@@ -58,7 +58,7 @@ internal class IndexRegister : Cate.WordRegister
         FromWordRegister(instruction, wordRegister);
     }
 
-    private void FromWordRegister(Instruction instruction, Cate.WordRegister wordRegister)
+    public void FromWordRegister(Instruction instruction, Cate.WordRegister wordRegister)
     {
         if (instruction.IsRegisterCopy(this, wordRegister)) return;
         instruction.WriteLine("\tpre " + AsmName + "," + wordRegister.AsmName);
@@ -95,43 +95,6 @@ internal class IndexRegister : Cate.WordRegister
         wordRegister.StoreIndirect(instruction, pointerRegister, offset);
     }
 
-    public override bool IsOffsetInRange(int offset)
-    {
-        return Compiler.IsOffsetInRange(offset);
-    }
-
-    public override void Add(Instruction instruction, int offset)
-    {
-        using var rrl = WordOperation.ReserveAnyRegister(instruction);
-        var wrl = rrl.WordRegister;
-        ToWordRegister(instruction, wrl);
-        using var rrr = WordOperation.ReserveAnyRegister(instruction);
-        var wrr = rrr.WordRegister;
-        wrr.LoadConstant(instruction, offset);
-        instruction.WriteLine("\tadw " + wrl.AsmName + "," + wrr.AsmName);
-    }
-
-    public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
-    {
-        if (sourceRegister is IndexRegister sourceIndexRegister) {
-            using var reservation = WordOperation.ReserveAnyRegister(instruction);
-            var wordRegister = reservation.WordRegister;
-            sourceIndexRegister.ToWordRegister(instruction, wordRegister);
-            FromWordRegister(instruction, wordRegister);
-        }
-        else if (sourceRegister is WordRegister wordRegister) {
-            FromWordRegister(instruction, wordRegister);
-        }
-        else {
-
-            throw new NotImplementedException();
-        }
-    }
-
-    public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-    {
-        throw new NotImplementedException();
-    }
 
     public void LoadConstant(Instruction instruction, Variable variable, int offset)
     {
