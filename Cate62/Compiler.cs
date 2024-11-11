@@ -113,12 +113,6 @@ namespace Inu.Cate.Sc62015
             return new WordLoadInstruction(function, destinationOperand, sourceOperand);
         }
 
-        protected override Cate.LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
-            Operand sourceOperand)
-        {
-            return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
-        }
-
         public override Cate.BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
             Operand leftOperand, Operand rightOperand)
         {
