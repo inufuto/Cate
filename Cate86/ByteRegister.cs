@@ -167,7 +167,7 @@ namespace Inu.Cate.I8086
                                 ForRegister(pointerRegister);
                                 return;
                             }
-                            using var reservation = WordOperation.ReserveAnyRegister(instruction);
+                            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.PointerRegisters);
                             var temporaryRegister = reservation.WordRegister;
                             temporaryRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
                             instruction.SetVariableRegister(indirectOperand.Variable, 0, temporaryRegister);

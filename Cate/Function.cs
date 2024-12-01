@@ -279,7 +279,7 @@ public class Function : NamedValue
 
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if pMovingBlock == 0 goto StartMovingBlock@Anchor81")) {
+            if (instruction.ToString().Contains("x = x + *pDir")) {
                 var aaa = 111;
             }
 #endif
