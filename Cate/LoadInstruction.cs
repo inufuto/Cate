@@ -95,10 +95,9 @@ public class ByteLoadInstruction : LoadInstruction
     protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers.Where(r => !IsRegisterReserved(r, SourceOperand)).ToList();
 }
 
-public class WordLoadInstruction : LoadInstruction
+public class WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : LoadInstruction(function, destinationOperand, sourceOperand)
 {
-    public WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
-
     public override void BuildAssembly()
     {
         if (

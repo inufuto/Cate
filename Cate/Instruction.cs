@@ -15,14 +15,9 @@ public abstract class Instruction
     }
 
 
-    private class RegisterConstantAssignment
+    private class RegisterConstantAssignment(Constant constant)
     {
-        public readonly Constant Constant;
-
-        public RegisterConstantAssignment(Constant constant)
-        {
-            Constant = constant;
-        }
+        public readonly Constant Constant = constant;
 
         public RegisterConstantAssignment(int value) : this(new ConstantInteger(value)) { }
 
@@ -33,16 +28,10 @@ public abstract class Instruction
     }
 
 
-    private class RegisterVariableAssignment
+    private class RegisterVariableAssignment(Variable variable, int offset)
     {
-        public readonly Variable Variable;
-        public readonly int Offset;
-
-        public RegisterVariableAssignment(Variable variable, int offset)
-        {
-            Variable = variable;
-            Offset = offset;
-        }
+        public readonly Variable Variable = variable;
+        public readonly int Offset = offset;
 
         public override string ToString()
         {
@@ -77,9 +66,8 @@ public abstract class Instruction
     public readonly ISet<Instruction> PreviousInstructions = new HashSet<Instruction>();
     public readonly Function Function;
     public readonly IList<string> Codes = new List<string>();
-    private readonly List<string> codesToJump = new();
+    private readonly List<string> codesToJump = [];
     private readonly IList<RegisterReservation> registerReservations = new List<RegisterReservation>();
-    //private readonly IList<RegisterReservation> operandRegisterReservations = new List<RegisterReservation>();
     private readonly ISet<Register> changedRegisters = new HashSet<Register>();
     public readonly ISet<Variable> SavingVariables = new HashSet<Variable>();
     private readonly Dictionary<Register, RegisterConstantAssignment> registerConstantAssignments = new();

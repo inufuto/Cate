@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Inu.Cate.Mos6502;
 
-internal class WordZeroPage : Cate.WordRegister
+internal class WordZeroPage(int id) : Cate.WordRegister(id, IdToName(id))
 {
     public const int MinId = 30;
     public const int Count = ByteZeroPage.Count / 2;
@@ -41,9 +41,6 @@ internal class WordZeroPage : Cate.WordRegister
         return id is >= MinId and < MinId + Count;
     }
 
-
-    public WordZeroPage(int id) : base(id, IdToName(id))
-    { }
 
     public int Offset => IdToOffset(Id);
 

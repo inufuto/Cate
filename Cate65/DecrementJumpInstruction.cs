@@ -1,10 +1,8 @@
 ﻿namespace Inu.Cate.Mos6502;
 
-internal class DecrementJumpInstruction : Cate.DecrementJumpInstruction
+internal class DecrementJumpInstruction(Function function, AssignableOperand operand, Anchor anchor)
+    : Cate.DecrementJumpInstruction(function, operand, anchor)
 {
-    public DecrementJumpInstruction(Function function, AssignableOperand operand, Anchor anchor) : base(function, operand, anchor)
-    { }
-
     public override void BuildAssembly()
     {
         if (Operand.Register is ByteRegister register) {

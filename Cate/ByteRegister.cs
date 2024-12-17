@@ -4,10 +4,8 @@ using System.Linq;
 
 namespace Inu.Cate;
 
-public abstract class ByteRegister : Register
+public abstract class ByteRegister(int id, string name) : Register(id, 1, name)
 {
-    protected ByteRegister(int id, string name) : base(id, 1, name) { }
-
     public virtual WordRegister? PairRegister => null;
 
     public override bool Conflicts(Register? register)
@@ -53,6 +51,9 @@ public abstract class ByteRegister : Register
                 return;
             case VariableOperand variableOperand: {
                     var register = instruction.GetVariableRegister(variableOperand);
+                    if (register is WordRegister wordRegister) {
+                        register = wordRegister.Low;
+                    }
                     if (register is ByteRegister byteRegister) {
                         if (Equals(byteRegister, this)) {
                             //instruction.RemoveRegisterAssignment(this);

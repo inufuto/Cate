@@ -20,8 +20,8 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
         int offset, int count)
     {
         if (!change) {
-            var register = instruction.GetVariableRegister(variable, offset);
-            if (register is Cate.ByteRegister byteRegister) {
+            var variableRegister = instruction.GetVariableRegister(variable, offset);
+            if (variableRegister is Cate.ByteRegister byteRegister) {
                 byteRegister.Operate(instruction, operation, change, count);
                 return;
             }
@@ -235,9 +235,9 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
     public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);
 
 
-    //public RegisterReservation.Saving Save(ByteRegister register, Instruction instruction)
+    //public RegisterReservation.Saving Save(ByteRegister variableRegister, Instruction instruction)
     //{
-    //    return new Saving(register, instruction, this);
+    //    return new Saving(variableRegister, instruction, this);
     //}
 
 }

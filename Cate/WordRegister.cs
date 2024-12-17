@@ -135,17 +135,6 @@ public abstract class WordRegister : Register
                 var destinationOffset = destinationIndirectOperand.Offset;
                 StoreIndirect(instruction, destinationPointer, destinationOffset);
                 return;
-                    //var destinationPointer = destinationIndirectOperand.Variable;
-                    //var destinationOffset = destinationIndirectOperand.Offset;
-                    //if (destinationPointer.Register is WordRegister destinationPointerRegister) {
-                    //    StoreIndirect(instruction,
-                    //        destinationPointerRegister, destinationOffset);
-                    //    return;
-                    //}
-                    //using var reservation = WordOperation.ReserveAnyRegister(instruction, WordOperation.RegistersToOffset(destinationOffset));
-                    //reservation.WordRegister.LoadFromMemory(instruction, destinationPointer, 0);
-                    //StoreIndirect(instruction, reservation.WordRegister, destinationOffset);
-                    //return;
                 }
         }
         throw new NotImplementedException();

@@ -410,7 +410,12 @@ public abstract class SubroutineInstruction : Instruction
                 }
             }
             else {
-                StoreWord(operand, label, parameter.Type);
+                if (operand is IntegerOperand { IntegerValue: 0 }) {
+                    WordOperation.ClearWord(this, label);
+                }
+                else {
+                    StoreWord(operand, label, parameter.Type);
+                }
             }
             assignment.SetDone(this, null);
         }

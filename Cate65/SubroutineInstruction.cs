@@ -2,11 +2,13 @@
 
 namespace Inu.Cate.Mos6502;
 
-internal class SubroutineInstruction : Cate.SubroutineInstruction
+internal class SubroutineInstruction(
+    Function function,
+    Function targetFunction,
+    AssignableOperand? destinationOperand,
+    List<Operand> sourceOperands)
+    : Cate.SubroutineInstruction(function, targetFunction, destinationOperand, sourceOperands)
 {
-    public SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand, List<Operand> sourceOperands) : base(function, targetFunction, destinationOperand, sourceOperands)
-    { }
-
     protected override void Call()
     {
         WriteLine("\tjsr\t" + TargetFunction.Label);
@@ -23,7 +25,7 @@ internal class SubroutineInstruction : Cate.SubroutineInstruction
     {
         return operand switch
         {
-            IndirectOperand _ => new List<Cate.ByteRegister>() { ByteRegister.A },
+            IndirectOperand _ => [ByteRegister.A],
             _ => base.Candidates(operand)
         };
     }

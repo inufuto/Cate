@@ -8,18 +8,11 @@ namespace Inu.Cate;
 
 public class Function : NamedValue
 {
-    public class Parameter
+    public class Parameter(ParameterizableType type, int? id, Register? register)
     {
-        public readonly ParameterizableType Type;
-        public readonly int? Id;
-        public readonly Register? Register;
-
-        public Parameter(ParameterizableType type, int? id, Register? register)
-        {
-            Type = type;
-            Id = id;
-            Register = register;
-        }
+        public readonly ParameterizableType Type = type;
+        public readonly int? Id = id;
+        public readonly Register? Register = register;
 
         public Variable? Variable { get; set; }
     }
@@ -145,7 +138,7 @@ public class Function : NamedValue
             }
         }
 
-        compiler.SaveRegisters(writer, savedRegisters);
+        compiler.SaveRegisters(writer, savedRegisters, this);
 
         Instruction? prevInstruction = null;
         var tabCount = 0;
@@ -277,9 +270,13 @@ public class Function : NamedValue
         var sortedVariables = TargetVariables(variables).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         AllocateLocalVariables(sortedVariables);
 
+        //if (Instructions.Count > 0)
+        //{
+        //    Compiler.Instance.FirstInstruction(Instructions[0]);
+        //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("x = x + *pDir")) {
+            if (instruction.ToString().Contains("@3 = IsWall_(@4,y)")) {
                 var aaa = 111;
             }
 #endif

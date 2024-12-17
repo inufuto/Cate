@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Inu.Cate.Mos6502;
 
-internal class ByteZeroPage : Cate.ByteRegister
+internal class ByteZeroPage(int id) : Cate.ByteRegister(id, IdToName(id))
 {
     public const int MinId = 10;
     public const int Count = 16 - 2;
@@ -45,8 +45,6 @@ internal class ByteZeroPage : Cate.ByteRegister
         return id is >= MinId and < MinId + Count;
     }
 
-
-    public ByteZeroPage(int id) : base(id, IdToName(id)) { }
 
     public int Offset => IdToOffset(Id);
 

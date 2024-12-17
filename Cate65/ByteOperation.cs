@@ -6,7 +6,7 @@ namespace Inu.Cate.Mos6502;
 
 internal class ByteOperation : Cate.ByteOperation
 {
-    public override List<Cate.ByteRegister> Accumulators => new() { ByteRegister.A };
+    public override List<Cate.ByteRegister> Accumulators => [ByteRegister.A];
     public override List<Cate.ByteRegister> Registers => ByteRegister.Registers.Union(ByteZeroPage.Registers).ToList();
 
     protected override void OperateConstant(Instruction instruction, string operation, string value, int count)

@@ -4,18 +4,11 @@ using System.Linq;
 
 namespace Inu.Cate;
 
-public abstract class Register : IComparable<Register>
+public abstract class Register(int id, int byteCount, string name) : IComparable<Register>
 {
-    public readonly int Id;
-    public readonly int ByteCount;
-    public readonly string Name;
-
-    protected Register(int id, int byteCount, string name)
-    {
-        Id = id;
-        ByteCount = byteCount;
-        Name = name;
-    }
+    public readonly int Id = id;
+    public readonly int ByteCount = byteCount;
+    public readonly string Name = name;
 
     public override string ToString() => Name;
     public virtual string AsmName => Name;
@@ -77,9 +70,9 @@ public abstract class Register : IComparable<Register>
         instruction.SetVariableRegister(variable, offset, this);
     }
 
-    public abstract void LoadIndirect(Instruction instruction, WordRegister wordRegister, int offset);
+    public abstract void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
 
-    public abstract void StoreIndirect(Instruction instruction, WordRegister wordRegister, int offset);
+    public abstract void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset);
 
     public virtual void LoadIndirect(Instruction instruction, Variable pointer, int offset)
     {
@@ -87,7 +80,7 @@ public abstract class Register : IComparable<Register>
             LoadIndirect(instruction, pointerRegister, offset);
             return;
         }
-        var allCandidates = WordOperation.Registers.Where(r => !r.Conflicts(this)).ToList();
+        var allCandidates = WordOperation.PointerRegisters.Where(r => !r.Conflicts(this)).ToList();
         var unReserved = allCandidates.Where(r => !instruction.IsRegisterReserved(r)).ToList();
         var candidates = unReserved.Where(r => r.IsOffsetInRange(offset)).ToList();
         if (candidates.Count == 0) {

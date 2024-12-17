@@ -6,17 +6,11 @@ using System.Linq;
 
 namespace Inu.Cate.Mos6502;
 
-internal class Compiler : Cate.Compiler
+internal class Compiler(bool parameterRegister) : Cate.Compiler(new ByteOperation(), new WordOperation())
 {
     public const string ZeroPageLabel = "@zp";
-    private readonly bool parameterRegister;
 
     public new static Compiler Instance => (Compiler)Cate.Compiler.Instance;
-
-    public Compiler(bool parameterRegister) : base(new ByteOperation(), new WordOperation())
-    {
-        this.parameterRegister = parameterRegister;
-    }
 
     protected override void WriteAssembly(StreamWriter writer)
     {
@@ -67,10 +61,7 @@ internal class Compiler : Cate.Compiler
             var register = variableType.ByteCount switch
             {
                 1 => AllocatableRegister(variable, ByteZeroPage.Registers, function),
-                _ => variableType is PointerType ?
-                    AllocatableRegister(variable, WordZeroPage.Registers, function)
-                    :
-                    AllocatableRegister(variable, WordZeroPage.Registers, function)
+                _ => AllocatableRegister(variable, WordZeroPage.Registers, function)
             };
             if (register == null)
                 continue;
@@ -128,7 +119,6 @@ internal class Compiler : Cate.Compiler
             return type.ByteCount switch
             {
                 1 => ByteRegister.Y,
-                2 when type is PointerType => PairWordRegister.Xy,
                 2 => PairWordRegister.Xy,
                 _ => null
             };

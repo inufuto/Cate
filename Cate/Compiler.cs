@@ -1500,7 +1500,7 @@ public abstract class Compiler
     }
 
 
-    public virtual void SaveRegisters(StreamWriter writer, ISet<Register> registers)
+    public virtual void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function instruction)
     {
         var set = SavingRegisters(registers).ToImmutableSortedSet();
         foreach (var r in set) {
@@ -1540,7 +1540,7 @@ public abstract class Compiler
         }
     }
 
-    private Dictionary<Register, List<Variable>> DistinctRegisters(IEnumerable<Variable> variables)
+    protected Dictionary<Register, List<Variable>> DistinctRegisters(IEnumerable<Variable> variables)
     {
         var dictionary = new Dictionary<Register, List<Variable>>();
         foreach (var variable in variables) {
@@ -1552,7 +1552,7 @@ public abstract class Compiler
                     list.Add(variable);
                 }
                 else {
-                    dictionary[register] = new List<Variable>() { variable };
+                    dictionary[register] = [variable];
                 }
             }
         }
@@ -1725,7 +1725,7 @@ public abstract class Compiler
         Debug.Assert(function != null);
         var first = variable.Usages.First().Key;
         var last = variable.Usages.Last().Key;
-        int sum = 0;
+        var sum = 0;
         for (var address = first; address <= last; ++address) {
             var instruction = function.Instructions[address];
             var adaptability = instruction.RegisterAdaptability(variable, register);
@@ -1734,4 +1734,6 @@ public abstract class Compiler
         }
         return sum;
     }
+
+    //public virtual void FirstInstruction(Instruction instruction) { }
 }

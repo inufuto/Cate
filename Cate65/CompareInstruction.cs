@@ -3,12 +3,15 @@ using System.Collections.Generic;
 
 namespace Inu.Cate.Mos6502;
 
-internal class CompareInstruction : Cate.CompareInstruction
+internal class CompareInstruction(
+    Function function,
+    int operatorId,
+    Operand leftOperand,
+    Operand rightOperand,
+    Anchor anchor)
+    : Cate.CompareInstruction(function, operatorId, leftOperand, rightOperand, anchor)
 {
     private static int subLabelIndex = 0;
-
-    public CompareInstruction(Function function, int operatorId, Operand leftOperand, Operand rightOperand, Anchor anchor) : base(function, operatorId, leftOperand, rightOperand, anchor)
-    { }
 
     public override int? RegisterAdaptability(Variable variable, Register register)
     {
@@ -28,15 +31,15 @@ internal class CompareInstruction : Cate.CompareInstruction
     }
 
 
-    public override void BuildAssembly()
-    {
-        if (LeftOperand.Type.ByteCount == 1) {
-            CompareByte();
-        }
-        else {
-            CompareWord();
-        }
-    }
+    //public override void BuildAssembly()
+    //{
+    //    if (LeftOperand.Type.ByteCount == 1) {
+    //        CompareByte();
+    //    }
+    //    else {
+    //        CompareWord();
+    //    }
+    //}
 
     protected override void CompareByte()
     {
@@ -53,18 +56,14 @@ internal class CompareInstruction : Cate.CompareInstruction
                 }
             }
         }
-        { }
-        var candidates =
-            RightOperand is IndirectOperand || LeftOperand is IndirectOperand ?
-                new List<Cate.ByteRegister>() { ByteRegister.A } :
-                ByteRegister.Registers;
+        var candidates = (RightOperand is IndirectOperand || LeftOperand is IndirectOperand) ? [ByteRegister.A] : ByteRegister.Registers;
         using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.ByteRegister;
             var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
             register.Load(this, LeftOperand);
             register.Operate(this, operation, false, RightOperand);
         }
-        jump:
+    jump:
         switch (OperatorId) {
             case Keyword.Equal:
                 WriteJumpLine("\tbeq\t" + Anchor);

@@ -2,11 +2,13 @@
 
 namespace Inu.Cate.Mos6502;
 
-class MonomialInstruction : Cate.MonomialInstruction
+internal class MonomialInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand sourceOperand)
+    : Cate.MonomialInstruction(function, operatorId, destinationOperand, sourceOperand)
 {
-    public MonomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, operatorId, destinationOperand, sourceOperand)
-    { }
-
     public override void BuildAssembly()
     {
         if (DestinationOperand.Type.ByteCount == 1) {
