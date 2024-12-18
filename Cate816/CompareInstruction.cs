@@ -155,9 +155,8 @@ internal class CompareInstruction(
         var candidates = (RightOperand is IndirectOperand || LeftOperand is IndirectOperand) ? [WordRegister.A] : (List<Cate.WordRegister>)[WordRegister.A, WordRegister.X, WordRegister.Y];
         using (var reservation = WordOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.WordRegister;
-            var operation = Equals(register, WordRegister.A) ? "cmp" : "cp" + register.Name;
             register.Load(this, LeftOperand);
-            register.Operate(this, operation, false, RightOperand);
+            register.Compare(this, "cmp", RightOperand);
         }
         Jump();
     }
@@ -166,6 +165,11 @@ internal class CompareInstruction(
     {
         if (Equals(register, ByteRegister.A) || Equals(register, WordRegister.A)) {
             return null;
+        }
+        switch (RightOperand) {
+            case IndirectOperand { Variable.Register: null } when register is WordIndexRegister:
+            case VariableOperand variableOperand when variableOperand.Variable.Equals(variable) && register is WordRegister or ByteRegister:
+                return null;
         }
         return base.RegisterAdaptability(variable, register);
     }

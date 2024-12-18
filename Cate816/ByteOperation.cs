@@ -74,6 +74,25 @@ internal class ByteOperation : Cate.ByteOperation
         }
     }
 
+    public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
+    {
+        if (Equals(pointerRegister, WordRegister.A)) {
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.PointerRegisters);
+            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+            StoreConstantIndirect(instruction, reservation.WordRegister, offset, value);
+            return;
+        }
+        if (!instruction.IsConstantAssigned(ModeFlag.IndexRegister, ModeFlag.IndexRegister.Value)) {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+                ByteRegister.A.LoadConstant(instruction, value);
+                ByteRegister.A.StoreIndirect(instruction, pointerRegister, offset);
+            }
+        }
+        else {
+            base.StoreConstantIndirect(instruction, pointerRegister, offset, value);
+        }
+    }
+
     public override List<Cate.ByteRegister> Registers => ByteRegister.Registers.Union(ByteZeroPage.Registers).ToList();
 
     public override void ClearByte(Instruction instruction, string label)

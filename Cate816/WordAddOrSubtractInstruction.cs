@@ -57,25 +57,29 @@ internal class WordAddOrSubtractInstruction(
     private void IncrementOrDecrement(string registerOperation, string memoryOperation, int count)
     {
         if (DestinationOperand.SameStorage(LeftOperand) && count == 1) {
-            if (DestinationOperand.Register is WordRegister wordRegister) {
-                wordRegister.MakeSize(this);
-                if (wordRegister.Equals(WordRegister.A)) {
-                    WriteLine("\t" + memoryOperation + "\t" + wordRegister);
-                }
-                else {
-                    WriteLine("\t" + registerOperation + wordRegister);
-                }
-                return;
-            }
-            if (DestinationOperand.Register is WordZeroPage wordZeroPage)
+            switch (DestinationOperand.Register)
             {
-                ModeFlag.Memory.ResetBit(this);
-                WriteLine("\t" + memoryOperation + "\t" + wordZeroPage);
-                return;
+                case WordRegister wordRegister:
+                {
+                    wordRegister.MakeSize(this);
+                    if (wordRegister.Equals(WordRegister.A)) {
+                        WriteLine("\t" + memoryOperation + "\t" + wordRegister);
+                    }
+                    else {
+                        WriteLine("\t" + registerOperation + wordRegister);
+                    }
+                    return;
+                }
+                case WordZeroPage wordZeroPage:
+                    ModeFlag.Memory.ResetBit(this);
+                    WriteLine("\t" + memoryOperation + "\t" + wordZeroPage);
+                    return;
             }
+
             if (DestinationOperand is VariableOperand variableOperand) {
                 ModeFlag.Memory.ResetBit(this);
                 WriteLine("\t" + memoryOperation + "\t" + variableOperand.MemoryAddress());
+                RemoveVariableRegister(variableOperand);
                 return;
             }
         }

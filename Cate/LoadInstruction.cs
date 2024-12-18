@@ -43,10 +43,9 @@ public abstract class LoadInstruction : Instruction
     }
 }
 
-public class ByteLoadInstruction : LoadInstruction
+public class ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : LoadInstruction(function, destinationOperand, sourceOperand)
 {
-    public ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
-
     public override void BuildAssembly()
     {
         if (

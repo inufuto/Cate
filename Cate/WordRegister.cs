@@ -131,10 +131,10 @@ public abstract class WordRegister : Register
                     return;
                 }
             case IndirectOperand destinationIndirectOperand: {
-                var destinationPointer = destinationIndirectOperand.Variable;
-                var destinationOffset = destinationIndirectOperand.Offset;
-                StoreIndirect(instruction, destinationPointer, destinationOffset);
-                return;
+                    var destinationPointer = destinationIndirectOperand.Variable;
+                    var destinationOffset = destinationIndirectOperand.Offset;
+                    StoreIndirect(instruction, destinationPointer, destinationOffset);
+                    return;
                 }
         }
         throw new NotImplementedException();
@@ -181,4 +181,9 @@ public abstract class WordRegister : Register
 
     public abstract bool IsOffsetInRange(int offset);
     public abstract void Add(Instruction instruction, int offset);
+
+    public virtual void Compare(Instruction instruction, string operation, Operand operand)
+    {
+        Operate(instruction, operation, false, operand);
+    }
 }

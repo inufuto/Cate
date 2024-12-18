@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace Inu.Cate.Wdc65816;
 
@@ -30,7 +31,6 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             base.SaveRegisters(writer, variables, instruction, tabCount);
             return;
         }
-
         var distinct = DistinctRegisters(variables);
         Debug.Assert(distinct.Keys.ToList() != null);
         using var evacuation = new RegisterEvacuation(this, writer, distinct.Keys.ToList(), instruction, tabCount);
@@ -45,10 +45,20 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
     {
         var distinctList = SavingRegisters(registers);
         distinctList.Reverse();
-        using var evacuation = new RegisterEvacuation(this, writer, distinctList, byteCount);
-        foreach (var register in distinctList.OrderBy(RegisterOrder)) {
-            evacuation.ChangeMode(register);
-            RestoreRegister(writer, register, byteCount);
+        Register? modeFlag = null;
+        using (var evacuation = new RegisterEvacuation(this, writer, distinctList, byteCount)) {
+            foreach (var register in distinctList.OrderBy(RegisterOrder)) {
+                if (register is ModeFlag) {
+                    modeFlag = register;
+                }
+                else {
+                    evacuation.ChangeMode(register);
+                    RestoreRegister(writer, register, byteCount);
+                }
+            }
+        }
+        if (modeFlag != null) {
+            RestoreRegister(writer, modeFlag, byteCount);
         }
     }
 
@@ -435,7 +445,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                     goto exit;
                 }
                 if (offset is >= 0 and < 0x100) {
-                    if (!register.Conflicts(ByteRegister.Y)) {
+                    if (!register.Conflicts(ByteRegister.Y) && instruction.IsConstantAssigned(ModeFlag.IndexRegister, ModeFlag.IndexRegister.Value)) {
                         using (Instance.ByteOperation.ReserveRegister(instruction, ByteRegister.Y)) {
                             ByteRegister.Y.LoadConstant(instruction, offset);
                             MakeSize(register, instruction);
@@ -444,23 +454,10 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                         goto exit;
                     }
                 }
-                else {
-                    if (!register.Conflicts(WordRegister.Y)) {
-                        using (Instance.WordOperation.ReserveRegister(instruction, WordRegister.Y)) {
-                            WordRegister.Y.LoadConstant(instruction, offset);
-                            MakeSize(register, instruction);
-                            instruction.WriteLine("\tld" + register + "\t(" + zeroPage.Name + "),y");
-                        }
-                    }
-                    goto exit;
-                }
-                break;
+                ViaWordIndex();
+                goto exit;
             default:
-                var candidates = ((List<Cate.WordRegister>)[WordRegister.A, WordRegister.X, WordRegister.Y]).Where(r => !r.Equals(WordRegister.A)).ToList();
-                using (var reservation = Instance.WordOperation.ReserveAnyRegister(instruction, candidates)) {
-                    reservation.WordRegister.CopyFrom(instruction, pointerRegister);
-                    LoadIndirect(register, instruction, reservation.WordRegister, offset);
-                }
+                ViaWordIndex();
                 goto exit;
         }
 
@@ -489,6 +486,15 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         instruction.AddChanged(register);
         instruction.RemoveRegisterAssignment(register);
         instruction.ResultFlags |= Instruction.Flag.Z;
+        return;
+
+        void ViaWordIndex()
+        {
+            var candidates = ((List<Cate.WordRegister>)[WordRegister.X, WordRegister.Y]);
+            using var reservation = Instance.WordOperation.ReserveAnyRegister(instruction, candidates);
+            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+            LoadIndirect(register, instruction, reservation.WordRegister, offset);
+        }
     }
 
     public static void StoreIndirect(Register register, Instruction instruction, Cate.WordRegister pointerRegister, int offset)
@@ -524,15 +530,6 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 }
                 ViaWordIndex();
                 goto exit;
-            //if (!register.Conflicts(WordRegister.Y)) {
-            //    using (Instance.WordOperation.ReserveRegister(instruction, WordRegister.Y)) {
-            //        WordRegister.Y.LoadConstant(instruction, offset);
-            //        MakeSize(register, instruction);
-            //        instruction.WriteLine("\tst" + register + "\t(" + zeroPage.Name + "),y");
-            //    }
-            //}
-            //goto exit;
-            //break;
             default:
                 ViaWordIndex();
                 goto exit;
@@ -563,7 +560,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
         void ViaWordIndex()
         {
-            var candidates = ((List<Cate.WordRegister>)[WordRegister.X, WordRegister.Y]).Where(r => !r.Equals(WordRegister.A)).ToList();
+            var candidates = ((List<Cate.WordRegister>)[WordRegister.X, WordRegister.Y]);
             using var reservation = Instance.WordOperation.ReserveAnyRegister(instruction, candidates);
             reservation.WordRegister.CopyFrom(instruction, pointerRegister);
             StoreIndirect(register, instruction, reservation.WordRegister, offset);

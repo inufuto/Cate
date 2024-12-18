@@ -1,4 +1,6 @@
-﻿namespace Inu.Cate.Wdc65816;
+﻿using Microsoft.Win32;
+
+namespace Inu.Cate.Wdc65816;
 
 internal abstract class WordRegister(ByteRegister byteRegister) : Cate.WordRegister(byteRegister.Id + IdOffset, byteRegister.Name)
 {
@@ -172,6 +174,41 @@ internal class WordIndexRegister(ByteIndexRegister byteIndexRegister) : WordRegi
             A.CopyFrom(instruction, this);
             A.Add(instruction, offset);
         }
+    }
+
+    public override void Compare(Instruction instruction, string operation, Operand operand)
+    {
+        switch (operand) {
+            case IntegerOperand integerOperand:
+                MakeSize(instruction);
+                instruction.WriteLine("\tcp" + AsmName + "\t#" + integerOperand.IntegerValue);
+                instruction.ResultFlags |= Instruction.Flag.Z;
+                return;
+            case VariableOperand variableOperand:
+                if (variableOperand.Register == null) {
+                    MakeSize(instruction);
+                    instruction.WriteLine("\tcp" + AsmName + "\t" + variableOperand.MemoryAddress());
+                    instruction.ResultFlags |= Instruction.Flag.Z;
+                    return;
+                }
+                if (variableOperand.Register is WordZeroPage wordZeroPage) {
+                    MakeSize(instruction);
+                    instruction.WriteLine("\tcp" + AsmName + "\t" + wordZeroPage.AsmName);
+                    instruction.ResultFlags |= Instruction.Flag.Z;
+                    return;
+                }
+                if (variableOperand.Register is WordRegister operandRegister)
+                {
+                    using var reservation = WordOperation.ReserveAnyRegister(instruction, WordZeroPage.Registers);
+                    reservation.WordRegister.CopyFrom(instruction, operandRegister);
+                    MakeSize(instruction);
+                    instruction.WriteLine("\tcp" + AsmName + "\t" + reservation.WordRegister.AsmName);
+                    instruction.ResultFlags |= Instruction.Flag.Z;
+                    return;
+                }
+                break;
+        }
+        base.Compare(instruction, operation, operand);
     }
 
     public override void MakeSize(Instruction instruction)

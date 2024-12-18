@@ -276,7 +276,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@3 = IsWall_(@4,y)")) {
+            if (instruction.ToString().Contains("if pActor == pMonster goto IsNearToMonster@Anchor35")) {
                 var aaa = 111;
             }
 #endif

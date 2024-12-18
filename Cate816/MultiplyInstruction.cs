@@ -7,6 +7,15 @@ internal class MultiplyInstruction(
     int rightValue)
     : Cate.MultiplyInstruction(function, destinationOperand, leftOperand, rightValue)
 {
+    public override int? RegisterAdaptability(Variable variable, Register register)
+    {
+        if (register.Equals(WordRegister.A) && DestinationOperand is VariableOperand variableOperand &&
+            variableOperand.Variable.Equals(variable)) {
+            return null;
+        }
+        return base.RegisterAdaptability(variable, register);
+    }
+
     public override void BuildAssembly()
     {
         if (RightValue == 0) {

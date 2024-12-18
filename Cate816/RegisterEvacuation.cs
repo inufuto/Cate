@@ -50,10 +50,12 @@ internal class RegisterEvacuation : IDisposable
         void PrepareFlag(ModeFlag flag)
         {
             if (instruction.PreviousInstructions.All(i => i.IsConstantAssigned(flag, flag.Value))) {
-                SetMode(flag);
+                //SetMode(flag);
+                flags[flag] = flag.Value;
             }
             else if (instruction.PreviousInstructions.All(i => i.IsConstantAssigned(flag, 0))) {
-                ResetMode(flag);
+                //ResetMode(flag);
+                flags[flag] = 0;
             }
         }
     }
@@ -81,7 +83,7 @@ internal class RegisterEvacuation : IDisposable
     public void Dispose()
     {
         if (savedSize == null) return;
-        var savedFlags = new Dictionary<ModeFlag, int>(flags);
+        //var savedFlags = new Dictionary<ModeFlag, int>(flags);
         SetMode();
         WriteLine("\tlda\t<" + Compiler.TemporaryWordLabel);
         //RestoreFlags(savedFlags);
