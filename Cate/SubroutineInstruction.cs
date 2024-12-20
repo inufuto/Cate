@@ -8,20 +8,14 @@ namespace Inu.Cate;
 
 public abstract class SubroutineInstruction : Instruction
 {
-    protected class ParameterAssignment
+    protected class ParameterAssignment(Function.Parameter parameter, Operand operand)
     {
-        public readonly Function.Parameter Parameter;
-        public readonly Operand Operand;
+        public readonly Function.Parameter Parameter = parameter;
+        public readonly Operand Operand = operand;
 
         public RegisterReservation? RegisterReservation { get; set; }
 
         public bool Done { get; private set; }
-
-        public ParameterAssignment(Function.Parameter parameter, Operand operand)
-        {
-            Parameter = parameter;
-            Operand = operand;
-        }
 
         public override string ToString()
         {
@@ -86,7 +80,7 @@ public abstract class SubroutineInstruction : Instruction
     public readonly AssignableOperand? DestinationOperand;
     public readonly List<Operand> SourceOperands;
 
-    protected readonly List<ParameterAssignment> ParameterAssignments = new();
+    protected readonly List<ParameterAssignment> ParameterAssignments = [];
 
     public override bool IsSourceOperand(Variable variable)
     {

@@ -162,7 +162,7 @@ internal class ByteIndexRegister(int id, string name) : ByteRegister(id, name)
     public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (pointerRegister.Equals(Wdc65816.WordRegister.A)) {
-            var candidates =  Wdc65816.WordRegister.PointerRegisters.Where(r => !r.Conflicts(this)).ToList();
+            var candidates = Wdc65816.WordRegister.PointerRegisters.Where(r => !r.Conflicts(this)).ToList();
             using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
             reservation.WordRegister.CopyFrom(instruction, pointerRegister);
             using (ByteOperation.ReserveRegister(instruction, A)) {
@@ -174,6 +174,14 @@ internal class ByteIndexRegister(int id, string name) : ByteRegister(id, name)
         using (ByteOperation.ReserveRegister(instruction, A)) {
             A.LoadIndirect(instruction, pointerRegister, offset);
             CopyFrom(instruction, A);
+        }
+    }
+
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+    {
+        using (ByteOperation.ReserveRegister(instruction, A)) {
+            A.CopyFrom(instruction, this);
+            A.StoreIndirect(instruction, pointerRegister, offset);
         }
     }
 

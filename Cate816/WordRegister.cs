@@ -88,6 +88,16 @@ internal class WordAccumulator(ByteAccumulator byteAccumulator) : WordRegister(b
 {
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
     {
+        if (operand is ConstantOperand constantOperand) {
+            MakeSize(instruction);
+            instruction.WriteLine("\t" + operation + "\t#" + constantOperand.MemoryAddress());
+            instruction.ResultFlags |= Instruction.Flag.Z;
+            if (!change)
+                return;
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
+            return;
+        }
         if (operand is VariableOperand variableOperand) {
             var variableRegister = instruction.GetVariableRegister(variableOperand);
             switch (variableRegister) {
@@ -170,9 +180,31 @@ internal class WordIndexRegister(ByteIndexRegister byteIndexRegister) : WordRegi
 
     public override void Add(Instruction instruction, int offset)
     {
+        const int threshold = 8;
+        switch (offset) {
+            case < 0 and > -threshold: {
+                    MakeSize(instruction);
+                    while (offset < 0) {
+                        instruction.WriteLine("\tde" + AsmName);
+                        ++offset;
+                    }
+                    instruction.AddChanged(this);
+                    return;
+                }
+            case > 0 and < threshold: {
+                    MakeSize(instruction);
+                    while (offset > 0) {
+                        instruction.WriteLine("\tin" + AsmName);
+                        --offset;
+                    }
+                    instruction.AddChanged(this);
+                    return;
+                }
+        }
         using (WordOperation.ReserveRegister(instruction, A)) {
             A.CopyFrom(instruction, this);
             A.Add(instruction, offset);
+            CopyFrom(instruction, A);
         }
     }
 
@@ -197,8 +229,7 @@ internal class WordIndexRegister(ByteIndexRegister byteIndexRegister) : WordRegi
                     instruction.ResultFlags |= Instruction.Flag.Z;
                     return;
                 }
-                if (variableOperand.Register is WordRegister operandRegister)
-                {
+                if (variableOperand.Register is WordRegister operandRegister) {
                     using var reservation = WordOperation.ReserveAnyRegister(instruction, WordZeroPage.Registers);
                     reservation.WordRegister.CopyFrom(instruction, operandRegister);
                     MakeSize(instruction);
@@ -214,5 +245,21 @@ internal class WordIndexRegister(ByteIndexRegister byteIndexRegister) : WordRegi
     public override void MakeSize(Instruction instruction)
     {
         ModeFlag.IndexRegister.ResetBit(instruction);
+    }
+
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+    {
+        using (WordOperation.ReserveRegister(instruction, A)) {
+            A.LoadIndirect(instruction, pointerRegister, offset);
+            CopyFrom(instruction, A);
+        }
+    }
+
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+    {
+        using (WordOperation.ReserveRegister(instruction, A)) {
+            A.CopyFrom(instruction, this);
+            A.StoreIndirect(instruction, pointerRegister, offset);
+        }
     }
 }

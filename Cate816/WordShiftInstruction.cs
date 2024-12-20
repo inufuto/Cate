@@ -63,20 +63,16 @@ internal class WordShiftInstruction(
                 : "cate.ShiftRightWord",
             _ => throw new NotImplementedException()
         };
-        using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
-            StoreCount();
-        }
+        ByteRegister.A.Load(this, RightOperand);
+        ByteRegister.A.MakeSize(this);
+        WriteLine("\tsta\t<" + Wdc65816.Compiler.TemporaryCountLabel);
+        Compiler.AddExternalName(Wdc65816.Compiler.TemporaryCountLabel);
         if (Equals(DestinationOperand.Register, WordRegister.A)) {
             Call();
             return;
         }
-        if (Equals(RightOperand.Register, ByteRegister.A)) {
-            StoreCount();
-        }
-        else {
-            using (WordOperation.ReserveRegister(this, WordRegister.A)) {
-                Call();
-            }
+        using (WordOperation.ReserveRegister(this, WordRegister.A)) {
+            Call();
         }
         return;
 
@@ -87,13 +83,6 @@ internal class WordShiftInstruction(
             RemoveRegisterAssignment(WordRegister.A);
             AddChanged(WordRegister.A);
             WordRegister.A.Store(this, DestinationOperand);
-        }
-
-        void StoreCount()
-        {
-            ByteRegister.A.Load(this, RightOperand);
-            ByteRegister.A.MakeSize(this);
-            WriteLine("\tsta\t<" + Wdc65816.Compiler.TemporaryCountLabel);
         }
     }
 }

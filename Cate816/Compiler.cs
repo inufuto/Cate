@@ -1,5 +1,5 @@
-﻿using Microsoft.Win32;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Inu.Cate.Wdc65816;
 
@@ -109,7 +109,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             }
             else if (register is ByteIndexRegister byteRegister) {
                 var wordRegister = byteRegister.WordRegister;
-                if (wordRegister != null) {
+                if (wordRegister != null && !distinctList.Contains(wordRegister)) {
                     distinctList.Add(wordRegister);
                 }
             }
@@ -343,7 +343,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         Instance.AddExternalName(externalName);
     }
 
-    private static void MakeSize(Register register, Instruction instruction)
+    public static void MakeSize(Register register, Instruction instruction)
     {
         switch (register) {
             case ByteRegister byteRegister:
@@ -423,6 +423,13 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public static void LoadIndirect(Register register, Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
+        if (offset < 0) {
+            pointerRegister.TemporaryOffset(instruction, offset, () =>
+            {
+                LoadIndirect(register, instruction, pointerRegister, 0);
+            });
+            return;
+        }
         switch (pointerRegister) {
             case WordIndexRegister when register is ByteIndexRegister byteIndexRegister:
                 using (Instance.ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
@@ -499,6 +506,13 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public static void StoreIndirect(Register register, Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
+        if (offset < 0) {
+            pointerRegister.TemporaryOffset(instruction, offset, () =>
+            {
+                StoreIndirect(register, instruction, pointerRegister, 0);
+            });
+            return;
+        }
         switch (pointerRegister) {
             case WordIndexRegister when register is ByteIndexRegister byteIndexRegister:
                 using (Instance.ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {

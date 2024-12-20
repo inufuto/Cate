@@ -60,6 +60,7 @@ internal class WordOperation : Cate.WordOperation
             WordRegister.A.Load(instruction, instruction.LeftOperand);
             ModeFlag.Memory.ResetBit(instruction);
             instruction.WriteLine("\t" + operation + "\t#" + value);
+            instruction.AddChanged(WordRegister.A);
             WordRegister.A.Store(instruction, instruction.DestinationOperand);
         }
     }
