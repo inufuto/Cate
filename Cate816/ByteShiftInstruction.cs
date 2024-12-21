@@ -8,6 +8,18 @@ internal class ByteShiftInstruction(
     Operand rightOperand)
     : Cate.ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
+    public override void BuildAssembly()
+    {
+        switch (OperatorId) {
+            case Keyword.ShiftRight when ((IntegerType)LeftOperand.Type).Signed:
+                ShiftVariable(RightOperand);
+                break;
+            default:
+                base.BuildAssembly();
+                break;
+        }
+    }
+
     protected override void ShiftVariable(Operand counterOperand)
     {
         var functionName = OperatorId switch
@@ -67,5 +79,18 @@ internal class ByteShiftInstruction(
             Keyword.ShiftRight when !((IntegerType)LeftOperand.Type).Signed => "lsr",
             _ => throw new NotImplementedException()
         };
+    }
+
+    protected override void OperateByte(string operation, int count)
+    {
+        if (DestinationOperand.Register is ByteZeroPage byteZeroPage && !Equals(LeftOperand.Register, byteZeroPage)) {
+            using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+                ByteRegister.A.Load(this, LeftOperand);
+                ByteRegister.A.Operate(this, operation, true, count);
+                byteZeroPage.CopyFrom(this, ByteRegister.A);
+            }
+            return;
+        }
+        base.OperateByte(operation, count);
     }
 }

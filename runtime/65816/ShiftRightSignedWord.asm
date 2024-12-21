@@ -7,7 +7,6 @@ cate.ShiftRightSignedWord: public cate.ShiftRightSignedWord
     php
         rep #$10 | i16
         phx | phy
-            rep #$20 | a16
             sep #$10 | i8
             pha
                 and #$8000

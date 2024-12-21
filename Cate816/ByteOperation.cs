@@ -104,7 +104,7 @@ internal class ByteOperation : Cate.ByteOperation
     public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister register)
     {
         var label = Wdc65816.Compiler.TemporaryWordLabel;
-        register.StoreToMemory(instruction, label);
+        register.StoreToMemory(instruction, "<" + label);
         return label;
     }
 

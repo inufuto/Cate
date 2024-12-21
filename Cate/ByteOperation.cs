@@ -195,7 +195,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
             instruction.DestinationOperand.Register is ByteRegister byteRegister &&
             Accumulators.Contains(byteRegister) &&
             !(
-                Equals(instruction.RightOperand.Register, byteRegister) ||
+                //Equals(instruction.RightOperand.Register, byteRegister) ||
                 (
                     instruction.RightOperand is IndirectOperand { Variable.Register: not null } indirectOperand &&
                     indirectOperand.Variable.Register.Conflicts(byteRegister)

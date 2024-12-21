@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Inu.Cate.Wdc65816;
+﻿namespace Inu.Cate.Wdc65816;
 
 internal class WordShiftInstruction(
     Function function,
@@ -10,6 +8,18 @@ internal class WordShiftInstruction(
     Operand rightOperand)
     : Cate.WordShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
+    public override void BuildAssembly()
+    {
+        switch (OperatorId) {
+            case Keyword.ShiftRight when ((IntegerType)LeftOperand.Type).Signed:
+                ShiftVariable(RightOperand);
+                break;
+            default:
+                base.BuildAssembly();
+                break;
+        }
+    }
+
     protected override void ShiftConstant(int count)
     {
         if (((IntegerType)LeftOperand.Type).Signed) {

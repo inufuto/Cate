@@ -7,6 +7,7 @@ cate.ShiftRightSignedByte: public cate.ShiftRightSignedByte
     php
         rep #$10 | i16
         phx | phy
+            sep #$30 | a8 | i8
             pha
                 and #$80
                 sta <sign

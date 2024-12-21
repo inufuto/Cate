@@ -67,6 +67,9 @@ internal class RegisterEvacuation : IDisposable
         if (byteCount > 0 && registers.Any(r => r is ByteZeroPage or WordZeroPage)) {
             savedSize = byteCount;
         }
+        if (byteCount == 1 && registers.Contains(WordRegister.A)) {
+            savedSize = byteCount;
+        }
         tabCount = 0;
         Evacuate();
     }

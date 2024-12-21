@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Inu.Language;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Inu.Cate;
 
@@ -276,7 +277,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pMember = *ppMember")) {
+            if (instruction.ToString().Contains("@2 = x2 - x1")) {
                 var aaa = 111;
             }
 #endif
