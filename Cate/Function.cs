@@ -277,7 +277,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@2 = x2 - x1")) {
+            if (instruction.ToString().Contains("ShowSprite_(@2,pBarrier[2],*pBarrier,15)")) {
                 var aaa = 111;
             }
 #endif

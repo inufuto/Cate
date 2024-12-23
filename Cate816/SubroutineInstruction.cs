@@ -32,4 +32,9 @@ internal class SubroutineInstruction(
     {
         StoreParametersDirect();
     }
+
+    protected override List<Cate.ByteRegister> Candidates(Operand operand)
+    {
+        return [ByteRegister.A,];
+    }
 }

@@ -34,8 +34,15 @@ internal class WordShiftInstruction(
         };
         if (count <= 2 && DestinationOperand.SameStorage(LeftOperand) && DestinationOperand is VariableOperand variableOperand) {
             ModeFlag.Memory.ResetBit(this);
-            for (var i = 0; i < count; ++i) {
-                WriteLine("\t" + operation + "\t" + variableOperand.MemoryAddress());
+            if (DestinationOperand.Register is WordZeroPage wordZeroPage) {
+                for (var i = 0; i < count; ++i) {
+                    WriteLine("\t" + operation + "\t" + wordZeroPage.AsmName);
+                }
+            }
+            else {
+                for (var i = 0; i < count; ++i) {
+                    WriteLine("\t" + operation + "\t" + variableOperand.MemoryAddress());
+                }
             }
             RemoveVariableRegister(variableOperand);
             return;
