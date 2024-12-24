@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Inu.Cate.Wdc65816;
 
@@ -93,10 +92,9 @@ internal class ByteZeroPage(int id) : Cate.ByteRegister(id, IdToName(id))
 
     public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
-        using (var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers)) {
-            var register = reservation.ByteRegister;
-            register.LoadIndirect(instruction, pointerRegister, offset);
-            register.StoreToMemory(instruction, Name);
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+            ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset);
+            ByteRegister.A.StoreToMemory(instruction, Name);
         }
         instruction.AddChanged(this);
         instruction.RemoveRegisterAssignment(this);

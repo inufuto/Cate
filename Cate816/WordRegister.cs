@@ -1,6 +1,4 @@
-﻿using Microsoft.Win32;
-
-namespace Inu.Cate.Wdc65816;
+﻿namespace Inu.Cate.Wdc65816;
 
 internal abstract class WordRegister(ByteRegister byteRegister) : Cate.WordRegister(byteRegister.Id + IdOffset, byteRegister.Name)
 {

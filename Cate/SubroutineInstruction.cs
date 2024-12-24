@@ -517,10 +517,10 @@ public abstract class SubroutineInstruction : Instruction
     public override int? RegisterAdaptability(Variable variable, Register register)
     {
         foreach (var assignment in ParameterAssignments) {
-            if (assignment.Operand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable)) {
-                if (Equals(assignment.Parameter.Register, register)) {
-                    return 1;
-                }
+            if (assignment.Operand is not VariableOperand variableOperand ||
+                !variableOperand.Variable.Equals(variable)) continue;
+            if (Equals(assignment.Parameter.Register, register)) {
+                return 1;
             }
         }
         return base.RegisterAdaptability(variable, register);

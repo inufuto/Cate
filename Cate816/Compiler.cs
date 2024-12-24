@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace Inu.Cate.Wdc65816;
 
@@ -18,7 +17,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
     public override void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function function)
     {
         var distinctList = SavingRegisters(registers);
-        using var evacuation = new RegisterEvacuation(this, writer, distinctList, function);
+        using var evacuation = new RegisterEvacuation(writer, distinctList, function);
         foreach (var register in distinctList.OrderByDescending(RegisterOrder)) {
             evacuation.ChangeMode(register);
             register.Save(writer, null, null, 0);
@@ -31,14 +30,19 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             base.SaveRegisters(writer, variables, instruction, tabCount);
             return;
         }
+        //if (instruction.ToString().Contains("CanMove_(pMonster,dx,dy)")) {
+        //    var aaa = 111;
+        //}
         var distinct = DistinctRegisters(variables);
         Debug.Assert(distinct.Keys.ToList() != null);
-        using var evacuation = new RegisterEvacuation(this, writer, distinct.Keys.ToList(), instruction, tabCount);
+        using var evacuation = new RegisterEvacuation(writer, distinct.Keys.ToList(), instruction, tabCount);
+        var savedFlags = new Dictionary<ModeFlag, int>(evacuation.Flags);
         foreach (var (register, list) in distinct.OrderByDescending(p => RegisterOrder(p.Key))) {
             var comment = "\t; " + string.Join(',', list.Select(v => v.Name).ToArray());
             evacuation.ChangeMode(register);
             register.Save(writer, comment, instruction, tabCount);
         }
+        evacuation.RestoreFlags(savedFlags);
     }
 
     public override void RestoreRegisters(StreamWriter writer, ISet<Register> registers, int byteCount)
@@ -46,7 +50,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         var distinctList = SavingRegisters(registers);
         distinctList.Reverse();
         Register? modeFlag = null;
-        using (var evacuation = new RegisterEvacuation(this, writer, distinctList, byteCount)) {
+        using (var evacuation = new RegisterEvacuation(writer, distinctList, byteCount)) {
             foreach (var register in distinctList.OrderBy(RegisterOrder)) {
                 if (register is ModeFlag) {
                     modeFlag = register;
@@ -69,7 +73,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             return;
         }
         var distinct = DistinctRegisters(variables);
-        using var evacuation = new RegisterEvacuation(this, writer, distinct.Keys.ToList(), instruction, tabCount);
+        using var evacuation = new RegisterEvacuation(writer, distinct.Keys.ToList(), instruction, tabCount);
         var savedFlags = new Dictionary<ModeFlag, int>(evacuation.PrepareFlags(instruction));
         foreach (var (register, list) in distinct.OrderBy(p => RegisterOrder(p.Key))) {
             var comment = "\t; " + string.Join(',', list.Select(v => v.Name).ToArray());
@@ -102,19 +106,26 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         var distinctList = new List<Register>();
         var modeFlagAdded = false;
         foreach (var register in list) {
-            if (register is ModeFlag) {
-                if (modeFlagAdded) continue;
-                distinctList.Add(register);
-                modeFlagAdded = true;
-            }
-            else if (register is ByteIndexRegister byteRegister) {
-                var wordRegister = byteRegister.WordRegister;
-                if (wordRegister != null && !distinctList.Contains(wordRegister)) {
-                    distinctList.Add(wordRegister);
-                }
-            }
-            else if (!distinctList.Any(r => r.Conflicts(register))) {
-                distinctList.Add(register);
+            switch (register) {
+                case ModeFlag when modeFlagAdded:
+                    continue;
+                case ModeFlag:
+                    distinctList.Add(register);
+                    modeFlagAdded = true;
+                    break;
+                case ByteIndexRegister byteRegister: {
+                        var wordRegister = byteRegister.WordRegister;
+                        if (wordRegister != null && !distinctList.Contains(wordRegister)) {
+                            distinctList.Add(wordRegister);
+                        }
+                        break;
+                    }
+                default: {
+                        if (!distinctList.Any(r => r.Conflicts(register))) {
+                            distinctList.Add(register);
+                        }
+                        break;
+                    }
             }
         }
         return distinctList;
@@ -122,43 +133,45 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
+        foreach (var variable in variables) {
+            if (variable is { Static: false, Parameter.Register: not null }) {
+                variable.Register = variable.Parameter.Register;
+            }
+        }
         var byteRegisters = new List<Cate.ByteRegister>() { ByteRegister.A }.Union(ByteZeroPage.Registers).ToList();
         var wordRegisters = new List<Cate.WordRegister>() { WordRegister.A }.Union(WordZeroPage.Registers).ToList();
         var pointerRegisters = WordRegister.PointerRegisters;
+        if (function.Name.Contains("FallMovable")) {
+            var aaa = 111;
+        }
         var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
         Allocate(rangeOrdered);
         var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         Allocate(usageOrdered);
 
-        foreach (var variable in variables.Where(v => v.Register == null && !v.Static)) {
-            if (variable.Parameter?.Register == null)
-                continue;
-            var register = variable.Parameter.Register;
-            if (register is ByteRegister byteRegister) {
-                //if (!Conflict(variable.Intersections, byteRegister)) {
-                //    variable.Register = byteRegister;
-                //}
-                //else {
-                register = AllocatableRegister(variable, byteRegisters, function);
-                if (register != null) {
-                    variable.Register = register;
-                }
-                //}
-            }
-            else if (register is WordRegister wordRegister) {
-                var registers = variable.Type is PointerType ? pointerRegisters : wordRegisters;
-                //if (registers.Contains(wordRegister) && !Conflict(variable.Intersections, wordRegister)) {
-                //    variable.Register = wordRegister;
-                //}
-                //else {
-                register = AllocatableRegister(variable, registers, function);
-                if (register != null) {
-                    variable.Register = register;
-                }
-                //}
-            }
-        }
+        //foreach (var variable in variables.Where(v => v.Register == null && !v.Static)) {
+        //    if (variable.Parameter?.Register == null)
+        //        continue;
+        //    var register = variable.Parameter.Register;
+        //    switch (register) {
+        //        case Cate.ByteRegister: {
+        //                register = AllocatableRegister(variable, byteRegisters, function);
+        //                if (register != null) {
+        //                    variable.Register = register;
+        //                }
+        //                break;
+        //            }
+        //        case Cate.WordRegister: {
+        //                var registers = variable.Type is PointerType ? pointerRegisters : wordRegisters;
+        //                register = AllocatableRegister(variable, registers, function);
+        //                if (register != null) {
+        //                    variable.Register = register;
+        //                }
+        //                break;
+        //            }
+        //    }
+        //}
 
         return;
 
@@ -184,13 +197,14 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
-        if (index == 0)
+        if (index < 4) {
             return type.ByteCount switch
             {
-                1 => ByteRegister.A,
-                2 => WordRegister.A,
+                1 => ByteZeroPage.Registers[index * 2],
+                2 => WordZeroPage.Registers[index],
                 _ => null
             };
+        }
         return null;
     }
 
@@ -198,8 +212,8 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
     {
         return type.ByteCount switch
         {
-            1 => ByteRegister.A,
-            2 => WordRegister.A,
+            1 => ByteZeroPage.Registers[0],
+            2 => WordZeroPage.Registers[0],
             _ => null
         };
     }
@@ -343,6 +357,15 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         Instance.AddExternalName(externalName);
     }
 
+    public override void RemoveSavingRegister(ISet<Register> savedRegisters, int byteCount)
+    {
+        if (byteCount == 1 && savedRegisters.Remove(WordZeroPage.Registers[0])) {
+            var high = WordZeroPage.Registers[0].High;
+            if (high != null) savedRegisters.Add(high);
+        }
+        base.RemoveSavingRegister(savedRegisters, byteCount);
+    }
+
     public static void MakeSize(Register register, Instruction instruction)
     {
         switch (register) {
@@ -353,7 +376,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 wordRegister.MakeSize(instruction);
                 return;
         }
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     public static void Save(Register register, StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
@@ -386,7 +409,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         instruction.WriteLine("\tld" + register + "\t#" + value);
         instruction.AddChanged(register);
         instruction.RemoveRegisterAssignment(register);
-        instruction.ResultFlags |= Instruction.Flag.Z;
+        //instruction.ResultFlags |= Instruction.Flag.Z;
     }
 
     public static void LoadFromMemory(Register register, Instruction instruction, string label)
@@ -395,7 +418,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         instruction.WriteLine("\tld" + register + "\t" + label);
         instruction.AddChanged(register);
         instruction.RemoveRegisterAssignment(register);
-        instruction.ResultFlags |= Instruction.Flag.Z;
+        //instruction.ResultFlags |= Instruction.Flag.Z;
     }
 
     public static void StoreToMemory(Register register, Instruction instruction, string label)
@@ -411,7 +434,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         instruction.RemoveRegisterAssignment(register);
         instruction.SetVariableRegister(variable, offset, register);
         instruction.AddChanged(register);
-        instruction.ResultFlags |= Instruction.Flag.Z;
+        //instruction.ResultFlags |= Instruction.Flag.Z;
     }
 
     public static void StoreToMemory(Register register, Instruction instruction, Variable variable, int offset)
@@ -492,7 +515,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
     exit:
         instruction.AddChanged(register);
         instruction.RemoveRegisterAssignment(register);
-        instruction.ResultFlags |= Instruction.Flag.Z;
+        //instruction.ResultFlags |= Instruction.Flag.Z;
         return;
 
         void ViaWordIndex()
@@ -594,7 +617,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 instruction.WriteLine("\tt" + sourceRegister + register);
                 instruction.AddChanged(register);
                 instruction.RemoveRegisterAssignment(register);
-                instruction.ResultFlags |= Instruction.Flag.Z;
+                //instruction.ResultFlags |= Instruction.Flag.Z;
                 return;
             case ByteZeroPage:
             case WordZeroPage:

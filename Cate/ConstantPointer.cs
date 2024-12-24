@@ -58,16 +58,10 @@ public class ConstantPointer(PointerType type, Variable? variable, int offset, i
     }
 }
 
-public class NullPointerOperand : IntegerOperand
+public class NullPointerOperand() : IntegerOperand(new PointerType(VoidType.Type), 0);
+
+class NullPointer(PointerType type) : Constant(type)
 {
-    public NullPointerOperand() : base(new PointerType(VoidType.Type), 0) { }
-}
-
-class NullPointer : Constant
-{
-
-    public NullPointer(PointerType type) : base(type) { }
-
     public NullPointer() : this(new PointerType(VoidType.Type)) { }
 
     public override void WriteAssembly(StreamWriter writer)

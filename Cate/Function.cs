@@ -250,11 +250,6 @@ public class Function : NamedValue
 
     private void OptimizeVariables()
     {
-        static List<Variable> TargetVariables(IEnumerable<Variable> sourceVariables)
-        {
-            return sourceVariables.Where(v => v.Type is ParameterizableType && v.Usages.Any() && !v.Static).ToList();
-        }
-
         Debug.Assert(functionBlock != null);
         var variables = TargetVariables(functionBlock.AllVariables);
         foreach (var variable1 in variables) {
@@ -277,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("ShowSprite_(@2,pBarrier[2],*pBarrier,15)")) {
+            if (instruction.ToString().Contains("CanMove_(pMonster,dx,dy)")) {
                 var aaa = 111;
             }
 #endif
@@ -288,6 +283,13 @@ public class Function : NamedValue
 
         foreach (var variable in variables.Where(v => v.Register != null).OrderBy(v => v.Range)) {
             variable.FillSavings(this);
+        }
+
+        return;
+
+        static List<Variable> TargetVariables(IEnumerable<Variable> sourceVariables)
+        {
+            return sourceVariables.Where(v => v.Type is ParameterizableType && v.Usages.Any() && !v.Static).ToList();
         }
     }
 

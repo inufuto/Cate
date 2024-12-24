@@ -37,4 +37,23 @@ internal class SubroutineInstruction(
     {
         return [ByteRegister.A,];
     }
+
+    public override int? RegisterAdaptability(Variable variable, Register register)
+    {
+        if (register.Equals(ByteRegister.A) || register.Equals(WordRegister.A)) {
+            {
+                if (DestinationOperand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable)) {
+                    return null;
+                }
+            }
+            if (SourceOperands.Count > 1) {
+                foreach (var operand in SourceOperands) {
+                    if (operand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable)) {
+                        return null;
+                    }
+                }
+            }
+        }
+        return base.RegisterAdaptability(variable, register);
+    }
 }

@@ -2,10 +2,8 @@
 
 namespace Inu.Cate;
 
-public abstract class Constant : Value
+public abstract class Constant(Type type) : Value(type)
 {
-    protected Constant(Type type) : base(type) { }
-
     public override bool IsConstant() => true;
 
     public abstract void WriteAssembly(StreamWriter writer);
