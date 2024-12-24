@@ -1,23 +1,16 @@
 ﻿namespace Inu.Cate.Wdc65816;
 
-internal abstract class WordRegister(ByteRegister byteRegister) : Cate.WordRegister(byteRegister.Id + IdOffset, byteRegister.Name)
+internal abstract class WordRegister(int id, string name) : Cate.WordRegister(id, name)
 {
-    public static readonly WordAccumulator A = new(ByteRegister.A);
-    public static readonly WordIndexRegister X = new(ByteRegister.X);
-    public static readonly WordIndexRegister Y = new(ByteRegister.Y);
+    public static readonly WordAccumulator A = new(4,ByteRegister.A);
+    public static readonly WordIndexRegister X = new(5, "x");
+    public static readonly WordIndexRegister Y = new(6, "y");
     public static readonly List<Cate.WordRegister> Registers = [A, X, Y];
-
-    private const int IdOffset = 4;
-    public readonly ByteRegister ByteRegister = byteRegister;
 
     public static List<Cate.WordRegister> PointerRegisters => ((List<Cate.WordRegister>)[X, Y]).Union(WordZeroPage.Registers).ToList();
 
     public abstract void MakeSize(Instruction instruction);
 
-    public override bool Contains(Cate.ByteRegister byteRegister)
-    {
-        return ByteRegister.Equals(byteRegister);
-    }
 
     public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
     {
@@ -82,8 +75,15 @@ internal abstract class WordRegister(ByteRegister byteRegister) : Cate.WordRegis
     }
 }
 
-internal class WordAccumulator(ByteAccumulator byteAccumulator) : WordRegister(byteAccumulator)
+internal class WordAccumulator(int id, ByteAccumulator byteAccumulator) : WordRegister(id, byteAccumulator.Name)
 {
+    public readonly ByteRegister ByteRegister= byteAccumulator;
+    public override bool Contains(Cate.ByteRegister byteRegister)
+    {
+        return ByteRegister.Equals(byteRegister);
+    }
+
+
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
     {
         if (operand is ConstantOperand constantOperand) {
@@ -163,7 +163,7 @@ internal class WordAccumulator(ByteAccumulator byteAccumulator) : WordRegister(b
     }
 }
 
-internal class WordIndexRegister(ByteIndexRegister byteIndexRegister) : WordRegister(byteIndexRegister)
+internal class WordIndexRegister(int id,string name) : WordRegister(id,name)
 {
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
     {
@@ -240,10 +240,7 @@ internal class WordIndexRegister(ByteIndexRegister byteIndexRegister) : WordRegi
         base.Compare(instruction, operation, operand);
     }
 
-    public override void MakeSize(Instruction instruction)
-    {
-        ModeFlag.IndexRegister.ResetBit(instruction);
-    }
+    public override void MakeSize(Instruction instruction) { }
 
     public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {

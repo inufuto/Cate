@@ -1,19 +1,10 @@
-﻿using System.Diagnostics;
-
-namespace Inu.Cate.Wdc65816;
+﻿namespace Inu.Cate.Wdc65816;
 
 internal abstract class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
 {
     public static readonly ByteAccumulator A = new(1, "a");
-    public static readonly ByteIndexRegister X = new(2, "x");
-    public static readonly ByteIndexRegister Y = new(3, "y");
 
-    public static readonly List<Cate.ByteRegister> Registers = [A, X, Y];
-
-    public Cate.WordRegister? WordRegister
-    {
-        get => Wdc65816.WordRegister.Registers.Find(r => ((WordRegister)r).ByteRegister.Equals(this));
-    }
+    public static readonly List<Cate.ByteRegister> Registers = [A];
 
     public abstract void MakeSize(Instruction instruction);
 
@@ -85,6 +76,8 @@ internal abstract class ByteRegister(int id, string name) : Cate.ByteRegister(id
 
 internal class ByteAccumulator(int id, string name) : ByteRegister(id, name)
 {
+    public Cate.WordRegister? WordRegister => Wdc65816.WordRegister.Registers.Find(r => r is WordAccumulator a && a.ByteRegister.Equals(this));
+
     public override void MakeSize(Instruction instruction)
     {
         ModeFlag.Memory.SetBit(instruction);
@@ -148,79 +141,5 @@ internal class ByteAccumulator(int id, string name) : ByteRegister(id, name)
             return;
         instruction.AddChanged(this);
         instruction.RemoveRegisterAssignment(this);
-    }
-}
-
-
-internal class ByteIndexRegister(int id, string name) : ByteRegister(id, name)
-{
-    public override void MakeSize(Instruction instruction)
-    {
-        ModeFlag.IndexRegister.SetBit(instruction);
-    }
-
-    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
-    {
-        if (pointerRegister.Equals(Wdc65816.WordRegister.A)) {
-            var candidates = Wdc65816.WordRegister.PointerRegisters.Where(r => !r.Conflicts(this)).ToList();
-            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
-            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
-            using (ByteOperation.ReserveRegister(instruction, A)) {
-                A.LoadIndirect(instruction, reservation.WordRegister, offset);
-                CopyFrom(instruction, A);
-            }
-            return;
-        }
-        using (ByteOperation.ReserveRegister(instruction, A)) {
-            A.LoadIndirect(instruction, pointerRegister, offset);
-            CopyFrom(instruction, A);
-        }
-    }
-
-    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
-    {
-        using (ByteOperation.ReserveRegister(instruction, A)) {
-            A.CopyFrom(instruction, this);
-            A.StoreIndirect(instruction, pointerRegister, offset);
-        }
-    }
-
-    public override void Decrement(Instruction instruction)
-    {
-        MakeSize(instruction);
-        instruction.WriteLine("\tde" + Name);
-    }
-
-    public override void Operate(Instruction instruction, string operation, bool change, int count)
-    {
-        using (ByteOperation.ReserveRegister(instruction, A)) {
-            A.CopyFrom(instruction, this);
-            A.Operate(instruction, operation, change, count);
-            if (change) {
-                CopyFrom(instruction, A);
-            }
-        }
-    }
-
-    public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-    {
-        using (ByteOperation.ReserveRegister(instruction, A)) {
-            A.CopyFrom(instruction, this);
-            A.Operate(instruction, operation, change, operand);
-            if (change) {
-                CopyFrom(instruction, A);
-            }
-        }
-    }
-
-    public override void Operate(Instruction instruction, string operation, bool change, string operand)
-    {
-        using (ByteOperation.ReserveRegister(instruction, A)) {
-            A.CopyFrom(instruction, this);
-            A.Operate(instruction, operation, change, operand);
-            if (change) {
-                CopyFrom(instruction, A);
-            }
-        }
     }
 }

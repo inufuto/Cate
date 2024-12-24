@@ -43,16 +43,16 @@ internal class ByteOperation : Cate.ByteOperation
 
                             break;
                         }
-                    case >= 0 and < 0x100: {
-                            using (ByteOperation.ReserveRegister(instruction, ByteRegister.Y)) {
-                                ByteRegister.Y.LoadConstant(instruction, offset);
-                                for (var i = 0; i < count; ++i) {
-                                    instruction.WriteLine("\t" + operation + "\t(" + wordZeroPage + "),y");
-                                }
-                            }
+                    //case >= 0 and < 0x100: {
+                    //        using (ByteOperation.ReserveRegister(instruction, ByteRegister.Y)) {
+                    //            ByteRegister.Y.LoadConstant(instruction, offset);
+                    //            for (var i = 0; i < count; ++i) {
+                    //                instruction.WriteLine("\t" + operation + "\t(" + wordZeroPage + "),y");
+                    //            }
+                    //        }
 
-                            break;
-                        }
+                    //        break;
+                    //    }
                     default: {
                             using (WordOperation.ReserveRegister(instruction, WordRegister.Y)) {
                                 WordRegister.Y.LoadConstant(instruction, offset);
@@ -82,15 +82,7 @@ internal class ByteOperation : Cate.ByteOperation
             StoreConstantIndirect(instruction, reservation.WordRegister, offset, value);
             return;
         }
-        if (!instruction.IsConstantAssigned(ModeFlag.IndexRegister, ModeFlag.IndexRegister.Value)) {
-            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-                ByteRegister.A.LoadConstant(instruction, value);
-                ByteRegister.A.StoreIndirect(instruction, pointerRegister, offset);
-            }
-        }
-        else {
-            base.StoreConstantIndirect(instruction, pointerRegister, offset, value);
-        }
+        base.StoreConstantIndirect(instruction, pointerRegister, offset, value);
     }
 
     public override List<Cate.ByteRegister> Registers => ByteRegister.Registers.Union(ByteZeroPage.Registers).ToList();

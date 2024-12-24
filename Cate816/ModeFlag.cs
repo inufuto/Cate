@@ -3,13 +3,6 @@
 internal class ModeFlag(int id, string name, int value, string directive, Action<Instruction>? changeAction) : Register(id, 1, name)
 {
     public static ModeFlag Memory = new(8, "mmf", 0x20, "a", null);
-    public static ModeFlag IndexRegister = new(9, "imf", 0x10, "i", instruction =>
-    {
-        instruction.AddChanged(WordRegister.X);
-        instruction.AddChanged(WordRegister.Y);
-        instruction.RemoveRegisterAssignment(WordRegister.X);
-        instruction.RemoveRegisterAssignment(WordRegister.Y);
-    });
 
     private static readonly Dictionary<ModeFlag, int> LastFlags = new();
 

@@ -104,15 +104,15 @@ internal class WordOperation : Cate.WordOperation
                             instruction.WriteLine("\t" + operation + "\t(" + wordZeroPage + ")");
                             break;
                         }
-                    case >= 0 and < 0x100: {
-                            using (ByteOperation.ReserveRegister(instruction, ByteRegister.Y)) {
-                                ByteRegister.Y.LoadConstant(instruction, offset);
-                                WordRegister.A.Load(instruction, instruction.LeftOperand);
-                                ModeFlag.Memory.ResetBit(instruction);
-                                instruction.WriteLine("\t" + operation + "\t(" + wordZeroPage + "),y");
-                            }
-                            break;
-                        }
+                    //case >= 0 and < 0x100: {
+                    //        using (ByteOperation.ReserveRegister(instruction, ByteRegister.Y)) {
+                    //            ByteRegister.Y.LoadConstant(instruction, offset);
+                    //            WordRegister.A.Load(instruction, instruction.LeftOperand);
+                    //            ModeFlag.Memory.ResetBit(instruction);
+                    //            instruction.WriteLine("\t" + operation + "\t(" + wordZeroPage + "),y");
+                    //        }
+                    //        break;
+                    //    }
                     default: {
                             using (WordOperation.ReserveRegister(instruction, WordRegister.Y)) {
                                 WordRegister.Y.LoadConstant(instruction, offset);

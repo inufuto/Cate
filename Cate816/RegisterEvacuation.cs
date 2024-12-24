@@ -18,7 +18,6 @@ internal class RegisterEvacuation : IDisposable
         this.tabCount = tabCount;
         if (registers.Any(r => r is ByteZeroPage or WordZeroPage)) {
             PrepareFlag(ModeFlag.Memory);
-            PrepareFlag(ModeFlag.IndexRegister);
             if (instruction.PreviousInstructions.All(i => i.IsRegisterAssigned(WordRegister.A))) {
                 ResetMode(ModeFlag.Memory);
             }
@@ -109,17 +108,9 @@ internal class RegisterEvacuation : IDisposable
             case ByteAccumulator or ByteZeroPage:
                 SetMode(ModeFlag.Memory);
                 break;
-            case ByteIndexRegister:
-                SetMode(ModeFlag.IndexRegister);
-                break;
             case WordAccumulator or WordZeroPage:
                 ResetMode(ModeFlag.Memory);
                 break;
-            case WordIndexRegister:
-                ResetMode(ModeFlag.IndexRegister);
-                break;
-                //default:
-                //    throw new NotImplementedException();
         }
     }
 
@@ -136,22 +127,10 @@ internal class RegisterEvacuation : IDisposable
         Flags[flag] = flag.Value;
         SetFlag(flag);
     }
-    //private void SetMode()
-    //{
-    //    switch (savedSize) {
-    //        case 1:
-    //            SetMode(ModeFlag.Memory);
-    //            break;
-    //        case 2:
-    //            ResetMode(ModeFlag.Memory);
-    //            break;
-    //    }
-    //}
 
     public Dictionary<ModeFlag, int> PrepareFlags(Instruction instruction)
     {
         PrepareFlag(ModeFlag.Memory);
-        PrepareFlag(ModeFlag.IndexRegister);
         return Flags;
 
         void PrepareFlag(ModeFlag flag)
