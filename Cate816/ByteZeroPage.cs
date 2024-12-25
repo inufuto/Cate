@@ -47,6 +47,8 @@ internal class ByteZeroPage(int id) : Cate.ByteRegister(id, IdToName(id))
 
     public override Cate.WordRegister? PairRegister => WordZeroPage.FromOffset(Offset);
 
+    public Cate.WordRegister? WordRegister => WordZeroPage.FromOffset(Offset);
+
     public override void LoadConstant(Instruction instruction, int value)
     {
         if (value == 0) {

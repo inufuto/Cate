@@ -16,6 +16,9 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function function)
     {
+        //if (function.Name.Contains("FindLift")) {
+        //    var aaa = 111;
+        //}
         var distinctList = SavingRegisters(registers);
         using var evacuation = new RegisterEvacuation(writer, distinctList, function);
         foreach (var register in distinctList.OrderByDescending(RegisterOrder)) {
@@ -324,13 +327,22 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         Instance.AddExternalName(externalName);
     }
 
-    public override void RemoveSavingRegister(ISet<Register> savedRegisters, int byteCount)
+    public override void RemoveSavingRegister(ISet<Register> savedRegisters, Register returnRegister)
     {
-        if (byteCount == 1 && savedRegisters.Remove(WordZeroPage.Registers[0])) {
-            var high = WordZeroPage.Registers[0].High;
-            if (high != null) savedRegisters.Add(high);
+        if (returnRegister is ByteZeroPage byteZeroPage) {
+            var wordZeroPage = byteZeroPage.WordRegister as WordZeroPage;
+            Debug.Assert(wordZeroPage != null);
+            if (savedRegisters.Remove(wordZeroPage)) {
+                Debug.Assert(wordZeroPage.High != null);
+                savedRegisters.Add(wordZeroPage.High);
+            }
         }
-        base.RemoveSavingRegister(savedRegisters, byteCount);
+        else if (returnRegister is WordZeroPage wordZeroPage) {
+            Debug.Assert(wordZeroPage is { Low: not null, High: not null });
+            savedRegisters.Remove(wordZeroPage.Low);
+            savedRegisters.Remove(wordZeroPage.High);
+        }
+        base.RemoveSavingRegister(savedRegisters, returnRegister);
     }
 
     protected override int? RegisterAdaptability(Variable variable, Register register)

@@ -133,7 +133,7 @@ public class Function : NamedValue
         var returnRegister = compiler.ReturnRegister((ParameterizableType)Type);
         if (returnRegister != null) {
             savedRegisters.Remove(returnRegister);
-            compiler.RemoveSavingRegister(savedRegisters, Type.ByteCount);
+            compiler.RemoveSavingRegister(savedRegisters, returnRegister);
             foreach (var includedRegister in compiler.IncludedRegisters(returnRegister)) {
                 savedRegisters.Remove(includedRegister);
             }

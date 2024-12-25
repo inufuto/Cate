@@ -1695,8 +1695,7 @@ public abstract class Compiler
         MakeAlignment(writer, ref offset);
     }
 
-    public virtual void RemoveSavingRegister(ISet<Register> savedRegisters, int byteCount)
-    { }
+    public virtual void RemoveSavingRegister(ISet<Register> savedRegisters, Register returnRegister) { }
 
     protected Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
     {
