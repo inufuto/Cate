@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("CanMove_(pMonster,dx,dy)")) {
+            if (instruction.ToString().Contains("pVVram = VVramPtr_(*pBlock,y)")) {
                 var aaa = 111;
             }
 #endif

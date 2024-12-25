@@ -142,23 +142,7 @@ public abstract class SubroutineInstruction : Instruction
             var reservations = FillParameters();
             ResultFlags = 0;
             Call();
-            foreach (var reservation in reservations) {
-                if (reservation.Register.Conflicts(returnRegister)) {
-                    switch (reservation.Register) {
-                        case ByteRegister:
-                            alternative = ByteOperation.ReserveAnyRegister(this);
-                            alternative.ByteRegister.CopyFrom(this, reservation.ByteRegister);
-                            returnRegister = alternative.ByteRegister;
-                            break;
-                        case WordRegister:
-                            alternative = WordOperation.ReserveAnyRegister(this);
-                            alternative.WordRegister.CopyFrom(this, reservation.WordRegister);
-                            returnRegister = alternative.WordRegister;
-                            break;
-                    }
-                }
-                reservation.Dispose();
-            }
+            returnRegister = ResolveReturnRegister(reservations, returnRegister, ref alternative);
         }
         RemoveStaticVariableAssignments();
 
@@ -184,8 +168,31 @@ public abstract class SubroutineInstruction : Instruction
                     break;
             }
         }
-
         alternative?.Dispose();
+    }
+
+    protected virtual Register? ResolveReturnRegister(List<RegisterReservation> reservations, Register? returnRegister,
+        ref RegisterReservation? alternative)
+    {
+        foreach (var reservation in reservations) {
+            if (reservation.Register.Conflicts(returnRegister)) {
+                switch (reservation.Register) {
+                    case ByteRegister:
+                        alternative = ByteOperation.ReserveAnyRegister(this);
+                        alternative.ByteRegister.CopyFrom(this, reservation.ByteRegister);
+                        returnRegister = alternative.ByteRegister;
+                        break;
+                    case WordRegister:
+                        alternative = WordOperation.ReserveAnyRegister(this);
+                        alternative.WordRegister.CopyFrom(this, reservation.WordRegister);
+                        returnRegister = alternative.WordRegister;
+                        break;
+                }
+            }
+            reservation.Dispose();
+        }
+
+        return returnRegister;
     }
 
 

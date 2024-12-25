@@ -9,6 +9,11 @@ internal class SubroutineInstruction(
     List<Operand> sourceOperands)
     : Cate.SubroutineInstruction(function, targetFunction, destinationOperand, sourceOperands)
 {
+    protected override Register? ResolveReturnRegister(List<RegisterReservation> reservations, Register? returnRegister, ref RegisterReservation? alternative)
+    {
+        return returnRegister;
+    }
+
     protected override void Call()
     {
         if (TargetFunction.Parameters.Count > 0) {
