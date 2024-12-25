@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if @6 == 0 goto CanMoveTo@Anchor20")) {
+            if (instruction.ToString().Contains("*pObj = FixedX_(b)")) {
                 var aaa = 111;
             }
 #endif

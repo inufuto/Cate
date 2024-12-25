@@ -121,7 +121,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             }
         }
 
-        if (distinctList.Any(r=>r is not WordIndexRegister) && !distinctList.Contains(ModeFlag.Memory)) {
+        if (distinctList.Any(r => r is not WordIndexRegister) && !distinctList.Contains(ModeFlag.Memory)) {
             distinctList.Add(ModeFlag.Memory);
         }
         return distinctList;
@@ -131,12 +131,14 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
     {
         foreach (var variable in variables) {
             if (variable is { Static: false, Parameter.Register: not null }) {
-                variable.Register = variable.Parameter.Register;
+                if (RegisterAdaptability(variable, variable.Parameter.Register) != null) {
+                    variable.Register = variable.Parameter.Register;
+                }
             }
         }
-        if (function.Name.Contains("MoveMan")) {
-            var aaa = 111;
-        }
+        //if (function.Name.Contains("MoveMan")) {
+        //    var aaa = 111;
+        //}
         var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
         List<Cate.ByteRegister> byteRegisters = new List<Cate.ByteRegister> { ByteRegister.A }.Union(ByteZeroPage.Registers).ToList();

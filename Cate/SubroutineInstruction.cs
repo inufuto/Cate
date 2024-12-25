@@ -223,7 +223,7 @@ public abstract class SubroutineInstruction : Instruction
     {
         StoreParameters();
 
-        var firstRegister = Compiler.ParameterRegister(0, IntegerType.ByteType);
+        var firstRegister = ParameterAssignments.Count(a => !a.Done) > 1 ? Compiler.ParameterRegister(0, IntegerType.ByteType) : null;
         var changed = true;
         while (changed) {
             changed = false;

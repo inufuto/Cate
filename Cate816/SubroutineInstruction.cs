@@ -59,6 +59,11 @@ internal class SubroutineInstruction(
                 }
             }
         }
+        if (DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable.Equals(variable)) {
+            if (ParameterAssignments.Any(a => register.Conflicts(a.Parameter.Register))) {
+                return null;
+            }
+        }
         return base.RegisterAdaptability(variable, register);
     }
 }
