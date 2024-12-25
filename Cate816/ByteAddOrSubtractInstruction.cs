@@ -22,7 +22,7 @@ internal class ByteAddOrSubtractInstruction(
             '-' => "sec|sbc",
             _ => throw new NotImplementedException()
         };
-        ResultFlags |= Flag.Z;
+        //ResultFlags |= Flag.Z;
 
         ByteOperation.OperateByteBinomial(this, operation, true);
     }
@@ -41,13 +41,13 @@ internal class ByteAddOrSubtractInstruction(
     protected override void Increment(int count)
     {
         IncrementOrDecrement("inc", count);
-        ResultFlags |= Flag.Z;
+        //ResultFlags |= Flag.Z;
     }
 
     protected override void Decrement(int count)
     {
         IncrementOrDecrement("dec", count);
-        ResultFlags |= Flag.Z;
+        //ResultFlags |= Flag.Z;
     }
 
     private void IncrementOrDecrement(string memoryOperation, int count)

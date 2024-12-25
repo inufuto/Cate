@@ -109,7 +109,7 @@ internal class ByteAccumulator(int id, string name) : ByteRegister(id, name)
                 case ByteZeroPage zeroPage:
                     MakeSize(instruction);
                     instruction.WriteLine("\t" + operation + "\t" + zeroPage);
-                    instruction.ResultFlags |= Instruction.Flag.Z;
+                    //instruction.ResultFlags |= Instruction.Flag.Z;
                     if (!change)
                         return;
                     instruction.AddChanged(this);
@@ -122,7 +122,7 @@ internal class ByteAccumulator(int id, string name) : ByteRegister(id, name)
                         MakeSize(instruction);
                         instruction.WriteLine("\t" + operation + "\t" + temporary);
                     }
-                    instruction.ResultFlags |= Instruction.Flag.Z;
+                    //instruction.ResultFlags |= Instruction.Flag.Z;
                     if (!change)
                         return;
                     instruction.AddChanged(this);

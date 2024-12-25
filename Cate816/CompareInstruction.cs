@@ -10,23 +10,23 @@ internal class CompareInstruction(
 {
     private static int subLabelIndex = 0;
 
-    public override void BuildAssembly()
-    {
-        if (OperandZero()) {
-            if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
-                if (LeftOperand is VariableOperand variableOperand) {
-                    var registerId = GetVariableRegister(variableOperand);
-                    if (registerId != null) {
-                        if (CanOmitOperation(Flag.Z)) {
-                            Jump();
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-        base.BuildAssembly();
-    }
+    //public override void BuildAssembly()
+    //{
+    //    if (OperandZero()) {
+    //        if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
+    //            if (LeftOperand is VariableOperand variableOperand) {
+    //                var registerId = GetVariableRegister(variableOperand);
+    //                if (registerId != null) {
+    //                    if (CanOmitOperation(Flag.Z)) {
+    //                        Jump();
+    //                        return;
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    }
+    //    base.BuildAssembly();
+    //}
 
     private void Jump()
     {
@@ -143,9 +143,11 @@ internal class CompareInstruction(
         var candidates = (RightOperand is IndirectOperand || LeftOperand is IndirectOperand) ? [ByteRegister.A] : ByteRegister.Registers;
         using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.ByteRegister;
-            var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
             register.Load(this, LeftOperand);
-            register.Operate(this, operation, false, RightOperand);
+            if (!OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual)) {
+                var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
+                register.Operate(this, operation, false, RightOperand);
+            }
         }
         Jump();
     }
@@ -156,7 +158,9 @@ internal class CompareInstruction(
         using (var reservation = WordOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.WordRegister;
             register.Load(this, LeftOperand);
-            register.Compare(this, "cmp", RightOperand);
+            if (!OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual)) {
+                register.Compare(this, "cmp", RightOperand);
+            }
         }
         Jump();
     }

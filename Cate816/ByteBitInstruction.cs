@@ -21,7 +21,7 @@ internal class ByteBitInstruction(
             '&' => "and",
             _ => throw new NotImplementedException()
         };
-        ResultFlags |= Flag.Z;
+        //ResultFlags |= Flag.Z;
 
         ByteOperation.OperateByteBinomial(this, operation, true);
     }

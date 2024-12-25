@@ -76,7 +76,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
                     if (register is ByteRegister byteRegister) {
                         Debug.Assert(operation.Replace("\t", "").Replace(" ", "").Length <= 3);
                         byteRegister.Operate(instruction, operation, change, count);
-                        instruction.ResultFlags |= Instruction.Flag.Z;
+                        //instruction.ResultFlags |= Instruction.Flag.Z;
                         return;
                     }
                     OperateMemory(instruction, operation, change, variable, offset, count);
@@ -95,7 +95,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
                 }
             case ByteRegisterOperand byteRegisterOperand: {
                     byteRegisterOperand.Register.Operate(instruction, operation, change, count);
-                    instruction.ResultFlags |= Instruction.Flag.Z;
+                    //instruction.ResultFlags |= Instruction.Flag.Z;
                     return;
                 }
         }

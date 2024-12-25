@@ -18,7 +18,7 @@ internal class ByteOperation : Cate.ByteOperation
             instruction.WriteLine("\t" + operation + "\t" + variable.MemoryAddress(offset));
         }
         instruction.RemoveVariableRegister(variable, offset);
-        instruction.ResultFlags |= Instruction.Flag.Z;
+        //instruction.ResultFlags |= Instruction.Flag.Z;
     }
 
     protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
