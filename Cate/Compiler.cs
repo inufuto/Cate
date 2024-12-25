@@ -1734,5 +1734,5 @@ public abstract class Compiler
         return sum;
     }
 
-    //public virtual void FirstInstruction(Instruction instruction) { }
+    public virtual void RemoveRegisterAssignment(Instruction instruction) { }
 }

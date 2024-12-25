@@ -16,7 +16,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function function)
     {
-        //if (function.Name.Contains("FindLift")) {
+        //if (function.Name.Contains("VErase2XY")) {
         //    var aaa = 111;
         //}
         var distinctList = SavingRegisters(registers);
@@ -113,13 +113,16 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                     distinctList.Add(register);
                     modeFlagAdded = true;
                     break;
-                default: {
-                        if (!distinctList.Any(r => r.Conflicts(register))) {
-                            distinctList.Add(register);
-                        }
-                        break;
+                default:
+                    if (!distinctList.Any(r => r.Conflicts(register))) {
+                        distinctList.Add(register);
                     }
+                    break;
             }
+        }
+
+        if (distinctList.Any(r=>r is not WordIndexRegister) && !distinctList.Contains(ModeFlag.Memory)) {
+            distinctList.Add(ModeFlag.Memory);
         }
         return distinctList;
     }
@@ -131,9 +134,9 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 variable.Register = variable.Parameter.Register;
             }
         }
-        //if (function.Name.Contains("FallMovable")) {
-        //    var aaa = 111;
-        //}
+        if (function.Name.Contains("MoveMan")) {
+            var aaa = 111;
+        }
         var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
         List<Cate.ByteRegister> byteRegisters = new List<Cate.ByteRegister> { ByteRegister.A }.Union(ByteZeroPage.Registers).ToList();
@@ -353,6 +356,13 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             }
         }
         return base.RegisterAdaptability(variable, register);
+    }
+
+    public override void RemoveRegisterAssignment(Instruction instruction)
+    {
+        instruction.RemoveRegisterAssignment(ByteRegister.A);
+        instruction.RemoveRegisterAssignment(WordRegister.A);
+        base.RemoveRegisterAssignment(instruction);
     }
 
     public static void MakeSize(Register register, Instruction instruction)

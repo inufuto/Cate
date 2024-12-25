@@ -4,6 +4,7 @@ internal class RegisterEvacuation : IDisposable
     private readonly StreamWriter writer;
     private readonly int tabCount;
     public readonly Dictionary<ModeFlag, int> Flags = new();
+    //private readonly Register? assignedRegister;
 
     public RegisterEvacuation(StreamWriter writer, List<Register> registers, Function function)
     {
@@ -18,12 +19,14 @@ internal class RegisterEvacuation : IDisposable
         this.tabCount = tabCount;
         if (registers.Any(r => r is ByteZeroPage or WordZeroPage)) {
             PrepareFlag(ModeFlag.Memory);
-            if (instruction.PreviousInstructions.All(i => i.IsRegisterAssigned(WordRegister.A))) {
-                ResetMode(ModeFlag.Memory);
-            }
-            else if (instruction.PreviousInstructions.All(i => i.IsRegisterAssigned(ByteRegister.A))) {
-                SetMode(ModeFlag.Memory);
-            }
+            //if (instruction.PreviousInstructions.All(i => i.IsRegisterAssigned(WordRegister.A))) {
+            //    //ResetMode(ModeFlag.Memory);
+            //    assignedRegister = WordRegister.A;
+            //}
+            //else if (instruction.PreviousInstructions.All(i => i.IsRegisterAssigned(ByteRegister.A))) {
+            //    //SetMode(ModeFlag.Memory);
+            //    assignedRegister = ByteRegister.A;
+            //}
         }
         Evacuate();
         return;
@@ -31,11 +34,9 @@ internal class RegisterEvacuation : IDisposable
         void PrepareFlag(ModeFlag flag)
         {
             if (instruction.PreviousInstructions.All(i => i.IsConstantAssigned(flag, flag.Value))) {
-                //SetMode(flag);
                 Flags[flag] = flag.Value;
             }
             else if (instruction.PreviousInstructions.All(i => i.IsConstantAssigned(flag, 0))) {
-                //ResetMode(flag);
                 Flags[flag] = 0;
             }
         }
@@ -56,15 +57,22 @@ internal class RegisterEvacuation : IDisposable
 
     private void Evacuate()
     {
-        //if (savedSize == null) return;
-        var savedFlags = new Dictionary<ModeFlag, int>(Flags);
-        //Compiler.AddExternalName(Compiler.TemporaryWordLabel);
+        //if (assignedRegister == null) return;
+        //var savedFlags = new Dictionary<ModeFlag, int>(Flags);
+        //ChangeMode(assignedRegister);
+        //Cate.Compiler.Instance.AddExternalName(Compiler.TemporaryWordLabel);
         //WriteLine("\tsta\t<" + Compiler.TemporaryWordLabel);
-        RestoreFlags(savedFlags);
+        //RestoreFlags(savedFlags);
     }
 
     public void Dispose()
     {
+        //if (assignedRegister == null) return;
+        //var savedFlags = new Dictionary<ModeFlag, int>(Flags);
+        //ChangeMode(assignedRegister);
+        //Cate.Compiler.Instance.AddExternalName(Compiler.TemporaryWordLabel);
+        //WriteLine("\tlda\t<" + Compiler.TemporaryWordLabel);
+        //RestoreFlags(savedFlags);
     }
     //private void WriteLine(string s)
     //{

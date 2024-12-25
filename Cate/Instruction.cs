@@ -394,6 +394,8 @@ public abstract class Instruction
             }
         nextRegister:;
         }
+
+        Compiler.RemoveRegisterAssignment(this);
     }
 
 
