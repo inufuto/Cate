@@ -128,14 +128,14 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 variable.Register = variable.Parameter.Register;
             }
         }
-        var byteRegisters = new List<Cate.ByteRegister>() { ByteRegister.A }.Union(ByteZeroPage.Registers).ToList();
-        var wordRegisters = new List<Cate.WordRegister>() { WordRegister.A }.Union(WordZeroPage.Registers).ToList();
-        var pointerRegisters = WordRegister.PointerRegisters;
         //if (function.Name.Contains("FallMovable")) {
         //    var aaa = 111;
         //}
         var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
+        List<Cate.ByteRegister> byteRegisters = new List<Cate.ByteRegister> { ByteRegister.A }.Union(ByteZeroPage.Registers).ToList();
+        List<Cate.WordRegister> wordRegisters = new List<Cate.WordRegister> { WordRegister.A }.Union(WordZeroPage.Registers).ToList();
+        var pointerRegisters = WordRegister.PointerRegisters;
         Allocate(rangeOrdered);
         var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         Allocate(usageOrdered);
@@ -331,6 +331,16 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             if (high != null) savedRegisters.Add(high);
         }
         base.RemoveSavingRegister(savedRegisters, byteCount);
+    }
+
+    protected override int? RegisterAdaptability(Variable variable, Register register)
+    {
+        if (variable.Intersections.Any()) {
+            if (register.Equals(ByteRegister.A) || register.Equals(WordRegister.A)) {
+                return null;
+            }
+        }
+        return base.RegisterAdaptability(variable, register);
     }
 
     public static void MakeSize(Register register, Instruction instruction)

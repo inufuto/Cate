@@ -1698,7 +1698,7 @@ public abstract class Compiler
     public virtual void RemoveSavingRegister(ISet<Register> savedRegisters, int byteCount)
     { }
 
-    protected static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
+    protected Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
     {
         T? maxRegister = null;
         int? max = null;
@@ -1719,7 +1719,7 @@ public abstract class Compiler
             v.Register != null && register.Conflicts(v.Register));
     }
 
-    protected static int? RegisterAdaptability(Variable variable, Register register)
+    protected virtual int? RegisterAdaptability(Variable variable, Register register)
     {
         var function = variable.Block.Function;
         Debug.Assert(function != null);
