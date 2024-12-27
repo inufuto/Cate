@@ -12,7 +12,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         base.AddSavingRegister(registers, register);
     }
 
-    public override void SaveRegisters(StreamWriter writer, ISet<Register> registers)
+    public override void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function instruction)
     {
         SaveRegisters(writer, registers, 0, _ => "");
     }

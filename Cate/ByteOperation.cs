@@ -20,8 +20,8 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
         int offset, int count)
     {
         if (!change) {
-            var register = instruction.GetVariableRegister(variable, offset);
-            if (register is Cate.ByteRegister byteRegister) {
+            var variableRegister = instruction.GetVariableRegister(variable, offset);
+            if (variableRegister is Cate.ByteRegister byteRegister) {
                 byteRegister.Operate(instruction, operation, change, count);
                 return;
             }
@@ -76,7 +76,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
                     if (register is ByteRegister byteRegister) {
                         Debug.Assert(operation.Replace("\t", "").Replace(" ", "").Length <= 3);
                         byteRegister.Operate(instruction, operation, change, count);
-                        instruction.ResultFlags |= Instruction.Flag.Z;
+                        //instruction.ResultFlags |= Instruction.Flag.Z;
                         return;
                     }
                     OperateMemory(instruction, operation, change, variable, offset, count);
@@ -95,7 +95,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
                 }
             case ByteRegisterOperand byteRegisterOperand: {
                     byteRegisterOperand.Register.Operate(instruction, operation, change, count);
-                    instruction.ResultFlags |= Instruction.Flag.Z;
+                    //instruction.ResultFlags |= Instruction.Flag.Z;
                     return;
                 }
         }
@@ -195,7 +195,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
             instruction.DestinationOperand.Register is ByteRegister byteRegister &&
             Accumulators.Contains(byteRegister) &&
             !(
-                Equals(instruction.RightOperand.Register, byteRegister) ||
+                //Equals(instruction.RightOperand.Register, byteRegister) ||
                 (
                     instruction.RightOperand is IndirectOperand { Variable.Register: not null } indirectOperand &&
                     indirectOperand.Variable.Register.Conflicts(byteRegister)
@@ -235,9 +235,9 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
     public abstract string ToTemporaryByte(Instruction instruction, ByteRegister register);
 
 
-    //public RegisterReservation.Saving Save(ByteRegister register, Instruction instruction)
+    //public RegisterReservation.Saving Save(ByteRegister variableRegister, Instruction instruction)
     //{
-    //    return new Saving(register, instruction, this);
+    //    return new Saving(variableRegister, instruction, this);
     //}
 
 }

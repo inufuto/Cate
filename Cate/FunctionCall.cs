@@ -3,15 +3,10 @@ using System.Linq;
 
 namespace Inu.Cate;
 
-internal class FunctionCall : Value
+internal class FunctionCall(Function function) : Value(function.Type)
 {
-    public readonly Function Function;
-    public readonly List<Value> Parameters = new List<Value>();
-
-    public FunctionCall(Function function) : base(function.Type)
-    {
-        Function = function;
-    }
+    public readonly Function Function = function;
+    public readonly List<Value> Parameters = [];
 
     public void AddParameter(Value value)
     {

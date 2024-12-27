@@ -83,7 +83,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         }
     }
 
-    public override void SaveRegisters(StreamWriter writer, ISet<Register> registers)
+    public override void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function instruction)
     {
         var registerComments = RegisterComment.FromRegisters(registers);
         foreach (var registerComment in registerComments) {

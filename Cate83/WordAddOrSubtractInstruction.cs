@@ -12,22 +12,19 @@ internal class WordAddOrSubtractInstruction(
 {
     public override void BuildAssembly()
     {
-        if (LeftOperand is ConstantOperand && !(RightOperand is ConstantOperand) && IsOperatorExchangeable()) {
-            ExchangeOperands();
-        }
-        else {
-            if (RightOperand.Register is WordRegister rightRegister) {
-                if (rightRegister.Addable && IsOperatorExchangeable()) {
-                    ExchangeOperands();
-                }
+        if (IsOperatorExchangeable()) {
+            if (LeftOperand is ConstantOperand) {
+                ExchangeOperands();
+            }
+            else if (Equals(RightOperand.Register, WordRegister.Hl) && (Equals(LeftOperand.Register, WordRegister.De) || Equals(LeftOperand.Register, WordRegister.Bc))) {
+                ExchangeOperands();
             }
         }
-
-        if (IncrementOrDecrement())
+        if (IncrementOrDecrement()) {
             return;
-
-        if (OperatorId == '+' && !Equals(RightOperand.Register, WordRegister.Hl)) {
-            if (RightOperand.Register is WordRegister rightWordRegister && (Equals(rightWordRegister, WordRegister.De) || Equals(rightWordRegister, WordRegister.Bc))) {
+        }
+        if (OperatorId == '+' && Equals(LeftOperand.Register, WordRegister.Hl)) {
+            if (RightOperand.Register is WordRegister rightWordRegister) {
                 OperateHl(rightWordRegister);
                 return;
             }
@@ -37,14 +34,14 @@ internal class WordAddOrSubtractInstruction(
             {
                 var rightRegister = reservation.WordRegister;
                 rightRegister.Load(this, RightOperand);
-                if (Equals(DestinationOperand.Register, WordRegister.Hl)) {
+                //if (Equals(DestinationOperand.Register, WordRegister.Hl)) {
                     OperateHl(rightRegister);
-                }
-                else {
-                    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
-                        OperateHl(rightRegister);
-                    }
-                }
+                //}
+                //else {
+                //    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                //        OperateHl(rightRegister);
+                //    }
+                //}
             }
             return;
 

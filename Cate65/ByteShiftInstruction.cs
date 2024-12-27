@@ -2,11 +2,14 @@
 
 namespace Inu.Cate.Mos6502;
 
-internal class ByteShiftInstruction : Cate.ByteShiftInstruction
+internal class ByteShiftInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : Cate.ByteShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
-    public ByteShiftInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
-    { }
-
     protected override string Operation()
     {
         return OperatorId switch
@@ -48,6 +51,16 @@ internal class ByteShiftInstruction : Cate.ByteShiftInstruction
 
     private void CallExternal(string functionName)
     {
+        if (Equals(DestinationOperand.Register, ByteRegister.A)) {
+            Call();
+            return;
+        }
+        using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
+            Call();
+        }
+
+        return;
+
         void Call()
         {
             ByteRegister.A.Load(this, LeftOperand);
@@ -57,14 +70,6 @@ internal class ByteShiftInstruction : Cate.ByteShiftInstruction
             RemoveRegisterAssignment(ByteRegister.Y);
             AddChanged(ByteRegister.Y);
             ByteRegister.A.Store(this, DestinationOperand);
-        }
-
-        if (Equals(DestinationOperand.Register, ByteRegister.A)) {
-            Call();
-            return;
-        }
-        using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
-            Call();
         }
     }
 

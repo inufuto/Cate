@@ -43,10 +43,9 @@ public abstract class LoadInstruction : Instruction
     }
 }
 
-public class ByteLoadInstruction : LoadInstruction
+public class ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : LoadInstruction(function, destinationOperand, sourceOperand)
 {
-    public ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
-
     public override void BuildAssembly()
     {
         if (
@@ -95,10 +94,9 @@ public class ByteLoadInstruction : LoadInstruction
     protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers.Where(r => !IsRegisterReserved(r, SourceOperand)).ToList();
 }
 
-public class WordLoadInstruction : LoadInstruction
+public class WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : LoadInstruction(function, destinationOperand, sourceOperand)
 {
-    public WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
-
     public override void BuildAssembly()
     {
         if (
@@ -118,10 +116,10 @@ public class WordLoadInstruction : LoadInstruction
             }
 
             var pointerRegisters = WordOperation.RegistersToOffset(offset);
-            if (pointerRegisters.Any()) {
+            if (pointerRegisters.Count > 0) {
                 using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
                 reservation.WordRegister.LoadFromMemory(this, pointer, 0);
-                ByteOperation.StoreConstantIndirect(this, reservation.WordRegister, offset,
+                WordOperation.StoreConstantIndirect(this, reservation.WordRegister, offset,
                     integerOperand.IntegerValue);
                 return;
             }

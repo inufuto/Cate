@@ -2,10 +2,14 @@
 
 namespace Inu.Cate;
 
-public abstract class ShiftInstruction : BinomialInstruction
+public abstract class ShiftInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : BinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
-    protected ShiftInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
-    { }
     protected abstract int Threshold();
 
     public override void BuildAssembly()
@@ -26,10 +30,14 @@ public abstract class ShiftInstruction : BinomialInstruction
 
 }
 
-public abstract class ByteShiftInstruction : ShiftInstruction
+public abstract class ByteShiftInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : ShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
-    protected ByteShiftInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
-    { }
     protected override int Threshold() => 8;
 
     protected override void ShiftConstant(int count)
@@ -41,10 +49,13 @@ public abstract class ByteShiftInstruction : ShiftInstruction
     protected abstract string Operation();
 }
 
-public abstract class WordShiftInstruction : ShiftInstruction
+public abstract class WordShiftInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : ShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
-    protected WordShiftInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
-    { }
-
     protected override int Threshold() => 8;
 }

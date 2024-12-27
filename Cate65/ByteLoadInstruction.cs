@@ -2,16 +2,12 @@
 
 namespace Inu.Cate.Mos6502;
 
-internal class ByteLoadInstruction : Cate.ByteLoadInstruction
+internal class ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : Cate.ByteLoadInstruction(function, destinationOperand, sourceOperand)
 {
-    public ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand)
-    { }
-
     protected override List<Cate.ByteRegister> Candidates()
     {
-        List<Cate.ByteRegister> candidates = SourceOperand is IndirectOperand || DestinationOperand is IndirectOperand ?
-            new List<Cate.ByteRegister>() { ByteRegister.A } :
-            ByteRegister.Registers;
+        var candidates = (SourceOperand is IndirectOperand || DestinationOperand is IndirectOperand) ? [ByteRegister.A] : ByteRegister.Registers;
         return candidates;
     }
 }

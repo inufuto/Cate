@@ -6,20 +6,18 @@ using System.Linq;
 
 namespace Inu.Cate.Mos6502;
 
-internal abstract class ByteRegister : Cate.ByteRegister
+internal abstract class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
 {
     public static readonly ByteRegister A = new Accumulator(1, "a");
     public static readonly ByteRegister X = new IndexRegister(2, "x");
     public static readonly ByteRegister Y = new IndexRegister(3, "y");
 
-    public static readonly List<Cate.ByteRegister> Registers = new() { A, X, Y };
+    public static readonly List<Cate.ByteRegister> Registers = [A, X, Y];
 
     public static Cate.ByteRegister FromId(int id)
     {
         return Registers.First(r => r.Id == id);
     }
-
-    protected ByteRegister(int id, string name) : base(id, name) { }
 
     public override void LoadConstant(Instruction instruction, string value)
     {
@@ -83,6 +81,7 @@ internal abstract class ByteRegister : Cate.ByteRegister
             instruction.RemoveRegisterAssignment(temporaryRegister);
             instruction.AddChanged(temporaryRegister);
         }
+        return;
 
         void ViaZeroPage(WordZeroPage zeroPage)
         {
@@ -193,10 +192,8 @@ internal abstract class ByteRegister : Cate.ByteRegister
     public abstract void Decrement(Instruction instruction);
 }
 
-internal class Accumulator : ByteRegister
+internal class Accumulator(int id, string name) : ByteRegister(id, name)
 {
-    public Accumulator(int id, string name) : base(id, name) { }
-
     public override void Operate(Instruction instruction, string operation, bool change, string operand)
     {
         instruction.WriteLine("\t" + operation + "\t" + operand);
@@ -233,10 +230,8 @@ internal class Accumulator : ByteRegister
     }
 }
 
-internal class IndexRegister : ByteRegister
+internal class IndexRegister(int id, string name) : ByteRegister(id, name)
 {
-    public IndexRegister(int id, string name) : base(id, name) { }
-
     public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         using (ByteOperation.ReserveRegister(instruction, A)) {

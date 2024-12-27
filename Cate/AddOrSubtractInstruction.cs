@@ -1,9 +1,13 @@
 ﻿namespace Inu.Cate;
 
-public abstract class AddOrSubtractInstruction : BinomialInstruction
+public abstract class AddOrSubtractInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : BinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
-    protected AddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand) { }
-
     protected virtual bool IncrementOrDecrement()
     {
         if (RightOperand is not IntegerOperand rightIntegerOperand)

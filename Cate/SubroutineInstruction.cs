@@ -8,20 +8,14 @@ namespace Inu.Cate;
 
 public abstract class SubroutineInstruction : Instruction
 {
-    protected class ParameterAssignment
+    protected class ParameterAssignment(Function.Parameter parameter, Operand operand)
     {
-        public readonly Function.Parameter Parameter;
-        public readonly Operand Operand;
+        public readonly Function.Parameter Parameter = parameter;
+        public readonly Operand Operand = operand;
 
         public RegisterReservation? RegisterReservation { get; set; }
 
         public bool Done { get; private set; }
-
-        public ParameterAssignment(Function.Parameter parameter, Operand operand)
-        {
-            Parameter = parameter;
-            Operand = operand;
-        }
 
         public override string ToString()
         {
@@ -86,7 +80,7 @@ public abstract class SubroutineInstruction : Instruction
     public readonly AssignableOperand? DestinationOperand;
     public readonly List<Operand> SourceOperands;
 
-    protected readonly List<ParameterAssignment> ParameterAssignments = new();
+    protected readonly List<ParameterAssignment> ParameterAssignments = [];
 
     public override bool IsSourceOperand(Variable variable)
     {
@@ -148,23 +142,7 @@ public abstract class SubroutineInstruction : Instruction
             var reservations = FillParameters();
             ResultFlags = 0;
             Call();
-            foreach (var reservation in reservations) {
-                if (reservation.Register.Conflicts(returnRegister)) {
-                    switch (reservation.Register) {
-                        case ByteRegister:
-                            alternative = ByteOperation.ReserveAnyRegister(this);
-                            alternative.ByteRegister.CopyFrom(this, reservation.ByteRegister);
-                            returnRegister = alternative.ByteRegister;
-                            break;
-                        case WordRegister:
-                            alternative = WordOperation.ReserveAnyRegister(this);
-                            alternative.WordRegister.CopyFrom(this, reservation.WordRegister);
-                            returnRegister = alternative.WordRegister;
-                            break;
-                    }
-                }
-                reservation.Dispose();
-            }
+            returnRegister = ResolveReturnRegister(reservations, returnRegister, ref alternative);
         }
         RemoveStaticVariableAssignments();
 
@@ -190,8 +168,31 @@ public abstract class SubroutineInstruction : Instruction
                     break;
             }
         }
-
         alternative?.Dispose();
+    }
+
+    protected virtual Register? ResolveReturnRegister(List<RegisterReservation> reservations, Register? returnRegister,
+        ref RegisterReservation? alternative)
+    {
+        foreach (var reservation in reservations) {
+            if (reservation.Register.Conflicts(returnRegister)) {
+                switch (reservation.Register) {
+                    case ByteRegister:
+                        alternative = ByteOperation.ReserveAnyRegister(this);
+                        alternative.ByteRegister.CopyFrom(this, reservation.ByteRegister);
+                        returnRegister = alternative.ByteRegister;
+                        break;
+                    case WordRegister:
+                        alternative = WordOperation.ReserveAnyRegister(this);
+                        alternative.WordRegister.CopyFrom(this, reservation.WordRegister);
+                        returnRegister = alternative.WordRegister;
+                        break;
+                }
+            }
+            reservation.Dispose();
+        }
+
+        return returnRegister;
     }
 
 
@@ -222,7 +223,7 @@ public abstract class SubroutineInstruction : Instruction
     {
         StoreParameters();
 
-        var firstRegister = Compiler.ParameterRegister(0, IntegerType.ByteType);
+        var firstRegister = ParameterAssignments.Count(a => !a.Done) > 1 ? Compiler.ParameterRegister(0, IntegerType.ByteType) : null;
         var changed = true;
         while (changed) {
             changed = false;
@@ -410,7 +411,12 @@ public abstract class SubroutineInstruction : Instruction
                 }
             }
             else {
-                StoreWord(operand, label, parameter.Type);
+                if (operand is IntegerOperand { IntegerValue: 0 }) {
+                    WordOperation.ClearWord(this, label);
+                }
+                else {
+                    StoreWord(operand, label, parameter.Type);
+                }
             }
             assignment.SetDone(this, null);
         }
@@ -518,10 +524,10 @@ public abstract class SubroutineInstruction : Instruction
     public override int? RegisterAdaptability(Variable variable, Register register)
     {
         foreach (var assignment in ParameterAssignments) {
-            if (assignment.Operand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable)) {
-                if (Equals(assignment.Parameter.Register, register)) {
-                    return 1;
-                }
+            if (assignment.Operand is not VariableOperand variableOperand ||
+                !variableOperand.Variable.Equals(variable)) continue;
+            if (Equals(assignment.Parameter.Register, register)) {
+                return 1;
             }
         }
         return base.RegisterAdaptability(variable, register);

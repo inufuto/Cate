@@ -266,12 +266,12 @@ namespace Inu.Cate.Sc62015
 
         public override string PointerConstantDirective => "defp";
         public override int PointerByteCount => 3;
-        public override void RemoveSavingRegister(ISet<Register> savedRegisters, int byteCount)
+        public override void RemoveSavingRegister(ISet<Register> savedRegisters, Register returnRegister)
         {
-            if (byteCount == 1) {
+            if (returnRegister.ByteCount == 1) {
                 savedRegisters.Remove(WordRegister.BA);
             }
-            base.RemoveSavingRegister(savedRegisters, byteCount);
+            base.RemoveSavingRegister(savedRegisters, returnRegister);
         }
 
         public override ReadOnlySpan<char> EndOfFunction => "\tret";

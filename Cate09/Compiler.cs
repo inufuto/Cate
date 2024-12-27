@@ -49,7 +49,7 @@ internal class Compiler : Cate.Compiler
         return savingRegisterIds;
     }
 
-    public override void SaveRegisters(StreamWriter writer, ISet<Register> registers)
+    public override void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function instruction)
     {
         SaveRegisters(writer, registers, null, 0);
     }

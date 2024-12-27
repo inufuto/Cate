@@ -12,8 +12,10 @@ internal class WordAddOrSubtractInstruction(
 {
     public override void BuildAssembly()
     {
-        if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
-            ExchangeOperands();
+        if (IsOperatorExchangeable()) {
+            if (RightOperand.Register != null && LeftOperand.Register == null) {
+                ExchangeOperands();
+            }
         }
         if (IncrementOrDecrement()) return;
 
@@ -23,7 +25,7 @@ internal class WordAddOrSubtractInstruction(
             '-' => "subw",
             _ => throw new NotImplementedException()
         };
-        if (DestinationOperand.Register is WordRegister destinationRegister) {
+        if (DestinationOperand.Register is WordRegister destinationRegister && !Equals(destinationRegister, RightOperand.Register)) {
             ViaRegister(destinationRegister);
             return;
         }
