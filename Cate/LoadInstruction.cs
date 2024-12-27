@@ -116,10 +116,10 @@ public class WordLoadInstruction(Function function, AssignableOperand destinatio
             }
 
             var pointerRegisters = WordOperation.RegistersToOffset(offset);
-            if (pointerRegisters.Any()) {
+            if (pointerRegisters.Count > 0) {
                 using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
                 reservation.WordRegister.LoadFromMemory(this, pointer, 0);
-                ByteOperation.StoreConstantIndirect(this, reservation.WordRegister, offset,
+                WordOperation.StoreConstantIndirect(this, reservation.WordRegister, offset,
                     integerOperand.IntegerValue);
                 return;
             }

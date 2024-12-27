@@ -308,6 +308,15 @@ internal class Compiler(bool parameterRegister) : Cate.Compiler(new ByteOperatio
         }
     }
 
+    public virtual void ClearByte(Instruction instruction, VariableOperand variableOperand)
+    {
+        using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+        var register = reservation.ByteRegister;
+        register.LoadConstant(instruction, 0);
+        register.StoreToMemory(instruction, variableOperand.MemoryAddress());
+        instruction.SetVariableRegister(variableOperand, register);
+    }
+
     public virtual void ClearByte(Instruction instruction, string label)
     {
         using var reservation = ByteOperation.ReserveAnyRegister(instruction);

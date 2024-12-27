@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("*pObj = FixedX_(b)")) {
+            if (instruction.ToString().Contains("pChars = pSprite + 4")) {
                 var aaa = 111;
             }
 #endif

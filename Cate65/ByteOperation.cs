@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 
 namespace Inu.Cate.Mos6502;
 
@@ -55,7 +56,7 @@ internal class ByteOperation : Cate.ByteOperation
     public override void ClearByte(Cate.ByteLoadInstruction instruction, VariableOperand variableOperand)
     {
         if (variableOperand.Register == null) {
-            ClearByte(instruction, variableOperand.MemoryAddress());
+            Mos6502.Compiler.Instance.ClearByte(instruction, variableOperand);
             return;
         }
         base.ClearByte(instruction, variableOperand);

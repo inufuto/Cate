@@ -31,20 +31,9 @@ internal class CompareInstruction(
     }
 
 
-    //public override void BuildAssembly()
-    //{
-    //    if (LeftOperand.Type.ByteCount == 1) {
-    //        CompareByte();
-    //    }
-    //    else {
-    //        CompareWord();
-    //    }
-    //}
-
     protected override void CompareByte()
     {
-        var operandZero = RightOperand is IntegerOperand { IntegerValue: 0 };
-        if (operandZero) {
+        if (OperandZero()) {
             if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
                 if (LeftOperand is VariableOperand variableOperand) {
                     var registerId = GetVariableRegister(variableOperand);
@@ -59,9 +48,11 @@ internal class CompareInstruction(
         var candidates = (RightOperand is IndirectOperand || LeftOperand is IndirectOperand) ? [ByteRegister.A] : ByteRegister.Registers;
         using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.ByteRegister;
-            var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
             register.Load(this, LeftOperand);
-            register.Operate(this, operation, false, RightOperand);
+            if (!OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual)) {
+                var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
+                register.Operate(this, operation, false, RightOperand);
+            }
         }
     jump:
         switch (OperatorId) {
@@ -73,7 +64,7 @@ internal class CompareInstruction(
                 break;
             case '<':
                 if (Signed) {
-                    BranchLessThan(operandZero, WriteJumpLine);
+                    BranchLessThan(OperandZero(), WriteJumpLine);
                 }
                 else {
                     WriteJumpLine("\tbcc\t" + Anchor);
@@ -81,7 +72,7 @@ internal class CompareInstruction(
                 break;
             case '>':
                 if (Signed) {
-                    BranchGreaterThan(operandZero, WriteJumpLine);
+                    BranchGreaterThan(OperandZero(), WriteJumpLine);
                 }
                 else {
                     BranchHigherThan(WriteJumpLine);
@@ -89,7 +80,7 @@ internal class CompareInstruction(
                 break;
             case Keyword.LessEqual:
                 if (Signed) {
-                    BranchLessThanOrEqualTo(operandZero, WriteJumpLine);
+                    BranchLessThanOrEqualTo(OperandZero(), WriteJumpLine);
                 }
                 else {
                     BranchLowerThanOrSameTo(WriteJumpLine);
@@ -97,7 +88,7 @@ internal class CompareInstruction(
                 break;
             case Keyword.GreaterEqual:
                 if (Signed) {
-                    BranchGreaterThanOrEqualTo(operandZero, WriteJumpLine);
+                    BranchGreaterThanOrEqualTo(OperandZero(), WriteJumpLine);
                 }
                 else {
                     WriteJumpLine("\tbcs\t" + Anchor);
@@ -106,6 +97,11 @@ internal class CompareInstruction(
             default:
                 throw new NotImplementedException();
         }
+    }
+
+    private bool OperandZero()
+    {
+        return RightOperand is IntegerOperand { IntegerValue: 0 };
     }
 
     private void BranchLowerThan(Action<string> write)

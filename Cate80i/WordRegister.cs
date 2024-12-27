@@ -141,7 +141,7 @@ namespace Inu.Cate.I8080
                             return;
                         }
                         using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
-                            WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                            Hl.LoadFromMemory(instruction, pointer, 0);
                             StoreIndirect(instruction, WordRegister.Hl, offset);
                         }
                         return;
@@ -219,10 +219,10 @@ namespace Inu.Cate.I8080
         public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
         {
             if (Equals(this, Hl)) {
-                using var reservation = WordOperation.ReserveAnyRegister(instruction, new List<Cate.WordRegister> { Bc, De });
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, [Bc, De]);
                 var temporaryRegister = reservation.WordRegister;
                 Hl.LoadFromMemory(instruction, pointer, 0);
-                temporaryRegister.LoadIndirect(instruction, WordRegister.Hl, offset);
+                temporaryRegister.LoadIndirect(instruction, Hl, offset);
                 Hl.CopyFrom(instruction, temporaryRegister);
                 return;
             }
@@ -246,7 +246,8 @@ namespace Inu.Cate.I8080
                     Low.StoreIndirect(instruction, pointerRegister, 0);
                     instruction.WriteLine("\tinx\t" + pointerRegister);
                     High.StoreIndirect(instruction, pointerRegister, 0);
-                    instruction.WriteLine("\tdcx\t" + pointerRegister);
+                    //instruction.WriteLine("\tdcx\t" + pointerRegister);
+                    instruction.RemoveRegisterAssignment(pointerRegister);
                     return;
                 }
                 using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
@@ -255,18 +256,14 @@ namespace Inu.Cate.I8080
                     instruction.WriteLine("\tinx\t" + pointerRegister);
                     ByteRegister.A.CopyFrom(instruction, High);
                     instruction.WriteLine("\tstax\t" + pointerRegister);
-                    instruction.WriteLine("\tdcx\t" + pointerRegister);
+                    //instruction.WriteLine("\tdcx\t" + pointerRegister);
+                    instruction.RemoveRegisterAssignment(pointerRegister);
                 }
                 return;
             }
 
-            void AddAndStore(Cate.WordRegister wordRegister)
-            {
-                wordRegister.Add(instruction, offset);
-                StoreIndirect(instruction, wordRegister, 0);
-            }
-
-            if (!instruction.TemporaryRegisters.Contains(pointerRegister)) {
+            //if (!instruction.TemporaryRegisters.Contains(pointerRegister)) {
+            if (!Equals(this, pointerRegister)) {
                 AddAndStore(pointerRegister);
             }
             else {
@@ -275,6 +272,14 @@ namespace Inu.Cate.I8080
                 var temporaryRegister = reservation.WordRegister;
                 temporaryRegister.CopyFrom(instruction, pointerRegister);
                 AddAndStore(temporaryRegister);
+            }
+
+            return;
+
+            void AddAndStore(Cate.WordRegister wordRegister)
+            {
+                wordRegister.Add(instruction, offset);
+                StoreIndirect(instruction, wordRegister, 0);
             }
         }
 
@@ -323,8 +328,7 @@ namespace Inu.Cate.I8080
             if (offset == 0) {
                 return;
             }
-
-            const int threshold = 4;
+            const int threshold = 8;
             var count = offset & 0xffff;
             if (count <= threshold) {
                 Loop("inx");
@@ -332,20 +336,12 @@ namespace Inu.Cate.I8080
                 instruction.RemoveRegisterAssignment(this);
                 return;
             }
-
             if (count >= 0x10000 - threshold) {
                 count = 0x10000 - count;
                 Loop("dcx");
                 instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
                 return;
-            }
-
-            void Loop(string operation)
-            {
-                for (var i = 0; i < count; ++i) {
-                    instruction.WriteLine("\t" + operation + "\t" + Name);
-                }
             }
 
             if (Equals(this, Hl)) {
@@ -380,6 +376,14 @@ namespace Inu.Cate.I8080
 
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
+            return;
+
+            void Loop(string operation)
+            {
+                for (var i = 0; i < count; ++i) {
+                    instruction.WriteLine("\t" + operation + "\t" + Name);
+                }
+            }
         }
     }
 }

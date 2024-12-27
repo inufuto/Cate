@@ -21,6 +21,16 @@ internal class SubroutineInstruction(
         StoreParametersDirect();
     }
 
+    protected override void StoreWord(Operand operand, string label, ParameterizableType type)
+    {
+        using var reservation = ByteOperation.ReserveAnyRegister(this, ByteRegister.Registers);
+        var register = reservation.ByteRegister;
+        register.Load(this, Compiler.LowByteOperand(operand));
+        register.StoreToMemory(this, label + "+0");
+        register.Load(this, Compiler.HighByteOperand(operand));
+        register.StoreToMemory(this, label + "+1");
+    }
+
     protected override List<Cate.ByteRegister> Candidates(Operand operand)
     {
         return operand switch

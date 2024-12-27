@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Inu.Cate.I8080;
@@ -30,7 +29,7 @@ internal class WordAddOrSubtractInstruction(
 
         if (OperatorId == '+') {
             if (Equals(LeftOperand.Register, WordRegister.Hl)) {
-                using var reservation = WordOperation.ReserveAnyRegister(this, [WordRegister.De, WordRegister.Bc]);
+                using var reservation = WordOperation.ReserveAnyRegister(this, [WordRegister.De, WordRegister.Bc], RightOperand);
                 reservation.WordRegister.Load(this, RightOperand);
                 WriteLine("\tdad\t" + reservation.WordRegister);
                 AddChanged(WordRegister.Hl);
@@ -39,8 +38,8 @@ internal class WordAddOrSubtractInstruction(
                 return;
             }
             if (Equals(RightOperand.Register, WordRegister.Hl)) {
-                using var reservation = WordOperation.ReserveAnyRegister(this, [WordRegister.De, WordRegister.Bc]);
-                reservation.WordRegister.Load(this, leftOperand);
+                using var reservation = WordOperation.ReserveAnyRegister(this, [WordRegister.De, WordRegister.Bc], LeftOperand);
+                reservation.WordRegister.Load(this, LeftOperand);
                 WriteLine("\tdad\t" + reservation.WordRegister);
                 AddChanged(WordRegister.Hl);
                 RemoveRegisterAssignment(WordRegister.Hl);

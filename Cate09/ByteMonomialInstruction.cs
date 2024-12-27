@@ -1,37 +1,39 @@
 ﻿using System;
 
-namespace Inu.Cate.Mc6809
+namespace Inu.Cate.Mc6809;
+
+internal class ByteMonomialInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand sourceOperand)
+    : MonomialInstruction(function, operatorId, destinationOperand, sourceOperand)
 {
-    internal class ByteMonomialInstruction : MonomialInstruction
+    public override void BuildAssembly()
     {
-        public ByteMonomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, operatorId, destinationOperand, sourceOperand)
-        { }
-
-        public override void BuildAssembly()
+        var operation = OperatorId switch
         {
-            var operation = OperatorId switch
-            {
-                '-' => "neg",
-                '~' => "com",
-                _ => throw new NotImplementedException()
-            };
-
-            if (DestinationOperand.Register is ByteRegister byteRegister) {
-                ViaRegister(byteRegister);
-                return;
-            }
-
-            using var reservation = ByteOperation.ReserveAnyRegister(this, SourceOperand);
-            var register = reservation.ByteRegister;
-            ViaRegister(register);
-            register.Store(this, DestinationOperand);
+            '-' => "neg",
+            '~' => "com",
+            _ => throw new NotImplementedException()
+        };
+        if (DestinationOperand.Register is ByteRegister byteRegister) {
+            ViaRegister(byteRegister);
             return;
+        }
+        if (DestinationOperand.SameStorage(SourceOperand)) {
+            ByteOperation.Operate(this, operation, true, DestinationOperand);
+            return;
+        }
+        using var reservation = ByteOperation.ReserveAnyRegister(this, SourceOperand);
+        ViaRegister(reservation.ByteRegister);
+        reservation.ByteRegister.Store(this, DestinationOperand);
+        return;
 
-            void ViaRegister(Cate.ByteRegister r)
-            {
-                r.Load(this, SourceOperand);
-                r.Operate(this, operation, true, 1);
-            }
+        void ViaRegister(Cate.ByteRegister register)
+        {
+            register.Load(this, SourceOperand);
+            register.Operate(this, operation, true, 1);
         }
     }
 }

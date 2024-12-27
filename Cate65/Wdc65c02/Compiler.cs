@@ -2,10 +2,8 @@
 
 namespace Inu.Cate.Wdc65c02;
 
-internal class Compiler : Mos6502.Compiler
+internal class Compiler(bool parameterRegister) : Mos6502.Compiler(parameterRegister)
 {
-    public Compiler(bool parameterRegister) : base(parameterRegister) { }
-
     public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
         Operand leftOperand, Operand rightOperand)
     {
@@ -42,6 +40,11 @@ internal class Compiler : Mos6502.Compiler
             return;
         }
         base.OperateIndirect(instruction, operation, zeroPage, offset, count);
+    }
+
+    public override void ClearByte(Instruction instruction, VariableOperand variableOperand)
+    {
+        instruction.WriteLine("\tstz\t" + variableOperand.MemoryAddress());
     }
 
     public override void ClearByte(Instruction instruction, string label)

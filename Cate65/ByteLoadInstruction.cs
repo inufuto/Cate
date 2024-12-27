@@ -7,7 +7,7 @@ internal class ByteLoadInstruction(Function function, AssignableOperand destinat
 {
     protected override List<Cate.ByteRegister> Candidates()
     {
-        var candidates = SourceOperand is IndirectOperand || DestinationOperand is IndirectOperand? [ByteRegister.A] : ByteRegister.Registers;
+        var candidates = (SourceOperand is IndirectOperand || DestinationOperand is IndirectOperand) ? [ByteRegister.A] : ByteRegister.Registers;
         return candidates;
     }
 }
