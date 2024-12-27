@@ -62,22 +62,14 @@ namespace Inu.Cate.I8086
             }
 
             if (DestinationOperand.Type is PointerType) {
-                void ViaRegister(Cate.PointerRegister r)
+                void ViaRegister(Cate.WordRegister r)
                 {
-                    if (LeftOperand.Type is PointerType) {
-                        r.Load(this, LeftOperand);
-                        r.Operate(this, operation, true, RightOperand);
-                    }
-                    else 
-                    {
-                        Debug.Assert(r.WordRegister != null);
-                        r.WordRegister.Load(this, LeftOperand);
-                        r.WordRegister.Operate(this, operation, true, RightOperand);
-                    }
+                    r.Load(this, LeftOperand);
+                    r.Operate(this, operation, true, RightOperand);
                     AddChanged(r);
                 }
 
-                if (DestinationOperand.Register is PointerRegister pointerRegister && !Equals(RightOperand.Register, pointerRegister)) {
+                if (DestinationOperand.Register is WordRegister pointerRegister && !Equals(RightOperand.Register, pointerRegister)) {
                     ViaRegister(pointerRegister);
                     return;
                 }
@@ -91,9 +83,9 @@ namespace Inu.Cate.I8086
                     reservation.WordRegister.Store(this, DestinationOperand);
                 }
                 else {
-                    using var reservation = PointerOperation.ReserveAnyRegister(this, LeftOperand);
-                    ViaRegister(reservation.PointerRegister);
-                    reservation.PointerRegister.Store(this, DestinationOperand);
+                    using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);
+                    ViaRegister(reservation.WordRegister);
+                    reservation.WordRegister.Store(this, DestinationOperand);
                 }
             }
             else {
@@ -180,10 +172,6 @@ namespace Inu.Cate.I8086
 
                 if (DestinationOperand.Register is WordRegister wordRegister && !Equals(RightOperand.Register, wordRegister)) {
                     ViaRegister(wordRegister);
-                    return;
-                }
-                if (DestinationOperand.Register is PointerRegister pointerRegister && !Equals(RightOperand.Register, pointerRegister)) {
-                    ViaRegister(pointerRegister.WordRegister);
                     return;
                 }
                 using var reservation = WordOperation.ReserveAnyRegister(this, LeftOperand);

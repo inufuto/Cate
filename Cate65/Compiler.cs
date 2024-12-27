@@ -6,18 +6,11 @@ using System.Linq;
 
 namespace Inu.Cate.Mos6502;
 
-internal class Compiler : Cate.Compiler
+internal class Compiler(bool parameterRegister) : Cate.Compiler(new ByteOperation(), new WordOperation())
 {
     public const string ZeroPageLabel = "@zp";
-    private readonly bool parameterRegister;
 
     public new static Compiler Instance => (Compiler)Cate.Compiler.Instance;
-
-    public Compiler(bool parameterRegister) : base(new ByteOperation(), new WordOperation(),
-        new PointerOperation())
-    {
-        this.parameterRegister = parameterRegister;
-    }
 
     protected override void WriteAssembly(StreamWriter writer)
     {
@@ -35,11 +28,11 @@ internal class Compiler : Cate.Compiler
             base.AddSavingRegister(registers, wordZeroPage.Low);
             base.AddSavingRegister(registers, wordZeroPage.High);
         }
-        if (register is WordZeroPage pointerZeroPage) {
-            Debug.Assert(pointerZeroPage.Low != null);
-            Debug.Assert(pointerZeroPage.High != null);
-            base.AddSavingRegister(registers, pointerZeroPage.Low);
-            base.AddSavingRegister(registers, pointerZeroPage.High);
+        if (register is WordZeroPage WordZeroPage) {
+            Debug.Assert(WordZeroPage.Low != null);
+            Debug.Assert(WordZeroPage.High != null);
+            base.AddSavingRegister(registers, WordZeroPage.Low);
+            base.AddSavingRegister(registers, WordZeroPage.High);
         }
         else {
             base.AddSavingRegister(registers, register);
@@ -68,10 +61,7 @@ internal class Compiler : Cate.Compiler
             var register = variableType.ByteCount switch
             {
                 1 => AllocatableRegister(variable, ByteZeroPage.Registers, function),
-                _ => variableType is PointerType ?
-                    AllocatableRegister(variable, PointerZeroPage.Registers, function)
-                    :
-                    AllocatableRegister(variable, WordZeroPage.Registers, function)
+                _ => AllocatableRegister(variable, WordZeroPage.Registers, function)
             };
             if (register == null)
                 continue;
@@ -81,7 +71,7 @@ internal class Compiler : Cate.Compiler
         foreach (var variable in variables.Where(v => v.Register == null && !v.Static)) {
             if (variable.Parameter?.Register == null) continue;
             var register = variable.Parameter.Register;
-            if (register is not (ByteZeroPage or WordZeroPage or PointerZeroPage)) continue;
+            if (register is not (ByteZeroPage or WordZeroPage or WordZeroPage)) continue;
             if (register is ByteRegister byteRegister && !Conflict(variable.Intersections, byteRegister)) {
                 variable.Register = byteRegister;
             }
@@ -129,7 +119,6 @@ internal class Compiler : Cate.Compiler
             return type.ByteCount switch
             {
                 1 => ByteRegister.Y,
-                2 when type is PointerType => PairPointerRegister.Xy,
                 2 => PairWordRegister.Xy,
                 _ => null
             };
@@ -142,7 +131,7 @@ internal class Compiler : Cate.Compiler
         return type.ByteCount switch
         {
             1 => ByteRegister.Y,
-            2 => (type is PointerType ? PairPointerRegister.Xy : PairWordRegister.Xy),
+            2 => PairWordRegister.Xy,
             _ => null
         };
     }
@@ -155,11 +144,6 @@ internal class Compiler : Cate.Compiler
     protected override LoadInstruction CreateWordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
     {
         return new WordLoadInstruction(function, destinationOperand, sourceOperand);
-    }
-
-    protected override LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
-    {
-        return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
     }
 
     public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
@@ -264,9 +248,6 @@ internal class Compiler : Cate.Compiler
                     case WordRegister wordRegister:
                         Debug.Assert(wordRegister.High != null);
                         return new ByteRegisterOperand(newType, wordRegister.High);
-                    case WordPointerRegister pointerRegister:
-                        Debug.Assert(pointerRegister.High != null);
-                        return new ByteRegisterOperand(newType, pointerRegister.High);
                     default:
                         return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset + 1);
                 }
@@ -290,9 +271,6 @@ internal class Compiler : Cate.Compiler
                     case WordRegister wordRegister:
                         Debug.Assert(wordRegister.Low != null);
                         return new ByteRegisterOperand(newType, wordRegister.Low);
-                    case WordPointerRegister pointerRegister:
-                        Debug.Assert(pointerRegister.Low != null);
-                        return new ByteRegisterOperand(newType, pointerRegister.Low);
                     default:
                         return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset);
                 }
@@ -308,26 +286,35 @@ internal class Compiler : Cate.Compiler
         Instance.AddExternalName(externalName);
     }
 
-    public virtual void LoadIndirect(Instruction instruction, ByteRegister byteRegister, PointerZeroPage zeroPage, int offset)
+    public virtual void LoadIndirect(Instruction instruction, ByteRegister byteRegister, WordZeroPage zeroPage, int offset)
     {
         Debug.Assert(!Equals(byteRegister, ByteRegister.Y));
         ByteRegister.Y.LoadConstant(instruction, offset);
         instruction.WriteLine("\tld" + byteRegister.AsmName + "\t(" + zeroPage.Name + "),y");
     }
 
-    public virtual void StoreIndirect(Instruction instruction, ByteRegister byteRegister, PointerZeroPage zeroPage, int offset)
+    public virtual void StoreIndirect(Instruction instruction, ByteRegister byteRegister, WordZeroPage zeroPage, int offset)
     {
         Debug.Assert(!Equals(byteRegister, ByteRegister.Y));
         ByteRegister.Y.LoadConstant(instruction, offset);
         instruction.WriteLine("\tst" + byteRegister.AsmName + "\t(" + zeroPage.AsmName + "),y");
     }
 
-    public virtual void OperateIndirect(Instruction instruction, string operation, PointerZeroPage zeroPage, int offset, int count)
+    public virtual void OperateIndirect(Instruction instruction, string operation, WordZeroPage zeroPage, int offset, int count)
     {
         ByteRegister.Y.LoadConstant(instruction, offset);
         for (var i = 0; i < count; ++i) {
             instruction.WriteLine("\t" + operation + "\t(" + zeroPage.Name + "),y");
         }
+    }
+
+    public virtual void ClearByte(Instruction instruction, VariableOperand variableOperand)
+    {
+        using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+        var register = reservation.ByteRegister;
+        register.LoadConstant(instruction, 0);
+        register.StoreToMemory(instruction, variableOperand.MemoryAddress());
+        instruction.SetVariableRegister(variableOperand, register);
     }
 
     public virtual void ClearByte(Instruction instruction, string label)

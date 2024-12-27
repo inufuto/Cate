@@ -119,10 +119,10 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
         }
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl) || Equals(this, A)) {
+            if (Equals(pointerRegister, WordRegister.Hl) || Equals(this, A)) {
                 Write(this);
                 return;
             }
@@ -134,12 +134,12 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
         }
 
         if (pointerRegister.Conflicts(this)) {
-            using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList());
-            var temporaryRegister = reservation.PointerRegister;
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers.Where(r => !Equals(r, pointerRegister)).ToList());
+            var temporaryRegister = reservation.WordRegister;
             temporaryRegister.CopyFrom(instruction, pointerRegister);
             temporaryRegister.TemporaryOffset(instruction, offset, () =>
             {
-                LoadIndirect(instruction, (Cate.PointerRegister)temporaryRegister, 0);
+                LoadIndirect(instruction, (Cate.WordRegister)temporaryRegister, 0);
             });
             return;
         }
@@ -158,10 +158,10 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
         }
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl) || Equals(this, A)) {
+            if (Equals(pointerRegister, WordRegister.Hl) || Equals(this, A)) {
                 instruction.WriteLine("\tld\t(" + pointerRegister + ")," + this);
                 return;
             }
@@ -233,21 +233,21 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
                     var offset = indirectOperand.Offset;
                     {
                         var register = instruction.GetVariableRegister(pointer, 0);
-                        if (register is PointerRegister pointerRegister) {
-                            if (Equals(pointerRegister, PointerRegister.Hl)) {
+                        if (register is WordRegister pointerRegister) {
+                            if (Equals(pointerRegister, WordRegister.Hl)) {
                                 OperateIndirect(instruction, operation, offset);
                             }
                             else {
-                                using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                                    PointerRegister.Hl.CopyFrom(instruction, pointerRegister);
+                                using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                                    WordRegister.Hl.CopyFrom(instruction, pointerRegister);
                                     OperateIndirect(instruction, operation, offset);
                                 }
                             }
                             return;
                         }
                     }
-                    using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                        PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                    using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                        WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
                         OperateIndirect(instruction, operation, offset);
                     }
                     return;
@@ -263,7 +263,7 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
             instruction.WriteLine("\t" + operation + "\ta,(hl)");
             return;
         }
-        PointerRegister.Hl.TemporaryOffset(instruction, offset, () =>
+        WordRegister.Hl.TemporaryOffset(instruction, offset, () =>
         {
             OperateIndirect(instruction, operation, 0);
         });

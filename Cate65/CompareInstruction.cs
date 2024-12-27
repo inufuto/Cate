@@ -3,12 +3,15 @@ using System.Collections.Generic;
 
 namespace Inu.Cate.Mos6502;
 
-internal class CompareInstruction : Cate.CompareInstruction
+internal class CompareInstruction(
+    Function function,
+    int operatorId,
+    Operand leftOperand,
+    Operand rightOperand,
+    Anchor anchor)
+    : Cate.CompareInstruction(function, operatorId, leftOperand, rightOperand, anchor)
 {
     private static int subLabelIndex = 0;
-
-    public CompareInstruction(Function function, int operatorId, Operand leftOperand, Operand rightOperand, Anchor anchor) : base(function, operatorId, leftOperand, rightOperand, anchor)
-    { }
 
     public override int? RegisterAdaptability(Variable variable, Register register)
     {
@@ -28,20 +31,9 @@ internal class CompareInstruction : Cate.CompareInstruction
     }
 
 
-    public override void BuildAssembly()
-    {
-        if (LeftOperand.Type.ByteCount == 1) {
-            CompareByte();
-        }
-        else {
-            CompareWord();
-        }
-    }
-
     protected override void CompareByte()
     {
-        var operandZero = RightOperand is IntegerOperand { IntegerValue: 0 };
-        if (operandZero) {
+        if (OperandZero()) {
             if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
                 if (LeftOperand is VariableOperand variableOperand) {
                     var registerId = GetVariableRegister(variableOperand);
@@ -53,18 +45,16 @@ internal class CompareInstruction : Cate.CompareInstruction
                 }
             }
         }
-        { }
-        var candidates =
-            RightOperand is IndirectOperand || LeftOperand is IndirectOperand ?
-                new List<Cate.ByteRegister>() { ByteRegister.A } :
-                ByteRegister.Registers;
+        var candidates = (RightOperand is IndirectOperand || LeftOperand is IndirectOperand) ? [ByteRegister.A] : ByteRegister.Registers;
         using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.ByteRegister;
-            var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
             register.Load(this, LeftOperand);
-            register.Operate(this, operation, false, RightOperand);
+            if (!OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual)) {
+                var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
+                register.Operate(this, operation, false, RightOperand);
+            }
         }
-        jump:
+    jump:
         switch (OperatorId) {
             case Keyword.Equal:
                 WriteJumpLine("\tbeq\t" + Anchor);
@@ -74,7 +64,7 @@ internal class CompareInstruction : Cate.CompareInstruction
                 break;
             case '<':
                 if (Signed) {
-                    BranchLessThan(operandZero, WriteJumpLine);
+                    BranchLessThan(OperandZero(), WriteJumpLine);
                 }
                 else {
                     WriteJumpLine("\tbcc\t" + Anchor);
@@ -82,7 +72,7 @@ internal class CompareInstruction : Cate.CompareInstruction
                 break;
             case '>':
                 if (Signed) {
-                    BranchGreaterThan(operandZero, WriteJumpLine);
+                    BranchGreaterThan(OperandZero(), WriteJumpLine);
                 }
                 else {
                     BranchHigherThan(WriteJumpLine);
@@ -90,7 +80,7 @@ internal class CompareInstruction : Cate.CompareInstruction
                 break;
             case Keyword.LessEqual:
                 if (Signed) {
-                    BranchLessThanOrEqualTo(operandZero, WriteJumpLine);
+                    BranchLessThanOrEqualTo(OperandZero(), WriteJumpLine);
                 }
                 else {
                     BranchLowerThanOrSameTo(WriteJumpLine);
@@ -98,7 +88,7 @@ internal class CompareInstruction : Cate.CompareInstruction
                 break;
             case Keyword.GreaterEqual:
                 if (Signed) {
-                    BranchGreaterThanOrEqualTo(operandZero, WriteJumpLine);
+                    BranchGreaterThanOrEqualTo(OperandZero(), WriteJumpLine);
                 }
                 else {
                     WriteJumpLine("\tbcs\t" + Anchor);
@@ -107,6 +97,11 @@ internal class CompareInstruction : Cate.CompareInstruction
             default:
                 throw new NotImplementedException();
         }
+    }
+
+    private bool OperandZero()
+    {
+        return RightOperand is IntegerOperand { IntegerValue: 0 };
     }
 
     private void BranchLowerThan(Action<string> write)
@@ -281,10 +276,5 @@ internal class CompareInstruction : Cate.CompareInstruction
 
         // Register value is not guaranteed due to branching
         RemoveRegisterAssignment(ByteRegister.A);
-    }
-
-    protected override void ComparePointer()
-    {
-        CompareWord();
     }
 }

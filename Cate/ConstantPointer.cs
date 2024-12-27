@@ -3,18 +3,12 @@ using Inu.Language;
 
 namespace Inu.Cate;
 
-public class ConstantPointer : Constant
+public class ConstantPointer(PointerType type, Variable? variable, int offset, int? elementCount = null)
+    : Constant(type)
 {
-    public readonly Variable? Variable;
-    public readonly int Offset;
-    public readonly int? ElementCount;
-
-    public ConstantPointer(PointerType type, Variable? variable, int offset, int? elementCount = null) : base(type)
-    {
-        Variable = variable;
-        Offset = offset;
-        ElementCount = elementCount;
-    }
+    public readonly Variable? Variable = variable;
+    public readonly int Offset = offset;
+    public readonly int? ElementCount = elementCount;
 
     public new PointerType Type => (PointerType)base.Type;
 
@@ -64,16 +58,10 @@ public class ConstantPointer : Constant
     }
 }
 
-public class NullPointerOperand : IntegerOperand
+public class NullPointerOperand() : IntegerOperand(new PointerType(VoidType.Type), 0);
+
+class NullPointer(PointerType type) : Constant(type)
 {
-    public NullPointerOperand() : base(new PointerType(VoidType.Type), 0) { }
-}
-
-class NullPointer : Constant
-{
-
-    public NullPointer(PointerType type) : base(type) { }
-
     public NullPointer() : this(new PointerType(VoidType.Type)) { }
 
     public override void WriteAssembly(StreamWriter writer)

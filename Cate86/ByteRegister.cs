@@ -104,18 +104,18 @@ namespace Inu.Cate.I8086
             instruction.SetVariableRegister(variable, offset, this);
         }
 
-        public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+        public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
-            instruction.WriteLine("\tmov " + this + ",[" + PointerRegister.AsPointer(pointerRegister) + addition + "]");
+            instruction.WriteLine("\tmov " + this + ",[" + pointerRegister.AsPointer() + addition + "]");
             instruction.RemoveRegisterAssignment(this);
             instruction.AddChanged(this);
         }
 
-        public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+        public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
         {
             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
-            instruction.WriteLine("\tmov [" + PointerRegister.AsPointer(pointerRegister) + addition + "]," + this);
+            instruction.WriteLine("\tmov [" + pointerRegister.AsPointer() + addition + "]," + this);
         }
 
         public override void CopyFrom(Instruction instruction, Cate.ByteRegister sourceRegister)
@@ -152,23 +152,23 @@ namespace Inu.Cate.I8086
                         return;
                     }
                 case IndirectOperand indirectOperand: {
-                        void ForRegister(Cate.PointerRegister register)
+                        void ForRegister(Cate.WordRegister register)
                         {
                             var offset = indirectOperand.Offset;
                             var addition = offset >= 0 ? "+" + offset : "-" + (-offset);
-                            Operate(instruction, operation, change, "[" + PointerRegister.AsPointer(register) + addition + "]");
+                            Operate(instruction, operation, change, "[" + register.AsPointer() + addition + "]");
                         }
 
 
                         var pointer = indirectOperand.Variable;
                         {
                             var register = instruction.GetVariableRegister(pointer, 0);
-                            if (register is PointerRegister pointerRegister) {
+                            if (register is WordRegister pointerRegister) {
                                 ForRegister(pointerRegister);
                                 return;
                             }
-                            using var reservation = PointerOperation.ReserveAnyRegister(instruction);
-                            var temporaryRegister = reservation.PointerRegister;
+                            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.PointerRegisters);
+                            var temporaryRegister = reservation.WordRegister;
                             temporaryRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
                             instruction.SetVariableRegister(indirectOperand.Variable, 0, temporaryRegister);
                             ForRegister(temporaryRegister);

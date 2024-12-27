@@ -9,9 +9,9 @@ namespace Inu.Cate.Mc6800;
 
 internal class Compiler : Cate.Compiler
 {
-    public Compiler() : base(new ByteOperation(), new WordOperation(), new PointerOperation()) { }
+    public Compiler() : base(new ByteOperation(), new WordOperation()) { }
 
-    protected Compiler(Cate.ByteOperation byteOperation, Cate.WordOperation wordOperation, Cate.PointerOperation pointerOperation) : base(byteOperation, wordOperation, pointerOperation) { }
+    protected Compiler(Cate.ByteOperation byteOperation, Cate.WordOperation wordOperation) : base(byteOperation, wordOperation) { }
 
     protected override void WriteAssembly(StreamWriter writer)
     {
@@ -65,7 +65,7 @@ internal class Compiler : Cate.Compiler
         return type.ByteCount switch
         {
             1 => ByteRegister.A,
-            _ => type is PointerType ? PointerRegister.X : IndexRegister.X
+            _ => type is PointerType ? IndexRegister.X : IndexRegister.X
         };
     }
 
@@ -79,12 +79,6 @@ internal class Compiler : Cate.Compiler
         Operand sourceOperand)
     {
         return new WordLoadInstruction(function, destinationOperand, sourceOperand);
-    }
-
-    protected override LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
-        Operand sourceOperand)
-    {
-        return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
     }
 
     public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
@@ -276,7 +270,7 @@ internal class Compiler : Cate.Compiler
                     var pointer = indirectOperand.Variable;
                     var offset = indirectOperand.Offset;
                     Debug.Assert(pointer.Register == null);
-                    var pointerRegister = PointerRegister.X;
+                    var pointerRegister = IndexRegister.X;
                     pointerRegister.LoadFromMemory(instruction, pointer, 0);
                     ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset);
                     ByteRegister.B.LoadIndirect(instruction, pointerRegister, offset + 1);

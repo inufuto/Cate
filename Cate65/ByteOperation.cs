@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 
 namespace Inu.Cate.Mos6502;
 
 internal class ByteOperation : Cate.ByteOperation
 {
-    public override List<Cate.ByteRegister> Accumulators => new() { ByteRegister.A };
+    public override List<Cate.ByteRegister> Accumulators => [ByteRegister.A];
     public override List<Cate.ByteRegister> Registers => ByteRegister.Registers.Union(ByteZeroPage.Registers).ToList();
 
     protected override void OperateConstant(Instruction instruction, string operation, string value, int count)
@@ -27,9 +28,9 @@ internal class ByteOperation : Cate.ByteOperation
     }
 
     protected override void OperateIndirect(Instruction instruction, string operation, bool change,
-        PointerRegister pointerRegister, int offset, int count)
+        WordRegister pointerRegister, int offset, int count)
     {
-        if (pointerRegister is not PointerZeroPage zeroPage) {
+        if (pointerRegister is not WordZeroPage zeroPage) {
             throw new NotImplementedException();
         }
         while (true) {
@@ -43,7 +44,7 @@ internal class ByteOperation : Cate.ByteOperation
         }
     }
 
-    public override void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset,
+    public override void StoreConstantIndirect(Instruction instruction, WordRegister pointerRegister, int offset,
         int value)
     {
         using var reservation = ReserveAnyRegister(instruction);
@@ -55,7 +56,7 @@ internal class ByteOperation : Cate.ByteOperation
     public override void ClearByte(Cate.ByteLoadInstruction instruction, VariableOperand variableOperand)
     {
         if (variableOperand.Register == null) {
-            ClearByte(instruction, variableOperand.MemoryAddress());
+            Mos6502.Compiler.Instance.ClearByte(instruction, variableOperand);
             return;
         }
         base.ClearByte(instruction, variableOperand);

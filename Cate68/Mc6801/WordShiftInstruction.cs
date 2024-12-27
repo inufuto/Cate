@@ -13,7 +13,7 @@ namespace Inu.Cate.Mc6800.Mc6801
         {
             if (
                 LeftOperand.SameStorage(DestinationOperand) && count <= 2 &&
-                (!(DestinationOperand is IndirectOperand indirectOperand) || PointerRegister.X.IsOffsetInRange(indirectOperand.Offset + 1))
+                (!(DestinationOperand is IndirectOperand indirectOperand) || IndexRegister.X.IsOffsetInRange(indirectOperand.Offset + 1))
             ) {
                 Action<Action<string>, Action<string>> byteAction = OperatorId switch
                 {

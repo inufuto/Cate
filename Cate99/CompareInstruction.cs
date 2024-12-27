@@ -82,31 +82,6 @@ namespace Inu.Cate.Tms99
             Jump();
         }
 
-        protected override void ComparePointer()
-        {
-            if (RightOperand is NullPointerOperand) {
-                if (OperatorId is Keyword.Equal or Keyword.NotEqual) {
-                    if (LeftOperand is VariableOperand variableOperand) {
-                        var leftRegister = GetVariableRegister(variableOperand);
-                        if (leftRegister != null) {
-                            if (CanOmitOperation(Flag.Z)) {
-                                goto jump;
-                            }
-                        }
-                    }
-                }
-                Tms99.PointerOperation.OperateConstant(this, "ci", LeftOperand, "0");
-            }
-            else if (RightOperand is PointerOperand pointerOperand) {
-                Tms99.PointerOperation.OperateConstant(this, "ci", LeftOperand, pointerOperand.MemoryAddress());
-            }
-            else {
-                Tms99.PointerOperation.Operate(this, "c", LeftOperand, RightOperand);
-            }
-        jump:
-            Jump();
-        }
-
         private void Jump()
         {
             switch (OperatorId) {

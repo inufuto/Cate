@@ -17,7 +17,7 @@ namespace Inu.Cate.Mc6800
             };
         }
 
-        public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
+        public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
             int offset, int value)
         {
             using var reservation = ReserveAnyRegister(instruction);
@@ -50,9 +50,9 @@ namespace Inu.Cate.Mc6800
         }
 
         protected override void OperateIndirect(Instruction instruction, string operation, bool change,
-            Cate.PointerRegister pointerRegister, int offset, int count)
+            WordRegister pointerRegister, int offset, int count)
         {
-            Debug.Assert(Equals(pointerRegister, PointerRegister.X));
+            Debug.Assert(Equals(pointerRegister, IndexRegister.X));
             while (true) {
                 if (pointerRegister.IsOffsetInRange(offset)) {
                     for (var i = 0; i < count; ++i) {

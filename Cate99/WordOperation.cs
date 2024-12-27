@@ -19,13 +19,6 @@ namespace Inu.Cate.Tms99
                 if (Tms99.Compiler.Operate(instruction, operation, rightOperand, destinationOperand)) return;
             }
 
-            void OperateRegister(Cate.WordRegister register)
-            {
-                register.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + Tms99.Compiler.OperandToString(instruction, rightOperand, false) + "," + register.Name);
-                register.Store(instruction, destinationOperand);
-            }
-
             if (destinationOperand.Register is WordRegister wordRegister && !Equals(wordRegister, rightOperand.Register)) {
                 OperateRegister(wordRegister);
                 return;
@@ -34,6 +27,14 @@ namespace Inu.Cate.Tms99
             var candidates = WordRegister.Registers.Where(r => !Equals(r, rightOperand.Register)).ToList();
             using var reservation = instance.ReserveAnyRegister(instruction, candidates, leftOperand);
             OperateRegister(reservation.WordRegister);
+            return;
+
+            void OperateRegister(Cate.WordRegister register)
+            {
+                register.Load(instruction, leftOperand);
+                instruction.WriteLine("\t" + operation + "\t" + Tms99.Compiler.OperandToString(instruction, rightOperand, false) + "," + register.Name);
+                register.Store(instruction, destinationOperand);
+            }
         }
 
         public static void OperateConstant(Instruction instruction, string operation, AssignableOperand destinationOperand, Operand leftOperand, int value)
@@ -51,15 +52,9 @@ namespace Inu.Cate.Tms99
                 instruction.RemoveRegisterAssignment(register);
                 register.Store(instruction, destinationOperand);
             }
-            void OperateRegisterConstantP(Cate.PointerRegister register)
+            void OperateRegisterConstantP(Cate.WordRegister register)
             {
-                if (leftOperand.Type is PointerType) {
-                    register.Load(instruction, leftOperand);
-                }
-                else {
-                    Debug.Assert(register.WordRegister != null);
-                    register.WordRegister.Load(instruction, leftOperand);
-                }
+                register.Load(instruction, leftOperand);
                 instruction.WriteLine("\t" + operation + "\t" + register.Name + "," + value);
                 instruction.AddChanged(register);
                 instruction.RemoveRegisterAssignment(register);
@@ -69,22 +64,13 @@ namespace Inu.Cate.Tms99
                 OperateRegisterConstantW(destinationWordRegister);
                 return;
             }
-            if (destinationOperand.Register is PointerRegister destinationPointerRegister) {
-                OperateRegisterConstantP(destinationPointerRegister);
-                return;
-            }
             if (leftOperand.Register is WordRegister leftWordRegister) {
                 OperateRegisterConstantW(leftWordRegister);
                 return;
             }
-            if (leftOperand.Register is PointerRegister leftPointerRegister) {
-                OperateRegisterConstantP(leftPointerRegister);
-                return;
-            }
-
             if (destinationOperand.Type is PointerType) {
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction);
-                OperateRegisterConstantP(reservation.PointerRegister);
+                using var reservation = WordOperation.ReserveAnyRegister(instruction);
+                OperateRegisterConstantP(reservation.WordRegister);
             }
             else {
                 using var reservation = WordOperation.ReserveAnyRegister(instruction);

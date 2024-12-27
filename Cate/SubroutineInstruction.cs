@@ -8,20 +8,14 @@ namespace Inu.Cate;
 
 public abstract class SubroutineInstruction : Instruction
 {
-    protected class ParameterAssignment
+    protected class ParameterAssignment(Function.Parameter parameter, Operand operand)
     {
-        public readonly Function.Parameter Parameter;
-        public readonly Operand Operand;
+        public readonly Function.Parameter Parameter = parameter;
+        public readonly Operand Operand = operand;
 
         public RegisterReservation? RegisterReservation { get; set; }
 
         public bool Done { get; private set; }
-
-        public ParameterAssignment(Function.Parameter parameter, Operand operand)
-        {
-            Parameter = parameter;
-            Operand = operand;
-        }
 
         public override string ToString()
         {
@@ -47,14 +41,9 @@ public abstract class SubroutineInstruction : Instruction
                 case WordRegister wordRegister:
                     wordRegister.Exchange(instruction, (WordRegister)other.Parameter.Register);
                     break;
-                case PointerRegister pointerRegister:
-                    pointerRegister.Exchange(instruction, (PointerRegister)other.Parameter.Register);
-                    break;
             }
             Done = true;
             other.Done = true;
-            //SetDone(instruction, other.Operand.Register);
-            //other.SetDone(instruction, Operand.Register);
         }
 
         public RegisterReservation? Close(Instruction instruction)
@@ -77,10 +66,6 @@ public abstract class SubroutineInstruction : Instruction
                         newReservation = instruction.WordOperation.ReserveRegister(instruction, wordRegister);
                         wordRegister.CopyFrom(instruction, RegisterReservation.WordRegister);
                         break;
-                    case PointerRegister pointerRegister:
-                        newReservation = instruction.PointerOperation.ReserveRegister(instruction, pointerRegister);
-                        pointerRegister.CopyFrom(instruction, RegisterReservation.PointerRegister);
-                        break;
                     default:
                         throw new NotImplementedException();
                 }
@@ -95,7 +80,7 @@ public abstract class SubroutineInstruction : Instruction
     public readonly AssignableOperand? DestinationOperand;
     public readonly List<Operand> SourceOperands;
 
-    protected readonly List<ParameterAssignment> ParameterAssignments = new();
+    protected readonly List<ParameterAssignment> ParameterAssignments = [];
 
     public override bool IsSourceOperand(Variable variable)
     {
@@ -157,28 +142,7 @@ public abstract class SubroutineInstruction : Instruction
             var reservations = FillParameters();
             ResultFlags = 0;
             Call();
-            foreach (var reservation in reservations) {
-                if (reservation.Register.Conflicts(returnRegister)) {
-                    switch (reservation.Register) {
-                        case ByteRegister:
-                            alternative = ByteOperation.ReserveAnyRegister(this);
-                            alternative.ByteRegister.CopyFrom(this, reservation.ByteRegister);
-                            returnRegister = alternative.ByteRegister;
-                            break;
-                        case WordRegister:
-                            alternative = WordOperation.ReserveAnyRegister(this);
-                            alternative.WordRegister.CopyFrom(this, reservation.WordRegister);
-                            returnRegister = alternative.WordRegister;
-                            break;
-                        case PointerRegister:
-                            alternative = PointerOperation.ReserveAnyRegister(this);
-                            alternative.PointerRegister.CopyFrom(this, reservation.PointerRegister);
-                            returnRegister = alternative.PointerRegister;
-                            break;
-                    }
-                }
-                reservation.Dispose();
-            }
+            returnRegister = ResolveReturnRegister(reservations, returnRegister, ref alternative);
         }
         RemoveStaticVariableAssignments();
 
@@ -202,13 +166,33 @@ public abstract class SubroutineInstruction : Instruction
                 case WordRegister wordRegister:
                     wordRegister.Store(this, DestinationOperand);
                     break;
-                case PointerRegister pointerRegister:
-                    pointerRegister.Store(this, DestinationOperand);
-                    break;
             }
         }
-
         alternative?.Dispose();
+    }
+
+    protected virtual Register? ResolveReturnRegister(List<RegisterReservation> reservations, Register? returnRegister,
+        ref RegisterReservation? alternative)
+    {
+        foreach (var reservation in reservations) {
+            if (reservation.Register.Conflicts(returnRegister)) {
+                switch (reservation.Register) {
+                    case ByteRegister:
+                        alternative = ByteOperation.ReserveAnyRegister(this);
+                        alternative.ByteRegister.CopyFrom(this, reservation.ByteRegister);
+                        returnRegister = alternative.ByteRegister;
+                        break;
+                    case WordRegister:
+                        alternative = WordOperation.ReserveAnyRegister(this);
+                        alternative.WordRegister.CopyFrom(this, reservation.WordRegister);
+                        returnRegister = alternative.WordRegister;
+                        break;
+                }
+            }
+            reservation.Dispose();
+        }
+
+        return returnRegister;
     }
 
 
@@ -239,7 +223,7 @@ public abstract class SubroutineInstruction : Instruction
     {
         StoreParameters();
 
-        var firstRegister = Compiler.ParameterRegister(0, IntegerType.ByteType);
+        var firstRegister = ParameterAssignments.Count(a => !a.Done) > 1 ? Compiler.ParameterRegister(0, IntegerType.ByteType) : null;
         var changed = true;
         while (changed) {
             changed = false;
@@ -291,12 +275,7 @@ public abstract class SubroutineInstruction : Instruction
                         register = ByteOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
                     }
                     else {
-                        if (parameter.Type is PointerType) {
-                            register = PointerOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
-                        }
-                        else {
-                            register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
-                        }
+                        register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
                     }
                     if (register == null || Equals(register, firstRegister)) continue;
                     if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
@@ -392,9 +371,6 @@ public abstract class SubroutineInstruction : Instruction
             case WordRegister wordRegister:
                 wordRegister.Load(this, operand);
                 break;
-            case PointerRegister pointerRegister:
-                pointerRegister.Load(this, operand);
-                break;
         }
         //CancelOperandRegister(operand);
         if (!Equals(operand.Register, register)) {
@@ -435,18 +411,18 @@ public abstract class SubroutineInstruction : Instruction
                 }
             }
             else {
-                if (parameter.Type is PointerType) {
-                    StorePointer(operand, label);
+                if (operand is IntegerOperand { IntegerValue: 0 }) {
+                    WordOperation.ClearWord(this, label);
                 }
                 else {
-                    StoreWord(operand, label);
+                    StoreWord(operand, label, parameter.Type);
                 }
             }
             assignment.SetDone(this, null);
         }
     }
 
-    protected virtual void StoreWord(Operand operand, string label)
+    protected virtual void StoreWord(Operand operand, string label, ParameterizableType type)
     {
         if (operand is VariableOperand variableOperand) {
             var variableRegister = GetVariableRegister(variableOperand);
@@ -456,35 +432,15 @@ public abstract class SubroutineInstruction : Instruction
                 return;
             }
         }
-        using var reservation = WordOperation.ReserveAnyRegister(this);
+        using var reservation = WordOperation.ReserveAnyRegister(this, WordOperation.RegistersForType(type));
         reservation.WordRegister.Load(this, operand);
         reservation.WordRegister.StoreToMemory(this, label);
     }
 
-    protected virtual void StorePointer(Operand operand, string label)
-    {
-        if (operand is VariableOperand variableOperand) {
-            var variableRegister = GetVariableRegister(variableOperand);
-            if (variableRegister is WordRegister wordRegister) {
-                wordRegister.Load(this, operand);
-                wordRegister.StoreToMemory(this, label);
-                return;
-            }
-            if (variableRegister is PointerRegister pointerRegister) {
-                pointerRegister.Load(this, operand);
-                pointerRegister.StoreToMemory(this, label);
-                return;
-            }
-        }
-        using var reservation = PointerOperation.ReserveAnyRegister(this);
-        reservation.PointerRegister.Load(this, operand);
-        reservation.PointerRegister.StoreToMemory(this, label);
-    }
-
     protected void StoreParametersViaPointer()
     {
-        using var pointerReservation = PointerOperation.ReserveAnyRegister(this, PointerOperation.Registers);
-        var pointerRegister = pointerReservation.PointerRegister;
+        using var pointerReservation = WordOperation.ReserveAnyRegister(this, WordOperation.Registers);
+        var pointerRegister = pointerReservation.WordRegister;
         var index = 0;
         var count = ParameterAssignments.Count(a => a.Parameter.Register == null);
         foreach (var assignment in ParameterAssignments.Where(assignment => assignment.Parameter.Register == null)) {
@@ -528,12 +484,7 @@ public abstract class SubroutineInstruction : Instruction
             }
             else {
                 if (operand is IntegerOperand integerOperand) {
-                    if (operand.Type is PointerType) {
-                        PointerOperation.StoreConstantIndirect(this, pointerRegister, 0, integerOperand.IntegerValue);
-                    }
-                    else {
-                        WordOperation.StoreConstantIndirect(this, pointerRegister, 0, integerOperand.IntegerValue);
-                    }
+                    WordOperation.StoreConstantIndirect(this, pointerRegister, 0, integerOperand.IntegerValue);
                     if (!last) {
                         pointerRegister.Add(this, operand.Type.ByteCount);
                     }
@@ -543,19 +494,11 @@ public abstract class SubroutineInstruction : Instruction
                     StoreViaPointer(pointerRegister, wordRegister, last);
                 }
                 else {
-                    if (operand.Type is PointerType) {
-                        using var reservation = PointerOperation.ReserveAnyRegister(this);
-                        reservation.PointerRegister.Load(this, operand);
-                        StoreViaPointer(pointerRegister, reservation.PointerRegister, last);
-                    }
-                    else {
-                        using var reservation = WordOperation.ReserveAnyRegister(this);
-                        reservation.WordRegister.Load(this, operand);
-                        StoreViaPointer(pointerRegister, reservation.WordRegister, last);
-                    }
+                    using var reservation = WordOperation.ReserveAnyRegister(this);
+                    reservation.WordRegister.Load(this, operand);
+                    StoreViaPointer(pointerRegister, reservation.WordRegister, last);
                 }
             }
-            //CancelOperandRegister(operand);
             assignment.SetDone(this, null);
             ++index;
             continue;
@@ -570,13 +513,7 @@ public abstract class SubroutineInstruction : Instruction
         }
     }
 
-    protected virtual void StoreViaPointer(PointerRegister pointerRegister, PointerRegister register, bool last)
-    {
-        Debug.Assert(register.WordRegister != null);
-        StoreViaPointer(pointerRegister, register.WordRegister, last);
-    }
-
-    protected virtual void StoreViaPointer(PointerRegister pointerRegister, WordRegister register, bool last)
+    protected virtual void StoreViaPointer(WordRegister pointerRegister, WordRegister register, bool last)
     {
         register.StoreIndirect(this, pointerRegister, 0);
         if (!last) {
@@ -587,10 +524,10 @@ public abstract class SubroutineInstruction : Instruction
     public override int? RegisterAdaptability(Variable variable, Register register)
     {
         foreach (var assignment in ParameterAssignments) {
-            if (assignment.Operand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable)) {
-                if (Equals(assignment.Parameter.Register, register)) {
-                    return 1;
-                }
+            if (assignment.Operand is not VariableOperand variableOperand ||
+                !variableOperand.Variable.Equals(variable)) continue;
+            if (Equals(assignment.Parameter.Register, register)) {
+                return 1;
             }
         }
         return base.RegisterAdaptability(variable, register);

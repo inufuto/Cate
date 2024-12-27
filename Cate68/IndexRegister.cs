@@ -42,12 +42,12 @@ internal class IndexRegister : Cate.WordRegister
     }
 
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Equals(this, IndexRegister.X));
-        Debug.Assert(Equals(pointerRegister, PointerRegister.X));
+        Debug.Assert(Equals(pointerRegister, IndexRegister.X));
         while (true) {
-            if (PointerRegister.X.IsOffsetInRange(offset)) {
+            if (IndexRegister.X.IsOffsetInRange(offset)) {
                 instruction.WriteLine("\tldx\t" + offset + ",x");
                 instruction.ResultFlags |= Instruction.Flag.Z;
                 instruction.RemoveRegisterAssignment(this);
@@ -60,19 +60,19 @@ internal class IndexRegister : Cate.WordRegister
 
     public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
     {
-        PointerRegister.X.LoadFromMemory(instruction, pointer, 0);
-        LoadIndirect(instruction, PointerRegister.X, offset);
+        IndexRegister.X.LoadFromMemory(instruction, pointer, 0);
+        LoadIndirect(instruction, IndexRegister.X, offset);
     }
 
     public override void StoreIndirect(Instruction instruction, Variable pointer, int offset)
     {
         StoreToMemory(instruction, ZeroPage.Word.Name);
         var variableRegister = instruction.GetVariableRegister(pointer, 0);
-        if (Equals(variableRegister, PointerRegister.X)) {
+        if (Equals(variableRegister, IndexRegister.X)) {
             ViaRegister();
             return;
         }
-        //using var pointerReservation = PointerOperation.ReserveRegister(instruction, PointerRegister.X);
+        //using var pointerReservation = PointerOperation.ReserveRegister(instruction, IndexRegister.X);
         ViaRegister();
         return;
 
@@ -89,38 +89,10 @@ internal class IndexRegister : Cate.WordRegister
     }
 
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         throw new NotImplementedException();
     }
-
-    //public override void Store(Instruction instruction, AssignableOperand destinationOperand)
-    //{
-    //    Debug.Assert(Equals(this, X));
-
-    //    switch (destinationOperand) {
-    //        case VariableOperand variableOperand:
-    //            StoreToMemory(instruction, variableOperand.MemoryAddress());
-    //            instruction.SetVariableRegister(variableOperand, this);
-    //            return;
-    //        case IndirectOperand indirectOperand:
-    //            var pointer = indirectOperand.Variable;
-    //            var offset = indirectOperand.Offset;
-    //            instruction.WriteLine("\tstx\t" + ZeroPage.Word);
-    //            Debug.Assert(pointer.Register == null);
-    //            var pointerRegister = PointerRegister.X;
-    //            pointerRegister.LoadFromMemory(instruction, pointer, 0);
-    //            using (var reservation = ByteOperation.ReserveAnyRegister(instruction)) {
-    //                var register = reservation.ByteRegister;
-    //                instruction.WriteLine("\tlda" + register + "\t" + ZeroPage.WordLow);
-    //                register.StoreIndirect(instruction, pointerRegister, offset + 1);
-    //                instruction.WriteLine("\tlda" + register + "\t" + ZeroPage.WordHigh);
-    //                register.StoreIndirect(instruction, pointerRegister, offset);
-    //            }
-    //            return;
-    //    }
-    //    throw new NotImplementedException();
-    //}
 
     public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
     {
@@ -189,6 +161,68 @@ internal class IndexRegister : Cate.WordRegister
                 return;
         }
         throw new NotImplementedException();
+    }
+
+    public override bool IsOffsetInRange(int offset) => offset is >= 0 and <= 0xff;
+
+    public override void Add(Instruction instruction, int offset)
+    {
+        switch (offset) {
+            case 0:
+                return;
+            case > 0 and <= 16: {
+                    while (offset > 0) {
+                        instruction.WriteLine("\tinx");
+                        --offset;
+                    }
+                    instruction.RemoveRegisterAssignment(X);
+                    return;
+                }
+            case < 0 and >= -16: {
+                    while (offset < 0) {
+                        instruction.WriteLine("\tdex");
+                        ++offset;
+                    }
+                    instruction.RemoveRegisterAssignment(X);
+                    return;
+                }
+            case >= 0 and < 0x100: {
+                    void AddByte(Cate.ByteRegister byteRegister)
+                    {
+                        byteRegister.LoadConstant(instruction, offset);
+                        instruction.Compiler.CallExternal(instruction, "Cate.AddX" + byteRegister.Name.ToUpper());
+                        instruction.RemoveRegisterAssignment(X);
+                    }
+                    if (!instruction.IsRegisterReserved(ByteRegister.A)) {
+                        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+                            AddByte(ByteRegister.A);
+                            instruction.RemoveRegisterAssignment(ByteRegister.A);
+                        }
+                        return;
+                    }
+                    if (!instruction.IsRegisterReserved(ByteRegister.B)) {
+                        using (ByteOperation.ReserveRegister(instruction, ByteRegister.B)) {
+                            AddByte(ByteRegister.B);
+                            instruction.RemoveRegisterAssignment(ByteRegister.B);
+                        }
+                        return;
+                    }
+                    using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+                    AddByte(reservation.ByteRegister);
+                    return;
+                }
+        }
+
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+            ByteRegister.A.LoadConstant(instruction, "high " + offset);
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.B)) {
+                ByteRegister.B.LoadConstant(instruction, "low " + offset);
+                instruction.Compiler.CallExternal(instruction, "Cate.AddXAB");
+                instruction.RemoveRegisterAssignment(X);
+                instruction.RemoveRegisterAssignment(ByteRegister.B);
+            }
+            instruction.RemoveRegisterAssignment(ByteRegister.A);
+        }
     }
 
     public override void Save(Instruction instruction)

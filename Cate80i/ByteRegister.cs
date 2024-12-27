@@ -45,10 +45,10 @@ internal class ByteRegister : Cate.ByteRegister
                 if (wordRegister.Contains(this))
                     return true;
                 break;
-            //case ByteRegister byteRegister:
-            //    if (Equals(byteRegister.PairRegister, PairRegister))
-            //        return true;
-            //    break;
+                //case ByteRegister byteRegister:
+                //    if (Equals(byteRegister.PairRegister, PairRegister))
+                //        return true;
+                //    break;
         }
         return base.Matches(register);
     }
@@ -126,10 +126,10 @@ internal class ByteRegister : Cate.ByteRegister
             LoadFromMemory(instruction, address);
             return;
         }
-        if (instruction.IsRegisterReserved(A) && !instruction.IsRegisterReserved(PointerRegister.Hl)) {
-            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                PointerRegister.Hl.LoadConstant(instruction, address);
-                LoadIndirect(instruction, PointerRegister.Hl, 0);
+        if (instruction.IsRegisterReserved(A) && !instruction.IsRegisterReserved(WordRegister.Hl)) {
+            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                WordRegister.Hl.LoadConstant(instruction, address);
+                LoadIndirect(instruction, WordRegister.Hl, 0);
             }
             return;
         }
@@ -147,10 +147,10 @@ internal class ByteRegister : Cate.ByteRegister
             instruction.SetVariableRegister(variable, offset, this);
             return;
         }
-        if (!instruction.IsRegisterReserved(PointerRegister.Hl) && !PointerRegister.Hl.Contains(this)) {
-            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                PointerRegister.Hl.LoadConstant(instruction, address);
-                StoreIndirect(instruction, PointerRegister.Hl, 0);
+        if (!instruction.IsRegisterReserved(WordRegister.Hl) && !WordRegister.Hl.Contains(this)) {
+            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                WordRegister.Hl.LoadConstant(instruction, address);
+                StoreIndirect(instruction, WordRegister.Hl, 0);
             }
             return;
         }
@@ -162,8 +162,8 @@ internal class ByteRegister : Cate.ByteRegister
 
     public override void LoadIndirect(Instruction instruction, Variable pointer, int offset)
     {
-        if (Conflicts(PointerRegister.Hl)) {
-            var candidates = Registers.Where(r => !r.Conflicts(PointerRegister.Hl)).ToList();
+        if (Conflicts(WordRegister.Hl)) {
+            var candidates = Registers.Where(r => !r.Conflicts(WordRegister.Hl)).ToList();
             using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);
             var register = reservation.ByteRegister;
             register.LoadIndirect(instruction, pointer, offset);
@@ -178,24 +178,24 @@ internal class ByteRegister : Cate.ByteRegister
 
         void ViaHl()
         {
-            PointerRegister.Hl.TemporaryOffset(instruction, offset, () => { LoadIndirect(instruction, PointerRegister.Hl, 0); });
+            WordRegister.Hl.TemporaryOffset(instruction, offset, () => { LoadIndirect(instruction, WordRegister.Hl, 0); });
         }
         {
             var register = instruction.GetVariableRegister(pointer, 0);
-            if (Equals(register, PointerRegister.Hl)) {
+            if (Equals(register, WordRegister.Hl)) {
                 ViaHl();
             }
             else {
-                if (register is PointerRegister pointerRegister && Equals(this, A)) {
+                if (register is WordRegister pointerRegister && Equals(this, A)) {
                     pointerRegister.TemporaryOffset(instruction, offset, () => { LoadIndirect(instruction, pointerRegister, 0); });
                     return;
                 }
-                using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+                using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
                     if (register != null) {
-                        PointerRegister.Hl.CopyFrom(instruction, (Cate.PointerRegister)register);
+                        WordRegister.Hl.CopyFrom(instruction, (Cate.WordRegister)register);
                     }
                     else {
-                        PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                        WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
                     }
                     ViaHl();
                 }
@@ -203,10 +203,10 @@ internal class ByteRegister : Cate.ByteRegister
         }
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 instruction.WriteLine("\tmov\t" + this + ",m");
                 instruction.AddChanged(this);
                 instruction.RemoveRegisterAssignment(this);
@@ -243,10 +243,10 @@ internal class ByteRegister : Cate.ByteRegister
     }
 
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 instruction.WriteLine("\tmov\tm," + this);
                 return;
             }
@@ -274,31 +274,31 @@ internal class ByteRegister : Cate.ByteRegister
         }
 
         var pointerRegister = instruction.GetVariableRegister(pointer, 0);
-        if (Equals(pointerRegister, PointerRegister.Hl)) {
-            StoreIndirect(instruction, PointerRegister.Hl, offset);
+        if (Equals(pointerRegister, WordRegister.Hl)) {
+            StoreIndirect(instruction, WordRegister.Hl, offset);
             return;
         }
 
-        if (pointerRegister is PointerRegister wordRegister && Equals(this, A)) {
+        if (pointerRegister is WordRegister wordRegister && Equals(this, A)) {
             StoreIndirect(instruction, wordRegister, offset);
             return;
         }
-        if (!Conflicts(PointerRegister.Hl)) {
-            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
+        if (!Conflicts(WordRegister.Hl)) {
+            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
                 if (pointerRegister != null) {
-                    PointerRegister.Hl.CopyFrom(instruction, (Cate.PointerRegister)pointerRegister);
+                    WordRegister.Hl.CopyFrom(instruction, (Cate.WordRegister)pointerRegister);
                 }
                 else {
-                    PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                    WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
                 }
-                StoreIndirect(instruction, PointerRegister.Hl, offset);
+                StoreIndirect(instruction, WordRegister.Hl, offset);
             }
         }
         else {
-            var candidates = PointerRegister.Registers.Where(r => !r.Conflicts(this)).ToList();
-            using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-            reservation.PointerRegister.LoadFromMemory(instruction, pointer, 0);
-            StoreIndirect(instruction, reservation.PointerRegister, offset);
+            var candidates = WordRegister.Registers.Where(r => !r.Conflicts(this)).ToList();
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+            reservation.WordRegister.LoadFromMemory(instruction, pointer, 0);
+            StoreIndirect(instruction, reservation.WordRegister, offset);
         }
     }
 
@@ -358,49 +358,49 @@ internal class ByteRegister : Cate.ByteRegister
                     instruction.RemoveRegisterAssignment(A);
                     return;
                 case ByteRegisterOperand registerOperand: {
-                    instruction.WriteLine("\t" + operation.Split('|')[0] + "\t" + registerOperand.Register);
-                    return;
-                }
-                case VariableOperand variableOperand: {
-                    var variable = variableOperand.Variable;
-                    var offset = variableOperand.Offset;
-                    var register = instruction.GetVariableRegister(variableOperand);
-                    if (register is ByteRegister byteRegister) {
-                        Debug.Assert(offset == 0);
-                        instruction.WriteLine("\t" + operation.Split('|')[0] + "\t" + byteRegister);
+                        instruction.WriteLine("\t" + operation.Split('|')[0] + "\t" + registerOperand.Register);
                         return;
                     }
-
-                    using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
-                        WordRegister.Hl.LoadConstant(instruction, variable.MemoryAddress(offset));
-                        instruction.WriteLine("\t" + operation.Split('|')[0] + "\tm");
-                    }
-                    return;
-                }
-                case IndirectOperand indirectOperand: {
-                    var pointer = indirectOperand.Variable;
-                    var offset = indirectOperand.Offset;
-                    {
-                        var register = instruction.GetVariableRegister(pointer, 0);
-                        if (register is PointerRegister pointerRegister) {
-                            if (Equals(pointerRegister, PointerRegister.Hl)) {
-                                OperateIndirect(instruction, operation, offset);
-                            }
-                            else {
-                                using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                                    PointerRegister.Hl.CopyFrom(instruction, pointerRegister);
-                                    OperateIndirect(instruction, operation, offset);
-                                }
-                            }
+                case VariableOperand variableOperand: {
+                        var variable = variableOperand.Variable;
+                        var offset = variableOperand.Offset;
+                        var register = instruction.GetVariableRegister(variableOperand);
+                        if (register is ByteRegister byteRegister) {
+                            Debug.Assert(offset == 0);
+                            instruction.WriteLine("\t" + operation.Split('|')[0] + "\t" + byteRegister);
                             return;
                         }
+
+                        using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                            WordRegister.Hl.LoadConstant(instruction, variable.MemoryAddress(offset));
+                            instruction.WriteLine("\t" + operation.Split('|')[0] + "\tm");
+                        }
+                        return;
                     }
-                    using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                        PointerRegister.Hl.LoadFromMemory(instruction, pointer, 0);
-                        OperateIndirect(instruction, operation, offset);
+                case IndirectOperand indirectOperand: {
+                        var pointer = indirectOperand.Variable;
+                        var offset = indirectOperand.Offset;
+                        {
+                            var register = instruction.GetVariableRegister(pointer, 0);
+                            if (register is WordRegister pointerRegister) {
+                                if (Equals(pointerRegister, WordRegister.Hl)) {
+                                    OperateIndirect(instruction, operation, offset);
+                                }
+                                else {
+                                    using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                                        WordRegister.Hl.CopyFrom(instruction, pointerRegister);
+                                        OperateIndirect(instruction, operation, offset);
+                                    }
+                                }
+                                return;
+                            }
+                        }
+                        using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                            WordRegister.Hl.LoadFromMemory(instruction, pointer, 0);
+                            OperateIndirect(instruction, operation, offset);
+                        }
+                        return;
                     }
-                    return;
-                }
             }
             throw new NotImplementedException();
         }
@@ -418,7 +418,7 @@ internal class ByteRegister : Cate.ByteRegister
             instruction.WriteLine("\t" + operation.Split('|')[0] + "\tm");
             return;
         }
-        PointerRegister.Hl.TemporaryOffset(instruction, offset, () =>
+        WordRegister.Hl.TemporaryOffset(instruction, offset, () =>
         {
             OperateIndirect(instruction, operation, 0);
         });
@@ -426,8 +426,8 @@ internal class ByteRegister : Cate.ByteRegister
 
     public override void Operate(Instruction instruction, string operation, bool change, string operand)
     {
-        using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-            PointerRegister.Hl.LoadConstant(instruction, operand);
+        using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+            WordRegister.Hl.LoadConstant(instruction, operand);
             instruction.WriteLine("\t" + operation.Split('|')[0] + "\tm");
         }
     }

@@ -25,9 +25,9 @@ internal class ByteOperation : Cate.ByteOperation
             OperateA();
             goto end;
         }
-        if (!instruction.IsRegisterReserved(PointerRegister.Hl)) {
-            using (PointerOperation.ReserveRegister(instruction, PointerRegister.Hl)) {
-                PointerRegister.Hl.LoadConstant(instruction, address);
+        if (!instruction.IsRegisterReserved(WordRegister.Hl)) {
+            using (WordOperation.ReserveRegister(instruction, WordRegister.Hl)) {
+                WordRegister.Hl.LoadConstant(instruction, address);
                 for (var i = 0; i < count; ++i) {
                     instruction.WriteLine("\t" + operation + "(hl)");
                 }
@@ -42,11 +42,11 @@ internal class ByteOperation : Cate.ByteOperation
             ByteRegister.A.LoadFromMemory(instruction, address);
             OperateA();
         }
-        end:
+    end:
         ;
     }
 
-    protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.PointerRegister pointerRegister, int offset, int count)
+    protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset, int count)
     {
         if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
             for (var i = 0; i < count; ++i) {
@@ -56,7 +56,7 @@ internal class ByteOperation : Cate.ByteOperation
         }
         if (offset == 0) {
             var operand = "(" + pointerRegister + ")";
-            if (Equals(pointerRegister, PointerRegister.Hl)) {
+            if (Equals(pointerRegister, WordRegister.Hl)) {
                 for (var i = 0; i < count; ++i) {
                     instruction.WriteLine("\t" + operation + operand);
                 }
@@ -84,7 +84,7 @@ internal class ByteOperation : Cate.ByteOperation
         instruction.AddChanged(ByteRegister.A);
     }
 
-    public override void StoreConstantIndirect(Instruction instruction, Cate.PointerRegister pointerRegister,
+    public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister,
         int offset, int value)
     {
         if (pointerRegister is IndexRegister && pointerRegister.IsOffsetInRange(offset)) {
@@ -92,7 +92,7 @@ internal class ByteOperation : Cate.ByteOperation
             return;
         }
         if (offset == 0) {
-            if (PointerRegister.IsAddable(pointerRegister)) {
+            if (pointerRegister is IndexRegister || pointerRegister.Equals(WordRegister.Hl)) {
                 instruction.WriteLine("\tld\t(" + pointerRegister + ")," + value);
                 return;
             }
@@ -102,17 +102,17 @@ internal class ByteOperation : Cate.ByteOperation
             }
             return;
         }
-        if (PointerRegister.IsAddable(pointerRegister)) {
+        if (pointerRegister is IndexRegister || pointerRegister.Equals(WordRegister.Hl)) {
             pointerRegister.TemporaryOffset(instruction, offset, () =>
             {
                 StoreConstantIndirect(instruction, pointerRegister, 0, value);
             });
             return;
         }
-        var candidates = new List<Cate.PointerRegister>(PointerRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList());
-        using var reservation = PointerOperation.ReserveAnyRegister(instruction, candidates);
-        reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-        StoreConstantIndirect(instruction, reservation.PointerRegister, offset, value);
+        var candidates = new List<Cate.WordRegister>(WordRegister.PointerOrder(offset).Where(r => !Equals(r, pointerRegister)).ToList());
+        using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+        reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+        StoreConstantIndirect(instruction, reservation.WordRegister, offset, value);
     }
 
     public override string ToTemporaryByte(Instruction instruction, Cate.ByteRegister rightRegister)

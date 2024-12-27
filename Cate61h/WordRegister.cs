@@ -1,9 +1,11 @@
-﻿namespace Inu.Cate.Hd61700;
+﻿using Microsoft.Win32;
+
+namespace Inu.Cate.Hd61700;
 
 internal class WordRegister : Cate.WordRegister
 {
     public const int Count = 10;
-    public static readonly List<Cate.WordRegister> Registers = new List<Cate.WordRegister>();
+    public static readonly List<Cate.WordRegister> Registers = [];
 
     static WordRegister()
     {
@@ -62,107 +64,100 @@ internal class WordRegister : Cate.WordRegister
 
     public override void LoadFromMemory(Instruction instruction, string label)
     {
-        using var reservation = PointerOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(true));
-        var pointerRegister = reservation.PointerRegister;
-        pointerRegister.LoadConstant(instruction, label);
-        LoadIndirect(instruction, pointerRegister, 0);
+        var indexRegister = IndexRegister.Ix;
+        indexRegister.LoadConstant(instruction, label);
+        LoadIndirect(instruction, indexRegister, 0);
     }
 
     public override void StoreToMemory(Instruction instruction, string label)
     {
-        using var reservation = PointerOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(true));
-        var pointerRegister = reservation.PointerRegister;
-        pointerRegister.LoadConstant(instruction, label);
-        StoreIndirect(instruction, pointerRegister, 0);
+        var indexRegister = IndexRegister.Ix;
+        indexRegister.LoadConstant(instruction, label);
+        StoreIndirect(instruction, indexRegister, 0);
     }
+
 
     public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
     {
-        using (var reservation = PointerOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(true))) {
-            var indexRegister = (IndexRegister)reservation.PointerRegister;
-            indexRegister.LoadConstant(instruction, variable, offset);
-            instruction.SetRegisterConstant(indexRegister, new PointerType(variable.Type), variable, offset);
-            LoadIndirect(instruction, indexRegister, 0);
-        }
+        var indexRegister = IndexRegister.Ix;
+        indexRegister.LoadConstant(instruction, variable, offset);
+        instruction.SetRegisterConstant(indexRegister, new PointerType(variable.Type), variable, offset);
+        LoadIndirect(instruction, indexRegister, 0);
         instruction.SetVariableRegister(variable, offset, this);
         instruction.AddChanged(this);
     }
 
     public override void StoreToMemory(Instruction instruction, Variable variable, int offset)
     {
-        using (var reservation = PointerOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(true))) {
-            var indexRegister = (IndexRegister)reservation.PointerRegister;
-            indexRegister.LoadConstant(instruction, variable, offset);
-            StoreIndirect(instruction, indexRegister, 0);
-        }
-
+        var indexRegister = IndexRegister.Ix;
+        indexRegister.LoadConstant(instruction, variable, offset);
+        StoreIndirect(instruction, indexRegister, 0);
         instruction.SetVariableRegister(variable, offset, this);
     }
 
-    public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
-        if (pointerRegister is IndexRegister indexRegister) {
-            var sign = offset >= 0 ? "+" : "-";
-            var abs = Math.Abs(offset);
-            switch (abs) {
-                case 0:
-                    WithOffset("$sx");
-                    break;
-                case 1:
-                    WithOffset("$sy");
-                    break;
-                default: {
-                        using var reservation = ByteOperation.ReserveAnyRegister(instruction);
-                        var byteRegister = reservation.ByteRegister;
-                        byteRegister.LoadConstant(instruction, abs);
-                        WithOffset(byteRegister.AsmName);
-                        break;
-                    }
-            }
-
-            void WithOffset(string offsetValue)
-            {
-                instruction.WriteLine("\tldw " + AsmName + ",(" + indexRegister.AsmName + sign + offsetValue + ")");
-            }
+        if (offset == 0) {
+            instruction.WriteLine("\tldw " + AsmName + ",(" + pointerRegister.AsmName + ")");
         }
         else {
-            if (offset == 0) {
-                instruction.WriteLine("\tldw " + AsmName + ",(" + pointerRegister.AsmName + ")");
-            }
-            else {
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(false));
-                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                LoadIndirect(instruction, reservation.PointerRegister, offset);
-            }
+            var indexRegister = IndexRegister.Iz;
+            indexRegister.FromWordRegister(instruction, pointerRegister);
+            LoadIndirect(instruction, indexRegister, offset);
         }
     }
 
-    public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    private void LoadIndirect(Instruction instruction, IndexRegister indexRegister, int offset)
     {
-        if (pointerRegister is IndexRegister indexRegister) {
-            if (offset == 0) {
-                instruction.WriteLine("\tstw " + AsmName + ",(" + indexRegister.AsmName + "+$sx)");
-            }
-            else if (offset == 1) {
-                instruction.WriteLine("\tstw " + AsmName + ",(" + indexRegister.AsmName + "+$sy)");
-            }
-            else {
-                using var reservation = ByteOperation.ReserveAnyRegister(instruction);
-                var offsetRegister = reservation.ByteRegister;
-                if (offset > 0) {
-                    offsetRegister.LoadConstant(instruction, offset);
-                    instruction.WriteLine("\tstw " + AsmName + ",(" + pointerRegister.AsmName + "+" + offsetRegister.AsmName + ")");
+        var sign = offset >= 0 ? "+" : "-";
+        var abs = Math.Abs(offset);
+        switch (abs) {
+            case 0:
+                WithOffset("$sx");
+                break;
+            case 1:
+                WithOffset("$sy");
+                break;
+            default: {
+                    using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+                    var byteRegister = reservation.ByteRegister;
+                    byteRegister.LoadConstant(instruction, abs);
+                    WithOffset(byteRegister.AsmName);
+                    break;
                 }
-                else {
-                    offsetRegister.LoadConstant(instruction, -offset);
-                    instruction.WriteLine("\tstw " + AsmName + ",(" + pointerRegister.AsmName + "-" + offsetRegister.AsmName + ")");
-                }
-            }
+        }
+
+        void WithOffset(string offsetValue)
+        {
+            instruction.WriteLine("\tldw " + AsmName + ",(" + indexRegister.AsmName + sign + offsetValue + ")");
+        }
+    }
+
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
+    {
+        var indexRegister = IndexRegister.Iz;
+        indexRegister.FromWordRegister(instruction, pointerRegister);
+        StoreIndirect(instruction, indexRegister, offset);
+    }
+    private void StoreIndirect(Instruction instruction, IndexRegister indexRegister, int offset)
+    {
+        if (offset == 0) {
+            instruction.WriteLine("\tstw " + AsmName + ",(" + indexRegister.AsmName + "+$sx)");
+        }
+        else if (offset == 1) {
+            instruction.WriteLine("\tstw " + AsmName + ",(" + indexRegister.AsmName + "+$sy)");
         }
         else {
-            using var reservation = PointerOperation.ReserveAnyRegister(instruction, IndexRegister.Registers(false));
-            reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-            StoreIndirect(instruction, reservation.PointerRegister, offset);
+            using var reservation = ByteOperation.ReserveAnyRegister(instruction);
+            var offsetRegister = reservation.ByteRegister;
+            if (offset > 0) {
+                offsetRegister.LoadConstant(instruction, offset);
+                instruction.WriteLine("\tstw " + AsmName + ",(" + indexRegister.AsmName + "+" + offsetRegister.AsmName + ")");
+            }
+            else {
+                offsetRegister.LoadConstant(instruction, -offset);
+                instruction.WriteLine("\tstw " + AsmName + ",(" + indexRegister.AsmName + "-" + offsetRegister.AsmName + ")");
+            }
         }
     }
 
@@ -177,8 +172,12 @@ internal class WordRegister : Cate.WordRegister
 
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
     {
-        var candidates = Registers.Where(r => !r.Equals(this)).ToList();
-        using (var reservation = WordOperation.ReserveAnyRegister(instruction, candidates, operand)) {
+        if (operand is IntegerOperand { IntegerValue: 1 }) {
+            instruction.WriteLine("\t" + operation + " " + AsmName + ",$sy");
+        }
+        else {
+            var candidates = Registers.Where(r => !r.Equals(this)).ToList();
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates, operand);
             var rightRegister = reservation.WordRegister;
             rightRegister.Load(instruction, operand);
             instruction.WriteLine("\t" + operation + " " + AsmName + "," + rightRegister.AsmName);
@@ -186,6 +185,25 @@ internal class WordRegister : Cate.WordRegister
         if (change) {
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
+        }
+    }
+
+    public override bool IsOffsetInRange(int offset)
+    {
+        return Compiler.IsOffsetInRange(offset);
+    }
+
+    public override void Add(Instruction instruction, int offset)
+    {
+        using var reservation = WordOperation.ReserveAnyRegister(instruction);
+        var wordRegister = reservation.WordRegister;
+        if (offset > 0) {
+            wordRegister.LoadConstant(instruction, offset);
+            instruction.WriteLine("\tadw " + AsmName + "," + wordRegister.AsmName);
+        }
+        else {
+            wordRegister.LoadConstant(instruction, -offset);
+            instruction.WriteLine("\tsbw " + AsmName + "," + wordRegister.AsmName);
         }
     }
 

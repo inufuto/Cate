@@ -53,14 +53,14 @@ internal class ByteRegisterFile(int id) : AbstractByteRegister(id, IdToName(id))
         reservation.ByteRegister.StoreToMemory(instruction, label);
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
         reservation.ByteRegister.LoadIndirect(instruction, pointerRegister, offset);
         CopyFrom(instruction, reservation.ByteRegister);
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         using var reservation = ByteOperation.ReserveAnyRegister(instruction, ByteRegister.Registers);
         reservation.ByteRegister.CopyFrom(instruction, this);

@@ -12,39 +12,36 @@ internal class WordAddOrSubtractInstruction(
 {
     public override void BuildAssembly()
     {
-        if (LeftOperand is ConstantOperand && !(RightOperand is ConstantOperand) && IsOperatorExchangeable()) {
-            ExchangeOperands();
-        }
-        else {
-            if (RightOperand.Register is WordRegister rightRegister) {
-                if (rightRegister.Addable && IsOperatorExchangeable()) {
-                    ExchangeOperands();
-                }
+        if (IsOperatorExchangeable()) {
+            if (LeftOperand is ConstantOperand) {
+                ExchangeOperands();
+            }
+            else if (Equals(RightOperand.Register, WordRegister.Hl) && (Equals(LeftOperand.Register, WordRegister.De) || Equals(LeftOperand.Register, WordRegister.Bc))) {
+                ExchangeOperands();
             }
         }
-
-        if (IncrementOrDecrement())
+        if (IncrementOrDecrement()) {
             return;
-
-        if (OperatorId == '+' && !Equals(RightOperand.Register, WordRegister.Hl)) {
-            if (RightOperand.Register is WordRegister rightWordRegister && (Equals(rightWordRegister, WordRegister.De) || Equals(rightWordRegister, WordRegister.Bc))) {
+        }
+        if (OperatorId == '+' && Equals(LeftOperand.Register, WordRegister.Hl)) {
+            if (RightOperand.Register is WordRegister rightWordRegister) {
                 OperateHl(rightWordRegister);
                 return;
             }
 
-            var candidates = new List<Cate.WordRegister>() { WordRegister.Bc, WordRegister.De };
+            var candidates = new List<Cate.WordRegister>() { WordRegister.De, WordRegister.Bc };
             using var reservation = WordOperation.ReserveAnyRegister(this, candidates);
             {
                 var rightRegister = reservation.WordRegister;
                 rightRegister.Load(this, RightOperand);
-                if (Equals(DestinationOperand.Register, WordRegister.Hl)) {
+                //if (Equals(DestinationOperand.Register, WordRegister.Hl)) {
                     OperateHl(rightRegister);
-                }
-                else {
-                    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
-                        OperateHl(rightRegister);
-                    }
-                }
+                //}
+                //else {
+                //    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                //        OperateHl(rightRegister);
+                //    }
+                //}
             }
             return;
 
@@ -81,7 +78,7 @@ internal class WordAddOrSubtractInstruction(
         }
     }
 
-    protected override int Threshold() => 4;
+    protected override int Threshold() => 8;
 
     protected override void Increment(int count)
     {

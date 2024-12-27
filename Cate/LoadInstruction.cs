@@ -43,10 +43,9 @@ public abstract class LoadInstruction : Instruction
     }
 }
 
-public class ByteLoadInstruction : LoadInstruction
+public class ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : LoadInstruction(function, destinationOperand, sourceOperand)
 {
-    public ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
-
     public override void BuildAssembly()
     {
         if (
@@ -65,18 +64,17 @@ public class ByteLoadInstruction : LoadInstruction
                         var pointer = indirectOperand.Variable;
                         var offset = indirectOperand.Offset;
                         var register = GetVariableRegister(pointer, 0);
-                        if (register is PointerRegister pointerRegister) {
+                        if (register is WordRegister pointerRegister && pointerRegister.IsOffsetInRange(0)) {
                             ByteOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
                             return;
                         }
-                        var pointerRegisters = PointerOperation.RegistersToOffset(offset);
+                        var pointerRegisters = WordOperation.RegistersToOffset(offset);
                         if (pointerRegisters.Any()) {
-                            using var reservation = PointerOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
-                            reservation.PointerRegister.LoadFromMemory(this, pointer, 0);
-                            ByteOperation.StoreConstantIndirect(this, reservation.PointerRegister, offset, integerOperand.IntegerValue);
+                            using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
+                            reservation.WordRegister.LoadFromMemory(this, pointer, 0);
+                            ByteOperation.StoreConstantIndirect(this, reservation.WordRegister, offset, integerOperand.IntegerValue);
                             return;
                         }
-
                         break;
                     }
             }
@@ -96,10 +94,9 @@ public class ByteLoadInstruction : LoadInstruction
     protected virtual List<ByteRegister> Candidates() => ByteOperation.Registers.Where(r => !IsRegisterReserved(r, SourceOperand)).ToList();
 }
 
-public class WordLoadInstruction : LoadInstruction
+public class WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : LoadInstruction(function, destinationOperand, sourceOperand)
 {
-    public WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
-
     public override void BuildAssembly()
     {
         if (
@@ -113,61 +110,39 @@ public class WordLoadInstruction : LoadInstruction
             var pointer = indirectOperand.Variable;
             var offset = indirectOperand.Offset;
             var register = GetVariableRegister(pointer, 0);
-            if (register is PointerRegister pointerRegister) {
+            if (register is WordRegister pointerRegister) {
                 WordOperation.StoreConstantIndirect(this, pointerRegister, offset, integerOperand.IntegerValue);
                 return;
             }
 
-            var pointerRegisters = PointerOperation.RegistersToOffset(offset);
-            if (pointerRegisters.Any()) {
-                using var reservation = PointerOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
-                reservation.PointerRegister.LoadFromMemory(this, pointer, 0);
-                ByteOperation.StoreConstantIndirect(this, reservation.PointerRegister, offset,
+            var pointerRegisters = WordOperation.RegistersToOffset(offset);
+            if (pointerRegisters.Count > 0) {
+                using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
+                reservation.WordRegister.LoadFromMemory(this, pointer, 0);
+                WordOperation.StoreConstantIndirect(this, reservation.WordRegister, offset,
                     integerOperand.IntegerValue);
                 return;
             }
         }
 
-        if (DestinationOperand.Register is WordRegister wordRegister) {
-            wordRegister.Load(this, SourceOperand);
+        if (DestinationOperand.Register is WordRegister destinationRegister) {
+            ViaRegister(destinationRegister);
+            return;
+        }
+        if (SourceOperand.Register is WordRegister leftRegister) {
+            ViaRegister(leftRegister);
             return;
         }
         {
             using var reservation = WordOperation.ReserveAnyRegister(this, SourceOperand);
-            reservation.WordRegister.Load(this, SourceOperand);
-            reservation.WordRegister.Store(this, DestinationOperand);
+            ViaRegister(reservation.WordRegister);
         }
-    }
-}
+        return;
 
-public class PointerLoadInstruction : LoadInstruction
-{
-    public PointerLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand) { }
-
-    public override void BuildAssembly()
-    {
-        if (
-            DestinationOperand.SameStorage(SourceOperand) &&
-            DestinationOperand.Type.ByteCount == SourceOperand.Type.ByteCount
-        ) {
-            return;
+        void ViaRegister(WordRegister register)
+        {
+            register.Load(this, SourceOperand);
+            register.Store(this, DestinationOperand);
         }
-
-        if (DestinationOperand.Register is PointerRegister pointerRegister) {
-            pointerRegister.Load(this, SourceOperand);
-            SetVariableRegister(DestinationOperand, pointerRegister);
-            return;
-        }
-
-        if (SourceOperand is VariableOperand variableOperand) {
-            var variableRegister = GetVariableRegister(variableOperand);
-            if (variableRegister is PointerRegister sourceRegister) {
-                sourceRegister.Store(this, DestinationOperand);
-                return;
-            }
-        }
-        using var reservation = PointerOperation.ReserveAnyRegister(this, SourceOperand);
-        reservation.PointerRegister.Load(this, SourceOperand);
-        reservation.PointerRegister.Store(this, DestinationOperand);
     }
 }

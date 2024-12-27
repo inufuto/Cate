@@ -2,7 +2,7 @@
 
 namespace Inu.Cate.Sm83;
 
-internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation(), new PointerOperation())
+internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation())
 {
     public const string TemporaryByte = "@Temporary@Byte";
 
@@ -24,33 +24,6 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
-        void AllocateOrdered(List<Variable> ordered)
-        {
-            foreach (var variable in ordered) {
-                var variableType = variable.Type;
-                Register? register;
-                if (variableType.ByteCount == 1) {
-                    var registers = ByteRegister.Registers;
-                    register = AllocatableRegister(variable, registers, function);
-                }
-                else {
-                    if (variableType is PointerType) {
-                        var registers = new List<PointerRegister>()
-                            { PointerRegister.Hl, PointerRegister.De, PointerRegister.Bc };
-                        register = AllocatableRegister(variable, registers, function);
-                    }
-                    else {
-                        var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
-                        register = AllocatableRegister(variable, registers, function);
-                    }
-                }
-
-                if (register == null)
-                    continue;
-                variable.Register = register;
-            }
-        }
-
         var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null)
             .OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
@@ -72,17 +45,32 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                     variable.Register = register;
                 }
             }
-            else if (register is WordRegister wordRegister) {
+            else if (register is WordRegister) {
                 register = AllocatableRegister(variable, WordRegister.Registers, function);
                 if (register != null) {
                     variable.Register = register;
                 }
             }
-            else if (register is PointerRegister) {
-                register = AllocatableRegister(variable, PointerRegister.Registers, function);
-                if (register != null) {
-                    variable.Register = register;
+        }
+
+        return;
+
+        void AllocateOrdered(List<Variable> ordered)
+        {
+            foreach (var variable in ordered) {
+                var variableType = variable.Type;
+                Register? register;
+                if (variableType.ByteCount == 1) {
+                    var registers = ByteRegister.Registers;
+                    register = AllocatableRegister(variable, registers, function);
                 }
+                else {
+                    var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
+                    register = AllocatableRegister(variable, registers, function);
+                }
+                if (register == null)
+                    continue;
+                variable.Register = register;
             }
         }
     }
@@ -101,12 +89,6 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         Operand sourceOperand)
     {
         return new WordLoadInstruction(function, destinationOperand, sourceOperand);
-    }
-
-    protected override LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
-        Operand sourceOperand)
-    {
-        return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
     }
 
     public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
@@ -128,23 +110,13 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
         switch (operatorId) {
             case '+':
-                if (destinationOperand.Type is PointerType)
-                    return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
-                        rightOperand);
                 return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
                     rightOperand);
             case '-': {
                     if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
                         var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
-                        if (destinationOperand.Type is PointerType)
-                            return new PointerAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand,
-                                operand);
                         return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
                     }
-
-                    if (destinationOperand.Type is PointerType)
-                        return new PointerAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
-                            rightOperand);
                     return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand,
                         rightOperand);
                 }
@@ -234,10 +206,6 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                     case Cate.WordRegister wordRegister:
                         Debug.Assert(wordRegister.Low != null);
                         return new ByteRegisterOperand(newType, wordRegister.Low);
-                    case Cate.PointerRegister pointerRegister:
-                        Debug.Assert(pointerRegister.WordRegister != null);
-                        Debug.Assert(pointerRegister.WordRegister.Low != null);
-                        return new ByteRegisterOperand(newType, pointerRegister.WordRegister.Low);
                     default:
                         return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset);
                 }
@@ -260,10 +228,6 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                     case Cate.WordRegister wordRegister:
                         Debug.Assert(wordRegister.High != null);
                         return new ByteRegisterOperand(newType, wordRegister.High);
-                    case Cate.PointerRegister pointerRegister:
-                        Debug.Assert(pointerRegister.WordRegister != null);
-                        Debug.Assert(pointerRegister.WordRegister.High != null);
-                        return new ByteRegisterOperand(newType, pointerRegister.WordRegister.High);
                     default:
                         return new VariableOperand(variableOperand.Variable, newType, variableOperand.Offset + 1);
                 }

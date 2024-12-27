@@ -39,11 +39,6 @@ public abstract class BinomialInstruction : Instruction
         return LeftOperand.IsVariable(variable) || RightOperand.IsVariable(variable);
     }
 
-    //public override void RemoveDestinationRegister()
-    //{
-    //    RemoveChangedRegisters(DestinationOperand);
-    //}
-
     public override string ToString() => DestinationOperand + " = " + LeftOperand + " " + ReservedWord.FromId(OperatorId) + " " + RightOperand;
 
     protected bool IsOperatorExchangeable()
@@ -70,6 +65,15 @@ public abstract class BinomialInstruction : Instruction
             return;
         }
 
+        if (DestinationOperand.Register is ByteRegister byteRegister && !Equals(RightOperand.Register, byteRegister)) {
+            ViaRegister(byteRegister);
+            return;
+        }
+        using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
+        ViaRegister(reservation.ByteRegister);
+        reservation.ByteRegister.Store(this, DestinationOperand);
+        return;
+
         void ViaRegister(ByteRegister register)
         {
             register.Load(this, LeftOperand);
@@ -78,14 +82,6 @@ public abstract class BinomialInstruction : Instruction
             }
             RemoveRegisterAssignment(register);
         }
-
-        if (DestinationOperand.Register is ByteRegister byteRegister && !Equals(RightOperand.Register, byteRegister)) {
-            ViaRegister(byteRegister);
-            return;
-        }
-        using var reservation = ByteOperation.ReserveAnyRegister(this, LeftOperand);
-        ViaRegister(reservation.ByteRegister);
-        reservation.ByteRegister.Store(this, DestinationOperand);
     }
 
     protected virtual bool IsOperatable(AssignableOperand operand) => true;

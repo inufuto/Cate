@@ -6,20 +6,18 @@ using System.Linq;
 
 namespace Inu.Cate.Mos6502;
 
-internal abstract class ByteRegister : Cate.ByteRegister
+internal abstract class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
 {
     public static readonly ByteRegister A = new Accumulator(1, "a");
     public static readonly ByteRegister X = new IndexRegister(2, "x");
     public static readonly ByteRegister Y = new IndexRegister(3, "y");
 
-    public static readonly List<Cate.ByteRegister> Registers = new() { A, X, Y };
+    public static readonly List<Cate.ByteRegister> Registers = [A, X, Y];
 
     public static Cate.ByteRegister FromId(int id)
     {
         return Registers.First(r => r.Id == id);
     }
-
-    protected ByteRegister(int id, string name) : base(id, name) { }
 
     public override void LoadConstant(Instruction instruction, string value)
     {
@@ -57,34 +55,35 @@ internal abstract class ByteRegister : Cate.ByteRegister
         instruction.WriteLine("\tst" + Name + "\t" + label);
     }
 
-    public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Equals(A));
         if (pointerRegister.IsOffsetInRange(offset)) {
             Debug.Assert(offset is >= 0 and < 0x100);
-            if (pointerRegister is PointerZeroPage zeroPage) {
+            if (pointerRegister is WordZeroPage zeroPage) {
                 ViaZeroPage(zeroPage);
             }
             else {
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerZeroPage.Registers);
-                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                ViaZeroPage((PointerZeroPage)reservation.PointerRegister);
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordZeroPage.Registers);
+                reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+                ViaZeroPage((WordZeroPage)reservation.WordRegister);
             }
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
             instruction.ResultFlags |= Instruction.Flag.Z;
         }
         else {
-            using var reservation = PointerOperation.ReserveAnyRegister(instruction);
-            var temporaryRegister = reservation.PointerRegister;
+            using var reservation = WordOperation.ReserveAnyRegister(instruction);
+            var temporaryRegister = reservation.WordRegister;
             temporaryRegister.CopyFrom(instruction, pointerRegister);
             temporaryRegister.Add(instruction, offset);
             LoadIndirect(instruction, temporaryRegister, 0);
             instruction.RemoveRegisterAssignment(temporaryRegister);
             instruction.AddChanged(temporaryRegister);
         }
+        return;
 
-        void ViaZeroPage(PointerZeroPage zeroPage)
+        void ViaZeroPage(WordZeroPage zeroPage)
         {
             using (ByteOperation.ReserveRegister(instruction, Y)) {
                 Compiler.Instance.LoadIndirect(instruction, this, zeroPage, offset);
@@ -92,17 +91,17 @@ internal abstract class ByteRegister : Cate.ByteRegister
         }
     }
 
-    public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Equals(A));
         if (pointerRegister.IsOffsetInRange(offset)) {
-            if (pointerRegister is PointerZeroPage zeroPage) {
+            if (pointerRegister is WordZeroPage zeroPage) {
                 ViaZeroPage(zeroPage);
             }
             else {
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerZeroPage.Registers);
-                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                ViaZeroPage((PointerZeroPage)reservation.PointerRegister);
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordZeroPage.Registers);
+                reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+                ViaZeroPage((WordZeroPage)reservation.WordRegister);
             }
         }
         else {
@@ -114,7 +113,7 @@ internal abstract class ByteRegister : Cate.ByteRegister
 
         return;
 
-        void ViaZeroPage(PointerZeroPage zeroPage)
+        void ViaZeroPage(WordZeroPage zeroPage)
         {
             Compiler.Instance.StoreIndirect(instruction, this, zeroPage, offset);
         }
@@ -193,10 +192,8 @@ internal abstract class ByteRegister : Cate.ByteRegister
     public abstract void Decrement(Instruction instruction);
 }
 
-internal class Accumulator : ByteRegister
+internal class Accumulator(int id, string name) : ByteRegister(id, name)
 {
-    public Accumulator(int id, string name) : base(id, name) { }
-
     public override void Operate(Instruction instruction, string operation, bool change, string operand)
     {
         instruction.WriteLine("\t" + operation + "\t" + operand);
@@ -233,11 +230,9 @@ internal class Accumulator : ByteRegister
     }
 }
 
-internal class IndexRegister : ByteRegister
+internal class IndexRegister(int id, string name) : ByteRegister(id, name)
 {
-    public IndexRegister(int id, string name) : base(id, name) { }
-
-    public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         using (ByteOperation.ReserveRegister(instruction, A)) {
             A.LoadIndirect(instruction, pointerRegister, offset);
@@ -245,7 +240,7 @@ internal class IndexRegister : ByteRegister
         }
     }
 
-    public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         using (ByteOperation.ReserveRegister(instruction, A)) {
             A.CopyFrom(instruction, this);

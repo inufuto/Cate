@@ -15,14 +15,9 @@ public abstract class Instruction
     }
 
 
-    private class RegisterConstantAssignment
+    private class RegisterConstantAssignment(Constant constant)
     {
-        public readonly Constant Constant;
-
-        public RegisterConstantAssignment(Constant constant)
-        {
-            Constant = constant;
-        }
+        public readonly Constant Constant = constant;
 
         public RegisterConstantAssignment(int value) : this(new ConstantInteger(value)) { }
 
@@ -33,16 +28,10 @@ public abstract class Instruction
     }
 
 
-    private class RegisterVariableAssignment
+    private class RegisterVariableAssignment(Variable variable, int offset)
     {
-        public readonly Variable Variable;
-        public readonly int Offset;
-
-        public RegisterVariableAssignment(Variable variable, int offset)
-        {
-            Variable = variable;
-            Offset = offset;
-        }
+        public readonly Variable Variable = variable;
+        public readonly int Offset = offset;
 
         public override string ToString()
         {
@@ -77,9 +66,8 @@ public abstract class Instruction
     public readonly ISet<Instruction> PreviousInstructions = new HashSet<Instruction>();
     public readonly Function Function;
     public readonly IList<string> Codes = new List<string>();
-    private readonly List<string> codesToJump = new();
+    private readonly List<string> codesToJump = [];
     private readonly IList<RegisterReservation> registerReservations = new List<RegisterReservation>();
-    //private readonly IList<RegisterReservation> operandRegisterReservations = new List<RegisterReservation>();
     private readonly ISet<Register> changedRegisters = new HashSet<Register>();
     public readonly ISet<Variable> SavingVariables = new HashSet<Variable>();
     private readonly Dictionary<Register, RegisterConstantAssignment> registerConstantAssignments = new();
@@ -104,7 +92,6 @@ public abstract class Instruction
     public Compiler Compiler => Compiler.Instance;
     public ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
     public WordOperation WordOperation => Compiler.Instance.WordOperation;
-    public PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
 
     public virtual bool IsJump() => false;
 
@@ -407,6 +394,8 @@ public abstract class Instruction
             }
         nextRegister:;
         }
+
+        Compiler.RemoveRegisterAssignment(this);
     }
 
 
@@ -472,34 +461,12 @@ public abstract class Instruction
 
         return register switch
         {
-            ByteRegister byteRegister => registerReservations.Any(reservation =>
-            {
-                return reservation.Register switch
-                {
-                    WordRegister wordRegister => wordRegister.Contains(byteRegister),
-                    PointerRegister pointerRegister => pointerRegister.WordRegister != null &&
-                                                       pointerRegister.WordRegister.Contains(byteRegister),
-                    _ => false
-                };
-            }),
+            ByteRegister byteRegister => registerReservations.Any(reservation => reservation.Register is WordRegister wordRegister && wordRegister.Contains(byteRegister)),
             WordRegister wordRegister => registerReservations.Any(reservation =>
             {
-                return reservation.Register switch
-                {
-                    ByteRegister byteRegister => wordRegister.Contains(byteRegister),
-                    PointerRegister pointerRegister => Equals(pointerRegister.WordRegister, wordRegister),
-                    _ => false
-                };
-            }),
-            PointerRegister pointerRegister => registerReservations.Any(reservation =>
-            {
-                return reservation.Register switch
-                {
-                    ByteRegister byteRegister => pointerRegister.WordRegister != null &&
-                                                 pointerRegister.WordRegister.Contains(byteRegister),
-                    WordRegister wordRegister => Equals(pointerRegister.WordRegister, wordRegister),
-                    _ => false
-                };
+                if (reservation.Register is ByteRegister byteRegister)
+                    return wordRegister.Contains(byteRegister);
+                return false;
             }),
             _ => false
         };
@@ -689,14 +656,7 @@ public abstract class Instruction
             changedRegisters.Remove(wordRegister.Low);
             changedRegisters.Remove(wordRegister.High);
         }
-        if (register is PointerRegister { WordRegister: { } } pointerRegister && pointerRegister.WordRegister.IsPair()) {
-            Debug.Assert(pointerRegister.WordRegister is { Low: { }, High: { } });
-            changedRegisters.Remove(pointerRegister.WordRegister.Low);
-            changedRegisters.Remove(pointerRegister.WordRegister.High);
-        }
-        //else {
         changedRegisters.Remove(register);
-        //}
     }
 
     public bool IsChanged(Register register)

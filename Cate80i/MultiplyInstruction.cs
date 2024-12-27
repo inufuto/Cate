@@ -45,8 +45,13 @@ internal class MultiplyInstruction : Cate.MultiplyInstruction
             {
                 using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     Debug.Assert(addition is { Low: { }, High: { } });
-                    WriteLine("\tsla\t" + addition.Low.Name);
-                    WriteLine("\trl\t" + addition.High.Name);
+                    WriteLine("\tora\ta");
+                    ByteRegister.A.CopyFrom(this, addition.Low);
+                    WriteLine("\tral");
+                    addition.Low.CopyFrom(this, ByteRegister.A);
+                    ByteRegister.A.CopyFrom(this, addition.High);
+                    WriteLine("\tral");
+                    addition.High.CopyFrom(this, ByteRegister.A);
                 }
             });
             AddChanged(WordRegister.Hl);

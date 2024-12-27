@@ -2,11 +2,13 @@
 
 namespace Inu.Cate.Mos6502;
 
-internal class MultiplyInstruction : Cate.MultiplyInstruction
+internal class MultiplyInstruction(
+    Function function,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    int rightValue)
+    : Cate.MultiplyInstruction(function, destinationOperand, leftOperand, rightValue)
 {
-    public MultiplyInstruction(Function function, AssignableOperand destinationOperand, Operand leftOperand, int rightValue) : base(function, destinationOperand, leftOperand, rightValue)
-    { }
-
     public override void BuildAssembly()
     {
         var candidates = new List<Cate.ByteRegister>() { ByteRegister.A, ByteRegister.X };

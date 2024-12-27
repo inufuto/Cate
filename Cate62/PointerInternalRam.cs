@@ -7,7 +7,7 @@
         public static readonly PointerInternalRam SI = new("si", "0dah");
         public static readonly PointerInternalRam DI = new("di", "0ddh");
 
-        public new static readonly List<Cate.PointerRegister> Registers = new();
+        public new static readonly List<Cate.WordRegister> Registers = new();
 
         static PointerInternalRam()
         {
@@ -50,6 +50,12 @@
         {
             instruction.WriteLine("\tmvp " + Name + ",[s++]\t");
         }
+
+        public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
+        {
+            base.CopyFrom(instruction, sourceRegister);
+        }
+
         public readonly string Label;
 
 

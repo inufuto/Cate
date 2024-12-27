@@ -6,6 +6,7 @@ namespace Inu.Cate;
 public abstract class WordOperation : RegisterOperation<WordRegister>
 {
     public List<WordRegister> PairRegisters => Registers.Where(r => r.IsPair()).ToList();
+    public virtual List<WordRegister> PointerRegisters => Registers;
 
     public virtual RegisterReservation ReserveRegister(Instruction instruction, WordRegister register)
     {
@@ -38,7 +39,12 @@ public abstract class WordOperation : RegisterOperation<WordRegister>
 
     public RegisterReservation ReserveAnyRegister(Instruction instruction, Operand sourceOperand)
     {
-        return ReserveAnyRegister(instruction, Registers, sourceOperand);
+        return ReserveAnyRegister(instruction, RegistersForType(sourceOperand.Type), sourceOperand);
+    }
+
+    public virtual List<WordRegister> RegistersForType(Type type)
+    {
+        return Registers.Where(r => r.ByteCount == type.ByteCount).ToList();
     }
 
     public RegisterReservation ReserveAnyRegister(Instruction instruction, List<WordRegister> candidates)
@@ -63,10 +69,22 @@ public abstract class WordOperation : RegisterOperation<WordRegister>
 
     public Operand LowByteOperand(Operand operand) => Compiler.LowByteOperand(operand);
 
-    public virtual void StoreConstantIndirect(Instruction instruction, PointerRegister pointerRegister, int offset, int value)
+    public virtual void StoreConstantIndirect(Instruction instruction, WordRegister pointerRegister, int offset, int value)
     {
         using var reservation = ReserveAnyRegister(instruction, Registers);
         reservation.WordRegister.LoadConstant(instruction, value);
         reservation.WordRegister.StoreIndirect(instruction, pointerRegister, offset);
+    }
+
+    public virtual List<WordRegister> RegistersToOffset(int offset)
+    {
+        return Registers.Where(r => r.IsOffsetInRange(offset)).ToList(); ;
+    }
+
+    public virtual void ClearWord(Instruction instruction, string label)
+    {
+        using var reservation = ReserveAnyRegister(instruction, Registers);
+        reservation.WordRegister.LoadConstant(instruction, 0);
+        reservation.WordRegister.StoreToMemory(instruction, label);
     }
 }

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Inu.Cate.Mos6502;
 
-internal class ByteZeroPage : Cate.ByteRegister
+internal class ByteZeroPage(int id) : Cate.ByteRegister(id, IdToName(id))
 {
     public const int MinId = 10;
     public const int Count = 16 - 2;
@@ -45,8 +45,6 @@ internal class ByteZeroPage : Cate.ByteRegister
         return id is >= MinId and < MinId + Count;
     }
 
-
-    public ByteZeroPage(int id) : base(id, IdToName(id)) { }
 
     public int Offset => IdToOffset(Id);
 
@@ -95,7 +93,7 @@ internal class ByteZeroPage : Cate.ByteRegister
         instruction.SetVariableRegister(variable, offset, this);
     }
 
-    public override void LoadIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.A };
         using (var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates)) {
@@ -107,7 +105,7 @@ internal class ByteZeroPage : Cate.ByteRegister
         instruction.RemoveRegisterAssignment(this);
     }
 
-    public override void StoreIndirect(Instruction instruction, PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         var candidates = new List<Cate.ByteRegister>() { ByteRegister.X, ByteRegister.A };
         using var reservation = ByteOperation.ReserveAnyRegister(instruction, candidates);

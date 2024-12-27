@@ -6,11 +6,11 @@ internal class WordLoadInstruction(Function function, AssignableOperand destinat
     public override void BuildAssembly()
     {
         if (DestinationOperand is VariableOperand { Register: null } variableOperand) {
-            if (!IsRegisterReserved(PointerRegister.Hl)) {
+            if (!IsRegisterReserved(WordRegister.Hl)) {
                 if (SourceOperand is IntegerOperand integerOperand) {
-                    using (PointerOperation.ReserveRegister(this, PointerRegister.Hl)) {
-                        PointerRegister.Hl.LoadConstant(this, variableOperand.MemoryAddress());
-                        WordOperation.StoreConstantIndirect(this, PointerRegister.Hl, variableOperand.Offset,
+                    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                        WordRegister.Hl.LoadConstant(this, variableOperand.MemoryAddress());
+                        WordOperation.StoreConstantIndirect(this, WordRegister.Hl, variableOperand.Offset,
                             integerOperand.IntegerValue);
                     }
                     return;

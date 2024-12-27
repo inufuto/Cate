@@ -45,16 +45,16 @@ internal class ByteRegister(int address) : AbstractByteRegister(MinId + address,
         instruction.WriteLine("\tmov\t@" + label + "," + this);
     }
 
-    public override void LoadIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
             instruction.WriteLine("\tmov\t" + this + ",@" + pointerRegister);
         }
         else {
-            if (Equals(pointerRegister, PointerRegister.FromAddress(0))) {
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.TemporaryRegisters);
-                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                instruction.WriteLine("\tmov\t" + this + "," + offset + "(" + reservation.PointerRegister + ")");
+            if (Equals(pointerRegister, WordRegister.FromAddress(0))) {
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.TemporaryRegisters);
+                reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+                instruction.WriteLine("\tmov\t" + this + "," + offset + "(" + reservation.WordRegister + ")");
             }
             else {
                 instruction.WriteLine("\tmov\t" + this + "," + offset + "(" + pointerRegister + ")");
@@ -64,16 +64,16 @@ internal class ByteRegister(int address) : AbstractByteRegister(MinId + address,
         instruction.RemoveRegisterAssignment(this);
     }
 
-    public override void StoreIndirect(Instruction instruction, Cate.PointerRegister pointerRegister, int offset)
+    public override void StoreIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
     {
         if (offset == 0) {
             instruction.WriteLine("\tmov\t" + "@" + pointerRegister + "," + this);
         }
         else {
-            if (Equals(pointerRegister, PointerRegister.FromAddress(0))) {
-                using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.TemporaryRegisters);
-                reservation.PointerRegister.CopyFrom(instruction, pointerRegister);
-                instruction.WriteLine("\tmov\t" + offset + "(" + reservation.PointerRegister + ")," + this);
+            if (Equals(pointerRegister, WordRegister.FromAddress(0))) {
+                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.TemporaryRegisters);
+                reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+                instruction.WriteLine("\tmov\t" + offset + "(" + reservation.WordRegister + ")," + this);
                 return;
             }
             instruction.WriteLine("\tmov\t" + offset + "(" + pointerRegister + ")," + this);
@@ -98,25 +98,25 @@ internal class ByteRegister(int address) : AbstractByteRegister(MinId + address,
                 break;
             case IndirectOperand indirectOperand: {
                     var variableRegister = indirectOperand.Variable.Register;
-                    if (variableRegister is PointerRegister pointerRegister) {
+                    if (variableRegister is WordRegister pointerRegister) {
                         ViaRegister(pointerRegister, indirectOperand.Offset);
                     }
                     else {
-                        using var reservation = PointerOperation.ReserveAnyRegister(instruction,PointerRegister.Registers.Where(r=>!Equals(r, PointerRegister.FromAddress(0))&& !r.Conflicts(this)).ToList(), operand);
-                        reservation.PointerRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
-                        ViaRegister(reservation.PointerRegister, indirectOperand.Offset);
+                        using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers.Where(r=>!Equals(r, WordRegister.FromAddress(0))&& !r.Conflicts(this)).ToList(), operand);
+                        reservation.WordRegister.LoadFromMemory(instruction, indirectOperand.Variable, 0);
+                        ViaRegister(reservation.WordRegister, indirectOperand.Offset);
                     }
                     break;
-                    void ViaRegister(Cate.PointerRegister register, int offset)
+                    void ViaRegister(Cate.WordRegister register, int offset)
                     {
                         if (offset == 0) {
                             instruction.WriteLine("\t" + operation + "\t" + this + ",@" + register);
                         }
                         else {
-                            if (Equals(register, PointerRegister.FromAddress(0))) {
-                                using var reservation = PointerOperation.ReserveAnyRegister(instruction, PointerRegister.TemporaryRegisters);
-                                reservation.PointerRegister.CopyFrom(instruction, register);
-                                instruction.WriteLine("\t" + operation + "\t" + this + "," + offset + "(" + reservation.PointerRegister + ")");
+                            if (Equals(register, WordRegister.FromAddress(0))) {
+                                using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.TemporaryRegisters);
+                                reservation.WordRegister.CopyFrom(instruction, register);
+                                instruction.WriteLine("\t" + operation + "\t" + this + "," + offset + "(" + reservation.WordRegister + ")");
                             }
                             else {
                                 instruction.WriteLine("\t" + operation + "\t" + this + "," + offset + "(" + register + ")");

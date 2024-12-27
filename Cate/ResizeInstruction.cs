@@ -80,6 +80,7 @@ public abstract class ResizeInstruction : Instruction
                 //Debug.Assert(pairRegister.High != null);
                 if (!IsRegisterReserved(pairRegister)) {
                     pairRegister.Load(this, SourceOperand);
+                    pairRegister.Low.Store(this, DestinationOperand);
                     return;
                 }
             }
@@ -113,7 +114,7 @@ public abstract class ResizeInstruction : Instruction
         }
         if (DestinationOperand.Register is WordRegister destinationRegister) {
             if (destinationRegister.IsPair()) {
-                Debug.Assert(destinationRegister is { Low: { }, High: { } });
+                Debug.Assert(destinationRegister is { Low: not null, High: not null });
                 //WriteLine("\t; low");
                 destinationRegister.Low.Load(this, SourceOperand);
                 //WriteLine("\t; high");

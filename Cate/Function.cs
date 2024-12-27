@@ -3,23 +3,17 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Inu.Language;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Inu.Cate;
 
 public class Function : NamedValue
 {
-    public class Parameter
+    public class Parameter(ParameterizableType type, int? id, Register? register)
     {
-        public readonly ParameterizableType Type;
-        public readonly int? Id;
-        public readonly Register? Register;
-
-        public Parameter(ParameterizableType type, int? id, Register? register)
-        {
-            Type = type;
-            Id = id;
-            Register = register;
-        }
+        public readonly ParameterizableType Type = type;
+        public readonly int? Id = id;
+        public readonly Register? Register = register;
 
         public Variable? Variable { get; set; }
     }
@@ -139,13 +133,13 @@ public class Function : NamedValue
         var returnRegister = compiler.ReturnRegister((ParameterizableType)Type);
         if (returnRegister != null) {
             savedRegisters.Remove(returnRegister);
-            compiler.RemoveSavingRegister(savedRegisters, Type.ByteCount);
+            compiler.RemoveSavingRegister(savedRegisters, returnRegister);
             foreach (var includedRegister in compiler.IncludedRegisters(returnRegister)) {
                 savedRegisters.Remove(includedRegister);
             }
         }
 
-        compiler.SaveRegisters(writer, savedRegisters);
+        compiler.SaveRegisters(writer, savedRegisters, this);
 
         Instruction? prevInstruction = null;
         var tabCount = 0;
@@ -256,11 +250,6 @@ public class Function : NamedValue
 
     private void OptimizeVariables()
     {
-        static List<Variable> TargetVariables(IEnumerable<Variable> sourceVariables)
-        {
-            return sourceVariables.Where(v => v.Type is ParameterizableType && v.Usages.Any() && !v.Static).ToList();
-        }
-
         Debug.Assert(functionBlock != null);
         var variables = TargetVariables(functionBlock.AllVariables);
         foreach (var variable1 in variables) {
@@ -277,9 +266,13 @@ public class Function : NamedValue
         var sortedVariables = TargetVariables(variables).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         AllocateLocalVariables(sortedVariables);
 
+        //if (Instructions.Count > 0)
+        //{
+        //    Compiler.Instance.FirstInstruction(Instructions[0]);
+        //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if direction != pEnemy[7] goto Turn@Anchor89")) {
+            if (instruction.ToString().Contains("pChars = pSprite + 4")) {
                 var aaa = 111;
             }
 #endif
@@ -290,6 +283,13 @@ public class Function : NamedValue
 
         foreach (var variable in variables.Where(v => v.Register != null).OrderBy(v => v.Range)) {
             variable.FillSavings(this);
+        }
+
+        return;
+
+        static List<Variable> TargetVariables(IEnumerable<Variable> sourceVariables)
+        {
+            return sourceVariables.Where(v => v.Type is ParameterizableType && v.Usages.Any() && !v.Static).ToList();
         }
     }
 

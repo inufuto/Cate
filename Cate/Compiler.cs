@@ -17,7 +17,6 @@ public abstract class Compiler
     public static Compiler Instance { get; private set; } = null!;
     public readonly ByteOperation ByteOperation;
     public readonly WordOperation WordOperation;
-    public readonly PointerOperation PointerOperation;
     private readonly Tokenizer tokenizer = new();
     private readonly Dictionary<SourcePosition, string> errors = new();
     private List<Token>? tokens = null;
@@ -32,13 +31,11 @@ public abstract class Compiler
     public readonly bool ConstantData;
 
 
-    protected Compiler(ByteOperation byteOperation, WordOperation wordOperation, PointerOperation pointerOperation,
-        bool constantData = false)
+    protected Compiler(ByteOperation byteOperation, WordOperation wordOperation, bool constantData = false)
     {
         Debug.Assert(Instance == null);
         ByteOperation = byteOperation;
         WordOperation = wordOperation;
-        PointerOperation = pointerOperation;
         Instance = this;
         currentBlock = globalBlock;
         ReservedWord.AddWords(Keyword.Words);
@@ -1446,7 +1443,7 @@ public abstract class Compiler
             var pairRegister = byteRegister.PairRegister;
             if (pairRegister != null) {
                 if (registers.Contains(pairRegister)) return;
-                if (registers.Any(r => r is PointerRegister p && Equals(p.WordRegister, pairRegister))) return;
+                if (registers.Any(r => r is WordRegister p && Equals(p, pairRegister))) return;
                 var added = new HashSet<Register>();
                 var removed = new HashSet<Register>();
                 foreach (var r in registers) {
@@ -1466,38 +1463,13 @@ public abstract class Compiler
             }
         }
         if (register is WordRegister wordRegister) {
-            if (registers.Any(r => r is PointerRegister p && Equals(p.WordRegister, wordRegister))) return;
+            if (registers.Any(r => r is WordRegister p && Equals(p, wordRegister))) return;
             var added = new HashSet<Register>();
             var removed = new HashSet<Register>();
             foreach (var r in registers) {
                 if (r is not ByteRegister b || !Equals(b.PairRegister, wordRegister)) continue;
                 added.Add(wordRegister);
                 removed.Add(b);
-            }
-            if (added.Any()) {
-                foreach (var r in removed) {
-                    registers.Remove(r);
-                }
-                foreach (var r in added) {
-                    registers.Add(r);
-                }
-                return;
-            }
-        }
-        if (register is PointerRegister { WordRegister: { } } pointerRegister) {
-            var added = new HashSet<Register>();
-            var removed = new HashSet<Register>();
-            foreach (var r in registers) {
-                switch (r) {
-                    case ByteRegister b when Equals(b.PairRegister, pointerRegister.WordRegister):
-                        added.Add(pointerRegister);
-                        removed.Add(b);
-                        break;
-                    case WordRegister w when Equals(w, pointerRegister.WordRegister):
-                        added.Add(pointerRegister);
-                        removed.Add(w);
-                        break;
-                }
             }
             if (added.Any()) {
                 foreach (var r in removed) {
@@ -1528,7 +1500,7 @@ public abstract class Compiler
     }
 
 
-    public virtual void SaveRegisters(StreamWriter writer, ISet<Register> registers)
+    public virtual void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function instruction)
     {
         var set = SavingRegisters(registers).ToImmutableSortedSet();
         foreach (var r in set) {
@@ -1568,7 +1540,7 @@ public abstract class Compiler
         }
     }
 
-    private Dictionary<Register, List<Variable>> DistinctRegisters(IEnumerable<Variable> variables)
+    protected Dictionary<Register, List<Variable>> DistinctRegisters(IEnumerable<Variable> variables)
     {
         var dictionary = new Dictionary<Register, List<Variable>>();
         foreach (var variable in variables) {
@@ -1580,7 +1552,7 @@ public abstract class Compiler
                     list.Add(variable);
                 }
                 else {
-                    dictionary[register] = new List<Variable>() { variable };
+                    dictionary[register] = [variable];
                 }
             }
         }
@@ -1594,11 +1566,9 @@ public abstract class Compiler
     public LoadInstruction CreateLoadInstruction(Function function, AssignableOperand destinationOperand,
         Operand sourceOperand)
     {
-        return destinationOperand.Type.ByteCount switch
-        {
-            1 => CreateByteLoadInstruction(function, destinationOperand, sourceOperand),
-            _ => destinationOperand.Type is PointerType ? CreatePointerLoadInstruction(function, destinationOperand, sourceOperand) : CreateWordLoadInstruction(function, destinationOperand, sourceOperand)
-        };
+        return destinationOperand.Type.ByteCount == 1
+            ? CreateByteLoadInstruction(function, destinationOperand, sourceOperand)
+            : CreateWordLoadInstruction(function, destinationOperand, sourceOperand);
     }
 
 
@@ -1613,13 +1583,6 @@ public abstract class Compiler
     {
         return new WordLoadInstruction(function, destinationOperand, sourceOperand);
     }
-
-    protected virtual LoadInstruction CreatePointerLoadInstruction(Function function, AssignableOperand destinationOperand,
-        Operand sourceOperand)
-    {
-        return new PointerLoadInstruction(function, destinationOperand, sourceOperand);
-    }
-
 
     public abstract BinomialInstruction CreateBinomialInstruction(Function function, int operatorId,
         AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand);
@@ -1732,10 +1695,9 @@ public abstract class Compiler
         MakeAlignment(writer, ref offset);
     }
 
-    public virtual void RemoveSavingRegister(ISet<Register> savedRegisters, int byteCount)
-    { }
+    public virtual void RemoveSavingRegister(ISet<Register> savedRegisters, Register returnRegister) { }
 
-    protected static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
+    protected Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
     {
         T? maxRegister = null;
         int? max = null;
@@ -1756,13 +1718,13 @@ public abstract class Compiler
             v.Register != null && register.Conflicts(v.Register));
     }
 
-    protected static int? RegisterAdaptability(Variable variable, Register register)
+    protected virtual int? RegisterAdaptability(Variable variable, Register register)
     {
         var function = variable.Block.Function;
         Debug.Assert(function != null);
         var first = variable.Usages.First().Key;
         var last = variable.Usages.Last().Key;
-        int sum = 0;
+        var sum = 0;
         for (var address = first; address <= last; ++address) {
             var instruction = function.Instructions[address];
             var adaptability = instruction.RegisterAdaptability(variable, register);
@@ -1771,4 +1733,6 @@ public abstract class Compiler
         }
         return sum;
     }
+
+    public virtual void RemoveRegisterAssignment(Instruction instruction) { }
 }

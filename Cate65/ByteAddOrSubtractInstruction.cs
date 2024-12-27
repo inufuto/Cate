@@ -3,11 +3,14 @@ using System.Collections.Generic;
 
 namespace Inu.Cate.Mos6502;
 
-internal class ByteAddOrSubtractInstruction : AddOrSubtractInstruction
+internal class ByteAddOrSubtractInstruction(
+    Function function,
+    int operatorId,
+    AssignableOperand destinationOperand,
+    Operand leftOperand,
+    Operand rightOperand)
+    : AddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
-    public ByteAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand) : base(function, operatorId, destinationOperand, leftOperand, rightOperand)
-    { }
-
     public override void BuildAssembly()
     {
         if (Equals(RightOperand.Register, ByteRegister.A) && !Equals(LeftOperand.Register, ByteRegister.A) && IsOperatorExchangeable()) {

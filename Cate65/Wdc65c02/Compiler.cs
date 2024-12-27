@@ -2,10 +2,8 @@
 
 namespace Inu.Cate.Wdc65c02;
 
-internal class Compiler : Mos6502.Compiler
+internal class Compiler(bool parameterRegister) : Mos6502.Compiler(parameterRegister)
 {
-    public Compiler(bool parameterRegister) : base(parameterRegister) { }
-
     public override BinomialInstruction CreateBinomialInstruction(Function function, int operatorId, AssignableOperand destinationOperand,
         Operand leftOperand, Operand rightOperand)
     {
@@ -15,7 +13,7 @@ internal class Compiler : Mos6502.Compiler
         return base.CreateBinomialInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
     }
 
-    public override void LoadIndirect(Instruction instruction, Mos6502.ByteRegister byteRegister, PointerZeroPage zeroPage, int offset)
+    public override void LoadIndirect(Instruction instruction, Mos6502.ByteRegister byteRegister, WordZeroPage zeroPage, int offset)
     {
         if (offset == 0) {
             instruction.WriteLine("\tld" + byteRegister.AsmName + "\t(" + zeroPage.Name + ")");
@@ -24,7 +22,7 @@ internal class Compiler : Mos6502.Compiler
         base.LoadIndirect(instruction, byteRegister, zeroPage, offset);
     }
 
-    public override void StoreIndirect(Instruction instruction, Mos6502.ByteRegister byteRegister, PointerZeroPage zeroPage, int offset)
+    public override void StoreIndirect(Instruction instruction, Mos6502.ByteRegister byteRegister, WordZeroPage zeroPage, int offset)
     {
         if (Equals(byteRegister, Mos6502.ByteRegister.A) && offset == 0) {
             instruction.WriteLine("\tst" + byteRegister.AsmName + "\t(" + zeroPage.AsmName + ")");
@@ -33,7 +31,7 @@ internal class Compiler : Mos6502.Compiler
         base.StoreIndirect(instruction, byteRegister, zeroPage, offset);
     }
 
-    public override void OperateIndirect(Instruction instruction, string operation, PointerZeroPage zeroPage, int offset, int count)
+    public override void OperateIndirect(Instruction instruction, string operation, WordZeroPage zeroPage, int offset, int count)
     {
         if (offset == 0) {
             for (var i = 0; i < count; ++i) {
@@ -42,6 +40,11 @@ internal class Compiler : Mos6502.Compiler
             return;
         }
         base.OperateIndirect(instruction, operation, zeroPage, offset, count);
+    }
+
+    public override void ClearByte(Instruction instruction, VariableOperand variableOperand)
+    {
+        instruction.WriteLine("\tstz\t" + variableOperand.MemoryAddress());
     }
 
     public override void ClearByte(Instruction instruction, string label)

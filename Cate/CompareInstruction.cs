@@ -43,10 +43,7 @@ public abstract class CompareInstruction : Instruction
             CompareByte();
         }
         else {
-            if (LeftOperand.Type is PointerType)
-                ComparePointer();
-            else
-                CompareWord();
+            CompareWord();
         }
     }
 
@@ -54,7 +51,6 @@ public abstract class CompareInstruction : Instruction
     protected abstract void CompareByte();
 
     protected abstract void CompareWord();
-    protected abstract void ComparePointer();
 
     protected bool CanOmitOperation(Flag flag)
     {

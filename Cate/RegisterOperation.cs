@@ -8,7 +8,6 @@ public abstract class RegisterOperation<T> where T:Register
     public static Compiler Compiler => Compiler.Instance;
     public static ByteOperation ByteOperation => Compiler.Instance.ByteOperation;
     public static WordOperation WordOperation => Compiler.Instance.WordOperation;
-    public static PointerOperation PointerOperation => Compiler.Instance.PointerOperation;
 
     public abstract List<T> Registers { get; }
 

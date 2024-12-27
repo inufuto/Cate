@@ -119,31 +119,6 @@ internal class CompareInstruction : Cate.CompareInstruction
         Jump(false);
     }
 
-    protected override void ComparePointer()
-    {
-        void CompareDe()
-        {
-            if (Equals(LeftOperand.Register, PointerRegister.Hl)) {
-                CompareHlDe();
-            }
-            else {
-                using var reservation = PointerOperation.ReserveRegister(this, PointerRegister.Hl);
-                PointerRegister.Hl.Load(this, LeftOperand);
-                CompareHlDe();
-            }
-        }
-
-        if (Equals(RightOperand.Register, PointerRegister.De)) {
-            CompareDe();
-        }
-        else {
-            using var reservation = PointerOperation.ReserveRegister(this, PointerRegister.De, RightOperand);
-            PointerRegister.De.Load(this, RightOperand);
-            CompareDe();
-        }
-        Jump(false);
-    }
-
     private void Jump(bool operandZero)
     {
         switch (OperatorId) {

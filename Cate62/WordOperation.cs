@@ -9,6 +9,13 @@
         {
             registers.AddRange(WordRegister.Registers);
             registers.AddRange(WordInternalRam.Registers);
+            registers.AddRange(PointerRegister.Registers);
+            registers.AddRange(PointerInternalRam.Registers);
+        }
+
+        public override List<Cate.WordRegister> RegistersToOffset(int offset)
+        {
+            return PointerRegister.Registers.Where(r => ((PointerRegister)r).IsOffsetInRange(offset)).ToList();
         }
     }
 }
