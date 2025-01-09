@@ -148,6 +148,7 @@ public abstract class SubroutineInstruction : Instruction
 
         if (returnRegister != null) {
             AddChanged(returnRegister);
+            RemoveRegisterAssignment(returnRegister);
         }
 
         if (DestinationOperand != null) {
