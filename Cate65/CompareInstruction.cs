@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Inu.Cate.Mos6502;
 
@@ -125,6 +124,7 @@ internal class CompareInstruction(
         write("\tbeq\t" + Anchor + "_F" + subLabelIndex);
         write("\tbcs\t" + Anchor);
         write(Anchor + "_F" + subLabelIndex + ":");
+        ++subLabelIndex;
     }
 
     private void BranchLessThan(bool operandZero, Action<string> write)

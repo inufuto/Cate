@@ -116,4 +116,9 @@ public class StructureType : Type
         }
         return null;
     }
+
+    public void MakeAlignment()
+    {
+        lastOffset= Compiler.Instance.AlignedSize(lastOffset);
+    }
 }

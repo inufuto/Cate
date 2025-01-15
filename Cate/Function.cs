@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("VPut_(pVVram,95)")) {
+            if (instruction.ToString().Contains("if xDis <= yDis")) {
                 var aaa = 111;
             }
 #endif

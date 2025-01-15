@@ -3,14 +3,9 @@ using Inu.Language;
 
 namespace Inu.Cate;
 
-public class ConstantBoolean : Constant
+public class ConstantBoolean(bool booleanValue) : Constant(BooleanType.Type)
 {
-    public readonly ConstantBooleanValue BooleanValue;
-
-    public ConstantBoolean(bool booleanValue) : base(BooleanType.Type)
-    {
-        BooleanValue = new ConstantBooleanValue(booleanValue);
-    }
+    public readonly ConstantBooleanValue BooleanValue = new(booleanValue);
 
     public override void WriteAssembly(StreamWriter writer)
     {

@@ -6,16 +6,10 @@ namespace Inu.Cate;
 
 public class ConstantStructure : Constant
 {
-    public class MemberValue
+    public class MemberValue(StructureType.Member member, Constant value)
     {
-        public readonly StructureType.Member Member;
-        public readonly Constant Value;
-
-        public MemberValue(StructureType.Member member, Constant value)
-        {
-            Member = member;
-            Value = value;
-        }
+        public readonly StructureType.Member Member = member;
+        public readonly Constant Value = value;
     }
     public readonly MemberValue[] MemberValues;
     public ConstantStructure(StructureType type, IReadOnlyList<Constant> memberValues) : base(type)
@@ -31,14 +25,20 @@ public class ConstantStructure : Constant
 
     public override void WriteAssembly(StreamWriter writer)
     {
+        var totalSize = 0;
         for (var i = 0; i < MemberValues.Length; i++) {
             var memberValue = MemberValues[i];
             memberValue.Value.WriteAssembly(writer);
+            var memberByteCount = MemberValues[i].Member.Type.ByteCount;
+            totalSize += memberByteCount;
             if (i >= MemberValues.Length - 1) continue;
             var offset = MemberValues[i].Member.Offset;
             var nextOffset = MemberValues[i + 1].Member.Offset;
-            Compiler.WriteAlignment(writer, nextOffset - (offset + MemberValues[i].Member.Type.ByteCount));
+            var alignmentByteCount = nextOffset - (offset + memberByteCount);
+            Compiler.WriteAlignment(writer, alignmentByteCount);
+            totalSize += alignmentByteCount;
         }
+        Compiler.WriteAlignment(writer, Type.ByteCount-totalSize);
     }
 
     public override Operand ToOperand()
