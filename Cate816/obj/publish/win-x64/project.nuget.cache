@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "hp9GhcVXpIM=",
+  "dgSpecHash": "3vBdAAVMDwU=",
   "success": true,
   "projectFilePath": "D:\\Projects\\cs\\console\\cate\\Cate816\\Cate816.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\mxb03\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.11\\microsoft.net.illink.tasks.8.0.11.nupkg.sha512"
+    "C:\\Users\\mxb03\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.12\\microsoft.net.illink.tasks.8.0.12.nupkg.sha512"
   ],
   "logs": []
 }
