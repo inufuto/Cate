@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if pVVram[-1] == 0 goto InitTrying@Anchor88")) {
+            if (instruction.ToString().Contains("if pMonster == 0 goto Hit@Anchor37")) {
                 var aaa = 111;
             }
 #endif

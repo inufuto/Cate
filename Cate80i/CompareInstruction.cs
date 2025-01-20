@@ -68,7 +68,7 @@ internal class CompareInstruction : Cate.CompareInstruction
                 }
             }
         }
-        jump:
+    jump:
         Jump(false);
     }
 
@@ -95,6 +95,25 @@ internal class CompareInstruction : Cate.CompareInstruction
 
     protected override void CompareWord()
     {
+        if (Equals(RightOperand.Register, WordRegister.De)) {
+            CompareDe();
+        }
+        else if (Equals(LeftOperand.Register, WordRegister.De)) {
+            using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                WordRegister.Hl.Load(this, LeftOperand);
+                using (WordOperation.ReserveRegister(this, WordRegister.De, RightOperand)) {
+                    WordRegister.De.Load(this, RightOperand);
+                    CompareHlDe();
+                }
+            }
+        }
+        else {
+            using var reservation = WordOperation.ReserveRegister(this, WordRegister.De, RightOperand);
+            WordRegister.De.Load(this, RightOperand);
+            CompareDe();
+        }
+        Jump(false);
+        return;
 
         void CompareDe()
         {
@@ -107,16 +126,6 @@ internal class CompareInstruction : Cate.CompareInstruction
                 CompareHlDe();
             }
         }
-
-        if (Equals(RightOperand.Register, WordRegister.De)) {
-            CompareDe();
-        }
-        else {
-            using var reservation = WordOperation.ReserveRegister(this, WordRegister.De, RightOperand);
-            WordRegister.De.Load(this, RightOperand);
-            CompareDe();
-        }
-        Jump(false);
     }
 
     private void Jump(bool operandZero)
