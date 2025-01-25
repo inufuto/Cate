@@ -273,10 +273,10 @@ public abstract class SubroutineInstruction : Instruction
                 {
                     Register? register;
                     if (parameter.Type.ByteCount == 1) {
-                        register = ByteOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
+                        register = ByteOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r) && !IsParameter(r));
                     }
                     else {
-                        register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
+                        register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r) && !IsParameter(r));
                     }
                     if (register == null || Equals(register, firstRegister)) continue;
                     if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
@@ -338,6 +338,11 @@ public abstract class SubroutineInstruction : Instruction
             if (reservation != null) parameterReservations.Add(reservation);
         }
         return parameterReservations;
+    }
+
+    private bool IsParameter(Register register)
+    {
+        return ParameterAssignments.Any(a => register.Conflicts(a.Parameter.Register));
     }
 
     private bool IsSourceVariable(Register register)

@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if pMonster == 0 goto Hit@Anchor37")) {
+            if (instruction.ToString().Contains("ShowSprite_")) {
                 var aaa = 111;
             }
 #endif
