@@ -342,12 +342,30 @@ public abstract class SubroutineInstruction : Instruction
 
     private bool IsParameter(Register register)
     {
-        return ParameterAssignments.Any(a => register.Conflicts(a.Parameter.Register));
+        //return false;
+        return ParameterAssignments.Any(a =>
+        {
+            return a.Done && Conflicts();
+
+            bool Conflicts()
+            {
+                if (a.Parameter.Register == null) return false;
+                if (register.Equals(a.Parameter.Register)) return true;
+                return register switch
+                {
+                    WordRegister wordRegister when a.Parameter.Register is ByteRegister parameterByteRegister =>
+                        wordRegister.Contains(parameterByteRegister),
+                    ByteRegister byteRegister when a.Parameter.Register is WordRegister parameterWordRegister =>
+                        parameterWordRegister.Contains(byteRegister),
+                    _ => false
+                };
+            }
+        });
     }
 
     private bool IsSourceVariable(Register register)
     {
-        foreach (var parameterAssignment in ParameterAssignments.Where(parameterAssignment => !parameterAssignment.Done && !Equals(parameterAssignment.Parameter.Register, register))) {
+        foreach (var parameterAssignment in ParameterAssignments.Where(a => !a.Done && !Equals(a.Parameter.Register, register))) {
             switch (parameterAssignment.Operand) {
                 case VariableOperand variableOperand: {
 
