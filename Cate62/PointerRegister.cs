@@ -1,14 +1,12 @@
 ﻿namespace Inu.Cate.Sc62015;
 
-internal class PointerRegister : Cate.WordRegister
+internal class PointerRegister(string name) : Cate.WordRegister(Compiler.NewRegisterId(), 3, name)
 {
     public static readonly PointerRegister X = new("x");
     public static readonly PointerRegister Y = new("y");
-    public static readonly List<Cate.WordRegister> Registers = new() { X, Y };
+    public static readonly List<Cate.WordRegister> Registers = [X, Y];
 
     public virtual string MV => "mv";
-
-    public PointerRegister(string name) : base(Compiler.NewRegisterId(), 3, name) { }
 
     public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
@@ -159,9 +157,16 @@ internal class PointerRegister : Cate.WordRegister
 
     public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
     {
-        if (sourceRegister is WordInternalRam wordInternalRam) {
-            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
-            reservation.WordRegister.CopyFrom(instruction, wordInternalRam);
+        //if (sourceRegister is WordInternalRam wordInternalRam) {
+        //    using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers);
+        //    reservation.WordRegister.CopyFrom(instruction, wordInternalRam);
+        //    CopyFrom(instruction, reservation.WordRegister);
+        //    return;
+        //}
+        if (sourceRegister is WordRegister or WordInternalRam) {
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, PointerInternalRam.Registers);
+            reservation.WordRegister.CopyFrom(instruction, this);
+            reservation.WordRegister.CopyFrom(instruction, sourceRegister);
             CopyFrom(instruction, reservation.WordRegister);
             return;
         }

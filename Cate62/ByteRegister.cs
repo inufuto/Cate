@@ -6,7 +6,7 @@ namespace Inu.Cate.Sc62015
     {
         public static readonly Accumulator A = new("a");
         public static readonly ByteRegister IL = new("il");
-        public static List<Cate.ByteRegister> Registers = new() { A, IL };
+        public static List<Cate.ByteRegister> Registers = [A, IL];
 
         public static List<Cate.ByteRegister> AccumulatorAndInternalRam
         {

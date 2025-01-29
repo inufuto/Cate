@@ -8,7 +8,7 @@
         public static readonly WordInternalRam CX = new("cx", "0d6h", ByteInternalRam.CL, ByteInternalRam.CH);
         public static readonly WordInternalRam DX = new("dx", "0d8h", ByteInternalRam.DL, ByteInternalRam.DH);
 
-        public new static List<Cate.WordRegister> Registers = new();
+        public new static List<Cate.WordRegister> Registers = [];
 
         static WordInternalRam()
         {
