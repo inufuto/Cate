@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("IsNear_(pMovable,pMonster)")) {
+            if (instruction.ToString().Contains("*p2 = Directions_+9")) {
                 var aaa = 111;
             }
 #endif

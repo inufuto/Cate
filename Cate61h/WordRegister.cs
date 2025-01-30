@@ -60,6 +60,8 @@ internal class WordRegister : Cate.WordRegister
     public override void LoadConstant(Instruction instruction, string value)
     {
         instruction.WriteLine("\tldw " + AsmName + "," + value);
+        instruction.AddChanged(this);
+        instruction.RemoveRegisterAssignment(this);
     }
 
     public override void LoadFromMemory(Instruction instruction, string label)
@@ -130,6 +132,8 @@ internal class WordRegister : Cate.WordRegister
         void WithOffset(string offsetValue)
         {
             instruction.WriteLine("\tldw " + AsmName + ",(" + indexRegister.AsmName + sign + offsetValue + ")");
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
         }
     }
 
