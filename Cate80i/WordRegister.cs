@@ -328,7 +328,7 @@ namespace Inu.Cate.I8080
             if (offset == 0) {
                 return;
             }
-            const int threshold = 8;
+            var threshold = Equals(Hl) ? 5 : 8;
             var count = offset & 0xffff;
             if (count <= threshold) {
                 Loop("inx");
