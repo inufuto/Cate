@@ -220,6 +220,7 @@ public abstract class Compiler
                 AcceptReservedWord(';');
             } while (!ParseReservedWord('}'));
         }
+        type.MakeAlignment();
 
         AcceptReservedWord(';');
         return true;

@@ -126,7 +126,7 @@ internal class CompareInstruction(
         using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.ByteRegister;
             register.Load(this, LeftOperand);
-            if (!OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual) || LeftOperand.Register != null) {
+            if (!OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual) || LeftOperand.Register != null || (LeftOperand is IndirectOperand indirectOperand && indirectOperand.Offset<0)) {
                 var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
                 register.Operate(this, operation, false, RightOperand);
             }

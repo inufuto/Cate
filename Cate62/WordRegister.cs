@@ -5,7 +5,7 @@ internal class WordRegister(string name, Cate.ByteRegister? low, Cate.ByteRegist
 {
     public static readonly WordRegister BA = new("ba", ByteRegister.A, null);
     public static readonly WordRegister I = new("i", ByteRegister.IL, null);
-    public static readonly List<Cate.WordRegister> Registers = new() { BA, I };
+    public static readonly List<Cate.WordRegister> Registers = [BA, I];
 
     public override Cate.ByteRegister? Low { get; } = low;
     public override Cate.ByteRegister? High { get; } = high;

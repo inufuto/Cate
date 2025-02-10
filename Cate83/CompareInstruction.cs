@@ -139,6 +139,29 @@ internal class CompareInstruction(
         if (Equals(RightOperand.Register, WordRegister.De)) {
             CompareDe();
         }
+        else if (Equals(LeftOperand.Register, WordRegister.De)) {
+            if (Equals(RightOperand.Register, WordRegister.Hl)) {
+                using (WordOperation.ReserveRegister(this, WordRegister.Bc)) {
+                    WordRegister.Bc.Load(this, RightOperand);
+                    using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                        WordRegister.Hl.Load(this, LeftOperand);
+                        using (WordOperation.ReserveRegister(this, WordRegister.De)) {
+                            WordRegister.De.CopyFrom(this, WordRegister.Bc);
+                            CompareHlDe();
+                        }
+                    }
+                }
+            }
+            else {
+                using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                    WordRegister.Hl.Load(this, LeftOperand);
+                    using (WordOperation.ReserveRegister(this, WordRegister.De)) {
+                        WordRegister.De.Load(this, RightOperand);
+                        CompareHlDe();
+                    }
+                }
+            }
+        }
         else {
             using var reservation = WordOperation.ReserveRegister(this, WordRegister.De, RightOperand);
             WordRegister.De.Load(this, RightOperand);

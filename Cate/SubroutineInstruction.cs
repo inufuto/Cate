@@ -148,6 +148,7 @@ public abstract class SubroutineInstruction : Instruction
 
         if (returnRegister != null) {
             AddChanged(returnRegister);
+            RemoveRegisterAssignment(returnRegister);
         }
 
         if (DestinationOperand != null) {
@@ -272,10 +273,10 @@ public abstract class SubroutineInstruction : Instruction
                 {
                     Register? register;
                     if (parameter.Type.ByteCount == 1) {
-                        register = ByteOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
+                        register = ByteOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r) && !IsParameter(r));
                     }
                     else {
-                        register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r));
+                        register = WordOperation.Registers.Find(r => !Equals(r, firstRegister) && !IsRegisterReserved(r) && !IsParameter(r));
                     }
                     if (register == null || Equals(register, firstRegister)) continue;
                     if (parameter.Register != null) RemoveRegisterAssignment(parameter.Register);
@@ -339,9 +340,32 @@ public abstract class SubroutineInstruction : Instruction
         return parameterReservations;
     }
 
+    private bool IsParameter(Register register)
+    {
+        //return false;
+        return ParameterAssignments.Any(a =>
+        {
+            return a.Done && Conflicts();
+
+            bool Conflicts()
+            {
+                if (a.Parameter.Register == null) return false;
+                if (register.Equals(a.Parameter.Register)) return true;
+                return register switch
+                {
+                    WordRegister wordRegister when a.Parameter.Register is ByteRegister parameterByteRegister =>
+                        wordRegister.Contains(parameterByteRegister),
+                    ByteRegister byteRegister when a.Parameter.Register is WordRegister parameterWordRegister =>
+                        parameterWordRegister.Contains(byteRegister),
+                    _ => false
+                };
+            }
+        });
+    }
+
     private bool IsSourceVariable(Register register)
     {
-        foreach (var parameterAssignment in ParameterAssignments.Where(parameterAssignment => !parameterAssignment.Done && !Equals(parameterAssignment.Parameter.Register, register))) {
+        foreach (var parameterAssignment in ParameterAssignments.Where(a => !a.Done && !Equals(a.Parameter.Register, register))) {
             switch (parameterAssignment.Operand) {
                 case VariableOperand variableOperand: {
 

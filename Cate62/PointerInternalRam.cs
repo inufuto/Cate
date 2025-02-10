@@ -7,7 +7,7 @@
         public static readonly PointerInternalRam SI = new("si", "0dah");
         public static readonly PointerInternalRam DI = new("di", "0ddh");
 
-        public new static readonly List<Cate.WordRegister> Registers = new();
+        public new static readonly List<Cate.WordRegister> Registers = [];
 
         static PointerInternalRam()
         {
@@ -17,7 +17,7 @@
                 Registers.Add(new PointerInternalRam(index));
             }
         }
-        
+
         private static string IndexToName(int index)
         {
             return "(" + IndexToLabel(index) + ")";
@@ -53,6 +53,19 @@
 
         public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
         {
+            switch (sourceRegister) {
+                case WordInternalRam:
+                    instruction.WriteLine("\tmvw " + AsmName + "," + sourceRegister.AsmName);
+                    instruction.AddChanged(this);
+                    instruction.RemoveRegisterAssignment(this);
+                    return;
+                case WordRegister wordRegister: {
+                        using var reservation = WordOperation.ReserveAnyRegister(instruction, WordInternalRam.Registers);
+                        reservation.WordRegister.CopyFrom(instruction, wordRegister);
+                        CopyFrom(instruction, reservation.WordRegister);
+                        return;
+                    }
+            }
             base.CopyFrom(instruction, sourceRegister);
         }
 
