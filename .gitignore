@@ -200,3 +200,5 @@ runtime/SC62015/c.bat
 /Cate816/obj/Release/net8.0/win-x64/Cate816.genruntimeconfig.cache
 /Cate816/obj/project.nuget.cache
 /Cate816/Properties/PublishProfiles/FolderProfile.pubxml
+/Cate816/obj/Release/net8.0/win-x64
+Cate816/obj/Cate816.csproj.nuget.g.props
