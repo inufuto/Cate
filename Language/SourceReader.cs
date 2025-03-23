@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inu.Language;
 
-public class SourceReader : IDisposable
+public class SourceReader(string fileName) : IDisposable
 {
     public const char EndOfLine = '\n';
     public const char EndOfFile = '\0';
@@ -14,18 +14,12 @@ public class SourceReader : IDisposable
     public static SourcePrinter? Printer { private get; set; }
 
     private SourceReader? parent;
-    public string FileName { get; private set; }
-    private readonly StreamReader reader;
+    public string FileName { get; private set; } = fileName;
+    private readonly StreamReader reader = new StreamReader(fileName, Encoding.UTF8);
     public int LineNumber { get; private set; } = 0;
     private string? currentLine = "";
     private string? prevLine;
     private int currentIndex = 1;
-
-    public SourceReader(string fileName)
-    {
-        FileName = fileName;
-        reader = new StreamReader(fileName, Encoding.UTF8);
-    }
 
     public void Dispose()
     {

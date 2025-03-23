@@ -1,17 +1,9 @@
-﻿using System.Collections.Generic;
+﻿namespace Inu.Language;
 
-namespace Inu.Language;
-
-public readonly struct SourcePosition
+public readonly struct SourcePosition(string fileName, int lineNumber)
 {
-    public readonly string FileName;
-    public readonly int LineNumber;
-
-    public SourcePosition(string fileName, int lineNumber)
-    {
-        FileName = fileName;
-        LineNumber = lineNumber;
-    }
+    public readonly string FileName = fileName;
+    public readonly int LineNumber = lineNumber;
 
     public override bool Equals(object? obj)
     {

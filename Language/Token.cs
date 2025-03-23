@@ -26,8 +26,6 @@ public abstract class Token
 
     public virtual bool IsEof() => false;
 
-    public virtual bool IsIdentifier() => false;
-
 
     public virtual bool IsReservedWord(int id) { return false; }
 
@@ -82,7 +80,6 @@ public class ReservedWord : Token
 
     public override bool IsReservedWord(int id) => Id == id;
 
-    public override bool IsIdentifier() => false;
     public override bool IsEof() => Id == EndOfFile;
 
     public static int ToId(string word)

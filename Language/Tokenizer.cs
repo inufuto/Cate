@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -69,25 +68,34 @@ public abstract class Tokenizer
 
         var position = lastPosition;
         var c = LastChar;
-        if (IsQuotation(c)) {
+        return GetToken(c, position);
+    }
+
+    protected virtual Token GetToken(char c, SourcePosition position)
+    {
+        if (IsQuotation(c))
+        {
             var s = ReadQuotedString();
             return new StringValue(position, s);
         }
-        if (IsNumericValueHead(c)) {
+        if (IsNumericValueHead(c))
+        {
             var value = ReadNumericValue();
             return new NumericValue(position, value);
         }
         if (IsIdentifierHead(c)) {
             var word = ReadWord();
             var id = ReservedWord.ToId(word);
-            if (id > 0) {
+            if (id > 0)
+            {
                 return new ReservedWord(position, id);
             }
             return new Identifier(position, word);
         }
         if (IsSequenceHead(c)) {
             var id = ReadSequence();
-            if (id > 0) {
+            if (id > 0)
+            {
                 return new ReservedWord(position, id);
             }
         }
@@ -138,7 +146,7 @@ public abstract class Tokenizer
         } while (LastChar == 0);
         return LastChar;
     }
-    protected void ReturnChar(char c)
+    public void ReturnChar(char c)
     {
         returnedChars.Push(LastChar);
         LastChar = c;
@@ -222,8 +230,8 @@ public abstract class Tokenizer
     }
     protected virtual bool IsIdentifierHead(char c)
     {
-        char upper = char.ToUpper(c);
-        return (upper >= 'A' && upper <= 'Z') || c == '_';
+        var upper = char.ToUpper(c);
+        return upper is >= 'A' and <= 'Z' || c == '_';
     }
     protected virtual bool IsIdentifierElement(char c)
     {
