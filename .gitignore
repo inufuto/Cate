@@ -189,14 +189,5 @@ runtime/SC62015/c.bat
 /Cate816/.vs/Cate816/v17/.futdcache.v2
 /Cate816/.vs/ProjectEvaluation/cate816.metadata.v9.bin
 /Cate816/.vs/ProjectEvaluation/cate816.projects.v9.bin
-/Cate816/obj/Debug/net8.0/Cate816.assets.cache
-/Cate816/obj/Debug/net8.0/Cate816.GeneratedMSBuildEditorConfig.editorconfig
-/Cate816/obj/Release/net8.0/win-x64/Cate816.assets.cache
-/Cate816/obj/Release/net8.0/win-x64/Cate816.csproj.CoreCompileInputs.cache
-/Cate816/obj/Release/net8.0/win-x64/Cate816.csproj.FileListAbsolute.txt
-/Cate816/obj/Release/net8.0/win-x64/Cate816.genbundle.cache
-/Cate816/obj/Release/net8.0/win-x64/Cate816.GeneratedMSBuildEditorConfig.editorconfig
-/Cate816/obj/Release/net8.0/win-x64/Cate816.genpublishdeps.cache
-/Cate816/obj/Release/net8.0/win-x64/Cate816.genruntimeconfig.cache
-/Cate816/obj/project.nuget.cache
-/Cate816/Properties/PublishProfiles/FolderProfile.pubxml
+/Language/Binary.cs.bak
+/Language/Arguments.cs.bak

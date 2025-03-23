@@ -12,7 +12,7 @@ public class NormalArgument
         var i = 0;
         while (i < args.Length) {
             if (IsOption(args[i])) {
-                var key = args[i].Substring(1).ToUpper();
+                var key = args[i][1..].ToUpper();
                 ++i;
                 if (function == null) continue;
                 var value = (i < args.Length) ? args[i] : null;
