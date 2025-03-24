@@ -8,7 +8,7 @@ namespace Inu.Cate.Z80;
 
 internal class ByteRegister : Cate.ByteRegister
 {
-    public static List<Cate.ByteRegister> Registers = new List<Cate.ByteRegister>();
+    public static List<Cate.ByteRegister> Registers = [];
 
 
     public static Cate.ByteRegister FromId(int id)
@@ -308,7 +308,7 @@ internal class ByteRegister : Cate.ByteRegister
                     }
 
                     using var reservation = WordOperation.ReserveAnyRegister(instruction,
-                        new List<Cate.WordRegister> { WordRegister.Hl, WordRegister.Ix, WordRegister.Iy });
+                        [WordRegister.Hl, WordRegister.Ix, WordRegister.Iy]);
                     reservation.WordRegister.LoadConstant(instruction, variable.MemoryAddress(offset));
                     instruction.WriteLine("\t" + operation + "(" + reservation.WordRegister + ")");
                     return;
