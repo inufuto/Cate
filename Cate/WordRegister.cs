@@ -44,6 +44,13 @@ public abstract class WordRegister : Register
         instruction.SetRegisterConstant(this, value);
     }
 
+    protected virtual void LoadConstant(Instruction instruction, PointerOperand pointerOperand)
+    {
+        LoadConstant(instruction, pointerOperand.MemoryAddress());
+        instruction.SetRegisterConstant(this, pointerOperand);
+        instruction.AddChanged(this);
+    }
+
     public void Load(Instruction instruction, Operand sourceOperand)
     {
         switch (sourceOperand) {
@@ -55,9 +62,7 @@ public abstract class WordRegister : Register
                 return;
             case PointerOperand sourcePointerOperand:
                 if (instruction.IsConstantAssigned(this, sourcePointerOperand)) return;
-                LoadConstant(instruction, sourcePointerOperand.MemoryAddress());
-                instruction.SetRegisterConstant(this, sourcePointerOperand);
-                instruction.AddChanged(this);
+                LoadConstant(instruction, sourcePointerOperand);
                 return;
             case IntegerOperand sourceIntegerOperand:
                 var value = sourceIntegerOperand.IntegerValue;

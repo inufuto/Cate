@@ -29,6 +29,7 @@ internal class ShiftInstruction(
     {
         var operation = Operation();
         if (count == 1 && IsMemoryOperation()) {
+            if (count == 0) return;
             switch (DestinationOperand.Type.ByteCount) {
                 case 1:
                     break;
@@ -79,7 +80,10 @@ internal class ShiftInstruction(
         void ViaRegister(Cate.ByteRegister byteRegister)
         {
             byteRegister.Load(this, LeftOperand);
-            WriteLine("\t" + operation + " " + count + "," + byteRegister);
+            if (count != 0)
+            {
+                WriteLine("\t" + operation + " " + count + "," + byteRegister);
+            }
             byteRegister.Store(this, DestinationOperand);
         }
     }
@@ -97,7 +101,10 @@ internal class ShiftInstruction(
         void ViaRegister(Cate.WordRegister wordRegister)
         {
             wordRegister.Load(this, LeftOperand);
-            WriteLine("\t" + operation + " " + count + "," + wordRegister);
+            if (count != 0)
+            {
+                WriteLine("\t" + operation + " " + count + "," + wordRegister);
+            }
             wordRegister.Store(this, DestinationOperand);
         }
     }

@@ -36,6 +36,10 @@ internal class WordRegister(int id, string name, Cate.ByteRegister high, Cate.By
                     instruction.WriteLine("\t" + operation + " " + AsmName + "," + integerOperand.IntegerValue);
                     break;
                 }
+            case PointerOperand pointerOperand: {
+                    instruction.WriteLine("\t" + operation + " " + AsmName + "," + pointerOperand.MemoryAddress());
+                    break;
+                }
             case VariableOperand variableOperand: {
                     var variable = variableOperand.Variable;
                     var offset = variableOperand.Offset;
@@ -144,6 +148,14 @@ internal class WordRegister(int id, string name, Cate.ByteRegister high, Cate.By
             return;
         }
         base.LoadConstant(instruction, value);
+    }
+
+    protected override void LoadConstant(Instruction instruction, PointerOperand pointerOperand)
+    {
+        instruction.WriteLine("\tld " + this + "," + pointerOperand.MemoryAddress());
+        instruction.RemoveRegisterAssignment(this);
+        instruction.SetRegisterConstant(this, pointerOperand);
+        instruction.AddChanged(this);
     }
 
     public override void LoadConstant(Instruction instruction, string value)

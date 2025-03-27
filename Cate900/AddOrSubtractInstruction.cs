@@ -99,6 +99,15 @@ internal class AddOrSubtractInstruction(Function function, int operatorId, Assig
     private void IncrementOrDecrement(string operation, int count)
     {
         if (count == 1 && IsMemoryOperation()) {
+            switch (DestinationOperand.Type.ByteCount) {
+                case 1:
+                    break;
+                case 2:
+                    operation += "w";
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
             ((Compiler)Compiler).OperateMemory(this, DestinationOperand,
                 operand => { WriteLine("\t" + operation + " " + count + "," + operand); });
             return;
@@ -110,6 +119,8 @@ internal class AddOrSubtractInstruction(Function function, int operatorId, Assig
             case 2:
                 IncrementOrDecrementWord(operation, count);
                 return;
+            default:
+                throw new NotImplementedException();
         }
     }
 

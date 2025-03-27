@@ -6,14 +6,7 @@ internal class Program
 {
     public static int Main(string[] args)
     {
-        var constantData = false;
-        var normalArgument = new NormalArgument(args, (option, value) =>
-        {
-            if (option == "DSEG") {
-                constantData = true;
-            }
-            return false;
-        });
-        return new Compiler(constantData).Main(normalArgument);
+        var normalArgument = new NormalArgument(args);
+        return new Compiler().Main(normalArgument);
     }
 }

@@ -1,9 +1,10 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Threading.Channels;
 
 namespace Inu.Cate.Tlcs900;
 
-internal class Compiler(bool constantData) : Inu.Cate.Compiler(new ByteOperation(), new WordOperation(), constantData)
+internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOperation(), true)
 {
     public override void SaveRegisters(StreamWriter writer, ISet<Register> registers, Function instruction)
     {
@@ -268,6 +269,32 @@ internal class Compiler(bool constantData) : Inu.Cate.Compiler(new ByteOperation
     {
         instruction.WriteLine("\tcall " + functionName);
         Instance.AddExternalName(functionName);
+    }
+
+    public override void RemoveSavingRegister(ISet<Register> savedRegisters, Register returnRegister)
+    {
+        if (returnRegister is ByteRegister byteRegister) {
+            bool changed;
+            do {
+                changed = false;
+                foreach (var savedRegister in savedRegisters) {
+                    if (savedRegister is not WordRegister wordRegister) continue;
+                    if (byteRegister.Equals(wordRegister.Low)) {
+                        savedRegisters.Remove(wordRegister);
+                        savedRegisters.Add(wordRegister.High);
+                        changed = true;
+                        break;
+                    }
+                    if (byteRegister.Equals(wordRegister.High)) {
+                        savedRegisters.Remove(wordRegister);
+                        savedRegisters.Add(wordRegister.Low);
+                        changed = true;
+                        break;
+                    }
+                }
+            } while (changed);
+        }
+        base.RemoveSavingRegister(savedRegisters, returnRegister);
     }
 
 

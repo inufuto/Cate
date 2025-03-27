@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("b = qqq_.3.q_")) {
+            if (instruction.ToString().Contains("pByte = pByte + 1")) {
                 var aaa = 111;
             }
 #endif

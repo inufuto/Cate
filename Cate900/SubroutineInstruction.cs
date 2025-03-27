@@ -9,7 +9,7 @@ internal class SubroutineInstruction(
 {
     protected override void Call()
     {
-        WriteLine("\tcall\t" + TargetFunction.Label);
+        WriteLine("\tcall " + TargetFunction.Label);
     }
 
     protected override void StoreParameters()
