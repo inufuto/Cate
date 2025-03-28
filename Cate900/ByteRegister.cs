@@ -14,19 +14,10 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
     public static readonly ByteRegister H = new(7, "h");
     public static readonly ByteRegister L = new(8, "l");
 
-    public static readonly ByteRegister IXL = new(9, "ixl");
-    public static readonly ByteRegister IXH = new(10, "ixh");
-    public static readonly ByteRegister IYL = new(11, "iyl");
-    public static readonly ByteRegister IYH = new(12, "iyh");
-    public static readonly ByteRegister IZL = new(13, "izl");
-    public static readonly ByteRegister IZH = new(14, "izh");
-
-    public static List<ByteRegister> All = [A, W, B, C, D, E, H, L, IXL, IXH, IYL, IYH, IZL, IZH];
-    public static List<ByteRegister> Standard = [A, W, B, C, D, E, H, L];
+    public static List<ByteRegister> All = [A, W, B, C, D, E, H, L];
 
     public WordRegister? WordRegister => WordRegister.All.FirstOrDefault(r => r.Contains(this));
     public override Cate.WordRegister? PairRegister => WordRegister;
-
 
     public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
@@ -53,7 +44,7 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
 
     public override void LoadConstant(Instruction instruction, int value)
     {
-        if (value == 0 && Standard.Contains(this)) {
+        if (value == 0) {
             instruction.WriteLine("\txor " + AsmName + "," + AsmName);
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
@@ -71,28 +62,15 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
 
     public override void LoadFromMemory(Instruction instruction, string label)
     {
-        if (Standard.Contains(this)) {
-            instruction.WriteLine("\tld " + AsmName + ",(" + label + ")");
-            instruction.RemoveRegisterAssignment(this);
-            instruction.AddChanged(this);
-        }
-        else {
-            using var reservation = ByteOperation.ReserveAnyRegister(instruction, Standard.Cast<Cate.ByteRegister>().ToList());
-            reservation.ByteRegister.LoadFromMemory(instruction, label);
-            CopyFrom(instruction, reservation.ByteRegister);
-        }
+        instruction.WriteLine("\tld " + AsmName + ",(" + label + ")");
+        instruction.RemoveRegisterAssignment(this);
+        instruction.AddChanged(this);
     }
+
 
     public override void StoreToMemory(Instruction instruction, string label)
     {
-        if (Standard.Contains(this)) {
-            instruction.WriteLine("\tld (" + label + ")," + AsmName);
-        }
-        else {
-            using var reservation = ByteOperation.ReserveAnyRegister(instruction, Standard.Cast<Cate.ByteRegister>().ToList());
-            reservation.ByteRegister.CopyFrom(instruction, this);
-            reservation.ByteRegister.StoreToMemory(instruction, label);
-        }
+        instruction.WriteLine("\tld (" + label + ")," + AsmName);
     }
 
     public override void LoadIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset)
@@ -150,7 +128,7 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
 
                     }
                     else {
-                        instruction.WriteLine("\t" + operation + " " + AsmName + ",(" + variable.MemoryAddress(offset) + ")");
+                        instruction.WriteLine("\t" + operation + " " + this.AsmName + ",(" + variable.MemoryAddress(offset) + ")");
                     }
                     break;
                 }
@@ -191,6 +169,7 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
         {
             return WordRegister.All.Where(r => !r.Conflicts(this)).Cast<Cate.WordRegister>().ToList();
         }
+
     }
 
     public override void Operate(Instruction instruction, string operation, bool change, string operand)

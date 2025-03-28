@@ -2,23 +2,34 @@
 
 namespace Inu.Cate.Tlcs900;
 
-internal class WordRegister(int id, string name, Cate.ByteRegister high, Cate.ByteRegister low)
+internal class WordRegister(int id, string name, Cate.ByteRegister? high, Cate.ByteRegister? low)
     : Cate.WordRegister(id, name)
 {
-    public static readonly WordRegister WA = new(21, "wa", ByteRegister.W, ByteRegister.A);
-    public static readonly WordRegister BC = new(22, "bc", ByteRegister.B, ByteRegister.C);
-    public static readonly WordRegister DE = new(23, "de", ByteRegister.D, ByteRegister.E);
-    public static readonly WordRegister HL = new(24, "hl", ByteRegister.H, ByteRegister.L);
-    public static readonly WordRegister IX = new(25, "ix", ByteRegister.IXH, ByteRegister.IXL);
-    public static readonly WordRegister IY = new(26, "iy", ByteRegister.IYH, ByteRegister.IYL);
-    public static readonly WordRegister IZ = new(27, "iz", ByteRegister.IZH, ByteRegister.IZL);
-    public static List<WordRegister> All = [WA, BC, DE, HL, IX, IY, IZ];
+    private WordRegister(int id, string name) : this(id, name, null, null) { }
+
+    public static readonly WordRegister WA = new(11, "wa", ByteRegister.W, ByteRegister.A);
+    public static readonly WordRegister BC = new(12, "bc", ByteRegister.B, ByteRegister.C);
+    public static readonly WordRegister DE = new(13, "de", ByteRegister.D, ByteRegister.E);
+    public static readonly WordRegister HL = new(14, "hl", ByteRegister.H, ByteRegister.L);
+    public static readonly WordRegister IX = new(15, "ix");
+    public static readonly WordRegister IY = new(16, "iy");
+    public static readonly WordRegister IZ = new(17, "iz");
+    public static List<WordRegister> All = [IX, IY, IZ, HL, DE, BC, WA];
 
 
-    public override Cate.ByteRegister High { get; } = high;
-    public override Cate.ByteRegister Low { get; } = low;
+    public override Cate.ByteRegister? High { get; } = high;
+    public override Cate.ByteRegister? Low { get; } = low;
 
-    internal List<Cate.ByteRegister> ByteRegisters => [Low, High];
+    internal List<Cate.ByteRegister> ByteRegisters
+    {
+        get
+        {
+            List<Cate.ByteRegister> registers = [];
+            if (Low != null) registers.Add(Low);
+            if (High != null) registers.Add(High);
+            return registers;
+        }
+    }
 
     public override void CopyFrom(Instruction instruction, Cate.WordRegister sourceRegister)
     {

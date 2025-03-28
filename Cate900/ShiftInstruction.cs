@@ -11,7 +11,7 @@ internal class ShiftInstruction(
     protected override int Threshold() => 16;
     public override void BuildAssembly()
     {
-        if (RightOperand.Register is WordRegister wordRegister) {
+        if (RightOperand.Register is WordRegister { Low: not null } wordRegister) {
             if (wordRegister.Low.Equals(ByteRegister.A)) {
                 ShiftVariableA(Operation());
                 return;
@@ -27,9 +27,9 @@ internal class ShiftInstruction(
 
     protected override void ShiftConstant(int count)
     {
+        if (count == 0) return;
         var operation = Operation();
         if (count == 1 && IsMemoryOperation()) {
-            if (count == 0) return;
             switch (DestinationOperand.Type.ByteCount) {
                 case 1:
                     break;

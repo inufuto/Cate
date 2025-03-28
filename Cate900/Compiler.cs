@@ -43,9 +43,9 @@ internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOpera
         var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
 
-        Allocate1(rangeOrdered);
+        Allocate(rangeOrdered);
         var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
-        Allocate1(usageOrdered);
+        Allocate(usageOrdered);
 
         foreach (var variable in variables.Where(v => v.Register == null && !v.Static)) {
             if (variable.Parameter?.Register == null)
@@ -78,7 +78,7 @@ internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOpera
 
         return;
 
-        void Allocate1(List<Variable> list)
+        void Allocate(List<Variable> list)
         {
             foreach (var variable in list) {
                 var variableType = variable.Type;
@@ -100,8 +100,7 @@ internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOpera
         {
             1 =>
             [
-                ByteRegister.A, ByteRegister.C, ByteRegister.E, ByteRegister.L, ByteRegister.IXL, ByteRegister.IYL,
-                ByteRegister.IZL
+                ByteRegister.A, ByteRegister.C, ByteRegister.E, ByteRegister.L
             ],
             2 =>
             [
@@ -281,12 +280,14 @@ internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOpera
                     if (savedRegister is not WordRegister wordRegister) continue;
                     if (byteRegister.Equals(wordRegister.Low)) {
                         savedRegisters.Remove(wordRegister);
+                        Debug.Assert(wordRegister.High != null);
                         savedRegisters.Add(wordRegister.High);
                         changed = true;
                         break;
                     }
                     if (byteRegister.Equals(wordRegister.High)) {
                         savedRegisters.Remove(wordRegister);
+                        Debug.Assert(wordRegister.Low != null);
                         savedRegisters.Add(wordRegister.Low);
                         changed = true;
                         break;

@@ -28,7 +28,7 @@ internal class ResizeInstruction(
         }
         if (SourceOperand.Register is ByteRegister sourceRegister) {
             Debug.Assert(sourceRegister.WordRegister != null);
-            if (!IsRegisterReserved(sourceRegister.WordRegister.High)) {
+            if (sourceRegister.WordRegister.High != null && !IsRegisterReserved(sourceRegister.WordRegister.High)) {
                 ViaRegister(sourceRegister.WordRegister);
                 return;
             }
