@@ -139,7 +139,7 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
                         var register = instruction.GetVariableRegister(pointer, 0);
                         if (register is WordRegister pointerRegister) {
                             ViaPointerRegister(pointerRegister);
-                            return;
+                            break;
                         }
                     }
                     using var reservation = WordOperation.ReserveAnyRegister(instruction, Candidates());

@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if x > RightEnd goto DrawUfos@Anchor62")) {
+            if (instruction.ToString().Contains("xDiff = gridX - pCard[1]")) {
                 var aaa = 111;
             }
 #endif
