@@ -53,7 +53,7 @@ internal class BinomialInstruction(
 
     private void OperateByte(string operation)
     {
-        if (DestinationOperand.Register is ByteRegister destinationRegister) {
+        if (DestinationOperand.Register is ByteRegister destinationRegister && !RightOperand.Conflicts(destinationRegister)) {
             ViaRegister(destinationRegister);
             return;
         }
@@ -71,7 +71,7 @@ internal class BinomialInstruction(
 
     private void OperateWord(string operation)
     {
-        if (DestinationOperand.Register is WordRegister destinationRegister) {
+        if (DestinationOperand.Register is WordRegister destinationRegister && !RightOperand.Conflicts(destinationRegister)) {
             ViaRegister(destinationRegister);
             return;
         }

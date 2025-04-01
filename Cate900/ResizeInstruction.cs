@@ -42,6 +42,8 @@ internal class ResizeInstruction(
             Debug.Assert(wordRegister.Low != null);
             wordRegister.Low.Load(this, SourceOperand);
             WriteLine("\t" + operation + " " + wordRegister);
+            Debug.Assert(wordRegister.High != null);
+            AddChanged(wordRegister.High);
             wordRegister.Store(this, DestinationOperand);
         }
     }
