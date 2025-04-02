@@ -178,12 +178,12 @@ public abstract class SubroutineInstruction : Instruction
         foreach (var reservation in reservations) {
             if (reservation.Register.Conflicts(returnRegister)) {
                 switch (reservation.Register) {
-                    case ByteRegister:
+                    case ByteRegister when returnRegister is ByteRegister:
                         alternative = ByteOperation.ReserveAnyRegister(this);
                         alternative.ByteRegister.CopyFrom(this, reservation.ByteRegister);
                         returnRegister = alternative.ByteRegister;
                         break;
-                    case WordRegister:
+                    case WordRegister when returnRegister is WordRegister:
                         alternative = WordOperation.ReserveAnyRegister(this);
                         alternative.WordRegister.CopyFrom(this, reservation.WordRegister);
                         returnRegister = alternative.WordRegister;
@@ -192,7 +192,6 @@ public abstract class SubroutineInstruction : Instruction
             }
             reservation.Dispose();
         }
-
         return returnRegister;
     }
 
@@ -553,6 +552,9 @@ public abstract class SubroutineInstruction : Instruction
             if (Equals(assignment.Parameter.Register, register)) {
                 return 1;
             }
+        }
+        if (ResultOperand is VariableOperand resultOperand && resultOperand.Variable.Equals(variable) && Equals(resultOperand.Variable.Register, register)) {
+            return 1;
         }
         return base.RegisterAdaptability(variable, register);
     }
