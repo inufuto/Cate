@@ -305,6 +305,7 @@ internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOpera
             case VariableOperand variableOperand:
                 Debug.Assert(variableOperand.Register == null);
                 action("(" + variableOperand.MemoryAddress() + ")");
+                instruction.RemoveVariableRegister(variableOperand);
                 return;
             case IndirectOperand indirectOperand: {
                     var pointer = indirectOperand.Variable;
