@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@3 = VramOffset_(*pBlock,@4)")) {
+            if (instruction.ToString().Contains("pBullet[2] = *pDirection << 0")) {
                 var aaa = 111;
             }
 #endif

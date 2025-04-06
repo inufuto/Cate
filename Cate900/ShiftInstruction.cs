@@ -9,25 +9,10 @@ internal class ShiftInstruction(
     : Cate.ShiftInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
     protected override int Threshold() => 16;
-    //public override void BuildAssembly()
-    //{
-    //    if (RightOperand.Register is WordRegister { Low: not null } wordRegister) {
-    //        if (wordRegister.Low.Equals(ByteRegister.A)) {
-    //            ShiftVariableA(Operation());
-    //            return;
-    //        }
-    //        using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
-    //            ByteRegister.A.CopyFrom(this, wordRegister.Low);
-    //            ShiftVariableA(Operation());
-    //            return;
-    //        }
-    //    }
-    //    base.BuildAssembly();
-    //}
+
 
     protected override void ShiftConstant(int count)
     {
-        if (count == 0) return;
         var operation = Operation();
         if (count == 1 && IsMemoryOperation()) {
             switch (DestinationOperand.Type.ByteCount) {
@@ -82,6 +67,8 @@ internal class ShiftInstruction(
             byteRegister.Load(this, LeftOperand);
             if (count != 0) {
                 WriteLine("\t" + operation + " " + count + "," + byteRegister);
+                AddChanged(byteRegister);
+                RemoveRegisterAssignment(byteRegister);
             }
             byteRegister.Store(this, DestinationOperand);
         }
@@ -102,6 +89,8 @@ internal class ShiftInstruction(
             wordRegister.Load(this, LeftOperand);
             if (count != 0) {
                 WriteLine("\t" + operation + " " + count + "," + wordRegister);
+                AddChanged(wordRegister);
+                RemoveRegisterAssignment(wordRegister);
             }
             wordRegister.Store(this, DestinationOperand);
         }
