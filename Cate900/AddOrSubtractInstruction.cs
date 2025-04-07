@@ -98,19 +98,24 @@ internal class AddOrSubtractInstruction(Function function, int operatorId, Assig
 
     private void IncrementOrDecrement(string operation, int count)
     {
-        if (count == 1 && IsMemoryOperation()) {
-            switch (DestinationOperand.Type.ByteCount) {
+        if (IsMemoryOperation()) {
+            switch (count) {
+                case 0:
+                    return;
                 case 1:
-                    break;
-                case 2:
-                    operation += "w";
-                    break;
-                default:
-                    throw new NotImplementedException();
+                    switch (DestinationOperand.Type.ByteCount) {
+                        case 1:
+                            break;
+                        case 2:
+                            operation += "w";
+                            break;
+                        default:
+                            throw new NotImplementedException();
+                    }
+                    ((Compiler)Compiler).OperateMemory(this, DestinationOperand,
+                        operand => { WriteLine("\t" + operation + " " + count + "," + operand); });
+                    return;
             }
-            ((Compiler)Compiler).OperateMemory(this, DestinationOperand,
-                operand => { WriteLine("\t" + operation + " " + count + "," + operand); });
-            return;
         }
         switch (DestinationOperand.Type.ByteCount) {
             case 1:
@@ -137,7 +142,9 @@ internal class AddOrSubtractInstruction(Function function, int operatorId, Assig
         void ViaRegister(Cate.ByteRegister byteRegister)
         {
             byteRegister.Load(this, LeftOperand);
-            WriteLine("\t" + operation + " " + count + "," + byteRegister);
+            if (count != 0) {
+                WriteLine("\t" + operation + " " + count + "," + byteRegister);
+            }
             AddChanged(byteRegister);
             RemoveRegisterAssignment(byteRegister);
             byteRegister.Store(this, DestinationOperand);
@@ -156,7 +163,9 @@ internal class AddOrSubtractInstruction(Function function, int operatorId, Assig
         void ViaRegister(Cate.WordRegister wordRegister)
         {
             wordRegister.Load(this, LeftOperand);
-            WriteLine("\t" + operation + " " + count + "," + wordRegister);
+            if (count != 0) {
+                WriteLine("\t" + operation + " " + count + "," + wordRegister);
+            }
             AddChanged(wordRegister);
             RemoveRegisterAssignment(wordRegister);
             wordRegister.Store(this, DestinationOperand);

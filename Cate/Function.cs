@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("nextGroundY = nextGroundY - 1")) {
+            if (instruction.ToString().Contains("pattern = @2 + 0")) {
                 var aaa = 111;
             }
 #endif
