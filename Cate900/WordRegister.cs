@@ -93,8 +93,10 @@ internal class WordRegister(int id, string name, Cate.ByteRegister? high, Cate.B
             default:
                 throw new NotImplementedException();
         }
-        if (change) instruction.AddChanged(this);
-        instruction.RemoveRegisterAssignment(this);
+        if (change) {
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
+        }
         return;
 
         List<Cate.WordRegister> Candidates()

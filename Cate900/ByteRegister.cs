@@ -161,8 +161,10 @@ internal class ByteRegister(int id, string name) : Cate.ByteRegister(id, name)
             default:
                 throw new NotImplementedException();
         }
-        if (change) instruction.AddChanged(this);
-        instruction.RemoveRegisterAssignment(this);
+        if (change) {
+            instruction.AddChanged(this);
+            instruction.RemoveRegisterAssignment(this);
+        }
         return;
 
         List<Cate.WordRegister> Candidates()

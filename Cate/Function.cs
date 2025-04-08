@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pattern = @2 + 0")) {
+            if (instruction.ToString().Contains("top = pLift[1] - 16")) {
                 var aaa = 111;
             }
 #endif
