@@ -20,7 +20,7 @@ internal class DecrementJumpInstruction(Function function, AssignableOperand ope
         ((Compiler)Cate.Compiler.Instance).OperateMemory(this, Operand, operand =>
         {
             WriteLine("\tdec 1," + operand);
-        });
+        }, true);
         WriteJumpLine("\tjr\tnz," + Anchor.Label);
     }
 }

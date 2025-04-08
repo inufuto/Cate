@@ -299,13 +299,15 @@ internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOpera
     }
 
 
-    public void OperateMemory(Instruction instruction, Operand operand, Action<string> action)
+    public void OperateMemory(Instruction instruction, Operand operand, Action<string> action, bool change)
     {
         switch (operand) {
             case VariableOperand variableOperand:
                 Debug.Assert(variableOperand.Register == null);
                 action("(" + variableOperand.MemoryAddress() + ")");
-                instruction.RemoveVariableRegister(variableOperand);
+                if (change) {
+                    instruction.RemoveVariableRegister(variableOperand);
+                }
                 return;
             case IndirectOperand indirectOperand: {
                     var pointer = indirectOperand.Variable;

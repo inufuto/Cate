@@ -24,7 +24,7 @@ internal class CompareInstruction(
             ((Compiler)Cate.Compiler.Instance).OperateMemory(this, LeftOperand, operand =>
             {
                 WriteLine("\t" + operation + " " + operand + "," + constantOperand.MemoryAddress());
-            });
+            }, false);
             Jump();
             return;
         }

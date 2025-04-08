@@ -27,7 +27,7 @@ internal class ShiftInstruction(
             ((Compiler)Cate.Compiler.Instance).OperateMemory(this, DestinationOperand, operand =>
             {
                 WriteLine("\t" + operation + " " + operand);
-            });
+            }, true);
             return;
         }
         switch (DestinationOperand.Type.ByteCount) {

@@ -34,7 +34,7 @@ internal class AddOrSubtractInstruction(Function function, int operatorId, Assig
             ((Compiler)Cate.Compiler.Instance).OperateMemory(this, DestinationOperand, operand =>
             {
                 WriteLine("\t" + operation + " " + operand + "," + constantOperand.MemoryAddress());
-            });
+            }, true);
             return;
         }
         switch (DestinationOperand.Type.ByteCount) {
@@ -113,7 +113,7 @@ internal class AddOrSubtractInstruction(Function function, int operatorId, Assig
                             throw new NotImplementedException();
                     }
                     ((Compiler)Compiler).OperateMemory(this, DestinationOperand,
-                        operand => { WriteLine("\t" + operation + " " + count + "," + operand); });
+                        operand => { WriteLine("\t" + operation + " " + count + "," + operand); }, true);
                     return;
             }
         }

@@ -37,7 +37,7 @@ internal class BinomialInstruction(
             ((Compiler)Cate.Compiler.Instance).OperateMemory(this, DestinationOperand, operand =>
             {
                 WriteLine("\t" + operation + " " + operand + "," + constantOperand.MemoryAddress());
-            });
+            }, true);
             return;
         }
         switch (DestinationOperand.Type.ByteCount) {
