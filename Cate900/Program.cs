@@ -1,8 +1,8 @@
 ﻿using Inu.Language;
 
-namespace Inu.Cate.Sc62015;
+namespace Inu.Cate.Tlcs900;
 
-public class Program
+internal class Program
 {
     public static int Main(string[] args)
     {

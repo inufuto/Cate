@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace Inu.Cate.I8086;
+﻿namespace Inu.Cate.Tlcs900;
 
 internal class ReturnInstruction(Function function, Operand? sourceOperand, Anchor anchor)
     : Cate.ReturnInstruction(function, sourceOperand, anchor)
@@ -9,7 +7,7 @@ internal class ReturnInstruction(Function function, Operand? sourceOperand, Anch
     {
         LoadResult();
         if (!Equals(Function.Instructions.Last())) {
-            WriteLine("\tjmp " + Anchor.Label);
+            WriteLine("\tjr\t" + Anchor.Label);
         }
     }
 }

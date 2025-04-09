@@ -85,4 +85,9 @@ public abstract class BinomialInstruction : Instruction
     }
 
     protected virtual bool IsOperatable(AssignableOperand operand) => true;
+
+    public bool IsMemoryOperation()
+    {
+        return DestinationOperand.SameStorage(LeftOperand) && DestinationOperand is VariableOperand { Register: null };
+    }
 }

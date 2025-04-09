@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if cell == 0 goto MoveMonsters@Anchor102")) {
+            if (instruction.ToString().Contains("top = pLift[1] - 16")) {
                 var aaa = 111;
             }
 #endif

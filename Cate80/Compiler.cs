@@ -6,10 +6,8 @@ using System.Linq;
 
 namespace Inu.Cate.Z80;
 
-internal class Compiler : Cate.Compiler
+internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation())
 {
-    public Compiler() : base(new ByteOperation(), new WordOperation()) { }
-
     protected override void WriteAssembly(StreamWriter writer)
     {
         writer.WriteLine("\textrn @Temporary@Byte");
@@ -113,32 +111,8 @@ internal class Compiler : Cate.Compiler
                     break;
                 }
             }
-            //else if (register is WordRegister pointerRegister) {
-            //    if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, pointerRegister)) {
-            //        List<Cate.WordRegister> candidates;
-            //        if (variable.Type is PointerType pointerType) {
-            //            candidates = WordRegister.PointerOrder(pointerType.ElementType is StructureType ? 10 : 0);
-            //        }
-            //        else {
-            //            throw new NotImplementedException();
-            //            //candidates = PointerRegister.Registers;
-            //        }
-            //        register = AllocatableRegister(variable, candidates, function);
-            //        if (register != null) {
-            //            variable.Register = register;
-            //        }
-            //    }
-            //    else {
-            //        variable.Register = pointerRegister;
-            //        break;
-            //    }
-            //}
         }
     }
-
-
-
-
 
 
     public override Register? ParameterRegister(int index, ParameterizableType type)
