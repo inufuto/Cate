@@ -21,3 +21,4 @@ This repository contains following Visual Studio Solutions:
 |Cate83.sln|for SM83|
 |Cate85.sln|for SM85|
 |Cate816.sln|for 65816|
+|Cate900.sln|for TLCS-900/H2|

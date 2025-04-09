@@ -1,9 +1,8 @@
 ﻿namespace Inu.Cate.Z80;
 
-class DecrementJumpInstruction : Cate.DecrementJumpInstruction
+class DecrementJumpInstruction(Function function, AssignableOperand operand, Anchor anchor)
+    : Cate.DecrementJumpInstruction(function, operand, anchor)
 {
-    public DecrementJumpInstruction(Function function, AssignableOperand operand, Anchor anchor) : base(function, operand, anchor) { }
-
     public override void BuildAssembly()
     {
         if (Equals(Operand.Register, ByteRegister.B)) {

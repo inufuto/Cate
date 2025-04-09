@@ -47,8 +47,13 @@ internal class CompareInstruction(
         var candidates = (RightOperand is IndirectOperand || LeftOperand is IndirectOperand) ? [ByteRegister.A] : ByteRegister.Registers;
         using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.ByteRegister;
+            var variableRegister = LeftOperand is VariableOperand variableOperand ? GetVariableRegister(variableOperand) : null;
             register.Load(this, LeftOperand);
-            if (Equals(LeftOperand is VariableOperand variableOperand ? GetVariableRegister(variableOperand) : null, register) || !OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual)) {
+            if (
+                Equals(variableRegister, register) ||
+                !OperandZero() ||
+                OperatorId is not (Keyword.Equal or Keyword.NotEqual)
+            ) {
                 var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
                 register.Operate(this, operation, false, RightOperand);
             }

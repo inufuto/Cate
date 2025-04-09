@@ -125,8 +125,12 @@ internal class CompareInstruction(
         var candidates = (RightOperand is IndirectOperand || LeftOperand is IndirectOperand) ? [ByteRegister.A] : ByteRegister.Registers;
         using (var reservation = ByteOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.ByteRegister;
-            register.Load(this, LeftOperand);
-            if (!OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual) || LeftOperand.Register != null || (LeftOperand is IndirectOperand indirectOperand && indirectOperand.Offset<0)) {
+            var variableRegister = LeftOperand is VariableOperand variableOperand ? GetVariableRegister(variableOperand) : null; register.Load(this, LeftOperand);
+            if (
+                Equals(variableRegister, register) ||
+                !OperandZero() ||
+                OperatorId is not (Keyword.Equal or Keyword.NotEqual)
+            ) {
                 var operation = Equals(register, ByteRegister.A) ? "cmp" : "cp" + register.Name;
                 register.Operate(this, operation, false, RightOperand);
             }
@@ -139,8 +143,13 @@ internal class CompareInstruction(
         var candidates = (RightOperand is IndirectOperand || LeftOperand is IndirectOperand) ? [WordRegister.A] : (List<Cate.WordRegister>)[WordRegister.A, WordRegister.X, WordRegister.Y];
         using (var reservation = WordOperation.ReserveAnyRegister(this, candidates, LeftOperand)) {
             var register = reservation.WordRegister;
+            var variableRegister = LeftOperand is VariableOperand variableOperand ? GetVariableRegister(variableOperand) : null;
             register.Load(this, LeftOperand);
-            if (!OperandZero() || OperatorId is not (Keyword.Equal or Keyword.NotEqual) || LeftOperand.Register != null) {
+            if (
+                Equals(variableRegister, register) ||
+                !OperandZero() ||
+                OperatorId is not (Keyword.Equal or Keyword.NotEqual)
+            ) {
                 register.Compare(this, "cmp", RightOperand);
             }
         }
