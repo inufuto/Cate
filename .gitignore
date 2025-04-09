@@ -191,3 +191,11 @@ runtime/SC62015/c.bat
 /Cate816/.vs/ProjectEvaluation/cate816.projects.v9.bin
 /Language/Binary.cs.bak
 /Language/Arguments.cs.bak
+/Cate816/bin/Release/net8.0/publish
+/Cate816/obj
+/Cate816/Properties/PublishProfiles/FolderProfile.pubxml
+/Cate900/.vs/Cate900
+/Cate900/bin
+/Cate900/obj
+/Cate900/Properties/PublishProfiles
+/Cate900/Cate900.csproj.user
