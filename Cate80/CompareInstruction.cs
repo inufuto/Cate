@@ -2,12 +2,15 @@
 
 namespace Inu.Cate.Z80;
 
-internal class CompareInstruction : Cate.CompareInstruction
+internal class CompareInstruction(
+    Function function,
+    int operatorId,
+    Operand leftOperand,
+    Operand rightOperand,
+    Anchor anchor)
+    : Cate.CompareInstruction(function, operatorId, leftOperand, rightOperand, anchor)
 {
     private static int subLabelIndex = 0;
-
-    public CompareInstruction(Function function, int operatorId, Operand leftOperand, Operand rightOperand, Anchor anchor)
-        : base(function, operatorId, leftOperand, rightOperand, anchor) { }
 
     public override int? RegisterAdaptability(Variable variable, Register register)
     {

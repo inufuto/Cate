@@ -1,6 +1,6 @@
-﻿namespace Inu.Cate.Z80;
+﻿namespace Inu.Cate.Tlcs900;
 
-internal class JumpInstruction(Function function, Anchor anchor) : Inu.Cate.JumpInstruction(function, anchor)
+internal class JumpInstruction(Function function, Anchor anchor) : Cate.JumpInstruction(function, anchor)
 {
     public override void BuildAssembly()
     {

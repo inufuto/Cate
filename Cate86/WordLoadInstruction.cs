@@ -1,10 +1,8 @@
 ﻿namespace Inu.Cate.I8086;
 
-internal class WordLoadInstruction : Cate.WordLoadInstruction
+internal class WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : Cate.WordLoadInstruction(function, destinationOperand, sourceOperand)
 {
-    public WordLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand)
-    { }
-
     public override void BuildAssembly()
     {
         if (

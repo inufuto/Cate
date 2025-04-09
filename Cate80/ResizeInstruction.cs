@@ -2,13 +2,14 @@
 
 namespace Inu.Cate.Z80;
 
-internal class ResizeInstruction : Cate.ResizeInstruction
+internal class ResizeInstruction(
+    Function function,
+    AssignableOperand destinationOperand,
+    IntegerType destinationType,
+    Operand sourceOperand,
+    IntegerType sourceType)
+    : Cate.ResizeInstruction(function, destinationOperand, destinationType, sourceOperand, sourceType)
 {
-    public ResizeInstruction(Function function, AssignableOperand destinationOperand, IntegerType destinationType,
-        Operand sourceOperand, IntegerType sourceType) : base(function, destinationOperand, destinationType, sourceOperand, sourceType)
-    { }
-
-
     protected override void Reduce()
     {
         if (SourceOperand.Register is WordRegister sourceRegister) {

@@ -2,10 +2,9 @@
 
 namespace Inu.Cate.Z80;
 
-internal class ReturnInstruction : Cate.ReturnInstruction
+internal class ReturnInstruction(Function function, Operand? sourceOperand, Anchor anchor)
+    : Cate.ReturnInstruction(function, sourceOperand, anchor)
 {
-    public ReturnInstruction(Function function, Operand? sourceOperand, Anchor anchor) : base(function, sourceOperand, anchor) { }
-
     public override void BuildAssembly()
     {
         LoadResult();

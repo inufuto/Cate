@@ -4,12 +4,13 @@ using System.Linq;
 
 namespace Inu.Cate.Z80;
 
-internal class SubroutineInstruction : Cate.SubroutineInstruction
+internal class SubroutineInstruction(
+    Function function,
+    Function targetFunction,
+    AssignableOperand? destinationOperand,
+    List<Operand> sourceOperands)
+    : Cate.SubroutineInstruction(function, targetFunction, destinationOperand, sourceOperands)
 {
-    public SubroutineInstruction(Function function, Function targetFunction, AssignableOperand? destinationOperand,
-        List<Operand> sourceOperands) : base(function, targetFunction, destinationOperand, sourceOperands)
-    { }
-
     protected override void Call()
     {
         WriteLine("\tcall\t" + TargetFunction.Label);
