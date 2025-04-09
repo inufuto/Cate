@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("top = pLift[1] - 16")) {
+            if (instruction.ToString().Contains("if large == 0 goto StartBang@Anchor36")) {
                 var aaa = 111;
             }
 #endif
