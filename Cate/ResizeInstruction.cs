@@ -99,6 +99,16 @@ public abstract class ResizeInstruction : Instruction
 
     protected virtual void Expand()
     {
+        if (DestinationOperand.Register is WordRegister destinationRegister) {
+            if (destinationRegister.IsPair()) {
+                Debug.Assert(destinationRegister is { Low: not null, High: not null });
+                //WriteLine("\t; low");
+                destinationRegister.Low.Load(this, SourceOperand);
+                //WriteLine("\t; high");
+                destinationRegister.High.LoadConstant(this, 0);
+                return;
+            }
+        }
         {
             if (SourceOperand.Register is ByteRegister sourceRegister) {
                 var pairRegister = sourceRegister.PairRegister;
@@ -110,16 +120,6 @@ public abstract class ResizeInstruction : Instruction
                         return;
                     }
                 }
-            }
-        }
-        if (DestinationOperand.Register is WordRegister destinationRegister) {
-            if (destinationRegister.IsPair()) {
-                Debug.Assert(destinationRegister is { Low: not null, High: not null });
-                //WriteLine("\t; low");
-                destinationRegister.Low.Load(this, SourceOperand);
-                //WriteLine("\t; high");
-                destinationRegister.High.LoadConstant(this, 0);
-                return;
             }
         }
         var pairRegisters = WordOperation.PairRegisters;

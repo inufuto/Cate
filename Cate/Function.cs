@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("bits = bits << 1")) {
+            if (instruction.ToString().Contains("@5 = HitMovableMyFighter_(*pFighter,pFighter[1])")) {
                 var aaa = 111;
             }
 #endif
