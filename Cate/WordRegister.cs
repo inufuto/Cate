@@ -99,9 +99,9 @@ public abstract class WordRegister : Register
                             instruction.CancelOperandRegister(sourceIndirectOperand);
                             return;
                         }
-                        var candidates = WordOperation.Registers.Where(r => r.IsOffsetInRange(offset)).ToList();
+                        var candidates = WordOperation.Registers.Where(r => !r.Equals(this) && r.IsOffsetInRange(offset)).ToList();
                         if (candidates.Any()) {
-                            var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+                            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
                             reservation.WordRegister.CopyFrom(instruction, pointerRegister);
                             LoadIndirect(instruction, reservation.WordRegister, offset);
                             instruction.AddChanged(this);
