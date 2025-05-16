@@ -56,7 +56,9 @@ internal class WordAddOrSubtractInstruction(
                 }
                 else {
                     using (WordOperation.ReserveRegister(this, WordRegister.D)) {
-                        WordRegister.D.Load(this, RightOperand);
+                        using (WordOperation.ReserveRegister(this, WordRegister.X)) {
+                            WordRegister.D.Load(this, RightOperand);
+                        }
                         AddXd(register);
                     }
                 }
@@ -64,22 +66,6 @@ internal class WordAddOrSubtractInstruction(
             register.Store(this, DestinationOperand);
             ResultFlags |= Flag.Z;
         }
-
-        //if (Equals(LeftOperand.Register, WordRegister.D) && Equals(DestinationOperand.Register, WordRegister.D)) {
-        //    AddD();
-        //    return;
-        //}
-        //using (WordOperation.ReserveRegister(this, WordRegister.D)) {
-        //    AddD();
-        //}
-
-        //void AddD()
-        //{
-        //    WordRegister.D.Load(this, LeftOperand);
-        //    WordRegister.D.Operate(this, operation, true, RightOperand);
-        //    WordRegister.D.Store(this, DestinationOperand);
-        //    ResultFlags |= Flag.Z;
-        //}
         void AddXd(Cate.WordRegister register)
         {
             WriteLine("\tlea" + register.AsmName + "\td," + register.AsmName);
