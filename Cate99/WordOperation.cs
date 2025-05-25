@@ -24,15 +24,28 @@ namespace Inu.Cate.Tms99
                 return;
             }
             Debug.Assert(instance != null);
-            var candidates = WordRegister.Registers.Where(r => !Equals(r, rightOperand.Register)).ToList();
-            using var reservation = instance.ReserveAnyRegister(instruction, candidates, leftOperand);
-            OperateRegister(reservation.WordRegister);
+            {
+                var candidates = WordRegister.Registers.Where(r => !Equals(r, rightOperand.Register)).ToList();
+                using var reservation = instance.ReserveAnyRegister(instruction, candidates, leftOperand);
+                OperateRegister(reservation.WordRegister);
+            }
             return;
 
             void OperateRegister(Cate.WordRegister register)
             {
                 register.Load(instruction, leftOperand);
-                instruction.WriteLine("\t" + operation + "\t" + Tms99.Compiler.OperandToString(instruction, rightOperand, false) + "," + register.Name);
+                var operandAsString = Tms99.Compiler.OperandToString(instruction, rightOperand, false);
+                if (operandAsString != null) {
+                    instruction.WriteLine("\t" + operation + "\t" + operandAsString + "," + register.Name);
+                }
+                else {
+                    if (rightOperand is IndirectOperand indirectOperand) {
+                        Debug.Assert(instance != null);
+                        using var reservation = instance.ReserveAnyRegister(instruction, WordRegister.Registers);
+                        reservation.WordRegister.LoadFromMemory(instruction, indirectOperand.Variable.Label);
+                        instruction.WriteLine("\t" + operation + "\t@" + indirectOperand.Offset + "(" + reservation.WordRegister + ")," + register.Name);
+                    }
+                }
                 register.Store(instruction, destinationOperand);
             }
         }

@@ -33,7 +33,7 @@ namespace Inu.Cate.Tms99
             if (change) {
                 instruction.RemoveVariableRegister(variable, offset);
             }
-            instruction.ResultFlags |= Instruction.Flag.Z;
+            //instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
         protected override void OperateIndirect(Instruction instruction, string operation, bool change, Cate.WordRegister pointerRegister, int offset,
@@ -47,7 +47,7 @@ namespace Inu.Cate.Tms99
                 }
                 register.StoreIndirect(instruction, pointerRegister, offset);
             }
-            instruction.ResultFlags |= Instruction.Flag.Z;
+            //instruction.ResultFlags |= Instruction.Flag.Z;
         }
 
         public override void StoreConstantIndirect(Instruction instruction, Cate.WordRegister pointerRegister, int offset, int value)
@@ -113,7 +113,7 @@ namespace Inu.Cate.Tms99
                 instruction.WriteLine("\t" + operation + "\t" + r.Name + "," + value);
                 instruction.AddChanged(r);
                 instruction.RemoveRegisterAssignment(r);
-                instruction.ResultFlags |= Instruction.Flag.Z;
+                //instruction.ResultFlags |= Instruction.Flag.Z;
             }
 
             if (destinationOperand.Register is ByteRegister byteRegister) {

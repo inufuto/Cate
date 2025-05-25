@@ -189,7 +189,7 @@ internal class ByteRegister : Cate.ByteRegister
             instruction.RemoveRegisterAssignment(this);
             instruction.AddChanged(this);
         }
-        instruction.ResultFlags |= Instruction.Flag.Z;
+        //instruction.ResultFlags |= Instruction.Flag.Z;
     }
 
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
