@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("__4 = pMap[-1] & 1")) {
+            if (instruction.ToString().Contains("{__1 = Directions_ + 0}")) {
                 var aaa = 111;
             }
 #endif

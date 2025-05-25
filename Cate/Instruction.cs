@@ -601,6 +601,9 @@ public abstract class Instruction
     public void SetRegisterConstant(Register register, PointerOperand pointerOperand)
     {
         var type = pointerOperand.Type;
+        if (type is IntegerType integerType) {
+            type = new PointerType(new IntegerType(1, false));
+        }
         var variable = pointerOperand.Variable;
         var offset = pointerOperand.Offset;
         SetRegisterConstant(register, (PointerType)type, variable, offset);
