@@ -198,7 +198,7 @@ namespace Inu.Cate.I8080
                 }
                 return;
             }
-            if (Math.Abs(offset) > 1) {
+            if (!Equals(pointerRegister, this) && Math.Abs(offset) > 1) {
                 var changed = instruction.IsChanged(pointerRegister);
                 pointerRegister.Save(instruction);
                 pointerRegister.Add(instruction, offset);
