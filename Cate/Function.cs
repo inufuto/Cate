@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("InitStairs_(pUpper[22],8,pUpper[21])")) {
+            if (instruction.ToString().Contains("pVVram = PutC_(pVVram,pPoint[2])")) {
                 var aaa = 111;
             }
 #endif

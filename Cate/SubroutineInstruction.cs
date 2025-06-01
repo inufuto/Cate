@@ -255,8 +255,10 @@ public abstract class SubroutineInstruction : Instruction
                 var operand = assignment.Operand;
                 var register = parameter.Register;
                 Debug.Assert(register != null);
-                if (ParameterAssignments.Count(p => !p.Done) > 1 && (IsRegisterReserved(register) || IsSourceVariable(register))) continue;
-                assignment.RegisterReservation = ReserveRegister(register, operand);
+                if (ParameterAssignments.Count(p => !p.Done) > 1) {
+                    if (IsRegisterReserved(register) || IsSourceVariable(register)) continue;
+                    assignment.RegisterReservation = ReserveRegister(register, operand);
+                }
                 Load(register, operand);
                 assignment.SetDone(this, register);
                 changed = true;
