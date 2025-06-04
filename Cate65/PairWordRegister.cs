@@ -4,17 +4,10 @@ using System.IO;
 
 namespace Inu.Cate.Mos6502;
 
-internal class PairWordRegister : Cate.WordRegister
+internal class PairWordRegister(int id, ByteRegister high, ByteRegister low)
+    : Cate.WordRegister(id, high.Name + low.Name)
 {
     public static PairWordRegister Xy = new(4, ByteRegister.X, ByteRegister.Y);
-
-    private readonly ByteRegister high, low;
-
-    public PairWordRegister(int id, ByteRegister high, ByteRegister low) : base(id, high.Name + low.Name)
-    {
-        this.high = high;
-        this.low = low;
-    }
 
     public override Cate.ByteRegister? High => high;
     public override Cate.ByteRegister? Low => low;
@@ -32,18 +25,6 @@ internal class PairWordRegister : Cate.WordRegister
         low.Save(writer, "", instruction, tabCount);
     }
 
-    //public override void Add(Instruction instruction, int offset)
-    //{
-    //    using var reservation = WordOperation.ReserveAnyRegister(instruction, WordZeroPage.Registers);
-    //    var zeroPage = reservation.WordRegister;
-    //    zeroPage.CopyFrom(instruction, this);
-    //    zeroPage.Add(instruction, offset);
-    //    CopyFrom(instruction, zeroPage);
-    //}
-
-    //public override bool IsOffsetInRange(int offset) => false;
-
-    //public override bool IsPointer(int offset) => false;
 
     public override void LoadConstant(Instruction instruction, string value)
     {
@@ -63,12 +44,6 @@ internal class PairWordRegister : Cate.WordRegister
         high.StoreToMemory(instruction, label + "+1");
     }
 
-    //public override void Store(Instruction instruction, AssignableOperand operand)
-    //{
-    //    low.Store(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
-    //    high.Store(instruction, Cate.Compiler.Instance.HighByteOperand(operand));
-    //}
-
     public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
     {
         low.LoadFromMemory(instruction, variable, offset);
@@ -77,8 +52,8 @@ internal class PairWordRegister : Cate.WordRegister
 
     public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
-        low.LoadIndirect(instruction, pointerRegister, offset);
         high.LoadIndirect(instruction, pointerRegister, offset + 1);
+        low.LoadIndirect(instruction, pointerRegister, offset);
     }
 
     public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
