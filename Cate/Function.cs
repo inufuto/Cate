@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("InitStairs_(pFloor[16],4,pFloor[15])")) {
+            if (instruction.ToString().Contains("ShowSprite_(pMonster,pattern)")) {
                 var aaa = 111;
             }
 #endif

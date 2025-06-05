@@ -346,7 +346,7 @@ public abstract class SubroutineInstruction : Instruction
         //return false;
         return ParameterAssignments.Any(a =>
         {
-            return a.Done && Conflicts();
+            return Conflicts();//a.Done && 
 
             bool Conflicts()
             {
