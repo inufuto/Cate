@@ -130,7 +130,9 @@ namespace Inu.Cate.I8086
             for (var i = 0; i < count; ++i) {
                 instruction.WriteLine("\t" + operation + this);
             }
-            //instruction.AddChanged(this);
+            if (change) {
+                instruction.AddChanged(this);
+            }
         }
 
         public override void Operate(Instruction instruction, string operation, bool change, Operand operand)

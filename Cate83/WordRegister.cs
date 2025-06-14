@@ -117,21 +117,32 @@ internal class WordRegister(int id, ByteRegister high, ByteRegister low, bool ad
             }
             return;
         }
-        if (Math.Abs(offset) > 1) {
-            var changed = instruction.IsChanged(pointerRegister);
-            pointerRegister.Save(instruction);
+
+        if (Equals(pointerRegister, this)) {
+            AddAndLoad();
+        }
+        else {
+            if (Math.Abs(offset) > 1) {
+                var changed = instruction.IsChanged(pointerRegister);
+                pointerRegister.Save(instruction);
+                AddAndLoad();
+                pointerRegister.Restore(instruction);
+                if (!changed) {
+                    instruction.RemoveChanged(pointerRegister);
+                }
+            }
+            else {
+                AddAndLoad();
+                pointerRegister.Add(instruction, -offset);
+            }
+        }
+
+        return;
+
+        void AddAndLoad()
+        {
             pointerRegister.Add(instruction, offset);
             LoadIndirect(instruction, pointerRegister, 0);
-            pointerRegister.Restore(instruction);
-            if (!changed) {
-                instruction.RemoveChanged(pointerRegister);
-            }
-            return;
-        }
-        pointerRegister.Add(instruction, offset);
-        LoadIndirect(instruction, pointerRegister, 0);
-        if (!Equals(pointerRegister, this)) {
-            pointerRegister.Add(instruction, -offset);
         }
     }
 
