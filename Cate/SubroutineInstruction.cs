@@ -25,7 +25,7 @@ public abstract class SubroutineInstruction : Instruction
         public void SetDone(SubroutineInstruction instruction, Register? register)
         {
             //instruction.CancelOperandRegister(Operand);
-            if (register != null) { // && !Equals(register, Parameter.Register)
+            if (register != null && !instruction.HasDone(register)) { // && !Equals(register, Parameter.Register)
                 RegisterReservation ??= instruction.ReserveRegister(register);
             }
             Done = true;
@@ -74,6 +74,11 @@ public abstract class SubroutineInstruction : Instruction
             Done = false;
             return newReservation;
         }
+    }
+
+    private bool HasDone(Register register)
+    {
+        return ParameterAssignments.Any(assignment => assignment is { Done: true, Operand.Register: not null } && assignment.Operand.Register.Equals(register));
     }
 
     public readonly Function TargetFunction;
@@ -258,6 +263,9 @@ public abstract class SubroutineInstruction : Instruction
                 if (ParameterAssignments.Count(p => !p.Done) > 1) {
                     if (IsRegisterReserved(register) || IsSourceVariable(register)) continue;
                     assignment.RegisterReservation = ReserveRegister(register, operand);
+                }
+                if (register.Name == "bx") {
+                    IsRegisterReserved(register);
                 }
                 Load(register, operand);
                 assignment.SetDone(this, register);

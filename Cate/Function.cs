@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("c = c + 1")) {
+            if (instruction.ToString().Contains("InitFixeds_")) {
                 var aaa = 111;
             }
 #endif

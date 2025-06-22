@@ -28,6 +28,15 @@ public abstract class ReturnInstruction : Instruction
         return Function.Instructions.Last() != this;
     }
 
+    public override int? RegisterAdaptability(Variable variable, Register register)
+    {
+        var resultRegister = ResultRegister;
+        if (resultRegister != null && ResultOperand is VariableOperand variableOperand && variableOperand.Variable.Equals(variable) && resultRegister.Equals(register)) {
+            return 1;
+        }
+        return base.RegisterAdaptability(variable, register);
+    }
+
     public override void ReserveOperandRegisters()
     {
         if (SourceOperand != null) {
