@@ -21,9 +21,9 @@ internal class WordAddOrSubtractInstruction(
             else if (LeftOperand.Register == null && RightOperand.Register != null) {
                 ExchangeOperands();
             }
-            else if (LeftOperand.Type is not PointerType && RightOperand.Type is PointerType) {
-                ExchangeOperands();
-            }
+            //else if (LeftOperand.Type is not PointerType && RightOperand.Type is PointerType) {
+            //    ExchangeOperands();
+            //}
         }
 
         if (AddConstant())

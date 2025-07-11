@@ -30,6 +30,26 @@ namespace Inu.Cate.Mc6809
                 WriteLine("\tst" + register.Name + "\t" + DirectPage.Word);
             }
 
+            if (DestinationOperand.Register is WordRegister destinationRegister) {
+                if (Equals(destinationRegister, WordRegister.D)) {
+                    ActToRegister();
+                    goto end;
+                }
+
+                using (WordOperation.ReserveRegister(this, WordRegister.D)) {
+                    ActToRegister();
+                    //WriteLine("\ttfr\td, " + destinationRegister.Name);
+                }
+                goto end;
+            }
+            using (WordOperation.ReserveRegister(this, WordRegister.D)) {
+                ActToRegister();
+            }
+        end:
+            RemoveRegisterAssignment(WordRegister.D);
+            AddChanged(WordRegister.D);
+            return;
+
             void ActToRegister()
             {
                 if (lowValue != 0) {
@@ -62,24 +82,6 @@ namespace Inu.Cate.Mc6809
                 }
                 WordRegister.D.Store(this, DestinationOperand);
             }
-            if (DestinationOperand.Register is WordRegister destinationRegister) {
-                if (Equals(destinationRegister, WordRegister.D)) {
-                    ActToRegister();
-                    goto end;
-                }
-
-                using (WordOperation.ReserveRegister(this, WordRegister.D)) {
-                    ActToRegister();
-                    WriteLine("\ttfr\td, " + destinationRegister.Name);
-                }
-                goto end;
-            }
-            using (WordOperation.ReserveRegister(this, WordRegister.D)) {
-                ActToRegister();
-            }
-        end:
-            RemoveRegisterAssignment(WordRegister.D);
-            AddChanged(WordRegister.D);
         }
 
         private void ClearDestination()

@@ -264,9 +264,9 @@ public abstract class SubroutineInstruction : Instruction
                     if (IsRegisterReserved(register) || IsSourceVariable(register)) continue;
                     assignment.RegisterReservation = ReserveRegister(register, operand);
                 }
-                if (register.Name == "bx") {
-                    IsRegisterReserved(register);
-                }
+                //if (register.Name == "bx") {
+                //    IsRegisterReserved(register);
+                //}
                 Load(register, operand);
                 assignment.SetDone(this, register);
                 changed = true;
