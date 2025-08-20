@@ -83,7 +83,7 @@ public abstract class SubroutineInstruction : Instruction
 
     public readonly Function TargetFunction;
     public readonly AssignableOperand? DestinationOperand;
-    public readonly List<Operand> SourceOperands;
+    public override List<Operand> SourceOperands { get;}
 
     protected readonly List<ParameterAssignment> ParameterAssignments = [];
 

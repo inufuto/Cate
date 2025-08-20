@@ -1,4 +1,6 @@
-﻿namespace Inu.Cate;
+﻿using System.Collections.Generic;
+
+namespace Inu.Cate;
 
 public abstract class DecrementJumpInstruction : Instruction
 {
@@ -28,8 +30,5 @@ public abstract class DecrementJumpInstruction : Instruction
         return Operand.IsVariable(variable);
     }
 
-    //public override void RemoveDestinationRegister()
-    //{
-    //    RemoveChangedRegisters(Operand);
-    //}
+    public override List<Operand> SourceOperands => [Operand];
 }

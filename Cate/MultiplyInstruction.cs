@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Inu.Cate;
 
@@ -59,10 +60,7 @@ public abstract class MultiplyInstruction : Instruction
         return LeftOperand.IsVariable(variable);
     }
 
-    //public override void RemoveDestinationRegister()
-    //{
-    //    RemoveChangedRegisters(DestinationOperand);
-    //}
+    public override List<Operand> SourceOperands => [LeftOperand];
 
     public override string ToString() => DestinationOperand + " = " + LeftOperand + " * " + RightValue;
 

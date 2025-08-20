@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Inu.Cate;
 
@@ -49,7 +50,8 @@ public abstract class ReturnInstruction : Instruction
         return SourceOperand != null && SourceOperand.IsVariable(variable);
     }
 
-    //public override void RemoveDestinationRegister() { }
+    public override List<Operand> SourceOperands => SourceOperand != null ? [SourceOperand] : [];
+
 
     protected void LoadResult()
     {

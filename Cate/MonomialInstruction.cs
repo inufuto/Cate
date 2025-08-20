@@ -1,4 +1,5 @@
-﻿using Inu.Language;
+﻿using System.Collections.Generic;
+using Inu.Language;
 
 namespace Inu.Cate;
 
@@ -33,10 +34,7 @@ public abstract class MonomialInstruction : Instruction
         return SourceOperand.IsVariable(variable);
     }
 
-    //public override void RemoveDestinationRegister()
-    //{
-    //    RemoveChangedRegisters(DestinationOperand);
-    //}
+    public override List<Operand> SourceOperands => [SourceOperand];
 
     public override string ToString()
     {

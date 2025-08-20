@@ -1,4 +1,5 @@
-﻿using Inu.Language;
+﻿using System.Collections.Generic;
+using Inu.Language;
 
 namespace Inu.Cate;
 
@@ -38,6 +39,8 @@ public abstract class BinomialInstruction : Instruction
     {
         return LeftOperand.IsVariable(variable) || RightOperand.IsVariable(variable);
     }
+
+    public override List<Operand> SourceOperands => [LeftOperand, RightOperand];
 
     public override string ToString() => DestinationOperand + " = " + LeftOperand + " " + ReservedWord.FromId(OperatorId) + " " + RightOperand;
 

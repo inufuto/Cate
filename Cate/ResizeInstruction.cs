@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Inu.Cate;
@@ -38,6 +39,8 @@ public abstract class ResizeInstruction : Instruction
     {
         return SourceOperand.IsVariable(variable);
     }
+
+    public override List<Operand> SourceOperands => [SourceOperand];
 
     public override Operand? ResultOperand => DestinationOperand;
 

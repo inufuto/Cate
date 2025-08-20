@@ -168,7 +168,7 @@ internal class WordZeroPage(int id) : Cate.WordRegister(id, IdToName(id))
 
     public override void Save(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
-        var registerAssigned = instruction != null && instruction.IsRegisterAssigned(ByteRegister.A);
+        var registerAssigned = instruction != null && (instruction.IsRegisterAssigned(ByteRegister.A) || instruction.IsRegisterSource(ByteRegister.A));
         if (registerAssigned) {
             Cate.Compiler.Instance.AddExternalName("ZB0");
             writer.WriteLine("\tsta\t<ZB0");
@@ -190,7 +190,7 @@ internal class WordZeroPage(int id) : Cate.WordRegister(id, IdToName(id))
 
     public override void Restore(StreamWriter writer, string? comment, Instruction? instruction, int tabCount)
     {
-        var registerAssigned = instruction != null && instruction.IsRegisterAssigned(ByteRegister.A);
+        var registerAssigned = instruction != null && (instruction.IsRegisterAssigned(ByteRegister.A) || instruction.IsRegisterDestination(ByteRegister.A));
         if (registerAssigned) {
             Cate.Compiler.Instance.AddExternalName("ZB0");
             writer.WriteLine("\tsta\t<ZB0");

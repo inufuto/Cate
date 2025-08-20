@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Inu.Language;
 
@@ -70,6 +71,8 @@ public abstract class CompareInstruction : Instruction
     {
         return LeftOperand.IsVariable(variable) || RightOperand.IsVariable(variable);
     }
+
+    public override List<Operand> SourceOperands => [LeftOperand, RightOperand];
 
     //public override void RemoveDestinationRegister() { }
 }

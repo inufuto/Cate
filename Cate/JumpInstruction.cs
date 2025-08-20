@@ -1,4 +1,6 @@
-﻿namespace Inu.Cate;
+﻿using System.Collections.Generic;
+
+namespace Inu.Cate;
 
 public abstract class JumpInstruction : Instruction
 {
@@ -19,5 +21,6 @@ public abstract class JumpInstruction : Instruction
     public override void ReserveOperandRegisters() { }
 
     public override bool IsSourceOperand(Variable variable) => false;
-    //public override void RemoveDestinationRegister() { }
+
+    public override List<Operand> SourceOperands => [];
 }

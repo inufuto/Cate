@@ -30,10 +30,7 @@ public abstract class LoadInstruction : Instruction
         return SourceOperand.IsVariable(variable);
     }
 
-    //public override void RemoveDestinationRegister()
-    //{
-    //    RemoveChangedRegisters(DestinationOperand);
-    //}
+    public override List<Operand> SourceOperands => [SourceOperand];
 
     public override Operand? ResultOperand => DestinationOperand;
 

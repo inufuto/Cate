@@ -672,4 +672,9 @@ public abstract class Instruction
     }
 
 
+    public bool IsRegisterDestination(Register register) => ResultOperand != null && ResultOperand.Conflicts(register);
+
+    public bool IsRegisterSource(Register register) => SourceOperands.Any(o => o.Conflicts(register));
+
+    public abstract List<Operand> SourceOperands { get; }
 }
