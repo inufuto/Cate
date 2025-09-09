@@ -53,8 +53,8 @@ internal class WordZeroPage(int id) : Cate.WordRegister(id, IdToName(id))
     public override void LoadConstant(Instruction instruction, string value)
     {
         Debug.Assert(Low != null && High != null);
-        Low.LoadConstant(instruction, "low " + value);
-        High.LoadConstant(instruction, "high " + value);
+        Low.LoadConstant(instruction, "low(" + value + ")");
+        High.LoadConstant(instruction, "high(" + value + ")");
     }
 
 
@@ -82,8 +82,7 @@ internal class WordZeroPage(int id) : Cate.WordRegister(id, IdToName(id))
             return;
         }
 
-        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A))
-        {
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
             Debug.Assert(Low != null && High != null);
             ByteRegister.A.CopyFrom(instruction, Low);
             ByteRegister.A.Store(instruction, Cate.Compiler.Instance.LowByteOperand(operand));
@@ -105,11 +104,10 @@ internal class WordZeroPage(int id) : Cate.WordRegister(id, IdToName(id))
     public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Low != null && High != null);
-        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A))
-        {
+        using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
             ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset);
             Low.CopyFrom(instruction, ByteRegister.A);
-            ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset+1);
+            ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset + 1);
             High.CopyFrom(instruction, ByteRegister.A);
         }
         //instruction.AddChanged(this);
@@ -128,7 +126,7 @@ internal class WordZeroPage(int id) : Cate.WordRegister(id, IdToName(id))
         //if (register is not WordZeroPage zeroPage)
         //    throw new NotImplementedException();
         Debug.Assert(Low != null && High != null);
-        Debug.Assert(register is { Low: { }, High: { } });
+        Debug.Assert(register is { Low: not null, High: not null });
         Low.CopyFrom(instruction, register.Low);
         High.CopyFrom(instruction, register.High);
         //instruction.AddChanged(this);

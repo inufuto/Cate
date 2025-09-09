@@ -55,7 +55,7 @@ internal class Compiler(bool parameterRegister) : Cate.Compiler(new ByteOperatio
             variable.Register = ByteRegister.X;
         }
 
-        var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
+        var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: not { Register: null } }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         foreach (var variable in usageOrdered) {
             var variableType = variable.Type;
             var register = variableType.ByteCount switch

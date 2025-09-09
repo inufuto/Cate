@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@55 = pMonster[3] & -8")) {
+            if (instruction.ToString().Contains("@5 = DecideDirection_.28.directionIndices_+3")) {
                 var aaa = 111;
             }
 #endif
