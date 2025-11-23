@@ -25,7 +25,11 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
-        var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null)
+        if (function.Name.Contains("SPrintC"))
+        {
+            var aaa = 111;
+        }
+        var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null })
             .OrderBy(v => v.Range)
             .ThenByDescending(v => v.Usages.Count).ToList();
         foreach (var variable in rangeOrdered) {
@@ -36,7 +40,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             }
         }
 
-        var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
+        var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         foreach (var variable in usageOrdered) {
             var variableType = variable.Type;
             var register = variableType.ByteCount == 1 ? AllocatableRegister(variable, ByteRegister.Registers, function) : AllocatableRegister(variable, WordRegister.Registers, function);
@@ -50,9 +54,9 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 continue;
             var register = variable.Parameter.Register;
             switch (register) {
-                case ByteRegister byteRegister when !Conflict(variable.Intersections, byteRegister):
-                    variable.Register = byteRegister;
-                    break;
+                //case ByteRegister byteRegister when !Conflict(variable.Intersections, byteRegister):
+                //    variable.Register = byteRegister;
+                //    break;
                 case ByteRegister _: {
                         register = AllocatableRegister(variable, ByteRegister.Registers, function);
                         if (register != null) {
@@ -60,9 +64,9 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                         }
                         break;
                     }
-                case WordRegister wordRegister when !Conflict(variable.Intersections, wordRegister):
-                    variable.Register = wordRegister;
-                    break;
+                //case WordRegister wordRegister when !Conflict(variable.Intersections, wordRegister):
+                //    variable.Register = wordRegister;
+                //    break;
                 case WordRegister _: {
                         register = AllocatableRegister(variable, WordRegister.Registers, function);
                         if (register != null) {

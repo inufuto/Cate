@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("@5 = DecideDirection_.28.directionIndices_+3")) {
+            if (instruction.ToString().Contains("if pMap < StageMap_+384")) {
                 var aaa = 111;
             }
 #endif

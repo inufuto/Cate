@@ -75,6 +75,9 @@ namespace Inu.Cate.Tms99
                 }
                 Tms99.WordOperation.OperateConstant(this, "ci", LeftOperand, integerOperand.IntegerValue);
             }
+            else if (RightOperand is PointerOperand pointerOperand) {
+                Tms99.WordOperation.OperateConstant(this, "ci", LeftOperand, pointerOperand.MemoryAddress());
+            }
             else {
                 Tms99.WordOperation.Operate(this, "c", LeftOperand, RightOperand);
             }
