@@ -25,10 +25,6 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
-        if (function.Name.Contains("SPrintC"))
-        {
-            var aaa = 111;
-        }
         var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null })
             .OrderBy(v => v.Range)
             .ThenByDescending(v => v.Usages.Count).ToList();

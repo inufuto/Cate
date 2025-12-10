@@ -16,4 +16,11 @@ internal class SubroutineInstruction(
     {
         StoreParametersViaPointer();
     }
+    public override int? RegisterAdaptability(Variable variable, Register register)
+    {
+        if (register.Conflicts(WordRegister.FromAddress(0)) && DestinationOperand is IndirectOperand indirectOperand && indirectOperand.Variable == variable) {
+            return null;
+        }
+        return base.RegisterAdaptability(variable, register);
+    }
 }

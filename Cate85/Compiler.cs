@@ -123,6 +123,10 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
+        if (function.Name.Contains("SPrintC"))
+        {
+            var aaa = 111;
+        }
         var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null })
                 .OrderBy(v => v.Range)
                 .ThenByDescending(v => v.Usages.Count).ToList();
@@ -166,9 +170,9 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 continue;
             var register = variable.Parameter.Register;
             switch (register) {
-                case ByteRegister byteRegister when !Conflict(variable.Intersections, byteRegister):
-                    variable.Register = byteRegister;
-                    break;
+                //case ByteRegister byteRegister when !Conflict(variable.Intersections, byteRegister):
+                //    variable.Register = byteRegister;
+                //    break;
                 case ByteRegister _: {
                         register = AllocatableRegister(variable, ByteOperation.Registers, function);
                         if (register != null) {
@@ -176,9 +180,9 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                         }
                         break;
                     }
-                case WordRegister wordRegister when !Conflict(variable.Intersections, wordRegister):
-                    variable.Register = wordRegister;
-                    break;
+                //case WordRegister wordRegister when !Conflict(variable.Intersections, wordRegister):
+                //    variable.Register = wordRegister;
+                //    break;
                 case WordRegister _: {
                         register = AllocatableRegister(variable, WordOperation.Registers, function);
                         if (register != null) {
