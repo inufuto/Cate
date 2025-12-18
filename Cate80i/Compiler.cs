@@ -6,11 +6,9 @@ using System.Linq;
 
 namespace Inu.Cate.I8080;
 
-internal class Compiler : Cate.Compiler
+internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation())
 {
     public const string TemporaryByte = "@Temporary@Byte";
-
-    public Compiler() : base(new ByteOperation(), new WordOperation()) { }
 
     protected override void WriteAssembly(StreamWriter writer)
     {
@@ -31,30 +29,36 @@ internal class Compiler : Cate.Compiler
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
-        var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
+        var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
         AllocateOrdered(rangeOrdered);
-        var usageOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
+        var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         AllocateOrdered(usageOrdered);
 
         foreach (var variable in variables.Where(v => v.Register == null && !v.Static)) {
             if (variable.Parameter?.Register == null)
                 continue;
             var register = variable.Parameter.Register;
-            if (register is ByteRegister byteRegister && !Conflict(variable.Intersections, byteRegister)) {
-                variable.Register = byteRegister;
-            }
-            else if (register is ByteRegister) {
-                register = AllocatableRegister(variable, ByteRegister.Registers, function);
-                if (register != null) {
-                    variable.Register = register;
-                }
-            }
-            else if (register is WordRegister wordRegister) {
-                register = AllocatableRegister(variable, WordRegister.Registers, function);
-                if (register != null) {
-                    variable.Register = register;
-                }
+            switch (register) {
+                case ByteRegister byteRegister when !Conflict(variable.Intersections, byteRegister):
+                    variable.Register = byteRegister;
+                    break;
+                case ByteRegister: {
+                        register = MostAdaptableRegister(variable, ByteRegister.Registers);
+                        if (register != null) {
+                            variable.Register = register;
+                        }
+
+                        break;
+                    }
+                case WordRegister: {
+                        register = MostAdaptableRegister(variable, WordRegister.Registers);
+                        if (register != null) {
+                            variable.Register = register;
+                        }
+
+                        break;
+                    }
             }
         }
 
@@ -67,11 +71,11 @@ internal class Compiler : Cate.Compiler
                 Register? register;
                 if (variableType.ByteCount == 1) {
                     var registers = ByteRegister.Registers;
-                    register = AllocatableRegister(variable, registers, function);
+                    register = MostAdaptableRegister(variable, registers);
                 }
                 else {
                     var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
-                    register = AllocatableRegister(variable, registers, function);
+                    register = MostAdaptableRegister(variable, registers);
                 }
                 if (register == null)
                     continue;
@@ -80,7 +84,7 @@ internal class Compiler : Cate.Compiler
         }
     }
 
-    
+
     public override Register? ParameterRegister(int index, ParameterizableType type)
     {
         return SubroutineInstruction.ParameterRegister(index, type);
@@ -253,5 +257,29 @@ internal class Compiler : Cate.Compiler
         instruction.WriteLine("\tcall\t" + functionName);
         Instance.AddExternalName(functionName);
 
+    }
+
+    public override void BuildAssignmentInstructions(Assignment assignment, Function function, AssignableOperand destinationOperand)
+    {
+        if (assignment.RightValue is FunctionCall && destinationOperand is IndirectOperand) {
+            var temporaryVariable = function.CreateTemporaryVariable(assignment.Type);
+            var variableOperand = new VariableOperand(temporaryVariable, assignment.Type, 0);
+            assignment.RightValue.BuildInstructions(function, variableOperand);
+            var instruction = Compiler.Instance.CreateLoadInstruction(function, destinationOperand, variableOperand);
+            function.Instructions.Add(instruction);
+        }
+        else {
+            base.BuildAssignmentInstructions(assignment, function, destinationOperand);
+        }
+    }
+
+    public override Operand DereferenceToOperand(Dereference dereference, Function function)
+    {
+        var sourceOperand = dereference.ToAssignableOperand(function);
+        var temporaryVariable = function.CreateTemporaryVariable(dereference.Type);
+        var variableOperand = new VariableOperand(temporaryVariable, dereference.Type, 0);
+        var instruction = Instance.CreateLoadInstruction(function, variableOperand, sourceOperand);
+        function.Instructions.Add(instruction);
+        return variableOperand;
     }
 }

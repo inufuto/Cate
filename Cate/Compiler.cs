@@ -1698,7 +1698,7 @@ public abstract class Compiler
 
     public virtual void RemoveSavingRegister(ISet<Register> savedRegisters, Register returnRegister) { }
 
-    protected Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers, Function function) where T : Register
+    protected T? MostAdaptableRegister<T>(Variable variable, IEnumerable<T> registers) where T : Register
     {
         T? maxRegister = null;
         int? max = null;
@@ -1712,6 +1712,7 @@ public abstract class Compiler
         }
         return maxRegister;
     }
+
 
     protected static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
     {
@@ -1736,4 +1737,14 @@ public abstract class Compiler
     }
 
     public virtual void RemoveRegisterAssignment(Instruction instruction) { }
+
+    public virtual void BuildAssignmentInstructions(Assignment assignment, Function function, AssignableOperand destinationOperand)
+    {
+        assignment.RightValue.BuildInstructions(function, destinationOperand);
+    }
+
+    public virtual Operand DereferenceToOperand(Dereference dereference, Function function)
+    {
+        return dereference.ToAssignableOperand(function);
+    }
 }

@@ -26,10 +26,10 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
-        var rangeOrdered = variables.Where(v => v.Register == null && !v.Static && v.Parameter == null).OrderBy(v => v.Range)
+        var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderBy(v => v.Range)
             .ThenBy(v => v.Usages.Count).ToList();
         foreach (var variable in rangeOrdered) {
-            if (variable.Type.ByteCount == 1 && !Conflict(variable.Intersections, ByteRegister.A) && RegisterAdaptability(variable, ByteRegister.A) != null) {
+            if (variable.Type.ByteCount == 1 && !Conflict(variable.Intersections, ByteRegister.A) && Equals(MostAdaptableRegister(variable, ByteRegister.Registers), ByteRegister.A)) {
                 variable.Register = ByteRegister.A;
                 continue;
             }
@@ -62,16 +62,16 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             var variableType = variable.Type;
             Register? register;
             if (variableType.ByteCount == 1) {
-                register = AllocatableRegister(variable, ByteRegister.Registers, function);
+                register = MostAdaptableRegister(variable, ByteRegister.Registers);
             }
             else {
                 if (variableType is PointerType pointerType) {
                     var registers = pointerType.ElementType is StructureType ? new List<WordRegister>() { WordRegister.Ix, WordRegister.Iy, WordRegister.Hl, WordRegister.De, WordRegister.Bc, } : new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc, WordRegister.Ix, WordRegister.Iy };
-                    register = AllocatableRegister(variable, registers, function);
+                    register = MostAdaptableRegister(variable, registers);
                 }
                 else {
                     var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
-                    register = AllocatableRegister(variable, registers, function);
+                    register = MostAdaptableRegister(variable, registers);
                 }
             }
             if (register == null)
@@ -87,7 +87,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 variable.Register = byteRegister;
             }
             else if (register is ByteRegister) {
-                register = AllocatableRegister(variable, ByteRegister.Registers, function);
+                register = MostAdaptableRegister(variable, ByteRegister.Registers);
                 if (register != null) {
                     variable.Register = register;
                 }
@@ -101,7 +101,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                     else {
                         candidates = WordRegister.Registers;
                     }
-                    register = AllocatableRegister(variable, candidates, function);
+                    register = MostAdaptableRegister(variable, candidates);
                     if (register != null) {
                         variable.Register = register;
                     }
@@ -242,6 +242,30 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
     {
         instruction.WriteLine("\tcall\t" + externalName);
         Instance.AddExternalName(externalName);
+    }
+
+    public override void BuildAssignmentInstructions(Assignment assignment, Function function, AssignableOperand destinationOperand)
+    {
+        if (assignment.RightValue is FunctionCall && destinationOperand is IndirectOperand) {
+            var temporaryVariable = function.CreateTemporaryVariable(assignment.Type);
+            var variableOperand = new VariableOperand(temporaryVariable, assignment.Type, 0);
+            assignment.RightValue.BuildInstructions(function, variableOperand);
+            var instruction = Compiler.Instance.CreateLoadInstruction(function, destinationOperand, variableOperand);
+            function.Instructions.Add(instruction);
+        }
+        else {
+            base.BuildAssignmentInstructions(assignment, function, destinationOperand);
+        }
+    }
+
+    public override Operand DereferenceToOperand(Dereference dereference, Function function)
+    {
+        var sourceOperand = dereference.ToAssignableOperand(function);
+        var temporaryVariable = function.CreateTemporaryVariable(dereference.Type);
+        var variableOperand = new VariableOperand(temporaryVariable, dereference.Type, 0);
+        var instruction = Instance.CreateLoadInstruction(function, variableOperand, sourceOperand);
+        function.Instructions.Add(instruction);
+        return variableOperand;
     }
 
     public override Operand LowByteOperand(Operand operand)

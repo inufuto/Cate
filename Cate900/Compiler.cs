@@ -51,28 +51,32 @@ internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOpera
             if (variable.Parameter?.Register == null)
                 continue;
             var register = variable.Parameter.Register;
-            if (register is ByteRegister byteRegister) {
-                if (!Conflict(variable.Intersections, byteRegister)) {
+            switch (register) {
+                case ByteRegister byteRegister when !Conflict(variable.Intersections, byteRegister):
                     variable.Register = byteRegister;
-                }
-                else {
-                    register = AllocatableRegister(variable, ByteRegister.All, function);
-                    if (register != null) {
-                        variable.Register = register;
+                    break;
+                case ByteRegister byteRegister: {
+                        register = MostAdaptableRegister(variable, ByteRegister.All);
+                        if (register != null) {
+                            variable.Register = register;
+                        }
+
+                        break;
                     }
-                }
-            }
-            else if (register is WordRegister wordRegister) {
-                var registers = WordRegister.All;
-                if (registers.Contains(wordRegister) && !Conflict(variable.Intersections, wordRegister)) {
-                    variable.Register = wordRegister;
-                }
-                else {
-                    register = AllocatableRegister(variable, registers, function);
-                    if (register != null) {
-                        variable.Register = register;
+                case WordRegister wordRegister: {
+                        var registers = WordRegister.All;
+                        if (registers.Contains(wordRegister) && !Conflict(variable.Intersections, wordRegister)) {
+                            variable.Register = wordRegister;
+                        }
+                        else {
+                            register = MostAdaptableRegister(variable, registers);
+                            if (register != null) {
+                                variable.Register = register;
+                            }
+                        }
+
+                        break;
                     }
-                }
             }
         }
 
@@ -82,10 +86,10 @@ internal class Compiler() : Inu.Cate.Compiler(new ByteOperation(), new WordOpera
         {
             foreach (var variable in list) {
                 var variableType = variable.Type;
-                var register = variableType.ByteCount switch
+                Register? register = variableType.ByteCount switch
                 {
-                    1 => AllocatableRegister(variable, ByteRegister.All, function),
-                    _ => AllocatableRegister(variable, WordRegister.All, function)
+                    1 => MostAdaptableRegister(variable, ByteRegister.All),
+                    _ => MostAdaptableRegister(variable, WordRegister.All)
                 };
                 if (register == null)
                     continue;

@@ -26,7 +26,7 @@ internal class Compiler(bool constantData) : Cate.Compiler(new ByteOperation(), 
                     variable.Register = byteRegister;
                 }
                 else {
-                    register = AllocatableRegister(variable, ByteRegister.Registers, function);
+                    register = MostAdaptableRegister(variable, ByteRegister.Registers);
                     if (register != null) {
                         variable.Register = register;
                     }
@@ -38,7 +38,7 @@ internal class Compiler(bool constantData) : Cate.Compiler(new ByteOperation(), 
                     variable.Register = wordRegister;
                 }
                 else {
-                    register = AllocatableRegister(variable, registers, function);
+                    register = MostAdaptableRegister(variable, registers);
                     if (register != null) {
                         variable.Register = register;
                     }
@@ -54,10 +54,10 @@ internal class Compiler(bool constantData) : Cate.Compiler(new ByteOperation(), 
                 var variableType = variable.Type;
                 Register? register;
                 if (variableType.ByteCount == 1) {
-                    register = AllocatableRegister(variable, ByteRegister.Registers, function);
+                    register = MostAdaptableRegister(variable, ByteRegister.Registers);
                 }
                 else {
-                    register = variableType is PointerType ? AllocatableRegister(variable, WordRegister.PointerRegisters, function) : AllocatableRegister(variable, WordRegister.Registers, function);
+                    register = variableType is PointerType ? MostAdaptableRegister(variable, WordRegister.PointerRegisters) : MostAdaptableRegister(variable, WordRegister.Registers);
                 }
                 if (register == null)
                     continue;

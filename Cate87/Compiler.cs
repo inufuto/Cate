@@ -38,16 +38,11 @@ internal abstract class Compiler(Cate.ByteOperation byteOperation, Cate.WordOper
         var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Type.ByteCount).ThenByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         var byteRegisters = ByteOperation.RegistersOtherThan(ByteRegister.A);
         foreach (var variable in usageOrdered) {
-            var register = variable.Type.ByteCount switch
+            Register? register = variable.Type.ByteCount switch
             {
-                1 => AllocatableRegister(variable, byteRegisters, function),
-                _ => variable.Type switch
-                {
-                    PointerType => AllocatableRegister(variable, WordOperation.Registers, function),
-                    _ => AllocatableRegister(variable, WordOperation.Registers, function)
-                }
+                1 => MostAdaptableRegister(variable, byteRegisters),
+                _ => MostAdaptableRegister(variable, WordOperation.Registers)
             };
-
             if (register == null)
                 continue;
             variable.Register = register;
@@ -65,7 +60,7 @@ internal abstract class Compiler(Cate.ByteOperation byteOperation, Cate.WordOper
                 variable.Register = byteRegister;
             }
             else if (register is ByteRegister) {
-                register = AllocatableRegister(variable, byteRegisters, function);
+                register = MostAdaptableRegister(variable, byteRegisters);
                 if (register != null) {
                     variable.Register = register;
                 }
@@ -73,7 +68,7 @@ internal abstract class Compiler(Cate.ByteOperation byteOperation, Cate.WordOper
             else if (register is WordRegister wordRegister) {
                 if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, wordRegister)) {
                     var candidates = WordOperation.Registers;
-                    register = AllocatableRegister(variable, candidates, function);
+                    register = MostAdaptableRegister(variable, candidates);
                     if (register != null) {
                         variable.Register = register;
                     }

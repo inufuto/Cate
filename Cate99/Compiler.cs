@@ -30,7 +30,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             .ThenByDescending(v => v.Usages.Count).ToList();
         foreach (var variable in rangeOrdered) {
             var variableType = variable.Type;
-            var register = variableType.ByteCount == 1 ? AllocatableRegister(variable, ByteRegister.Registers, function) : AllocatableRegister(variable, WordRegister.Registers, function);
+            Register? register = variableType.ByteCount == 1 ? MostAdaptableRegister(variable, ByteRegister.Registers) : MostAdaptableRegister(variable, WordRegister.Registers);
             if (register != null) {
                 variable.Register = register;
             }
@@ -39,7 +39,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         foreach (var variable in usageOrdered) {
             var variableType = variable.Type;
-            var register = variableType.ByteCount == 1 ? AllocatableRegister(variable, ByteRegister.Registers, function) : AllocatableRegister(variable, WordRegister.Registers, function);
+            Register? register = variableType.ByteCount == 1 ? MostAdaptableRegister(variable, ByteRegister.Registers) : MostAdaptableRegister(variable, WordRegister.Registers);
             if (register == null)
                 continue;
             variable.Register = register;
@@ -54,7 +54,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 //    variable.Register = byteRegister;
                 //    break;
                 case ByteRegister _: {
-                        register = AllocatableRegister(variable, ByteRegister.Registers, function);
+                        register = MostAdaptableRegister(variable, ByteRegister.Registers);
                         if (register != null) {
                             variable.Register = register;
                         }
@@ -64,7 +64,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 //    variable.Register = wordRegister;
                 //    break;
                 case WordRegister _: {
-                        register = AllocatableRegister(variable, WordRegister.Registers, function);
+                        register = MostAdaptableRegister(variable, WordRegister.Registers);
                         if (register != null) {
                             variable.Register = register;
                         }

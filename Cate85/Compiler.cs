@@ -123,10 +123,6 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override void AllocateRegisters(List<Variable> variables, Function function)
     {
-        if (function.Name.Contains("SPrintC"))
-        {
-            var aaa = 111;
-        }
         var rangeOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: null })
                 .OrderBy(v => v.Range)
                 .ThenByDescending(v => v.Usages.Count).ToList();
@@ -134,13 +130,13 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             var variableType = variable.Type;
             Register? register;
             if (variableType.ByteCount == 1) {
-                register = AllocatableRegister(variable, ByteOperation.Registers, function);
+                register = MostAdaptableRegister(variable, ByteOperation.Registers);
             }
             else if (variableType is PointerType) {
-                register = AllocatableRegister(variable, WordOperation.Registers, function);
+                register = MostAdaptableRegister(variable, WordOperation.Registers);
             }
             else {
-                register = AllocatableRegister(variable, WordOperation.Registers, function);
+                register = MostAdaptableRegister(variable, WordOperation.Registers);
             }
             if (register != null) {
                 variable.Register = register;
@@ -152,13 +148,13 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             var variableType = variable.Type;
             Register? register;
             if (variableType.ByteCount == 1) {
-                register = AllocatableRegister(variable, ByteOperation.Registers, function);
+                register = MostAdaptableRegister(variable, ByteOperation.Registers);
             }
             else if (variableType is PointerType) {
-                register = AllocatableRegister(variable, WordOperation.Registers, function);
+                register = MostAdaptableRegister(variable, WordOperation.Registers);
             }
             else {
-                register = AllocatableRegister(variable, WordOperation.Registers, function);
+                register = MostAdaptableRegister(variable, WordOperation.Registers);
             }
             if (register == null)
                 continue;
@@ -174,7 +170,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 //    variable.Register = byteRegister;
                 //    break;
                 case ByteRegister _: {
-                        register = AllocatableRegister(variable, ByteOperation.Registers, function);
+                        register = MostAdaptableRegister(variable, ByteOperation.Registers);
                         if (register != null) {
                             variable.Register = register;
                         }
@@ -184,7 +180,7 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 //    variable.Register = wordRegister;
                 //    break;
                 case WordRegister _: {
-                        register = AllocatableRegister(variable, WordOperation.Registers, function);
+                        register = MostAdaptableRegister(variable, WordOperation.Registers);
                         if (register != null) {
                             variable.Register = register;
                         }
