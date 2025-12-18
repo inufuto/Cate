@@ -237,5 +237,29 @@ internal abstract class Compiler(Cate.ByteOperation byteOperation, Cate.WordOper
         Instance.AddExternalName(externalName);
     }
 
+    public override void BuildAssignmentInstructions(Assignment assignment, Function function, AssignableOperand destinationOperand)
+    {
+        if (assignment.RightValue is FunctionCall && destinationOperand is IndirectOperand) {
+            var temporaryVariable = function.CreateTemporaryVariable(assignment.Type);
+            var variableOperand = new VariableOperand(temporaryVariable, assignment.Type, 0);
+            assignment.RightValue.BuildInstructions(function, variableOperand);
+            var instruction = Compiler.Instance.CreateLoadInstruction(function, destinationOperand, variableOperand);
+            function.Instructions.Add(instruction);
+        }
+        else {
+            base.BuildAssignmentInstructions(assignment, function, destinationOperand);
+        }
+    }
+
+    public override Operand DereferenceToOperand(Dereference dereference, Function function)
+    {
+        var sourceOperand = dereference.ToAssignableOperand(function);
+        var temporaryVariable = function.CreateTemporaryVariable(dereference.Type);
+        var variableOperand = new VariableOperand(temporaryVariable, dereference.Type, 0);
+        var instruction = Instance.CreateLoadInstruction(function, variableOperand, sourceOperand);
+        function.Instructions.Add(instruction);
+        return variableOperand;
+    }
+
     public abstract void SkipIfZero(Instruction instruction);
 }
