@@ -363,4 +363,14 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
 
     public override string ParameterPrefix => "__";
     public override string LabelPrefix => "__";
+    
+    public override void BuildAssignmentInstructions(Assignment assignment, Function function, AssignableOperand destinationOperand)
+    {
+        BuildAssignmentInstructionsSeparately(assignment, function, destinationOperand);
+    }
+
+    public override Operand DereferenceToOperand(Dereference dereference, Function function)
+    {
+        return DereferenceToOperandSplitSeparately(dereference, function);
+    }
 }

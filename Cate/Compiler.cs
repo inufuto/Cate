@@ -1743,8 +1743,33 @@ public abstract class Compiler
         assignment.RightValue.BuildInstructions(function, destinationOperand);
     }
 
+    protected void BuildAssignmentInstructionsSeparately(Assignment assignment, Function function,
+        AssignableOperand destinationOperand)
+    {
+        if (assignment.RightValue is FunctionCall && destinationOperand is IndirectOperand) {
+            var temporaryVariable = function.CreateTemporaryVariable(assignment.Type);
+            var variableOperand = new VariableOperand(temporaryVariable, assignment.Type, 0);
+            assignment.RightValue.BuildInstructions(function, variableOperand);
+            var instruction = Compiler.Instance.CreateLoadInstruction(function, destinationOperand, variableOperand);
+            function.Instructions.Add(instruction);
+        }
+        else {
+            assignment.RightValue.BuildInstructions(function, destinationOperand);
+        }
+    }
+
     public virtual Operand DereferenceToOperand(Dereference dereference, Function function)
     {
         return dereference.ToAssignableOperand(function);
+    }
+
+    protected Operand DereferenceToOperandSplitSeparately(Dereference dereference, Function function)
+    {
+        var sourceOperand = dereference.ToAssignableOperand(function);
+        var temporaryVariable = function.CreateTemporaryVariable(dereference.Type);
+        var variableOperand = new VariableOperand(temporaryVariable, dereference.Type, 0);
+        var instruction = CreateLoadInstruction(function, variableOperand, sourceOperand);
+        function.Instructions.Add(instruction);
+        return variableOperand;
     }
 }
