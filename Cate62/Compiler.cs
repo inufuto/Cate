@@ -44,11 +44,11 @@ namespace Inu.Cate.Sc62015
             ;
             foreach (var variable in ordered) {
                 var variableType = variable.Type;
-                var register = variableType.ByteCount switch
+                Register? register = variableType.ByteCount switch
                 {
-                    1 => AllocatableRegister(variable, ByteOperation.Registers, function),
-                    2 => AllocatableRegister(variable, WordRegister.Registers.Union(WordInternalRam.Registers), function),
-                    3 => AllocatableRegister(variable, PointerRegister.Registers.Union(PointerInternalRam.Registers), function),
+                    1 => MostAdaptableRegister(variable, ByteOperation.Registers),
+                    2 => MostAdaptableRegister(variable, WordRegister.Registers.Union(WordInternalRam.Registers)),
+                    3 => MostAdaptableRegister(variable, PointerRegister.Registers.Union(PointerInternalRam.Registers)),
                     _ => null
                 };
                 if (register != null) {
@@ -56,17 +56,6 @@ namespace Inu.Cate.Sc62015
                 }
             }
         }
-
-        //private static Register? AllocatableRegister<T>(Variable variable, IEnumerable<T> registers) where T : Register
-        //{
-        //    return (from register in registers let conflict = Conflict(variable.Intersections, register) where !conflict select register).FirstOrDefault();
-        //}
-
-        //private static bool Conflict<T>(IEnumerable<Variable> variables, T register) where T : Register
-        //{
-        //    return variables.Any(v =>
-        //        v.Register != null && register.Conflicts(v.Register));
-        //}
 
         public override Register? ParameterRegister(int index, ParameterizableType type)
         {

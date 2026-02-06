@@ -10,8 +10,10 @@ internal class ByteAddOrSubtractInstruction(
 {
     public override void BuildAssembly()
     {
-        if (RightOperand.Register != null && LeftOperand.Register == null && IsOperatorExchangeable()) {
-            ExchangeOperands();
+        if (IsOperatorExchangeable()) {
+            if ((RightOperand.Register != null && LeftOperand.Register == null) || LeftOperand is ConstantOperand || DestinationOperand.SameStorage(RightOperand)) {
+                ExchangeOperands();
+            }
         }
         if (IncrementOrDecrement()) return;
 

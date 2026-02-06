@@ -154,14 +154,14 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
         {
             foreach (var variable in list) {
                 var variableType = variable.Type;
-                var register = variableType.ByteCount switch
+                Register? register = variableType.ByteCount switch
                 {
-                    1 => AllocatableRegister(variable, byteRegisters, function),
-                    _ => AllocatableRegister(variable, variableType switch
+                    1 => MostAdaptableRegister(variable, byteRegisters),
+                    _ => MostAdaptableRegister(variable, variableType switch
                     {
                         PointerType => pointerRegisters,
                         _ => wordRegisters
-                    }, function)
+                    })
                 };
                 if (register == null)
                     continue;

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Inu.Cate;
 
-internal class FunctionCall(Function function) : Value(function.Type)
+public class FunctionCall(Function function) : Value(function.Type)
 {
     public readonly Function Function = function;
     public readonly List<Value> Parameters = [];

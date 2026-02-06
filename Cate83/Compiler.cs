@@ -36,20 +36,26 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
             if (variable.Parameter?.Register == null)
                 continue;
             var register = variable.Parameter.Register;
-            if (register is ByteRegister byteRegister && !Conflict(variable.Intersections, byteRegister)) {
-                variable.Register = byteRegister;
-            }
-            else if (register is ByteRegister) {
-                register = AllocatableRegister(variable, ByteRegister.Registers, function);
-                if (register != null) {
-                    variable.Register = register;
-                }
-            }
-            else if (register is WordRegister) {
-                register = AllocatableRegister(variable, WordRegister.Registers, function);
-                if (register != null) {
-                    variable.Register = register;
-                }
+            switch (register) {
+                case ByteRegister byteRegister when !Conflict(variable.Intersections, byteRegister):
+                    variable.Register = byteRegister;
+                    break;
+                case ByteRegister: {
+                        register = MostAdaptableRegister(variable, ByteRegister.Registers);
+                        if (register != null) {
+                            variable.Register = register;
+                        }
+
+                        break;
+                    }
+                case WordRegister: {
+                        register = MostAdaptableRegister(variable, WordRegister.Registers);
+                        if (register != null) {
+                            variable.Register = register;
+                        }
+
+                        break;
+                    }
             }
         }
 
@@ -62,11 +68,11 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
                 Register? register;
                 if (variableType.ByteCount == 1) {
                     var registers = ByteRegister.Registers;
-                    register = AllocatableRegister(variable, registers, function);
+                    register = MostAdaptableRegister(variable, registers);
                 }
                 else {
                     var registers = new List<WordRegister>() { WordRegister.Hl, WordRegister.De, WordRegister.Bc };
-                    register = AllocatableRegister(variable, registers, function);
+                    register = MostAdaptableRegister(variable, registers);
                 }
                 if (register == null)
                     continue;
@@ -242,5 +248,15 @@ internal class Compiler() : Cate.Compiler(new ByteOperation(), new WordOperation
     {
         instruction.WriteLine("\tcall\t" + functionName);
         Instance.AddExternalName(functionName);
+    }
+
+    public override void BuildAssignmentInstructions(Assignment assignment, Function function, AssignableOperand destinationOperand)
+    {
+        BuildAssignmentInstructionsSeparately(assignment, function, destinationOperand);
+    }
+
+    public override Operand DereferenceToOperand(Dereference dereference, Function function)
+    {
+        return DereferenceToOperandSplitSeparately(dereference, function);
     }
 }
