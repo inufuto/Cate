@@ -2,11 +2,8 @@
 
 namespace Inu.Cate;
 
-public abstract class AssignableValue : Value
+public abstract class AssignableValue(Type type) : Value(type)
 {
-    protected AssignableValue(Type type) : base(type)
-    { }
-
     public override Operand ToOperand(Function function)
     {
         return ToAssignableOperand(function);

@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("*pStatus = FromAscii_(c)")) {
+            if (instruction.ToString().Contains("__6 = pattern + seq")) {
                 var aaa = 111;
             }
 #endif

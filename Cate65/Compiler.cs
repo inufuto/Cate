@@ -58,13 +58,14 @@ internal class Compiler(bool parameterRegister) : Cate.Compiler(new ByteOperatio
         var usageOrdered = variables.Where(v => v.Register == null && v is { Static: false, Parameter: not { Register: null } }).OrderByDescending(v => v.Usages.Count).ThenBy(v => v.Range).ToList();
         foreach (var variable in usageOrdered) {
             var variableType = variable.Type;
-            var register = variableType.ByteCount switch
-            {
-                1 => AllocatableRegister(variable, ByteZeroPage.Registers, function),
-                _ => AllocatableRegister(variable, WordZeroPage.Registers, function)
-            };
-            if (register == null)
-                continue;
+            Register? register;
+            if (variableType.ByteCount == 1) {
+                register = MostAdaptableRegister(variable, ByteZeroPage.Registers);
+            }
+            else {
+                register = MostAdaptableRegister(variable, WordZeroPage.Registers);
+            }
+            if (register == null) continue;
             variable.Register = register;
         }
 
@@ -76,7 +77,7 @@ internal class Compiler(bool parameterRegister) : Cate.Compiler(new ByteOperatio
                 variable.Register = byteRegister;
             }
             else if (register is ByteRegister) {
-                register = AllocatableRegister(variable, ByteZeroPage.Registers, function);
+                register = MostAdaptableRegister(variable, ByteZeroPage.Registers);
                 if (register != null) {
                     variable.Register = register;
                 }
@@ -84,7 +85,7 @@ internal class Compiler(bool parameterRegister) : Cate.Compiler(new ByteOperatio
             else if (register is WordRegister wordRegister) {
                 if ((variable.Type is PointerType { ElementType: StructureType _ }) || Conflict(variable.Intersections, wordRegister)) {
                     var candidates = WordZeroPage.Registers;
-                    register = AllocatableRegister(variable, candidates, function);
+                    register = MostAdaptableRegister(variable, candidates);
                     if (register != null) {
                         variable.Register = register;
                     }

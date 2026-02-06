@@ -110,7 +110,7 @@ internal class Compiler : Cate.Compiler
             var variableType = variable.Type;
             Cate.Register? register = null;
             if (variableType.ByteCount != 1) continue;
-            register = AllocatableRegister(variable, ByteRegister.Registers, function);
+            register = MostAdaptableRegister(variable, ByteRegister.Registers);
             if (register != null) {
                 variable.Register = register;
             }
@@ -121,11 +121,11 @@ internal class Compiler : Cate.Compiler
             var variableType = variable.Type;
             Cate.Register? register;
             if (variableType.ByteCount == 1) {
-                register = AllocatableRegister(variable, ByteRegister.Registers, function);
+                register = MostAdaptableRegister(variable, ByteRegister.Registers);
             }
             else {
-                List<Cate.WordRegister> registers = variableType is PointerType ? WordRegister.IndexRegisters : WordRegister.Registers;
-                register = AllocatableRegister(variable, registers, function);
+                var registers = variableType is PointerType ? WordRegister.IndexRegisters : WordRegister.Registers;
+                register = MostAdaptableRegister(variable, registers);
             }
             if (register == null)
                 continue;
@@ -141,7 +141,7 @@ internal class Compiler : Cate.Compiler
                     variable.Register = byteRegister;
                     break;
                 case ByteRegister _: {
-                        register = AllocatableRegister(variable, ByteRegister.Registers, function);
+                        register = MostAdaptableRegister(variable, ByteRegister.Registers);
                         if (register != null) {
                             variable.Register = register;
                         }
@@ -151,7 +151,7 @@ internal class Compiler : Cate.Compiler
                     variable.Register = wordRegister;
                     break;
                 case WordRegister _: {
-                        register = AllocatableRegister(variable, WordRegister.Registers, function);
+                        register = MostAdaptableRegister(variable, WordRegister.Registers);
                         if (register != null) {
                             variable.Register = register;
                         }

@@ -3,7 +3,7 @@ using Inu.Language;
 
 namespace Inu.Cate;
 
-class Dereference : AssignableValue
+public class Dereference : AssignableValue
 {
     private readonly Value sourceValue;
     private readonly int offset;
@@ -25,13 +25,12 @@ class Dereference : AssignableValue
             return;
         }
         variable = function.CreateTemporaryVariable(new PointerType(Type));
-        //var assignableOperand = temporaryVariable.ToAssignableOperand(function, Variable.Usage.Write, temporaryVariable.Type, offset);
         sourceValue.BuildInstructions(function, variable.ToAssignableOperand());
     }
 
     public override Operand ToOperand(Function function)
     {
-        return ToAssignableOperand(function);
+        return Compiler.DereferenceToOperand(this, function);
     }
 
     public override bool CanAssign()
