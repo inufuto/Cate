@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("__6 = pattern + seq")) {
+            if (instruction.ToString().Contains("@4 = @5 >> @6")) {
                 var aaa = 111;
             }
 #endif
