@@ -11,6 +11,7 @@ public class Anchor
     public readonly ISet<int> OriginAddresses = new HashSet<int>();
     private readonly int id;
     private int? address;
+    private int endLabelCount = 0;
 
     public Anchor(Function function)
     {
@@ -30,11 +31,23 @@ public class Anchor
         OriginAddresses.Add(originAddress);
     }
 
-    public int? Address {
+    public int? Address
+    {
         get => address;
-        set {
+        set
+        {
             Debug.Assert(address == null);
             address = value;
         }
+    }
+
+    public string NewEndLabel()
+    {
+        var label = Label + "_end";
+        if (endLabelCount != 0) {
+            label += endLabelCount;
+        }
+        ++endLabelCount;
+        return label;
     }
 }
