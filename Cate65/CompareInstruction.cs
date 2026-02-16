@@ -215,11 +215,12 @@ internal class CompareInstruction(
             else {
                 unsignedBranch();
             }
-            WriteLine("\tbne\t" + Anchor + "_end");
+            var endLabel = Anchor.NewEndLabel();
+            WriteLine("\tbne\t" + endLabel);
 
             CompareLowByte();
             lowByteBranch();
-            WriteLine(Anchor + "_end:");
+            WriteLine(endLabel + ":");
         }
 
         switch (OperatorId) {

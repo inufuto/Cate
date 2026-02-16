@@ -2,11 +2,14 @@
 
 namespace Inu.Cate.Mc6800;
 
-internal class CompareInstruction : Cate.CompareInstruction
+internal class CompareInstruction(
+    Function function,
+    int operatorId,
+    Operand leftOperand,
+    Operand rightOperand,
+    Anchor anchor)
+    : Cate.CompareInstruction(function, operatorId, leftOperand, rightOperand, anchor)
 {
-    public CompareInstruction(Function function, int operatorId, Operand leftOperand, Operand rightOperand, Anchor anchor)
-        : base(function, operatorId, leftOperand, rightOperand, anchor) { }
-
     protected override void CompareByte()
     {
         if (RightOperand is IntegerOperand { IntegerValue: 0 }) {
@@ -29,7 +32,7 @@ internal class CompareInstruction : Cate.CompareInstruction
             register.Load(this, LeftOperand);
             register.Operate(this, "cmp", false, RightOperand);
         }
-        jump:
+    jump:
         switch (OperatorId) {
             case Keyword.Equal:
                 WriteJumpLine("\tbeq\t" + Anchor);
@@ -91,24 +94,6 @@ internal class CompareInstruction : Cate.CompareInstruction
         using var reservation = ByteOperation.ReserveAnyRegister(this);
         var register = reservation.ByteRegister;
 
-        void WriteInstructions(string signedBranch, string unsignedBranch, string lowByteBranch)
-        {
-            register.Load(this, Compiler.HighByteOperand(LeftOperand));
-            register.Operate(this, "cmp", false, Compiler.HighByteOperand(RightOperand));
-            if (Signed) {
-                WriteLine("\t" + signedBranch + "\t" + Anchor);
-            }
-            else {
-                WriteLine("\t" + unsignedBranch + "\t" + Anchor);
-            }
-            WriteLine("\tbne\t" + Anchor + "_end");
-
-            register.Load(this, Compiler.LowByteOperand(LeftOperand));
-            register.Operate(this, "cmp", false, Compiler.LowByteOperand(RightOperand));
-            WriteLine("\t" + lowByteBranch + "\t" + Anchor);
-            WriteLine(Anchor + "_end:");
-        }
-
         switch (OperatorId) {
             case '<':
                 WriteInstructions("blt", "bcs", "bcs");
@@ -127,5 +112,26 @@ internal class CompareInstruction : Cate.CompareInstruction
         }
         // Register value is not guaranteed due to branching
         RemoveRegisterAssignment(register);
+        return;
+
+        void WriteInstructions(string signedBranch, string unsignedBranch, string lowByteBranch)
+        {
+            register.Load(this, Compiler.HighByteOperand(LeftOperand));
+            register.Operate(this, "cmp", false, Compiler.HighByteOperand(RightOperand));
+            if (Signed) {
+                WriteLine("\t" + signedBranch + "\t" + Anchor);
+            }
+            else {
+                WriteLine("\t" + unsignedBranch + "\t" + Anchor);
+            }
+
+            var endLabel = Anchor.NewEndLabel();
+            WriteLine("\tbne\t" + endLabel);
+
+            register.Load(this, Compiler.LowByteOperand(LeftOperand));
+            register.Operate(this, "cmp", false, Compiler.LowByteOperand(RightOperand));
+            WriteLine("\t" + lowByteBranch + "\t" + Anchor);
+            WriteLine(endLabel + ":");
+        }
     }
 }

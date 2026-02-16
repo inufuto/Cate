@@ -231,6 +231,13 @@ internal class ByteRegister : Cate.ByteRegister
             });
             return;
         }
+        if (Equals(A) && !((WordRegister)pointerRegister).Addable && Math.Abs(offset) > ((WordRegister)pointerRegister).AddingThreshold)
+        {
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, WordRegister.Registers.Where(r => ((WordRegister)r).Addable).ToList());
+            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+            LoadIndirect(instruction, reservation.WordRegister, offset);
+            return;
+        }
 
         pointerRegister.TemporaryOffset(instruction, offset, () =>
         {

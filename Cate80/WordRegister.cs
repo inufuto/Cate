@@ -64,19 +64,27 @@ internal abstract class WordRegister : Cate.WordRegister
         writer.WriteLine("\tpop\t" + Name + comment);
     }
 
+    public int AddingThreshold
+    {
+        get
+        {
+            if (!IsPair()) return 0;
+            return Addable ? 4 : 8;
+        }
+    }
+
     public override void Add(Instruction instruction, int offset)
     {
         if (offset == 0) { return; }
 
-        const int threshold = 4;
         var count = offset & 0xffff;
-        if (count <= threshold) {
+        if (count <= AddingThreshold) {
             Loop("inc");
             instruction.AddChanged(this);
             instruction.RemoveRegisterAssignment(this);
             return;
         }
-        if (count >= 0x10000 - threshold) {
+        if (count >= 0x10000 - AddingThreshold) {
             count = 0x10000 - count;
             Loop("dec");
             instruction.AddChanged(this);

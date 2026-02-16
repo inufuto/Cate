@@ -30,6 +30,11 @@ namespace Inu.Cate.I8080
             };
             using (ByteOperation.ReserveRegister(this, ByteRegister.B)) {
                 ByteRegister.B.Load(this, RightOperand);
+                if (DestinationOperand.Register != null && Equals(DestinationOperand.Register, ByteRegister.A)) {
+                    ByteRegister.A.Load(this, LeftOperand);
+                    Compiler.CallExternal(this, functionName);
+                    return;
+                }
                 using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
                     ByteRegister.A.Load(this, LeftOperand);
                     Compiler.CallExternal(this, functionName);
