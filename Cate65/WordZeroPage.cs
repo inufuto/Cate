@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace Inu.Cate.Mos6502;
 
@@ -104,19 +105,32 @@ internal class WordZeroPage(int id) : Cate.WordRegister(id, IdToName(id))
     public override void LoadIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Low != null && High != null);
+        if (Equals(pointerRegister, this))
+        {
+            var candidates = Registers.Where(r => !Equals(r, this)).ToList();
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+            LoadIndirect(instruction, reservation.WordRegister, offset);
+            return;
+        }
         using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
             ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset);
             Low.CopyFrom(instruction, ByteRegister.A);
             ByteRegister.A.LoadIndirect(instruction, pointerRegister, offset + 1);
             High.CopyFrom(instruction, ByteRegister.A);
         }
-        //instruction.AddChanged(this);
-        //instruction.RemoveVariableRegister(this);
     }
 
     public override void StoreIndirect(Instruction instruction, WordRegister pointerRegister, int offset)
     {
         Debug.Assert(Low != null && High != null);
+        if (Equals(pointerRegister, this)) {
+            var candidates = Registers.Where(r => !Equals(r, this)).ToList();
+            using var reservation = WordOperation.ReserveAnyRegister(instruction, candidates);
+            reservation.WordRegister.CopyFrom(instruction, pointerRegister);
+            StoreIndirect(instruction, reservation.WordRegister, offset);
+            return;
+        }
         Low.StoreIndirect(instruction, pointerRegister, offset);
         High.StoreIndirect(instruction, pointerRegister, offset + 1);
     }

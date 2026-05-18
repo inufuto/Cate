@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("if shotX < alienX")) {
+            if (instruction.ToString().Contains("p = pStage[5]")) {
                 var aaa = 111;
             }
 #endif
