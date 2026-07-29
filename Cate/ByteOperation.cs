@@ -189,7 +189,7 @@ public abstract class ByteOperation : RegisterOperation<ByteRegister>
         reservation.ByteRegister.StoreToMemory(instruction, label);
     }
 
-    public void OperateByteBinomial(BinomialInstruction instruction, string operation, bool change)
+    public virtual void OperateByteBinomial(BinomialInstruction instruction, string operation, bool change)
     {
         if (
             instruction.DestinationOperand.Register is ByteRegister byteRegister &&

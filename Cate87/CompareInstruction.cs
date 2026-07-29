@@ -140,7 +140,7 @@ internal abstract class CompareInstruction(
         action();
     }
 
-    private void OperateConstant(string operation, Action action, string value)
+    protected virtual void OperateConstant(string operation, Action action, string value)
     {
         ByteRegister.A.Load(this, LeftOperand);
         WriteJumpLine("\t" + operation.Split('|')[1] + "\ta," + value);

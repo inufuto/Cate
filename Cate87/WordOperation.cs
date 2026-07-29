@@ -1,23 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
-namespace Inu.Cate.MuCom87
+namespace Inu.Cate.MuCom87;
+
+internal abstract class WordOperation : Cate.WordOperation
 {
-    internal class WordOperation : Cate.WordOperation
-    {
-        public override List<Cate.WordRegister> Registers => WordRegister.Registers;
-        //public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
-        //{
-        //    // cannot operate
-        //    throw new NotImplementedException();
-        //}
+    public override List<Cate.WordRegister> Registers => WordRegister.Registers;
 
-        //public override Operand LowByteOperand(Operand operand)
-        //{
-        //    return Compiler.LowByteOperand(operand);
-        //}
+    public abstract int Threshold { get; }
 
-        protected override bool CanCopyRegisterToSave(Instruction instruction, Cate.WordRegister register) => false;
-    }
+    protected override bool CanCopyRegisterToSave(Instruction instruction, Cate.WordRegister register) => false;
+    public abstract void AddRegister(Instruction instruction, WordRegister wordRegister, int offset);
+    public abstract void SubtractRegister(Instruction instruction, WordRegister wordRegister, int offset);
 }

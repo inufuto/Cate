@@ -362,48 +362,33 @@ internal class WordRegister(int id, Cate.ByteRegister high, Cate.ByteRegister lo
 
     public override void Add(Instruction instruction, int offset)
     {
+        var threshold = ((WordOperation)WordOperation).Threshold;
         if (offset > 0) {
-            if (offset < 8) {
+            if (offset < threshold) {
                 var count = offset;
                 while (count > 0) {
                     instruction.WriteLine("\tinx\t" + AsmName);
                     --count;
                 }
-                instruction.RemoveRegisterAssignment(this);
-                instruction.AddChanged(this);
-                return;
             }
-            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-                Debug.Assert(Low != null);
-                Debug.Assert(High != null);
-                ByteRegister.A.CopyFrom(instruction, Low);
-                instruction.WriteLine("\tadi\ta,low " + offset);
-                Low.CopyFrom(instruction, ByteRegister.A);
-                ByteRegister.A.CopyFrom(instruction, High);
-                instruction.WriteLine("\taci\ta,high " + offset);
-                High.CopyFrom(instruction, ByteRegister.A);
+            else {
+                ((WordOperation)WordOperation).AddRegister(instruction, this, offset);
             }
         }
         else if (offset < 0) {
-            if (offset > -8) {
+            if (offset > -threshold) {
                 var count = -offset;
                 while (count > 0) {
                     instruction.WriteLine("\tdcx\t" + AsmName);
                     --count;
                 }
-                return;
             }
-            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
-                Debug.Assert(Low != null);
-                Debug.Assert(High != null);
-                ByteRegister.A.CopyFrom(instruction, Low);
-                instruction.WriteLine("\tsui\ta,low " + -offset);
-                Low.CopyFrom(instruction, ByteRegister.A);
-                ByteRegister.A.CopyFrom(instruction, High);
-                instruction.WriteLine("\tsbi\ta,high " + -offset);
-                High.CopyFrom(instruction, ByteRegister.A);
+            else {
+                ((WordOperation)WordOperation).SubtractRegister(instruction, this, offset);
             }
         }
+        instruction.RemoveRegisterAssignment(this);
+        instruction.AddChanged(this);
     }
 
     public override void Save(Instruction instruction)
