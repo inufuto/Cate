@@ -384,7 +384,7 @@ internal class WordRegister(int id, Cate.ByteRegister high, Cate.ByteRegister lo
                 }
             }
             else {
-                ((WordOperation)WordOperation).SubtractRegister(instruction, this, offset);
+                ((WordOperation)WordOperation).SubtractRegister(instruction, this, -offset);
             }
         }
         instruction.RemoveRegisterAssignment(this);

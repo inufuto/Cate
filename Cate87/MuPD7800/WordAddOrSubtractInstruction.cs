@@ -25,6 +25,8 @@ internal class WordAddOrSubtractInstruction(Function function, int operatorId, A
                 Debug.Assert(wordRegister.High != null);
                 wordRegister.Low.Operate(this, lowOperation, true, Compiler.LowByteOperand(constantOperand));
                 wordRegister.High.Operate(this, highOperation, true, Compiler.HighByteOperand(constantOperand));
+                RemoveRegisterAssignment(wordRegister);
+                AddChanged(wordRegister);
                 wordRegister.Store(this, DestinationOperand);
             }
         }
