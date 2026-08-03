@@ -74,5 +74,16 @@ namespace Inu.Cate.MuCom87
             register.StoreToMemory(instruction, label);
             return label;
         }
+
+        public virtual void OperateByteRegister(Instruction instruction, ByteRegister byteRegister, string operation, bool change, ConstantOperand constantOperand)
+        {
+            using (ByteOperation.ReserveRegister(instruction, ByteRegister.A)) {
+                ByteRegister.A.CopyFrom(instruction, byteRegister);
+                ByteRegister.A.Operate(instruction, operation, change, constantOperand);
+                if (change) {
+                    byteRegister.CopyFrom(instruction, ByteRegister.A);
+                }
+            }
+        }
     }
 }

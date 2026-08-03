@@ -166,6 +166,11 @@ internal class ByteRegister : Cate.ByteRegister
 
     public override void Operate(Instruction instruction, string operation, bool change, Operand operand)
     {
+        if (operand is ConstantOperand constantOperand)
+        {
+            ((ByteOperation)ByteOperation).OperateByteRegister(instruction, this, operation, change, constantOperand);
+            return;
+        }
         using (ByteOperation.ReserveRegister(instruction, A)) {
             A.CopyFrom(instruction, this);
             A.Operate(instruction, operation, change, operand);

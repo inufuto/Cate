@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Inu.Cate.MuCom87;
 
-internal class WordAddOrSubtractInstruction(
+internal abstract class WordAddOrSubtractInstruction(
     Function function,
     int operatorId,
     AssignableOperand destinationOperand,
@@ -11,6 +11,11 @@ internal class WordAddOrSubtractInstruction(
     Operand rightOperand)
     : AddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand)
 {
+    protected override int Threshold() 
+    {
+        return ((WordOperation)WordOperation).Threshold;
+    }
+
     public override void BuildAssembly()
     {
         if (IsOperatorExchangeable()) {
@@ -43,6 +48,11 @@ internal class WordAddOrSubtractInstruction(
                 throw new NotImplementedException();
         }
 
+        BuildAssembly(lowOperation, highOperation);
+    }
+
+    protected virtual void BuildAssembly(string lowOperation, string highOperation)
+    {
         using (ByteOperation.ReserveRegister(this, ByteRegister.A)) {
             ByteRegister.A.Load(this, Compiler.LowByteOperand(LeftOperand));
             ByteRegister.A.Operate(this, lowOperation, true, Compiler.LowByteOperand(RightOperand));
@@ -52,8 +62,6 @@ internal class WordAddOrSubtractInstruction(
             ByteRegister.A.Store(this, Compiler.HighByteOperand(DestinationOperand));
         }
     }
-
-    protected override int Threshold() => 8;
 
     protected override void Increment(int count)
     {

@@ -118,13 +118,13 @@ internal abstract class Compiler(Cate.ByteOperation byteOperation, Cate.WordOper
         }
         switch (operatorId) {
             case '+':
-                return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                return CreateWordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
             case '-': {
                     if (rightOperand is IntegerOperand { IntegerValue: > 0 } integerOperand) {
                         var operand = new IntegerOperand(rightOperand.Type, -integerOperand.IntegerValue);
-                        return new WordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
+                        return CreateWordAddOrSubtractInstruction(function, '+', destinationOperand, leftOperand, operand);
                     }
-                    return new WordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
+                    return CreateWordAddOrSubtractInstruction(function, operatorId, destinationOperand, leftOperand, rightOperand);
                 }
             case '|':
             case '^':
@@ -137,6 +137,8 @@ internal abstract class Compiler(Cate.ByteOperation byteOperation, Cate.WordOper
                 throw new NotImplementedException();
         }
     }
+
+    protected abstract BinomialInstruction CreateWordAddOrSubtractInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand);
 
     protected abstract ByteShiftInstruction CreateByteShiftInstruction(Function function, int operatorId, AssignableOperand destinationOperand, Operand leftOperand, Operand rightOperand);
 
