@@ -206,6 +206,11 @@ internal abstract class WordRegister : Cate.WordRegister
             }
             return;
         }
+        if (pointerRegister.Equals(this)) {
+            pointerRegister.Add(instruction, offset);
+            LoadIndirect(instruction, pointerRegister, 0);
+            return;
+        }
         using (var reservation = WordOperation.ReserveRegister(instruction, pointerRegister)) {
             pointerRegister.Add(instruction, offset);
             LoadIndirect(instruction, pointerRegister, 0);
