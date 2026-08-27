@@ -68,7 +68,12 @@ public class ByteLoadInstruction(Function function, AssignableOperand destinatio
                         var pointerRegisters = WordOperation.RegistersToOffset(offset);
                         if (pointerRegisters.Any()) {
                             using var reservation = WordOperation.ReserveAnyRegister(this, pointerRegisters, SourceOperand);
-                            reservation.WordRegister.LoadFromMemory(this, pointer, 0);
+                            if (register is WordRegister wordRegister) {
+                                reservation.WordRegister.CopyFrom(this, wordRegister);
+                            }
+                            else {
+                                reservation.WordRegister.LoadFromMemory(this, pointer, 0);
+                            }
                             ByteOperation.StoreConstantIndirect(this, reservation.WordRegister, offset, integerOperand.IntegerValue);
                             return;
                         }

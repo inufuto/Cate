@@ -1,17 +1,14 @@
-﻿namespace Inu.Cate.Mc6809
-{
-    internal class ByteLoadInstruction : Cate.ByteLoadInstruction
-    {
-        public ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand) : base(function, destinationOperand, sourceOperand)
-        { }
+﻿namespace Inu.Cate.Mc6809;
 
-        public override void BuildAssembly()
-        {
-            if (SourceOperand is IntegerOperand { IntegerValue: 0 }) {
-                ByteOperation.Operate(this, "clr", true, DestinationOperand);
-                return;
-            }
-            base.BuildAssembly();
+internal class ByteLoadInstruction(Function function, AssignableOperand destinationOperand, Operand sourceOperand)
+    : Cate.ByteLoadInstruction(function, destinationOperand, sourceOperand)
+{
+    public override void BuildAssembly()
+    {
+        if (SourceOperand is IntegerOperand { IntegerValue: 0 }) {
+            ByteOperation.Operate(this, "clr", true, DestinationOperand);
+            return;
         }
+        base.BuildAssembly();
     }
 }
