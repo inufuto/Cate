@@ -2,7 +2,7 @@ module ::= (constant-definition | type-definition | variable-declaration | funct
 
 constant-definition ::= "constexpr" parameterizable-type identifier "=" constant-expression ("," identifier "=" constant-expression)*  ";"
 
-type-definition ::= "struct" identifier ( ":" identifier )+ ("{" (type identifier ("," identifier)* ";")* "}") ";"
+type-definition ::= "struct" identifier ( ":" identifier )? ("{" (type identifier ("," identifier)* ";")* "}")? ";"
 
 variable-declaration ::= ( | "static" | "extern") ( | "const") type identifier ( | "=" constant-value) ("," identifier ( | "=" constant-value))* ";"
 
@@ -54,7 +54,7 @@ constant-expression ::= trinomial
 
 trinomial ::= binomial ("?" expression ":" trinomial)
 
-binomial ::= (prefix-expression | binomial) ("||" | "&&" | "|" | "^" | "&" | "==" | "!=" | "<" | ">" | ">>" | "<<" | "+" | "-" | "*" | "/" | "&") (prefix-expression | binomial)
+binomial ::= (prefix-expression | binomial) ("||" | "&&" | "|" | "^" | "&" | "==" | "!=" | "<" | ">" | ">>" | "<<" | "+" | "-" | "*" | "/" | "%" | "&") (prefix-expression | binomial)
 
 prefix-expression ::= (sizeof-expression | cast-expression | monomial | dereference | reference | pre-increment-or-decrement | postfix-expression)
 
