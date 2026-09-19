@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pFire[1] = 224")) {
+            if (instruction.ToString().Contains("if Man[1] >= pMonster[1]")) {
                 var aaa = 111;
             }
 #endif
