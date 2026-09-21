@@ -2,18 +2,11 @@
 
 namespace Inu.Cate;
 
-internal class Binomial : Value
+internal class Binomial(ParameterizableType type, int operatorId, Value leftValue, Value rightValue)
+    : Value(type)
 {
-    private readonly int operatorId;
-    private Value leftValue;
-    private Value rightValue;
-
-    public Binomial(ParameterizableType type, int operatorId, Value leftValue, Value rightValue) : base(type)
-    {
-        this.operatorId = operatorId;
-        this.leftValue = leftValue;
-        this.rightValue = rightValue;
-    }
+    private Value leftValue = leftValue;
+    private Value rightValue = rightValue;
 
     public new ParameterizableType Type => (ParameterizableType)base.Type;
 
@@ -27,6 +20,7 @@ internal class Binomial : Value
                 (leftValue, rightValue) = (rightValue, leftValue);
             }
             var leftOperand = leftValue.ToOperand(function);
+            if (rightValue is ConstantPointer) {}
             var rightOperand = rightValue.ToOperand(function);
             var instruction = Compiler.Instance.CreateBinomialInstruction(
                 function, operatorId,

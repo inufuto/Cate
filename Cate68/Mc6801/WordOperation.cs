@@ -9,4 +9,9 @@ internal class WordOperation : Mc6800.WordOperation
     {
         return type is PointerType ? ([IndexRegister.X,]) : base.RegistersForType(type);
     }
+
+    public override List<WordRegister> RegistersToOffset(int offset)
+    {
+        return [IndexRegister.X];
+    }
 }

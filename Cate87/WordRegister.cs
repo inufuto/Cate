@@ -219,6 +219,7 @@ internal class WordRegister(int id, Cate.ByteRegister high, Cate.ByteRegister lo
     public override void LoadFromMemory(Instruction instruction, Variable variable, int offset)
     {
         instruction.WriteLine("\tl" + Name + "d\t" + variable.MemoryAddress(offset));
+        instruction.RemoveRegisterAssignment(this);
         instruction.SetVariableRegister(variable, offset, this);
         instruction.AddChanged(this);
         instruction.SetRegisterOffset(this, offset);

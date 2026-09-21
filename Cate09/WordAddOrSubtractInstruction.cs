@@ -56,7 +56,12 @@ internal class WordAddOrSubtractInstruction(
                 }
                 else {
                     using (WordOperation.ReserveRegister(this, WordRegister.D)) {
-                        using (WordOperation.ReserveRegister(this, WordRegister.X)) {
+                        if (RightOperand is IndirectOperand indirectOperand && indirectOperand.Conflicts(register)) {
+                            using (WordOperation.ReserveRegister(this, register)) {
+                                WordRegister.D.Load(this, RightOperand);
+                            }
+                        }
+                        else {
                             WordRegister.D.Load(this, RightOperand);
                         }
                         AddXd(register);
@@ -74,17 +79,20 @@ internal class WordAddOrSubtractInstruction(
 
     private bool AddConstant()
     {
-        if (RightOperand is IntegerOperand integerOperand) {
+        if (RightOperand is ConstantOperand constantOperand) {
             if (Equals(LeftOperand.Register, WordRegister.D) && Equals(DestinationOperand.Register, WordRegister.D))
                 return false;
+            if (RightOperand is IntegerOperand integerOperand) {
 
-            var value = integerOperand.IntegerValue;
-            if (OperatorId == '-') {
-                value = -value;
+                var value = integerOperand.IntegerValue;
+                if (OperatorId == '-') {
+                    value = -value;
+                }
+                {
+                    return AddConstant(value.ToString());
+                }
             }
-            {
-                return AddConstant(value.ToString());
-            }
+            return AddConstant(constantOperand.MemoryAddress());
         }
         return false;
     }
