@@ -34,15 +34,9 @@ public abstract class ConstantOperand : Operand
     public override bool IsVariable(Variable variable) => false;
 }
 
-public class IntegerOperand : ConstantOperand
+public class IntegerOperand(Type type, int integerValue) : ConstantOperand
 {
-    public readonly int IntegerValue;
-
-    public IntegerOperand(Type type, int integerValue)
-    {
-        Type = type;
-        IntegerValue = integerValue;
-    }
+    public readonly int IntegerValue = integerValue;
 
     public override bool Equals(object? obj) => obj is IntegerOperand integerOperand && IntegerValue == integerOperand.IntegerValue;
 
@@ -53,7 +47,8 @@ public class IntegerOperand : ConstantOperand
         return IntegerValue.ToString();
     }
 
-    public override Type Type { get; }
+    public override Type Type { get; } = type;
+
     public override Operand Cast(ParameterizableType type)
     {
         return new IntegerOperand(type, IntegerValue);
@@ -61,10 +56,8 @@ public class IntegerOperand : ConstantOperand
 }
 
 
-class BooleanOperand : IntegerOperand
+public class BooleanOperand(int integerValue) : IntegerOperand(BooleanType.Type, integerValue)
 {
-    public BooleanOperand(int integerValue) : base(BooleanType.Type, integerValue)
-    { }
     public override Type Type => BooleanType.Type;
 }
 
