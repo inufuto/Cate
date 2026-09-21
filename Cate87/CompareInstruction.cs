@@ -91,24 +91,24 @@ internal abstract class CompareInstruction(
                 OperateRegister(operation, action, registerOperand.Register);
                 return;
             case VariableOperand variableOperand: {
-                var register = GetVariableRegister(variableOperand);
-                if (register is Cate.ByteRegister byteRegister && !Equals(byteRegister, ByteRegister.A)) {
-                    OperateRegister(operation, action, byteRegister);
-                    return;
-                }
+                    var register = GetVariableRegister(variableOperand);
+                    if (register is Cate.ByteRegister byteRegister && !Equals(byteRegister, ByteRegister.A)) {
+                        OperateRegister(operation, action, byteRegister);
+                        return;
+                    }
 
-                break;
-            }
-            case IndirectOperand indirectOperand: {
-                var pointer = indirectOperand.Variable;
-                var offset = indirectOperand.Offset;
-                var register = GetVariableRegister(pointer, offset);
-                if (register is WordRegister pointerRegister) {
-                    OperateIndirect(operation, action, pointerRegister);
-                    return;
+                    break;
                 }
-                break;
-            }
+            case IndirectOperand indirectOperand: {
+                    var pointer = indirectOperand.Variable;
+                    var offset = indirectOperand.Offset;
+                    var register = GetVariableRegister(pointer, offset);
+                    if (register is WordRegister pointerRegister) {
+                        OperateIndirect(operation, action, pointerRegister);
+                        return;
+                    }
+                    break;
+                }
         }
 
         OperateViaAccumulator(operation, action);
@@ -193,13 +193,25 @@ internal abstract class CompareInstruction(
 
     private void CallExternalWord(string functionName, string skip)
     {
-        using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+        if (Equals(LeftOperand.Register, WordRegister.Bc)) {
             using (WordOperation.ReserveRegister(this, WordRegister.Bc)) {
-                WordRegister.Bc.Load(this, RightOperand);
-                WordRegister.Hl.Load(this, LeftOperand);
-                Compiler.CallExternal(this, functionName);
+                using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                    WordRegister.Hl.Load(this, LeftOperand);
+                    WordRegister.Bc.Load(this, RightOperand);
+                    Compiler.CallExternal(this, functionName);
+                    AddChanged(WordRegister.Hl);
+                }
             }
-            AddChanged(WordRegister.Hl);
+        }
+        else {
+            using (WordOperation.ReserveRegister(this, WordRegister.Hl)) {
+                using (WordOperation.ReserveRegister(this, WordRegister.Bc)) {
+                    WordRegister.Bc.Load(this, RightOperand);
+                    WordRegister.Hl.Load(this, LeftOperand);
+                    Compiler.CallExternal(this, functionName);
+                }
+                AddChanged(WordRegister.Hl);
+            }
         }
 
         if (skip.Equals("skz")) {
