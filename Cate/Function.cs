@@ -272,7 +272,7 @@ public class Function : NamedValue
         //}
         foreach (var instruction in Instructions) {
 #if DEBUG
-            if (instruction.ToString().Contains("pVram = PrintNumber5_(8304,HiScore)")) {
+            if (instruction.ToString().Contains("pUpper = pStage[1] + @6")) {
                 var aaa = 111;
             }
 #endif

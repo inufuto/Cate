@@ -56,7 +56,7 @@ internal class WordAddOrSubtractInstruction(
                 }
                 else {
                     using (WordOperation.ReserveRegister(this, WordRegister.D)) {
-                        if (RightOperand is IndirectOperand indirectOperand && indirectOperand.Conflicts(register)) {
+                        if (RightOperand is IndirectOperand) {
                             using (WordOperation.ReserveRegister(this, register)) {
                                 WordRegister.D.Load(this, RightOperand);
                             }
