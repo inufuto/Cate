@@ -45,6 +45,7 @@ internal class Compiler(bool parameterRegister) : Mos6502.Compiler(parameterRegi
     public override void ClearByte(Instruction instruction, VariableOperand variableOperand)
     {
         instruction.WriteLine("\tstz\t" + variableOperand.MemoryAddress());
+        instruction.RemoveVariableRegister(variableOperand);
     }
 
     public override void ClearByte(Instruction instruction, string label)
